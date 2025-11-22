@@ -2044,3 +2044,88 @@ main#mainContent {
   text-decoration: none;
   font-weight: 600;
 }
+
+/* ===== Bottom Navigation Bar ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #f1f1f1; /* soft grey */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid #ddd;
+  z-index: 9999;
+  font-family: 'Inter', system-ui, sans-serif;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280; /* muted grey for inactive */
+  text-decoration: none;
+  transition: color 0.25s ease, transform 0.25s ease;
+  position: relative;
+  padding-top: 4px;
+}
+
+/* Remove tap highlight */
+.bottom-nav a:focus,
+.bottom-nav a:active {
+  outline: none;
+  background: none;
+}
+
+/* Icons */
+.bottom-nav .icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* Labels */
+.bottom-nav .label {
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+/* Active (highlighted) state — icon glow only */
+.bottom-nav a.active {
+  color: #2563eb; /* blue highlight */
+}
+
+.bottom-nav a.active .icon {
+  text-shadow: 0 0 8px rgba(37, 99, 235, 0.4); /* soft glow */
+  transform: scale(1.1);
+}
+
+/* Hover (desktop) */
+@media (hover: hover) {
+  .bottom-nav a:hover {
+    color: #2563eb;
+  }
+}
+
+/* Prevent overlap with content */
+main#mainContent {
+  padding-bottom: 80px;
+}
+
+/* Optional dark mode variant */
+html[data-theme="dark"] .bottom-nav {
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+}
+
+html[data-theme="dark"] .bottom-nav a {
+  color: #888;
+}
+
+html[data-theme="dark"] .bottom-nav a.active {
+  color: #60a5fa;
+}

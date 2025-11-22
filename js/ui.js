@@ -22,12 +22,19 @@ import { initCostBaseTrackerUI } from './cost_base_tracker.js';
 import { initDashboardMobileV3UI } from './dashboard_mobile_v3_ui.js';
 
 
+//to navigation bar temporary comments
+//function setActiveNav(view) {
+//  document.querySelectorAll('nav ul li a').forEach(link => {
+//    link.classList.toggle('active', link.getAttribute('data-view') === view);
+//  });
+//}
 
 function setActiveNav(view) {
-  document.querySelectorAll('nav ul li a').forEach(link => {
+  document.querySelectorAll('.bottom-nav a').forEach(link => {
     link.classList.toggle('active', link.getAttribute('data-view') === view);
   });
 }
+
 
 export async function loadView(view) {
   console.log(`📄 Loading view: ${view}`);
