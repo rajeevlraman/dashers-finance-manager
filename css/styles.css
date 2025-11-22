@@ -1899,19 +1899,22 @@ select[name="type"] option[value="expense"] {
 }
 .transaction-item.income { color: green; }
 .transaction-item.expense { color: red; }
+
+/* ===== Bottom Navigation Bar ===== */
 .bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: 65px;
-  background: #fff;
+  background: #ffffff;
   border-top: 1px solid #e5e7eb;
-  display: flex;
+  display: flex;                /* 👈 ensures horizontal layout */
+  flex-direction: row;          /* 👈 ensures items go in a row */
   justify-content: space-around;
   align-items: center;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-  z-index: 999;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
 }
 
 .bottom-nav a {
@@ -1920,19 +1923,37 @@ select[name="type"] option[value="expense"] {
   color: #6b7280;
   font-size: 1.4rem;
   display: flex;
-  flex-direction: column;
+  flex-direction: column;       /* 👈 icon above label */
   align-items: center;
   justify-content: center;
   text-decoration: none;
   gap: 4px;
+  transition: color 0.3s ease;
 }
 
-.bottom-nav a span {
+.bottom-nav a .label {
   font-size: 0.7rem;
   font-weight: 600;
 }
 
 .bottom-nav a.active {
-  color: #2563eb;
+  color: #2563eb;              /* blue active color */
   font-weight: 700;
 }
+
+.bottom-nav a:hover {
+  color: #1d4ed8;
+}
+
+/* prevent content from hiding behind bottom nav */
+main#mainContent {
+  padding-bottom: 90px;
+}
+
+/* optional: hide top nav on small screens */
+@media (max-width: 600px) {
+  nav:not(.bottom-nav) {
+    display: none;
+  }
+}
+
