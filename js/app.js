@@ -5,7 +5,7 @@ import { setupDebugConsole } from './debugConsole.js';
 setupDebugConsole();
 
 import { initUI } from './ui.js';
-import { processRecurringTransactions, processDueBills } from './recurringjob.js';
+import { processRecurringTransactions, processDueBills } from './recurringJob.js';
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
