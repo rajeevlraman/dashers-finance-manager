@@ -8,7 +8,7 @@ const CACHE_NAME = 'budget-tracker-v26';
 
 // 🔹 Files to cache for offline support
 const PRECACHE_URLS = [
-  './',
+  '/',
   'index.html',
   'manifest.json',
   'css/styles.css',
