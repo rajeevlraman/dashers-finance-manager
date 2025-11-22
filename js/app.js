@@ -68,30 +68,22 @@ window.addEventListener('beforeinstallprompt', (e) => {
 // Main Initialization Block
 // --------------------------
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Splash screen fade‐out
   const splash = document.getElementById('splashScreen');
   if (splash) {
     setTimeout(() => splash.classList.add('hidden'), 1200);
   }
 
-  // 2. Initialize UI (navigation, view management)
   initUI();
-
-  // 3. Run daily automation: recurring transactions + due bills
   await processRecurringTransactions();
   await processDueBills();
-
-  // 4. Request persistent storage
   await requestPersistentStorage();
 
-  // 5. Register Service Worker for PWA
+  // Register Service Worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/serviceWorker.js')
+    navigator.serviceWorker.register('serviceWorker.js')
       .then(reg => {
         console.log('✅ Service Worker registered:', reg.scope);
-        if (reg.waiting) {
-          showUpdateToast(reg.waiting);
-        }
+        if (reg.waiting) showUpdateToast(reg.waiting);
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
@@ -104,12 +96,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       .catch(err => console.error('❌ Service Worker registration failed:', err));
   }
 
-  // 6. If offline at startup, show offline banner
-  if (!navigator.onLine) {
-    showOfflineBanner();
-  }
+  if (!navigator.onLine) showOfflineBanner();
 
-  // 7. Setup Install / Dismiss button handlers
   const installBtn = document.getElementById('installBtn');
   if (installBtn) {
     installBtn.addEventListener('click', async () => {
@@ -134,9 +122,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   updateConnectionIcon();
+
+  // ===============================
+  // 🪄 SW Debug Console Integration
+  // ===============================
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'DEBUG_LOG') {
+        showSWConsole(e.data.message);
+      }
+    });
+  }
 });
 
-
+// --------------------------
+// SW Debug Console Overlay
+// --------------------------
+function showSWConsole(msg) {
+  let consoleEl = document.getElementById('swConsole');
+  if (!consoleEl) {
+    consoleEl = document.createElement('div');
+    consoleEl.id = 'swConsole';
+    consoleEl.style = `position:fixed;bottom:10px;left:10px;right:10px;max-height:40%;overflow:auto;\n      background:#111;color:#0f0;font-family:monospace;font-size:12px;padding:8px;border-radius:8px;z-index:9999;`;
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✖ Close';
+    closeBtn.style = 'float:right;background:#f00;color:white;border:none;padding:3px 6px;border-radius:4px;';
+    closeBtn.onclick = () => consoleEl.remove();
+    consoleEl.appendChild(closeBtn);
+    document.body.appendChild(consoleEl);
+  }
+  const line = document.createElement('div');
+  line.textContent = msg;
+  consoleEl.appendChild(line);
+}
 
 // --------------------------
 // Auxiliary UI Helpers
