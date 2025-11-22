@@ -1,11 +1,11 @@
 // app.js
 
 // ✅ Enable debug console for testing; comment out for production
-import { setupDebugConsole } from 'debugConsole.js';
+import { setupDebugConsole } from './debugConsole.js';
 setupDebugConsole();
 
 import { initUI } from './ui.js';
-import { processRecurringTransactions, processDueBills } from 'recurringjob.js';
+import { processRecurringTransactions, processDueBills } from './recurringjob.js';
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
