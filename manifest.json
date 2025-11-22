@@ -2,7 +2,7 @@
   "name": "Budget Tracker",
   "short_name": "Budget",
   "description": "Track your income, expenses, budgets, and bills — even offline!",
-  "start_url": "/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
