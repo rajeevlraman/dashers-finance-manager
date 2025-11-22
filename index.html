@@ -141,7 +141,7 @@
 
   // Register service worker for all devices
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/serviceWorker.js', { scope: '/' })
+    navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
       .then(reg => {
         console.log('✅ SW registered:', reg.scope);
         
