@@ -64,6 +64,44 @@ window.addEventListener('beforeinstallprompt', (e) => {
   showInstallBanner();
 });
 
+//--------password auth logic
+
+document.addEventListener('DOMContentLoaded', () => {
+  const loginScreen = document.getElementById('loginScreen');
+  const loginForm = document.getElementById('loginForm');
+
+  // If user already logged in, skip login
+  if (localStorage.getItem('loggedIn') === 'true') {
+    loginScreen.classList.add('hidden');
+  }
+
+  // Handle login
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    // Simple validation (you can replace this later)
+    if (email && password) {
+      localStorage.setItem('loggedIn', 'true');
+      loginScreen.classList.add('hidden');
+      console.log('✅ Logged in successfully');
+    } else {
+      alert('Please enter valid credentials');
+    }
+  });
+
+  // Optional: fake logout (you can trigger this elsewhere)
+  window.logout = () => {
+    localStorage.removeItem('loggedIn');
+    loginScreen.classList.remove('hidden');
+  };
+});
+
+
+//----------------------
+
+
 // --------------------------
 // Main Initialization Block
 // --------------------------
