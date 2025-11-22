@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 5. Register Service Worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('serviceWorker.js')
+    navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
       .then(reg => {
         console.log('✅ Service Worker registered:', reg.scope);
         if (reg.waiting) {
