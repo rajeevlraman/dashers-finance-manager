@@ -518,6 +518,7 @@ nav .label {
   
   main#mainContent {
     padding: 1rem;
+    padding-bottom: 90px; /* prevents overlap with bottom nav */
   }
   
   nav .label {
@@ -1898,3 +1899,40 @@ select[name="type"] option[value="expense"] {
 }
 .transaction-item.income { color: green; }
 .transaction-item.expense { color: red; }
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+  z-index: 999;
+}
+
+.bottom-nav a {
+  flex: 1;
+  text-align: center;
+  color: #6b7280;
+  font-size: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  gap: 4px;
+}
+
+.bottom-nav a span {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.bottom-nav a.active {
+  color: #2563eb;
+  font-weight: 700;
+}
