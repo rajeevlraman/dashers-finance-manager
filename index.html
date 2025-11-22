@@ -1,34 +1,58 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#3498db">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Budget Tracker">
+  
+  <!-- Enhanced Viewport for iOS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
+  
   <title>Budget Tracker</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- iOS Specific Icons & Splash Screens -->
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/icon-192.png">
+  
+  <!-- iOS Splash Screens (simplified) -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Prevent telephone number detection -->
+  <meta name="format-detection" content="telephone=no">
+  
+  <!-- Charts -->
+  <script src="js/vendor/chart.umd.min.js"></script>
+  
+  <script type="module">
+  import { initAutoDashboard } from './js/dashboard_mobile.js';
+  initAutoDashboard();
+  </script>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="/dashers-finance-manager/css/styles.css">
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/dashboard_mobile.js"></script>
 
-  <!-- Manifest -->
-  <link rel="manifest" href="/dashers-finance-manager/manifest.json">
 
-  <!-- Icons -->
-  <link rel="apple-touch-icon" href="/dashers-finance-manager/assets/icons/icon-192.png">
-
-  <!-- ChartJS -->
-  <script src="/dashers-finance-manager/js/vendor/chart.umd.min.js"></script>
-
+  <!-- iOS PWA Detection -->
+  <script>
+    // Detect iOS and apply specific fixes
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      document.documentElement.classList.add('ios-device');
+      console.log('📱 iOS Device Detected - Applying PWA fixes');
+    }
+  </script>
 </head>
-
 <body>
-
-  <!-- Splash -->
   <div id="splashScreen">
     <div class="splash-inner">
-      <img src="/dashers-finance-manager/assets/icons/icon-192.png" alt="Logo">
+      <img src="assets/icons/icon-192.png" alt="Logo">
       <h1>Budget Tracker</h1>
       <div class="spinner"></div>
     </div>
@@ -36,6 +60,9 @@
 
   <header>
     <h1>Budget Tracker</h1>
+    <div class="header-status">
+      <span id="connectionStatus" title="Online">🟢</span>
+    </div>
     <div class="header-actions">
       <button id="btnExport">Backup Data</button>
       <button id="btnImport">Restore Data</button>
@@ -44,83 +71,197 @@
 
   <nav>
     <ul>
-      <li><a href="#dashboard" data-view="dashboard">🏠 Dashboard</a></li>
-      <li><a href="#transactions" data-view="transactions">💸 Transactions</a></li>
-      <li><a href="#budgets" data-view="budgets">🎯 Budgets</a></li>
-      <li><a href="#accounts" data-view="accounts">💳 Accounts</a></li>
-      <li><a href="#categories" data-view="categories">🗂️ Categories</a></li>
-      <li><a href="#reports" data-view="reports">📊 Reports</a></li>
-      <li><a href="#bills" data-view="bills">🧾 Bills</a></li>
-      <li><a href="#settings" data-view="settings">⚙️ Settings</a></li>
-      <li><a href="#calendar" data-view="calendar">📅 Calendar</a></li>
-      <li><a href="#recurring" data-view="recurring">🔁 Recurring</a></li>
+      <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
+      <li><a href="#transactions" data-view="transactions"><span class="icon">💸</span><span class="label">Transactions</span></a></li>
+      <li><a href="#budgets" data-view="budgets"><span class="icon">🎯</span><span class="label">Budgets</span></a></li>
+      <li><a href="#accounts" data-view="accounts"><span class="icon">💳</span><span class="label">Accounts</span></a></li>
+      <li><a href="#categories" data-view="categories"><span class="icon">🗂️</span><span class="label">Categories</span></a></li>
+      <li><a href="#reports" data-view="reports"><span class="icon">📊</span><span class="label">Reports</span></a></li>
+      <li><a href="#bills" data-view="bills"><span class="icon">🧾</span><span class="label">Bills</span></a></li>
+      <li><a href="#settings" data-view="settings"><span class="icon">⚙️</span><span class="label">Settings</span></a></li>
+      <li><a href="#calendar" data-view="calendar"><span class="icon">📅</span><span class="label">Calendar</span></a></li>
+      <li><a href="#recurring" data-view="recurring"><span class="icon">🔁</span><span class="label">Recurring</span></a></li>
+      <li><a href="#loans" data-view="loans"><span class="icon">🏦</span><span class="label">Loans</span></a></li>
+      <li><a href="#properties" data-view="properties"><span class="icon">🏠</span><span class="label">Properties</span></a></li>
+      <li><a href="#tenants" data-view="tenants"><span class="icon">👤</span><span class="label">Tenants</span></a></li>
+      <li><a href="#maintenance" data-view="maintenance"><span class="icon">🧰</span><span class="label">Maintenance</span></a></li>
+      <li><a href="#expenses" data-view="expenses"><span class="icon">💸</span><span class="label">Expenses</span></a></li>
+      <li><a href="#property-dashboard" data-view="property-dashboard"><span class="icon">📊</span><span class="label"> Prop-Dashboard</span></a></li>
+      <li><a href="#mobile-dashboard" data-view="mobile-dashboard"><span class="icon">📱</span><span class="label">Prop Mobile</span></a></li>
+      <li><a href="#mobiledash" data-view="mobiledash"><span class="icon">📱</span><span class="label">MobileDash</span></a></li>
+      <li><a href="#tax" data-view="tax"><span class="icon">📘</span><span class="label">ATO Reports</span></a></li>
+      <li><a href="#costbase" data-view="costbase"><span class="icon">🧱</span><span class="label">Cost Base</span></a></li>
+
+
     </ul>
   </nav>
 
-  <main id="mainContent"></main>
+  <main id="mainContent">
+    <!-- Dynamic content loads here -->
+  </main>
 
-  <!-- Install Banner -->
+  <!-- PWA Installation Banner -->
   <div id="installBanner" class="install-banner hidden">
     <div class="install-banner-content">
-      <strong>Install Budget Tracker</strong>
-      <button id="installBtn" class="button">Install</button>
-      <button id="installDismiss" class="button red">Dismiss</button>
+      <span class="install-icon">📱</span>
+      <div class="install-text">
+        <strong>Install Budget Tracker</strong>
+        <p>Get quick access and offline support — install to your device.</p>
+      </div>
+      <div class="install-actions">
+        <button id="installBtn" class="button">Install</button>
+        <button id="installDismiss" class="button red">Dismiss</button>
+      </div>
     </div>
   </div>
+  <button id="btnMigrateToDexie" class="btn-warning">⚙️ Migrate to Dexie Database</button>
 
-  <!-- iOS Install Guide -->
-  <div id="iosInstallGuide" class="ios-install-guide hidden">
-    <div class="ios-install-content">
-      <h3>Install on iPhone</h3>
-      <p>Tap Share → “Add to Home Screen”</p>
-      <button id="closeIosGuide" class="button">Got it</button>
-    </div>
+  <!-- PWA Debug Button (remove in production) -->
+  <div style="position: fixed; top: 10px; right: 10px; z-index: 10000; display: none;" id="debugPWA">
+    <button onclick="checkPWAStatus()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;">Check PWA</button>
   </div>
 
-  <!-- App scripts (GitHub Pages absolute paths) -->
-  <script type="module" src="/dashers-finance-manager/js/app.js"></script>
-  <script type="module" src="/dashers-finance-manager/js/dashboard_mobile.js"></script>
+<script>
+  // Comprehensive Device Detection - SINGLE DECLARATION
+  //const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+  
+  console.log('📱 Device Detection:', {
+    isIOS: isIOS,
+    isSafari: isSafari, 
+    isAndroid: isAndroid,
+    userAgent: navigator.userAgent
+  });
 
-  <script>
-    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
+  // Add iOS class to HTML element for CSS targeting
+  if (isIOS) {
+    document.documentElement.classList.add('ios-device');
+  }
 
-    console.log("Device:", { isIOS, isAndroid });
+  // Register service worker for all devices
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/serviceWorker.js', { scope: '/' })
+      .then(reg => {
+        console.log('✅ SW registered:', reg.scope);
+        
+        // Show iOS install guide after delay on iOS devices
+        if (isIOS) {
+          setTimeout(() => {
+            showIOSInstallGuide();
+          }, 3000);
+        }
+      })
+      .catch(err => {
+        console.error('❌ SW registration failed:', err);
+      });
+  }
 
-    // Register SW from correct path
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/dashers-finance-manager/serviceWorker.js", { scope: "/dashers-finance-manager/" })
-        .then(reg => console.log("SW registered:", reg.scope))
-        .catch(err => console.warn("SW FAILED:", err));
-    }
-
-    // Android install
-    window.addEventListener('beforeinstallprompt', e => {
+  // Android install prompt (only for Android)
+  if (isAndroid) {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('✅ Android: PWA installable');
       e.preventDefault();
       window.deferredPrompt = e;
-      document.getElementById("installBanner").classList.remove("hidden");
+      
+      setTimeout(() => {
+        const banner = document.getElementById('installBanner');
+        if (banner) banner.classList.remove('hidden');
+      }, 2000);
     });
+  }
 
-    document.getElementById("installBtn")?.addEventListener("click", async () => {
-      if (!window.deferredPrompt) return;
-      window.deferredPrompt.prompt();
-      window.deferredPrompt = null;
-      document.getElementById("installBanner").classList.add("hidden");
-    });
-
-    document.getElementById("installDismiss")?.addEventListener("click", () =>
-      document.getElementById("installBanner").classList.add("hidden")
-    );
-
-    // iOS install hint
-    if (isIOS && !window.matchMedia('(display-mode: standalone)').matches) {
-      document.getElementById("iosInstallGuide").classList.remove("hidden");
+  // iOS Install Guide Functions
+  function showIOSInstallGuide() {
+    const guide = document.getElementById('iosInstallGuide');
+    if (guide && !localStorage.getItem('iosGuideDismissed')) {
+      console.log('📱 Showing iOS install guide');
+      guide.classList.add('show');
     }
+  }
 
-    document.getElementById("closeIosGuide")?.addEventListener("click", () =>
-      document.getElementById("iosInstallGuide").classList.add("hidden")
-    );
-  </script>
+  function hideIOSInstallGuide() {
+    const guide = document.getElementById('iosInstallGuide');
+    if (guide) {
+      guide.classList.remove('show');
+      localStorage.setItem('iosGuideDismissed', 'true');
+      console.log('📱 iOS install guide dismissed');
+    }
+  }
+
+  // Set up event listeners when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Close iOS guide button
+    const closeBtn = document.getElementById('closeIosGuide');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', hideIOSInstallGuide);
+    }
+    
+    // iOS-specific: Show install guide on user interaction
+    if (isIOS) {
+      // Show guide when user interacts with the page
+      let guideShown = false;
+      const showGuideOnInteraction = function() {
+        if (!guideShown) {
+          setTimeout(showIOSInstallGuide, 1000);
+          guideShown = true;
+        }
+      };
+      
+      document.addEventListener('touchstart', showGuideOnInteraction, { once: true, passive: true });
+      document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
+    }
+    
+    // Android install button handler
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn && isAndroid) {
+      installBtn.addEventListener('click', async () => {
+        if (!window.deferredPrompt) {
+          console.warn("⚠️ Install prompt not available");
+          return;
+        }
+        window.deferredPrompt.prompt();
+        const choiceResult = await window.deferredPrompt.userChoice;
+        console.log('👍 User install choice:', choiceResult.outcome);
+        window.deferredPrompt = null;
+        document.getElementById('installBanner').classList.add('hidden');
+      });
+    }
+    
+    // Install dismiss button (both iOS and Android)
+    const installDismiss = document.getElementById('installDismiss');
+    if (installDismiss) {
+      installDismiss.addEventListener('click', () => {
+        const banner = document.getElementById('installBanner');
+        if (banner) banner.classList.add('hidden');
+      });
+    }
+  });
+
+  // Log if Android install prompt doesn't appear
+  if (isAndroid) {
+    setTimeout(() => {
+      if (!window.deferredPrompt) {
+        console.log('❌ Android: beforeinstallprompt never fired');
+      }
+    }, 5000);
+  }
+</script>
+
+  <script type="module" src="/js/app.js"></script>
+
+  <!-- iOS Installation Guide -->
+<div id="iosInstallGuide" class="ios-install-guide">
+  <div class="ios-install-content">
+    <h3>📱 Install Budget Tracker on iOS</h3>
+    <ol class="ios-install-steps">
+      <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
+      <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+      <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
+    </ol>
+    <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
+  </div>
+</div>
 
 </body>
 </html>
