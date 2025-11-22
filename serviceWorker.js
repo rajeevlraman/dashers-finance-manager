@@ -4,7 +4,7 @@
 // Full offline support, background updates, and iOS PWA caching fixes.
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v27'; // 🚨 IMPORTANT: Bump the version number!
+const CACHE_NAME = 'budget-tracker-v28'; // 🚨 IMPORTANT: Bump the version number!
 
 // 🔹 Files to cache for offline support
 const PRECACHE_URLS = [
