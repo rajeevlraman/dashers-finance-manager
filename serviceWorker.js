@@ -19,7 +19,7 @@ const PRECACHE_URLS = [
   './js/db_dexie.js',
   './js/dexie_db.js',
   './js/debugConsole.js',
-  './js/recurringjob.js',
+  './js/recurringJob.js',
   './js/exportimport.js',
   './js/loanCalculations.js',
   './js/reports.js',
