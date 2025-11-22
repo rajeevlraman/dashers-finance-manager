@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Register Service Worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('serviceWorker.js')
+    navigator.serviceWorker.register('./serviceWorker.js')
       .then(reg => {
         console.log('✅ Service Worker registered:', reg.scope);
         if (reg.waiting) showUpdateToast(reg.waiting);

@@ -12,14 +12,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
   
   <title>Budget Tracker</title>
-  <link rel="stylesheet" href="css/styles.css" />
-  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="manifest" href="./manifest.json">
   
   <!-- iOS Specific Icons & Splash Screens -->
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="/assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="/assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-192.png">
   
   <!-- iOS Splash Screens (simplified) -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,15 +28,15 @@
   <meta name="format-detection" content="telephone=no">
   
   <!-- Charts -->
-  <script src="js/vendor/chart.umd.min.js"></script>
+  <script src="./js/vendor/chart.umd.min.js"></script>
   
   <script type="module">
   import { initAutoDashboard } from './js/dashboard_mobile.js';
   initAutoDashboard();
   </script>
 
-  <script type="module" src="/js/app.js"></script>
-  <script type="module" src="/js/dashboard_mobile.js"></script>
+  <script type="module" src="./js/app.js"></script>
+  <script type="module" src="./js/dashboard_mobile.js"></script>
 
 
   <!-- iOS PWA Detection -->
@@ -52,7 +52,7 @@
 <body>
   <div id="splashScreen">
     <div class="splash-inner">
-      <img src="assets/icons/icon-192.png" alt="Logo">
+      <img src="./assets/icons/icon-192.png" alt="Logo">
       <h1>Budget Tracker</h1>
       <div class="spinner"></div>
     </div>
@@ -141,7 +141,7 @@
 
   // Register service worker for all devices
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/serviceWorker.js', { scope: '/' })
+    navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
       .then(reg => {
         console.log('✅ SW registered:', reg.scope);
         
@@ -248,7 +248,7 @@
   }
 </script>
 
-  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="./js/app.js"></script>
 
   <!-- iOS Installation Guide -->
 <div id="iosInstallGuide" class="ios-install-guide">
