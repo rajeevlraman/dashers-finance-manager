@@ -19,6 +19,9 @@ import { initDashboardMobileUI } from './dashboard_mobile.js';
 import { initDashboardMobileV2UI } from './dashboard_mobile_v2.js';
 import { initTaxComplianceUI } from './tax_compliance.js';
 import { initCostBaseTrackerUI } from './cost_base_tracker.js';
+import { initDashboardMobileV3UI } from './dashboard_mobile_v3_ui.js';
+
+
 
 function setActiveNav(view) {
   document.querySelectorAll('nav ul li a').forEach(link => {
@@ -95,6 +98,10 @@ export async function loadView(view) {
       case 'costbase':
         await initCostBaseTrackerUI();
         break;
+      case 'mobiledashv3':
+        await initDashboardMobileV3UI();
+        break;
+
 
       default:
         main.innerHTML = '<h2>Welcome</h2><p>Select a tab to begin.</p>';
