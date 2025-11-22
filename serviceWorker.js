@@ -4,47 +4,48 @@
 // Full offline support, background updates, and iOS PWA caching fixes.
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v26';
+const CACHE_NAME = 'budget-tracker-v27'; // 🚨 IMPORTANT: Bump the version number!
 
 // 🔹 Files to cache for offline support
 const PRECACHE_URLS = [
-  '/',
-  'index.html',
-  'manifest.json',
-  'css/styles.css',
+  '/',
+  './index.html',
+  './manifest.json',
+  './css/styles.css',
 
-  // Core JS
-  'js/app.js',
-  'js/ui.js',
-  'js/db_dexie.js',
-  'js/dexie_db.js',
-  'js/debugConsole.js',
-  'js/recurringjob.js',
-  'js/exportimport.js',
-  'js/loanCalculations.js',
-  'js/reports.js',
-  'js/settings.js',
-  'js/emojipicker.js',
+  // Core JS
+  './js/app.js',
+  './js/ui.js',
+  './js/db_dexie.js',
+  './js/dexie_db.js',
+  './js/debugConsole.js',
+  './js/recurringjob.js',
+  './js/exportimport.js',
+  './js/loanCalculations.js',
+  './js/reports.js',
+  './js/settings.js',
+  './js/emojipicker.js',
 
-  // Feature modules
-  'js/budgets.js',
-  'js/transactions.js',
-  'js/accounts.js',
-  'js/categories.js',
-  'js/dashboard.js',
-  'js/bills.js',
-  'js/calendar.js',
-  'js/recurring.js',
-  'js/loans.js',
+  // Feature modules
+  './js/budgets.js',
+  './js/transactions.js',
+  './js/accounts.js',
+  './js/categories.js',
+  './js/dashboard.js',
+  './js/bills.js',
+  './js/calendar.js',
+  './js/recurring.js',
+  './js/loans.js',
 
-  // Vendor libraries
-  'js/vendor/chart.umd.min.js',
+  // Vendor libraries
+  './js/vendor/chart.umd.min.js',
 
-  // Icons
-  'assets/icons/icon-192.png',
-  'assets/icons/icon-512.png',
-  'assets/icons/maskable_icon.png'
+  // Icons
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
+  './assets/icons/maskable_icon.png'
 ];
+// ... rest of the Service Worker code ...
 
 // ============================================================================
 // 🏗️ INSTALL – Cache all assets
