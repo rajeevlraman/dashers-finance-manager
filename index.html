@@ -10,16 +10,16 @@
   <title>Budget Tracker</title>
 
   <!-- CSS -->
-  <link rel="stylesheet" href="./css/styles.css">
+  <link rel="stylesheet" href="/dashers-finance-manager/css/styles.css">
 
-  <!-- Manifest (GitHub Pages correct path) -->
-  <link rel="manifest" href="./manifest.json">
+  <!-- Manifest -->
+  <link rel="manifest" href="/dashers-finance-manager/manifest.json">
 
   <!-- Icons -->
-  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/dashers-finance-manager/assets/icons/icon-192.png">
 
-  <!-- Charts -->
-  <script src="./js/vendor/chart.umd.min.js"></script>
+  <!-- ChartJS -->
+  <script src="/dashers-finance-manager/js/vendor/chart.umd.min.js"></script>
 
 </head>
 
@@ -28,7 +28,7 @@
   <!-- Splash -->
   <div id="splashScreen">
     <div class="splash-inner">
-      <img src="./assets/icons/icon-192.png" alt="Logo">
+      <img src="/dashers-finance-manager/assets/icons/icon-192.png" alt="Logo">
       <h1>Budget Tracker</h1>
       <div class="spinner"></div>
     </div>
@@ -44,22 +44,22 @@
 
   <nav>
     <ul>
-      <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
-      <li><a href="#transactions" data-view="transactions"><span class="icon">💸</span><span class="label">Transactions</span></a></li>
-      <li><a href="#budgets" data-view="budgets"><span class="icon">🎯</span><span class="label">Budgets</span></a></li>
-      <li><a href="#accounts" data-view="accounts"><span class="icon">💳</span><span class="label">Accounts</span></a></li>
-      <li><a href="#categories" data-view="categories"><span class="icon">🗂️</span><span class="label">Categories</span></a></li>
-      <li><a href="#reports" data-view="reports"><span class="icon">📊</span><span class="label">Reports</span></a></li>
-      <li><a href="#bills" data-view="bills"><span class="icon">🧾</span><span class="label">Bills</span></a></li>
-      <li><a href="#settings" data-view="settings"><span class="icon">⚙️</span><span class="label">Settings</span></a></li>
-      <li><a href="#calendar" data-view="calendar"><span class="icon">📅</span><span class="label">Calendar</span></a></li>
-      <li><a href="#recurring" data-view="recurring"><span class="icon">🔁</span><span class="label">Recurring</span></a></li>
+      <li><a href="#dashboard" data-view="dashboard">🏠 Dashboard</a></li>
+      <li><a href="#transactions" data-view="transactions">💸 Transactions</a></li>
+      <li><a href="#budgets" data-view="budgets">🎯 Budgets</a></li>
+      <li><a href="#accounts" data-view="accounts">💳 Accounts</a></li>
+      <li><a href="#categories" data-view="categories">🗂️ Categories</a></li>
+      <li><a href="#reports" data-view="reports">📊 Reports</a></li>
+      <li><a href="#bills" data-view="bills">🧾 Bills</a></li>
+      <li><a href="#settings" data-view="settings">⚙️ Settings</a></li>
+      <li><a href="#calendar" data-view="calendar">📅 Calendar</a></li>
+      <li><a href="#recurring" data-view="recurring">🔁 Recurring</a></li>
     </ul>
   </nav>
 
   <main id="mainContent"></main>
 
-  <!-- Android Install Banner -->
+  <!-- Install Banner -->
   <div id="installBanner" class="install-banner hidden">
     <div class="install-banner-content">
       <strong>Install Budget Tracker</strong>
@@ -77,25 +77,24 @@
     </div>
   </div>
 
-  <!-- App JS (GitHub Pages correct path) -->
-  <script type="module" src="./js/app.js"></script>
-  <script type="module" src="./js/dashboard_mobile.js"></script>
+  <!-- App scripts (GitHub Pages absolute paths) -->
+  <script type="module" src="/dashers-finance-manager/js/app.js"></script>
+  <script type="module" src="/dashers-finance-manager/js/dashboard_mobile.js"></script>
 
   <script>
-    // Device Detection
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
 
     console.log("Device:", { isIOS, isAndroid });
 
-    // Register Service Worker (GitHub Pages path)
+    // Register SW from correct path
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./serviceWorker.js", { scope: "./" })
+      navigator.serviceWorker.register("/dashers-finance-manager/serviceWorker.js", { scope: "/dashers-finance-manager/" })
         .then(reg => console.log("SW registered:", reg.scope))
         .catch(err => console.warn("SW FAILED:", err));
     }
 
-    // Android install prompt
+    // Android install
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       window.deferredPrompt = e;
@@ -113,7 +112,7 @@
       document.getElementById("installBanner").classList.add("hidden")
     );
 
-    // iOS Install hint
+    // iOS install hint
     if (isIOS && !window.matchMedia('(display-mode: standalone)').matches) {
       document.getElementById("iosInstallGuide").classList.remove("hidden");
     }
