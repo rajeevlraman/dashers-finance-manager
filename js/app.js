@@ -8,6 +8,9 @@ setupDebugConsole();
 
 import { initUI } from './ui.js';
 import { processRecurringTransactions, processDueBills } from './recurringJob.js';
+import { applyLayoutChanges, LayoutModes } from './layoutManager.js';
+import { initDashboardMobileV2UI } from './dashboard_mobile_v2.js';
+import { initDashboardDesktopUI } from './dashboard_desktop.js';
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
@@ -225,6 +228,116 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (splash) {
         setTimeout(() => splash.classList.add('hidden'), 1200);
     }
+
+//layout detection
+document.addEventListener('DOMContentLoaded', async () => {
+
+    // --- 0. Development Branch Check ---
+    checkBranchIndicator();
+
+    // --- 1. Login/Authentication Logic ---
+    const loginScreen = document.getElementById('loginScreen');
+    const loginForm = document.getElementById('loginForm');
+    if (localStorage.getItem('loggedIn') === 'true') {
+        loginScreen && loginScreen.classList.add('hidden');
+    }
+
+    loginForm && loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (email && password) {
+            localStorage.setItem('loggedIn', 'true');
+            loginScreen && loginScreen.classList.add('hidden');
+            console.log('✅ Logged in successfully');
+        } else {
+            alert('Please enter valid credentials');
+        }
+    });
+
+    // Optional: fake logout
+    window.logout = () => {
+        localStorage.removeItem('loggedIn');
+        loginScreen && loginScreen.classList.remove('hidden');
+    };
+
+    // --- 2. Splash screen fade‐out ---
+    const splash = document.getElementById('splashScreen');
+    if (splash) setTimeout(() => splash.classList.add('hidden'), 1200);
+
+    // --- 🧭 2.5 Apply responsive layout detection ---
+    applyLayoutChanges(mode => {
+        console.log(`📱 Layout changed → ${mode}`);
+
+        if (mode === LayoutModes.MOBILE) {
+            document.body.classList.add('is-mobile');
+            document.body.classList.remove('is-desktop');
+            initDashboardMobileV2UI();
+        } else {
+            document.body.classList.add('is-desktop');
+            document.body.classList.remove('is-mobile');
+            initDashboardDesktopUI();
+        }
+    });
+
+    // --- 3. Initialize global UI (nav, menus, etc.) ---
+    initUI();
+
+    // --- 4. Run daily automation ---
+    await processRecurringTransactions();
+    await processDueBills();
+
+    // --- 5. Request persistent storage ---
+    await requestPersistentStorage();
+
+    // --- 6. Register Service Worker ---
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
+            .then(reg => {
+                console.log('✅ Service Worker registered:', reg.scope);
+                if (reg.waiting) showUpdateToast(reg.waiting);
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showUpdateToast(newWorker);
+                        }
+                    });
+                });
+            })
+            .catch(err => console.error('❌ Service Worker registration failed:', err));
+    }
+
+    // --- 7. If offline at startup, show offline banner ---
+    if (!navigator.onLine) showOfflineBanner();
+
+    // --- 8. Setup Install / Dismiss button handlers ---
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                console.warn('⚠️ Install prompt not available');
+                hideInstallBanner();
+                return;
+            }
+            deferredPrompt.prompt();
+            const choice = await deferredPrompt.userChoice;
+            console.log('👍 User choice for install:', choice.outcome);
+            deferredPrompt = null;
+            hideInstallBanner();
+        });
+    }
+
+    const installDismissBtn = document.getElementById('installDismiss');
+    if (installDismissBtn) {
+        installDismissBtn.addEventListener('click', () => {
+            console.log('🚫 User dismissed install banner');
+            hideInstallBanner();
+        });
+    }
+});
+
 
     // --- 3. Initialize UI (navigation, view management) ---
     initUI();
