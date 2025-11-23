@@ -1,15 +1,10 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES } from './db.js';
 
 const DEFAULT_ACCOUNTS = [
-  // Bank Accounts
   { id: 'bank1', name: 'Main Checking', type: 'bank', balance: 0, currency: 'AUD' },
   { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
-  
-  // Credit Cards
   { id: 'credit1', name: 'Visa Credit Card', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 5000 },
   { id: 'credit2', name: 'MasterCard', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 3000 },
-  
-  // Offset Account
   { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD' }
 ];
 
@@ -22,111 +17,108 @@ function generateId() {
   });
 }
 
-// Add default accounts function - FIXED
+// Add default accounts
 async function addDefaultAccounts() {
   console.log('📦 Adding default accounts...');
-  
-  const existingAccounts = await getAllItems(STORE_NAMES.accounts);
-  const existingIds = existingAccounts.map(a => a.id);
-  
-  let addedCount = 0;
-  for (const account of DEFAULT_ACCOUNTS) {
-    // Only add if it doesn't already exist
-    if (!existingIds.includes(account.id)) {
+  const existing = await getAllItems(STORE_NAMES.accounts);
+  const existingIds = existing.map(a => a.id);
+
+  let added = 0;
+  for (const acc of DEFAULT_ACCOUNTS) {
+    if (!existingIds.includes(acc.id)) {
       await addItem(STORE_NAMES.accounts, {
-        ...account,
+        ...acc,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
-      addedCount++;
-      console.log('✅ Added account:', account.name);
+      added++;
     }
   }
-  
-  console.log(`📦 Added ${addedCount} default accounts`);
-  initAccountsUI(); // Refresh the UI
+
+  console.log(`✅ Added ${added} default accounts`);
+  initAccountsUI();
 }
 
 export function initAccountsUI() {
-  const mainContent = document.getElementById('mainContent');
+  const main = document.getElementById('mainContent');
+  main.classList.add('page-transition');
 
-  mainContent.innerHTML = `
-    <div class="accounts-header">
-      <h2>🏦 Accounts</h2>
-      <div class="accounts-actions">
-        <button id="btnNewAcc" class="btn-primary">➕ New Account</button>
-        <button id="btnAddDefaults" class="btn-secondary">📦 Add Default Accounts</button>
+  main.innerHTML = `
+    <div class="page-container">
+      <div class="page-header">
+        <h2>🏦 Accounts</h2>
+        <div class="page-actions">
+          <button id="btnNewAcc" class="btn btn-primary">➕ New Account</button>
+          <button id="btnAddDefaults" class="btn btn-secondary">📦 Add Defaults</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div id="accList" class="accounts-grid">Loading…</div>
       </div>
     </div>
-    <div id="accList">Loading…</div>
   `;
-  
+
+  setTimeout(() => main.classList.remove('page-transition'), 400);
+
   document.getElementById('btnNewAcc').addEventListener('click', () => openAccountEditor());
   document.getElementById('btnAddDefaults').addEventListener('click', addDefaultAccounts);
-  
-  refreshAccountList(mainContent);
+
+  refreshAccountList();
 }
 
-function refreshAccountList(mainContent) {
+function refreshAccountList() {
   getAllItems(STORE_NAMES.accounts).then(accounts => {
     const listEl = document.getElementById('accList');
+
     if (!accounts.length) {
       listEl.innerHTML = `
         <div class="empty-state">
-          <p>No accounts defined.</p>
-          <button class="btn-primary" id="btnAddDefaultsEmpty">📦 Add Default Accounts</button>
+          <p>No accounts yet.</p>
+          <button class="btn btn-primary" id="btnAddDefaultsEmpty">📦 Add Default Accounts</button>
         </div>
       `;
-      
-      // Add event listener properly - FIXED
       document.getElementById('btnAddDefaultsEmpty').addEventListener('click', addDefaultAccounts);
       return;
     }
 
-    let html = `
-      <div class="accounts-grid">
-        ${accounts.map(account => {
-          const isNegative = account.balance < 0;
-          const isCredit = account.type === 'credit';
-          const balanceClass = isNegative ? 'negative' : 'positive';
-          const icon = getAccountIcon(account.type);
-          
-          return `
-            <div class="account-card ${account.type}">
-              <div class="account-header">
-                <div class="account-icon">${icon}</div>
-                <div class="account-info">
-                  <h3 class="account-name">${account.name}</h3>
-                  <span class="account-type">${getAccountTypeLabel(account.type)}</span>
-                </div>
-                <div class="account-balance ${balanceClass}">
-                  ${formatCurrency(account.balance, account.currency)}
-                  ${isCredit && account.creditLimit ? `
-                    <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
-                  ` : ''}
-                </div>
-              </div>
-              <div class="account-actions">
-                <button class="icon-btn edit-btn" data-id="${account.id}" data-action="edit" title="Edit">✏️</button>
-                <button class="icon-btn delete-btn" data-id="${account.id}" data-action="delete" title="Delete">🗑️</button>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    `;
-    
-    listEl.innerHTML = html;
+    listEl.innerHTML = accounts.map(account => {
+      const isNegative = account.balance < 0;
+      const isCredit = account.type === 'credit';
+      const balanceClass = isNegative ? 'negative' : 'positive';
+      const icon = getAccountIcon(account.type);
 
-    // Event listeners
-    listEl.querySelectorAll('.icon-btn').forEach(btn => {
+      return `
+        <div class="account-card">
+          <div class="account-header">
+            <div class="account-icon">${icon}</div>
+            <div class="account-info">
+              <h4 class="account-name">${account.name}</h4>
+              <p class="account-type">${getAccountTypeLabel(account.type)}</p>
+            </div>
+            <div class="account-balance ${balanceClass}">
+              ${formatCurrency(account.balance, account.currency)}
+              ${isCredit && account.creditLimit ? `
+                <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
+              ` : ''}
+            </div>
+          </div>
+          <div class="account-actions">
+            <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+            <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('button').forEach(btn => {
       const id = btn.dataset.id;
       const action = btn.dataset.action;
       btn.addEventListener('click', () => {
         if (action === 'edit') openAccountEditor(id);
         else if (action === 'delete') {
           if (confirm('Delete this account?')) {
-            deleteItem(STORE_NAMES.accounts, id).then(() => refreshAccountList(mainContent));
+            deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
           }
         }
       });
@@ -134,7 +126,7 @@ function refreshAccountList(mainContent) {
   });
 }
 
-// Helper functions
+// Helpers
 function getAccountIcon(type) {
   const icons = {
     bank: '🏦',
@@ -162,11 +154,10 @@ function getAccountTypeLabel(type) {
 }
 
 function formatCurrency(amount, currency) {
-  const formatter = new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency
-  });
-  return formatter.format(amount);
+    currency
+  }).format(amount);
 }
 
 function openAccountEditor(id) {
@@ -181,95 +172,94 @@ function openAccountEditor(id) {
 }
 
 function showAccountForm(acc) {
-  const mainContent = document.getElementById('mainContent');
+  const main = document.getElementById('mainContent');
+  main.classList.add('page-transition');
 
-  mainContent.innerHTML = `
-    <h2>${acc.id ? 'Edit' : 'New'} Account</h2>
-    <form id="accForm" class="styled-form">
-      <div class="form-group">
-        <label class="form-label">Name</label>
-        <input type="text" name="name" value="${acc.name}" class="form-input" required>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">Type</label>
-        <select name="type" class="form-select" required>
-          <option value="bank" ${acc.type === 'bank' ? 'selected' : ''}>🏦 Bank Account</option>
-          <option value="credit" ${acc.type === 'credit' ? 'selected' : ''}>💳 Credit Card</option>
-          <option value="cash" ${acc.type === 'cash' ? 'selected' : ''}>💵 Cash</option>
-          <option value="investment" ${acc.type === 'investment' ? 'selected' : ''}>📈 Investment</option>
-          <option value="savings" ${acc.type === 'savings' ? 'selected' : ''}>💰 Savings</option>
-          <option value="offset" ${acc.type === 'offset' ? 'selected' : ''}>⚖️ Offset Account</option>
-          <option value="other" ${acc.type === 'other' ? 'selected' : ''}>📁 Other</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">Starting Balance</label>
-        <input type="number" step="0.01" name="balance" value="${acc.balance}" class="form-input" required>
-        <small class="form-hint">Use negative for credit cards (amount owed)</small>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">Currency</label>
-        <select name="currency" class="form-select" required>
-          <option value="USD" ${acc.currency === 'USD' ? 'selected' : ''}>USD ($)</option>
-          <option value="EUR" ${acc.currency === 'EUR' ? 'selected' : ''}>EUR (€)</option>
-          <option value="GBP" ${acc.currency === 'GBP' ? 'selected' : ''}>GBP (£)</option>
-          <option value="CAD" ${acc.currency === 'CAD' ? 'selected' : ''}>CAD ($)</option>
-          <option value="AUD" ${acc.currency === 'AUD' ? 'selected' : ''}>AUD ($)</option>
-        </select>
-      </div>
-      
-      <div id="creditFields" class="form-group" style="display: ${acc.type === 'credit' ? 'block' : 'none'}">
-        <label class="form-label">Credit Limit</label>
-        <input type="number" step="0.01" name="creditLimit" value="${acc.creditLimit || 0}" class="form-input">
+  main.innerHTML = `
+    <div class="page-container">
+      <div class="page-header">
+        <h2>${acc.id ? '✏️ Edit' : '➕ New'} Account</h2>
       </div>
 
-      <div class="form-actions">
-        <button class="btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account</button>
-        <button class="btn-secondary" type="button" id="btnCancel">Cancel</button>
+      <div class="section-card">
+        <form id="accForm" class="styled-form">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="name" value="${acc.name}" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label>Type</label>
+            <select name="type" class="form-select" required>
+              <option value="bank" ${acc.type === 'bank' ? 'selected' : ''}>🏦 Bank</option>
+              <option value="credit" ${acc.type === 'credit' ? 'selected' : ''}>💳 Credit</option>
+              <option value="cash" ${acc.type === 'cash' ? 'selected' : ''}>💵 Cash</option>
+              <option value="investment" ${acc.type === 'investment' ? 'selected' : ''}>📈 Investment</option>
+              <option value="savings" ${acc.type === 'savings' ? 'selected' : ''}>💰 Savings</option>
+              <option value="offset" ${acc.type === 'offset' ? 'selected' : ''}>⚖️ Offset</option>
+              <option value="other" ${acc.type === 'other' ? 'selected' : ''}>📁 Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Starting Balance</label>
+            <input type="number" step="0.01" name="balance" value="${acc.balance}" class="form-input" required>
+            <small class="form-hint">Use negative for owed balances.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Currency</label>
+            <select name="currency" class="form-select" required>
+              ${['AUD','USD','EUR','GBP','CAD'].map(cur => `
+                <option value="${cur}" ${acc.currency === cur ? 'selected' : ''}>${cur}</option>
+              `).join('')}
+            </select>
+          </div>
+
+          <div id="creditFields" class="form-group" style="display:${acc.type === 'credit' ? 'block' : 'none'};">
+            <label>Credit Limit</label>
+            <input type="number" step="0.01" name="creditLimit" value="${acc.creditLimit || 0}" class="form-input">
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account</button>
+            <button class="btn btn-secondary" type="button" id="btnCancel">Cancel</button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   `;
 
-  // Show/hide credit limit field
+  setTimeout(() => main.classList.remove('page-transition'), 400);
+
   document.querySelector('select[name="type"]').addEventListener('change', function() {
     document.getElementById('creditFields').style.display = this.value === 'credit' ? 'block' : 'none';
   });
 
-  document.getElementById('btnCancel').addEventListener('click', () => initAccountsUI());
+  document.getElementById('btnCancel').addEventListener('click', initAccountsUI);
 
   document.getElementById('accForm').addEventListener('submit', async e => {
     e.preventDefault();
     const form = e.target;
-    const formData = new FormData(form);
-    
+    const data = new FormData(form);
+
     const newAcc = {
       id: acc.id || generateId(),
-      name: formData.get('name').trim(),
-      type: formData.get('type'),
-      balance: parseFloat(formData.get('balance')),
-      currency: formData.get('currency'),
+      name: data.get('name').trim(),
+      type: data.get('type'),
+      balance: parseFloat(data.get('balance')),
+      currency: data.get('currency'),
       createdAt: acc.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
-    // Add credit limit for credit cards
     if (newAcc.type === 'credit') {
-      newAcc.creditLimit = parseFloat(formData.get('creditLimit')) || 0;
+      newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
     }
 
-    try {
-      if (acc.id) {
-        await updateItem(STORE_NAMES.accounts, newAcc);
-      } else {
-        await addItem(STORE_NAMES.accounts, newAcc);
-      }
-      initAccountsUI();
-    } catch (err) {
-      console.error("❌ Error saving account:", err);
-      alert("Error saving account: " + err.message);
-    }
+    if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
+    else await addItem(STORE_NAMES.accounts, newAcc);
+
+    initAccountsUI();
   });
 }
