@@ -29,8 +29,15 @@ import { initDashboardMobileV3UI } from './dashboard_mobile_v3_ui.js';
 //  });
 //}
 
+//function setActiveNav(view) {
+//  document.querySelectorAll('.bottom-nav a').forEach(link => {
+//    link.classList.toggle('active', link.getAttribute('data-view') === view);
+//  });
+//}
+
+
 function setActiveNav(view) {
-  document.querySelectorAll('.bottom-nav a').forEach(link => {
+  document.querySelectorAll('nav ul li a, .bottom-nav a').forEach(link => {
     link.classList.toggle('active', link.getAttribute('data-view') === view);
   });
 }
