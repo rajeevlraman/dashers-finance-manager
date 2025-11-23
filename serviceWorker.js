@@ -39,7 +39,7 @@ const PRECACHE_URLS = [
 
   // Vendor libraries
   './js/vendor/chart.umd.min.js',
-  './vendor/dexie.min.js'
+  './vendor/dexie.min.js',
 
   // Icons
   './assets/icons/icon-192.png',
