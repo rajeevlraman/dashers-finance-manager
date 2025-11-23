@@ -92,6 +92,12 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request = event.request;
 
+  // 🚫 Ignore source map files to prevent iOS errors
+  if (request.url.endsWith('.map')) {
+    event.respondWith(new Response('', { status: 204 }));
+    return;
+  }
+
   // Skip non-GET and cross-origin
   if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) return;
 
