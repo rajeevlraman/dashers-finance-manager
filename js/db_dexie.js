@@ -6,7 +6,8 @@
 // ============================================================================
 
 //import Dexie from 'dexie';
-import Dexie from 'https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.mjs';
+//import Dexie from 'https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.mjs';
+import Dexie from './vendor/dexie.min.js';
 
 
 export const STORE_NAMES = {

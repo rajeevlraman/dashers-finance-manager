@@ -4,7 +4,7 @@
 // Full offline support, background updates, and iOS PWA caching fixes.
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v31'; // 🚨 IMPORTANT: Bump the version number!
+const CACHE_NAME = 'budget-tracker-v32'; // 🚨 IMPORTANT: Bump the version number!
 
 // 🔹 Files to cache for offline support
 const PRECACHE_URLS = [
@@ -39,6 +39,7 @@ const PRECACHE_URLS = [
 
   // Vendor libraries
   './js/vendor/chart.umd.min.js',
+  './vendor/dexie.min.js'
 
   // Icons
   './assets/icons/icon-192.png',
@@ -92,8 +93,8 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request = event.request;
 
-  // 🚫 Ignore source map files to prevent iOS errors
-  if (request.url.endsWith('.map')) {
+  // 🚫 Block .map file requests (Dexie, Chart.js, etc.)
+  if (req.url.endsWith('.map')) {
     event.respondWith(new Response('', { status: 204 }));
     return;
   }
