@@ -1,7 +1,7 @@
 import { getAllItems, STORE_NAMES } from './db.js';
 
 export async function initDashboardDesktopUI() {
-  console.log("✅ initDashboardUI() executing...");
+  console.log("✅ initDashboardDesktopUI() executing...");
   const mainContent = document.getElementById('mainContent');
   mainContent.innerHTML = '<p>⏳ Loading dashboard...</p>';
 
