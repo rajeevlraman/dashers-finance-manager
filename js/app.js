@@ -8,7 +8,7 @@ setupDebugConsole();
 
 import { initUI } from './ui.js';
 import { processRecurringTransactions, processDueBills } from './recurringJob.js';
-import { applyLayoutChanges, LayoutModes } from '.js/layoutManager.js';
+import { applyLayoutChanges, LayoutModes } from './js/layoutManager.js';
 import { initDashboardMobileV2UI } from './dashboard_mobile_v2.js';
 import { initDashboardDesktopUI } from './dashboard_desktop.js';
 
