@@ -2,6 +2,8 @@ import { getAllItems, addItem, deleteItem, STORE_NAMES } from './db.js';
 
 export async function initTransactionsUI() {
   const mainContent = document.getElementById('mainContent');
+  mainContent.classList.add('page-transition');
+
   const [categories, accounts, transactions] = await Promise.all([
     getAllItems(STORE_NAMES.categories),
     getAllItems(STORE_NAMES.accounts),
@@ -10,23 +12,24 @@ export async function initTransactionsUI() {
 
   const mainCats = categories.filter(c => !c.parentId);
   const subCats = categories.filter(c => c.parentId);
-
-  // Get current date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
 
   mainContent.innerHTML = `
-    <div class="transactions-header">
-      <h2>💸 Transactions</h2>
-    </div>
+    <div class="page-container">
+      <div class="page-header">
+        <h2>💸 Transactions</h2>
+        <div class="page-actions">
+          <button class="btn btn-primary" id="btnAddTx">Add</button>
+          <button class="btn btn-secondary" id="btnExportTx">Export</button>
+        </div>
+      </div>
 
-    <div class="transactions-container">
-      <!-- Add Transaction Card -->
-      <div class="form-card">
-        <h3 class="card-title">➕ Add New Transaction</h3>
+      <div class="section-card">
+        <h3>➕ Add New Transaction</h3>
         <form id="txForm" class="styled-form">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Type</label>
+              <label>Type</label>
               <select name="type" class="form-select" required>
                 <option value="expense">📤 Expense</option>
                 <option value="income">📥 Income</option>
@@ -34,19 +37,19 @@ export async function initTransactionsUI() {
             </div>
 
             <div class="form-group">
-              <label class="form-label">Amount</label>
+              <label>Amount</label>
               <input type="number" name="amount" class="form-input" step="0.01" placeholder="0.00" required>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Date</label>
+              <label>Date</label>
               <input type="date" name="date" class="form-input" value="${today}" required>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Account</label>
+              <label>Account</label>
               <select name="accountId" class="form-select" required>
                 ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
               </select>
@@ -55,7 +58,7 @@ export async function initTransactionsUI() {
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Main Category</label>
+              <label>Main Category</label>
               <select id="mainCategory" class="form-select" required>
                 <option value="">-- Select Category --</option>
                 ${mainCats.map(c => `<option value="${c.id}">${c.icon || '📁'} ${c.name}</option>`).join('')}
@@ -63,26 +66,26 @@ export async function initTransactionsUI() {
             </div>
 
             <div class="form-group">
-              <label class="form-label">Subcategory</label>
+              <label>Subcategory</label>
               <select id="subCategory" class="form-select">
                 <option value="">-- None --</option>
               </select>
             </div>
           </div>
 
-          <button class="btn-primary" type="submit">
-            💾 Add Transaction
-          </button>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">💾 Add Transaction</button>
+            <button class="btn btn-secondary" type="reset">🧹 Clear</button>
+          </div>
         </form>
       </div>
 
-      <!-- Filter Card -->
-      <div class="form-card">
-        <h3 class="card-title">🔍 Filter Transactions</h3>
+      <div class="section-card">
+        <h3>🔍 Filter Transactions</h3>
         <form id="filterForm" class="styled-form">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Type</label>
+              <label>Type</label>
               <select name="type" class="form-select">
                 <option value="">All Types</option>
                 <option value="income">📥 Income</option>
@@ -91,7 +94,7 @@ export async function initTransactionsUI() {
             </div>
 
             <div class="form-group">
-              <label class="form-label">Main Category</label>
+              <label>Main Category</label>
               <select name="mainCategoryId" class="form-select">
                 <option value="">All Categories</option>
                 ${mainCats.map(c => `<option value="${c.id}">${c.icon || '📁'} ${c.name}</option>`).join('')}
@@ -101,14 +104,14 @@ export async function initTransactionsUI() {
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Subcategory</label>
+              <label>Subcategory</label>
               <select name="subCategoryId" class="form-select">
                 <option value="">All Subcategories</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Date Range</label>
+              <label>Date Range</label>
               <div class="date-range">
                 <input type="date" name="from" class="form-input" placeholder="From">
                 <span class="date-separator">to</span>
@@ -117,22 +120,21 @@ export async function initTransactionsUI() {
             </div>
           </div>
 
-          <button class="btn-secondary" type="submit">
-            🔍 Apply Filters
-          </button>
+          <button class="btn btn-secondary" type="submit">🔍 Apply Filters</button>
         </form>
       </div>
-    </div>
 
-    <div id="txList" class="transactions-list"></div>
+      <div id="txList" class="section-card"></div>
+    </div>
   `;
 
-  // ... rest of your JavaScript logic remains exactly the same
+  setTimeout(() => mainContent.classList.remove('page-transition'), 400);
+
+  // === Dynamic category linking ===
   const txForm = document.getElementById('txForm');
   const mainSelect = document.getElementById('mainCategory');
   const subSelect = document.getElementById('subCategory');
 
-  // === Update Subcategory Options Dynamically ===
   mainSelect.addEventListener('change', () => {
     const parentId = mainSelect.value;
     const filteredSubs = subCats.filter(s => s.parentId === parentId);
@@ -165,7 +167,7 @@ export async function initTransactionsUI() {
     initTransactionsUI();
   });
 
-  // === Filter form dynamic linking ===
+  // === Filter linking ===
   const filterMain = document.querySelector('#filterForm [name="mainCategoryId"]');
   const filterSub = document.querySelector('#filterForm [name="subCategoryId"]');
 
@@ -215,7 +217,7 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
   };
 
   if (filtered.length === 0) {
-    txList.innerHTML = '<p>No transactions found.</p>';
+    txList.innerHTML = '<p style="text-align:center;color:#666;">No transactions found.</p>';
     return;
   }
 
@@ -228,15 +230,18 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
         ${filtered.map(tx => {
           const cat = getMainSub(tx.categoryId);
           const acc = accounts.find(a => a.id === tx.accountId)?.name || 'Unknown';
+          const typeTag = tx.type === 'income'
+            ? `<span class="tag income">Income</span>`
+            : `<span class="tag expense">Expense</span>`;
           return `
             <tr>
               <td>${tx.date}</td>
-              <td>${tx.type}</td>
+              <td>${typeTag}</td>
               <td>$${tx.amount.toFixed(2)}</td>
               <td>${cat.main}</td>
               <td>${cat.sub || '-'}</td>
               <td>${acc}</td>
-              <td><button class="button red" data-id="${tx.id}">🗑️ Delete</button></td>
+              <td><button class="btn btn-danger" data-id="${tx.id}">🗑️</button></td>
             </tr>
           `;
         }).join('')}
@@ -244,7 +249,7 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
     </table>
   `;
 
-  txList.querySelectorAll('.button.red').forEach(btn => {
+  txList.querySelectorAll('.btn-danger').forEach(btn => {
     btn.addEventListener('click', async () => {
       await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
       initTransactionsUI();
