@@ -102,10 +102,15 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_dining', name: 'Dining & Entertainment', type: 'expense', icon: '🍽️', parentId: null },
 
 // Dining Subcategories
-{ id: 'exp_restaurants', name: 'Restaurants', type: 'expense', icon: '🍕', parentId: 'exp_dining' },
-{ id: 'exp_takeaway', name: 'Takeaway', type: 'expense', icon: '🍔', parentId: 'exp_dining' },
-{ id: 'exp_cafes', name: 'Cafes', type: 'expense', icon: '☕', parentId: 'exp_dining' },
-{ id: 'exp_movies', name: 'Movies & Shows', type: 'expense', icon: '🎬', parentId: 'exp_dining' },
+{ id: 'exp_restaurants', name: 'Indian Restaurants', type: 'expense', icon: '🍚', parentId: 'exp_dining' },
+// Fast Food under Dining
+{ id: 'exp_kfc',   name: 'KFC',          type: 'expense', icon: '🍗', parentId: 'exp_dining' },
+{ id: 'exp_mcd',   name: 'McDonald\'s',  type: 'expense', icon: '🍔', parentId: 'exp_dining' },
+{ id: 'exp_hj',    name: 'Hungry Jack\'s', type: 'expense', icon: '🍔', parentId: 'exp_dining' },
+{ id: 'exp_nandos',name: 'Nando\'s',    type: 'expense', icon: '🍗', parentId: 'exp_dining' },
+{ id: 'exp_dominos', name: 'Domino\'s', type: 'expense', icon: '🍕', parentId: 'exp_dining' },
+{ id: 'exp_pizzahut', name: 'Pizza Hut', type: 'expense', icon: '🍕', parentId: 'exp_dining' },
+
 
 // Travel Main
 { id: 'exp_travel', name: 'Travel', type: 'expense', icon: '✈️', parentId: null },
