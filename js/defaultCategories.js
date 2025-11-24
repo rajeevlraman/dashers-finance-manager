@@ -89,6 +89,116 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_pharmacy', name: 'Pharmacy / Medicine', type: 'expense', icon: '💊', parentId: 'exp_health' },
 { id: 'exp_health_insurance', name: 'Health Insurance', type: 'expense', icon: '🛡️', parentId: 'exp_health' },
 
+// Education Main
+{ id: 'exp_education', name: 'Education', type: 'expense', icon: '📚', parentId: null },
+
+// Education Subcategories
+{ id: 'exp_school_fees', name: 'School Fees', type: 'expense', icon: '🏫', parentId: 'exp_education' },
+{ id: 'exp_uni_fees', name: 'University / TAFE', type: 'expense', icon: '🎓', parentId: 'exp_education' },
+{ id: 'exp_books', name: 'Books & Stationery', type: 'expense', icon: '📘', parentId: 'exp_education' },
+{ id: 'exp_courses', name: 'Courses & Certifications', type: 'expense', icon: '📝', parentId: 'exp_education' },
+
+// Dining Main
+{ id: 'exp_dining', name: 'Dining & Entertainment', type: 'expense', icon: '🍽️', parentId: null },
+
+// Dining Subcategories
+{ id: 'exp_restaurants', name: 'Restaurants', type: 'expense', icon: '🍕', parentId: 'exp_dining' },
+{ id: 'exp_takeaway', name: 'Takeaway', type: 'expense', icon: '🍔', parentId: 'exp_dining' },
+{ id: 'exp_cafes', name: 'Cafes', type: 'expense', icon: '☕', parentId: 'exp_dining' },
+{ id: 'exp_movies', name: 'Movies & Shows', type: 'expense', icon: '🎬', parentId: 'exp_dining' },
+
+// Travel Main
+{ id: 'exp_travel', name: 'Travel', type: 'expense', icon: '✈️', parentId: null },
+
+// Travel Subcategories
+{ id: 'exp_flights', name: 'Flights', type: 'expense', icon: '🛫', parentId: 'exp_travel' },
+{ id: 'exp_hotel', name: 'Accommodation', type: 'expense', icon: '🏨', parentId: 'exp_travel' },
+{ id: 'exp_car_rental', name: 'Car Rental', type: 'expense', icon: '🚘', parentId: 'exp_travel' },
+{ id: 'exp_travel_food', name: 'Travel Food', type: 'expense', icon: '🍱', parentId: 'exp_travel' },
+{ id: 'exp_tours', name: 'Tours & Activities', type: 'expense', icon: '🗺️', parentId: 'exp_travel' },
+
+// Personal Main
+{ id: 'exp_personal', name: 'Personal & Lifestyle', type: 'expense', icon: '🧍', parentId: null },
+
+// Personal Subcategories
+{ id: 'exp_clothing', name: 'Clothing', type: 'expense', icon: '👕', parentId: 'exp_personal' },
+{ id: 'exp_grooming', name: 'Grooming / Salon', type: 'expense', icon: '💇', parentId: 'exp_personal' },
+{ id: 'exp_gifts', name: 'Gifts', type: 'expense', icon: '🎁', parentId: 'exp_personal' },
+{ id: 'exp_fitness', name: 'Fitness / Gym', type: 'expense', icon: '🏋️', parentId: 'exp_personal' },
+
+// Subscriptions Main
+{ id: 'exp_subs', name: 'Subscriptions', type: 'expense', icon: '📺', parentId: null },
+
+// Subscriptions Subcategories
+{ id: 'exp_netflix', name: 'Streaming (Netflix, etc.)', type: 'expense', icon: '🎥', parentId: 'exp_subs' },
+{ id: 'exp_music', name: 'Music (Spotify, etc.)', type: 'expense', icon: '🎵', parentId: 'exp_subs' },
+{ id: 'exp_cloud', name: 'Cloud Storage', type: 'expense', icon: '☁️', parentId: 'exp_subs' },
+{ id: 'exp_software', name: 'Apps & Software', type: 'expense', icon: '📱', parentId: 'exp_subs' },
+
+// Insurance Main
+{ id: 'exp_insurance', name: 'Insurance', type: 'expense', icon: '🛡️', parentId: null },
+
+// Insurance Subcategories
+{ id: 'exp_home_ins', name: 'Home Insurance', type: 'expense', icon: '🏠', parentId: 'exp_insurance' },
+{ id: 'exp_car_ins', name: 'Car Insurance', type: 'expense', icon: '🚗💼', parentId: 'exp_insurance' },
+{ id: 'exp_health_ins', name: 'Health Insurance', type: 'expense', icon: '⚕️', parentId: 'exp_insurance' },
+{ id: 'exp_life_ins', name: 'Life Insurance', type: 'expense', icon: '❤️', parentId: 'exp_insurance' },
+
+// Kids Main
+{ id: 'exp_kids', name: 'Kids & Family', type: 'expense', icon: '🧸', parentId: null },
+
+// Kids Subcategories
+{ id: 'exp_childcare', name: 'Childcare', type: 'expense', icon: '🍼', parentId: 'exp_kids' },
+{ id: 'exp_school_items', name: 'School Items', type: 'expense', icon: '🎒', parentId: 'exp_kids' },
+{ id: 'exp_kids_activities', name: 'Kids Activities', type: 'expense', icon: '🤸', parentId: 'exp_kids' },
+
+// Pets Main
+{ id: 'exp_pets', name: 'Pets', type: 'expense', icon: '🐶', parentId: null },
+
+// Pets Subcategories
+{ id: 'exp_pet_food', name: 'Pet Food', type: 'expense', icon: '🥫', parentId: 'exp_pets' },
+{ id: 'exp_vet', name: 'Vet Bills', type: 'expense', icon: '⚕️', parentId: 'exp_pets' },
+{ id: 'exp_pet_supplies', name: 'Pet Supplies', type: 'expense', icon: '🦴', parentId: 'exp_pets' },
+
+// Tech Main
+{ id: 'exp_tech', name: 'Tech & Home Office', type: 'expense', icon: '💻', parentId: null },
+
+// Tech Subcategories
+{ id: 'exp_devices', name: 'Devices (Laptop/Phone)', type: 'expense', icon: '📱', parentId: 'exp_tech' },
+{ id: 'exp_pc_parts', name: 'PC Parts / Accessories', type: 'expense', icon: '🖱️', parentId: 'exp_tech' },
+{ id: 'exp_home_office', name: 'Home Office Gear', type: 'expense', icon: '🪑', parentId: 'exp_tech' },
+
+// Fees Main
+{ id: 'exp_fees', name: 'Fees & Charges', type: 'expense', icon: '💳', parentId: null },
+
+// Fees Subcategories
+{ id: 'exp_bank_fees', name: 'Bank Fees', type: 'expense', icon: '🏦', parentId: 'exp_fees' },
+{ id: 'exp_late_fees', name: 'Late Fees', type: 'expense', icon: '⏰', parentId: 'exp_fees' },
+{ id: 'exp_service_fees', name: 'Service Charges', type: 'expense', icon: '🧾', parentId: 'exp_fees' },
+
+// Misc Main
+{ id: 'exp_misc', name: 'Miscellaneous', type: 'expense', icon: '🧩', parentId: null },
+
+// Misc Subcategories
+{ id: 'exp_misc_items', name: 'Misc Items', type: 'expense', icon: '📦', parentId: 'exp_misc' },
+{ id: 'exp_emergency', name: 'Emergency Spend', type: 'expense', icon: '🚨', parentId: 'exp_misc' },
+
+// Savings Main
+{ id: 'sav_main', name: 'Savings & Investments', type: 'savings', icon: '📈', parentId: null },
+
+// Savings Subcategories
+{ id: 'sav_emergency', name: 'Emergency Fund', type: 'savings', icon: '🚑', parentId: 'sav_main' },
+{ id: 'sav_high_interest', name: 'High Interest Savings', type: 'savings', icon: '🏦', parentId: 'sav_main' },
+{ id: 'sav_invest', name: 'Investments (Shares/ETF)', type: 'savings', icon: '📊', parentId: 'sav_main' },
+
+// Debt Main
+{ id: 'debt_main', name: 'Debt Repayments', type: 'debt', icon: '💸', parentId: null },
+
+// Debt Subcategories
+{ id: 'debt_home_loan', name: 'Home Loan', type: 'debt', icon: '🏠', parentId: 'debt_main' },
+{ id: 'debt_car_loan', name: 'Car Loan', type: 'debt', icon: '🚗', parentId: 'debt_main' },
+{ id: 'debt_personal', name: 'Personal Loan', type: 'debt', icon: '💵', parentId: 'debt_main' },
+{ id: 'debt_credit_card', name: 'Credit Card', type: 'debt', icon: '💳', parentId: 'debt_main' }
 
 
 ];
