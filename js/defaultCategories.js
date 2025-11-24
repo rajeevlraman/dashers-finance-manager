@@ -35,6 +35,7 @@ export const DEFAULT_CATEGORIES = [
 
 // Income Subcategories
 { id: 'inc_salary', name: 'Salary / Wages', type: 'income', icon: '🧾', parentId: 'inc_main' },
+{ id: 'inc_Spouse_salary', name: 'Spouse_Salary / Wages', type: 'income', icon: '🧾', parentId: 'inc_main' },
 { id: 'inc_business', name: 'Business Income', type: 'income', icon: '🏢', parentId: 'inc_main' },
 { id: 'inc_invest', name: 'Investment Income', type: 'income', icon: '📈', parentId: 'inc_main' },
 { id: 'inc_rent', name: 'Rental Income', type: 'income', icon: '🏘️', parentId: 'inc_main' },
@@ -45,11 +46,14 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_housing', name: 'Housing & Living', type: 'expense', icon: '🏡', parentId: null },
 
 // Housing Subcategories
-{ id: 'exp_mortgage', name: 'Mortgage', type: 'expense', icon: '💸', parentId: 'exp_housing' },
+{ id: 'exp_Home_mortgage', name: 'Home_Mortgage', type: 'expense', icon: '💸', parentId: 'exp_housing' },
+{ id: 'exp_Inv_mortgage', name: 'Inv_Mortgage', type: 'expense', icon: '💸', parentId: 'exp_housing' },
+{ id: 'exp_Home_Equity_mortgage', name: 'Home_Equity_Mortgage', type: 'expense', icon: '💸', parentId: 'exp_housing' },
 { id: 'exp_rent_payment', name: 'Rent Payment', type: 'expense', icon: '💰', parentId: 'exp_housing' },
 { id: 'exp_council_rates', name: 'Council Rates', type: 'expense', icon: '📄', parentId: 'exp_housing' },
-{ id: 'exp_water_rates', name: 'Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_housing' },
-{ id: 'exp_body_corp', name: 'Body Corporate', type: 'expense', icon: '🏢', parentId: 'exp_housing' },
+{ id: 'exp_Inv_council_rates', name: 'Inv Council Rates', type: 'expense', icon: '📄', parentId: 'exp_housing' },
+{ id: 'exp_Inv_water_rates', name: 'Inv Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_housing' },
+{ id: 'exp_Land_Tax', name: 'Land Tax', type: 'expense', icon: '🏢', parentId: 'exp_housing' },
 { id: 'exp_repairs', name: 'Repairs & Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_housing' },
   
 // Utilities Main
@@ -69,25 +73,28 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_grocery_supermarket', name: 'Supermarket', type: 'expense', icon: '🛍️', parentId: 'exp_groceries' },
 { id: 'exp_grocery_fresh', name: 'Fruits & Vegetables', type: 'expense', icon: '🥬', parentId: 'exp_groceries' },
 { id: 'exp_grocery_meat', name: 'Meat & Seafood', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
-{ id: 'exp_household_supplies', name: 'Household Supplies', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
+{ id: 'exp_Indian_Groceries', name: 'Indian Groceroies', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 
 // Transport Main
 { id: 'exp_transport', name: 'Transport', type: 'expense', icon: '🚗', parentId: null },
 
 // Transport Subcategories
 { id: 'exp_fuel', name: 'Fuel / Petrol', type: 'expense', icon: '⛽', parentId: 'exp_transport' },
+{ id: 'exp_Car2_fuel', name: '2nd Car Fuel / Petrol', type: 'expense', icon: '⛽', parentId: 'exp_transport' },
 { id: 'exp_ev_charge', name: 'EV Charging', type: 'expense', icon: '🔌', parentId: 'exp_transport' },
 { id: 'exp_car_service', name: 'Car Service', type: 'expense', icon: '🛠️', parentId: 'exp_transport' },
-{ id: 'exp_car_insurance', name: 'Car Insurance', type: 'expense', icon: '🚗💼', parentId: 'exp_transport' },
+{ id: 'exp_car2_service', name: '2nd Car Service', type: 'expense', icon: '🛠️', parentId: 'exp_transport' },
 { id: 'exp_rego', name: 'Registration', type: 'expense', icon: '📄', parentId: 'exp_transport' },
+{ id: 'exp_car2_rego', name: '2nd car Registration', type: 'expense', icon: '📄', parentId: 'exp_transport' },
 { id: 'exp_public_transport', name: 'Public Transport', type: 'expense', icon: '🚆', parentId: 'exp_transport' },
+{ id: 'exp_Parking_Fees', name: 'parking Fees', type: 'expense', icon: '🚆', parentId: 'exp_transport' },
 
 { id: 'exp_health', name: 'Health & Medical', type: 'expense', icon: '🩺', parentId: null },
 
 { id: 'exp_gp', name: 'GP Visits', type: 'expense', icon: '👨‍⚕️', parentId: 'exp_health' },
 { id: 'exp_dental', name: 'Dental', type: 'expense', icon: '🦷', parentId: 'exp_health' },
 { id: 'exp_pharmacy', name: 'Pharmacy / Medicine', type: 'expense', icon: '💊', parentId: 'exp_health' },
-{ id: 'exp_health_insurance', name: 'Health Insurance', type: 'expense', icon: '🛡️', parentId: 'exp_health' },
+{ id: 'exp_Ambulance_Cover', name: 'Anbulance cover', type: 'expense', icon: '🛡️', parentId: 'exp_health' },
 
 // Education Main
 { id: 'exp_education', name: 'Education', type: 'expense', icon: '📚', parentId: null },
@@ -99,7 +106,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_courses', name: 'Courses & Certifications', type: 'expense', icon: '📝', parentId: 'exp_education' },
 
 // Dining Main
-{ id: 'exp_dining', name: 'Dining & Entertainment', type: 'expense', icon: '🍽️', parentId: null },
+{ id: 'exp_dining', name: 'Dining', type: 'expense', icon: '🍽️', parentId: null },
 
 // Dining Subcategories
 { id: 'exp_restaurants', name: 'Indian Restaurants', type: 'expense', icon: '🍚', parentId: 'exp_dining' },
@@ -136,6 +143,8 @@ export const DEFAULT_CATEGORIES = [
 
 // Subscriptions Subcategories
 { id: 'exp_netflix', name: 'Streaming (Netflix, etc.)', type: 'expense', icon: '🎥', parentId: 'exp_subs' },
+{ id: 'exp_disney', name: 'Streaming (disney, etc.)', type: 'expense', icon: '🎥', parentId: 'exp_subs' },
+{ id: 'exp_prime', name: 'Streaming (prime, etc.)', type: 'expense', icon: '🎥', parentId: 'exp_subs' },
 { id: 'exp_music', name: 'Music (Spotify, etc.)', type: 'expense', icon: '🎵', parentId: 'exp_subs' },
 { id: 'exp_cloud', name: 'Cloud Storage', type: 'expense', icon: '☁️', parentId: 'exp_subs' },
 { id: 'exp_software', name: 'Apps & Software', type: 'expense', icon: '📱', parentId: 'exp_subs' },
@@ -145,7 +154,10 @@ export const DEFAULT_CATEGORIES = [
 
 // Insurance Subcategories
 { id: 'exp_home_ins', name: 'Home Insurance', type: 'expense', icon: '🏠', parentId: 'exp_insurance' },
+{ id: 'exp_home_contents_ins', name: 'Home & Contents Insurance', type: 'expense', icon: '🏠', parentId: 'exp_insurance' },
+{ id: 'exp_Landlord_ins', name: 'Landlord Insurance', type: 'expense', icon: '🏠', parentId: 'exp_insurance' },
 { id: 'exp_car_ins', name: 'Car Insurance', type: 'expense', icon: '🚗💼', parentId: 'exp_insurance' },
+{ id: 'exp_car2_ins', name: '2nd Car Insurance', type: 'expense', icon: '🚗💼', parentId: 'exp_insurance' },
 { id: 'exp_health_ins', name: 'Health Insurance', type: 'expense', icon: '⚕️', parentId: 'exp_insurance' },
 { id: 'exp_life_ins', name: 'Life Insurance', type: 'expense', icon: '❤️', parentId: 'exp_insurance' },
 
