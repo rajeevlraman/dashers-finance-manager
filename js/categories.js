@@ -94,12 +94,17 @@ export async function initCategoriesUI() {
           
           ${children.length > 0 ? `
             <div class="subcategories-list compact">
-              ${children.map(sub => `
-                <div class="subcategory-item compact">
-                  <span class="sub-icon">${sub.icon || guessCategoryIcon(sub.name)}</span>
-                  <span class="sub-name">${sub.name}</span>
+            ${children.map(sub => `
+              <div class="subcategory-item compact" data-id="${sub.id}">
+                <span class="sub-icon">${sub.icon || guessCategoryIcon(sub.name)}</span>
+                <span class="sub-name">${sub.name}</span>
+                <div class="subcategory-actions">
+                  <button class="action-btn edit-btn" data-id="${sub.id}" data-action="edit" title="Edit">✏️</button>
+                  <button class="action-btn delete-btn" data-id="${sub.id}" data-action="delete" title="Delete">🗑️</button>
                 </div>
-              `).join('')}
+              </div>
+            `).join('')}
+
             </div>
           ` : ''}
         </div>
