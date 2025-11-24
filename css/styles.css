@@ -680,15 +680,13 @@ nav .label {
   gap: 0.3rem;
 }
 
+/* Make subcategory row a proper flex row */
 .subcategory-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.5rem;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #eee;
-  font-size: 0.85em;
+  justify-content: space-between;   /* Push actions to the right */
+  padding: 4px 6px;
+  gap: 8px;
 }
 
 .sub-icon {
