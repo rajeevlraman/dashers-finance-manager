@@ -2941,3 +2941,29 @@ body, main {
   background: #008080;
   color: white;
 }
+/* Make category and subcategory text visible in dark mode */
+.category-name,
+.sub-name {
+  color: #e8fefe;     /* soft teal-white for readability */
+}
+
+/* Also fix header icon color */
+.category-icon,
+.sub-icon {
+  color: #e8fefe;
+}
+
+/* Section titles (INCOME / EXPENSE) for tree layout */
+.section-title {
+  color: #00b3b3;     /* bright teal heading */
+}
+
+/* Buttons inside category cards */
+.category-actions .action-btn {
+  color: #e8fefe;
+}
+
+/* Arrow color */
+.tree-arrow {
+  color: #e8fefe;
+}
