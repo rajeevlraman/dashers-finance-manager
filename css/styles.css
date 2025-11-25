@@ -2632,3 +2632,16 @@ body, main {
     --btn-padding: 0.85rem 1.3rem;
   }
 }
+
+.subcategory-toggle {
+  margin: 6px 0;
+  padding: 4px 8px;
+  background: #f3f3f3;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.subcategory-toggle:hover {
+  background: #e8e8e8;
+}

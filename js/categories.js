@@ -92,46 +92,75 @@ export async function initCategoriesUI() {
             </div>
           </div>
           
-          ${children.length > 0 ? `
-            <div class="subcategories-list compact">
-            ${children.map(sub => `
-              <div class="subcategory-item compact" data-id="${sub.id}">
-                <span class="sub-icon">${sub.icon || guessCategoryIcon(sub.name)}</span>
-                <span class="sub-name">${sub.name}</span>
-                <div class="subcategory-actions">
-                  <button class="action-btn edit-btn" data-id="${sub.id}" data-action="edit" title="Edit">✏️</button>
-                  <button class="action-btn delete-btn" data-id="${sub.id}" data-action="delete" title="Delete">🗑️</button>
-                </div>
+    ${children.length > 0 ? `
+      <div class="subcategory-toggle" data-id="${category.id}">
+          ▼ Subcategories (${children.length})
+      </div>
+      <div class="subcategories-list compact" style="display:none;" id="sub-${category.id}">
+          ${children.map(sub => `
+            <div class="subcategory-item compact" data-id="${sub.id}">
+              <span class="sub-icon">${sub.icon || guessCategoryIcon(sub.name)}</span>
+              <span class="sub-name">${sub.name}</span>
+              <div class="subcategory-actions">
+                <button class="action-btn edit-btn" data-id="${sub.id}" data-action="edit" title="Edit">✏️</button>
+                <button class="action-btn delete-btn" data-id="${sub.id}" data-action="delete" title="Delete">🗑️</button>
               </div>
-            `).join('')}
-
             </div>
-          ` : ''}
+          `).join('')}
+      </div>
+    ` : ''}
+
         </div>
       `;
     }
 
-    function attachCategoryEventListeners() {
-      catList.querySelectorAll('.action-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        const action = btn.dataset.action;
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          if (action === 'edit') {
-            openCatEditor(id);
-          } else if (action === 'delete') {
-            if (confirm('Delete this category and its subcategories?')) {
-              await deleteItem(STORE_NAMES.categories, id);
-              const subs = subCats.filter(s => s.parentId === id);
-              for (const sub of subs) await deleteItem(STORE_NAMES.categories, sub.id);
-              initCategoriesUI();
-            }
-          } else if (action === 'addSub') {
-            openCatEditor(null, id);
-          }
-        });
-      });
-    }
+function attachCategoryEventListeners() {
+  // Handle main + subcategory action buttons
+  catList.querySelectorAll('.action-btn').forEach(btn => {
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+
+      if (action === 'edit') {
+        openCatEditor(id);
+
+      } else if (action === 'delete') {
+        if (confirm('Delete this category and its subcategories?')) {
+          await deleteItem(STORE_NAMES.categories, id);
+
+          // Delete its subcategories
+          const subs = subCats.filter(s => s.parentId === id);
+          for (const sub of subs) await deleteItem(STORE_NAMES.categories, sub.id);
+
+          initCategoriesUI();
+        }
+
+      } else if (action === 'addSub') {
+        openCatEditor(null, id);
+      }
+    });
+  });
+
+  // Handle subcategory dropdown toggle
+  catList.querySelectorAll('.subcategory-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const id = toggle.dataset.id;
+      const subList = document.getElementById(`sub-${id}`);
+
+      if (!subList) return;
+
+      const isHidden = subList.style.display === 'none';
+
+      subList.style.display = isHidden ? 'block' : 'none';
+      toggle.textContent = isHidden
+        ? `▲ Subcategories`
+        : `▼ Subcategories`;
+    });
+  });
+}
+
   } // <-- This was missing
 
   // ========== RESET TO DEFAULTS ==========
