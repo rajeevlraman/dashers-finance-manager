@@ -99,9 +99,7 @@ function renderCategoryCard(category) {
 
 
       ${children.length > 0 ? `
-        <div class="subcategory-toggle" data-id="${category.id}">
-          ▼ Subcategories (${children.length})
-        </div>
+
 
         <div class="subcategories-list compact" id="sub-${category.id}" style="display:none;">
           ${children.map(sub => `
