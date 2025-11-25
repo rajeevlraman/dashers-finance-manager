@@ -128,32 +128,39 @@ export async function initBudgetsUI() {
 
             const budgetCard = document.createElement('div');
             budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''}`;
-budgetCard.innerHTML = `
-    <div class="budget-row-1">
-        <div class="left">
-            <span class="budget-icon">${icon}</span>
-            <span class="budget-name">${cat?.name || 'Unknown'}</span>
-            <span class="budget-values">
-                $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} ${budget.frequency}
-                · ${percent.toFixed(0)}%
-            </span>
-        </div>
-        <div class="right">
-            <button class="budget-btn edit-btn" data-id="${budget.id}">✏️</button>
-            <button class="budget-btn delete-btn" data-id="${budget.id}">🗑️</button>
-        </div>
-    </div>
+        budgetCard.innerHTML = `
+            <div class="budget-card-row1">
+                <div class="budget-left">
+                    <span class="category-icon">${icon}</span>
+                    <span class="category-name">${cat?.name || 'Unknown'}</span>
 
-    <div class="budget-row-2">
-        <div class="progress-bar-container">
-            <div class="progress-bar" style="width:${percent}%"></div>
-        </div>
-        <div class="progress-status">
-            $${remaining.toFixed(2)} remaining — 
-            ${isOverBudget ? '<span class="over">⚠️ Over Budget</span>' : '<span class="under">On Track</span>'}
-        </div>
-    </div>
-`;
+                    <span class="budget-values">
+                        $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} ${budget.frequency}
+                        · ${percent.toFixed(0)}%
+                    </span>
+                </div>
+
+                <div class="budget-actions">
+                    <button class="action-btn edit-btn" data-id="${budget.id}" title="Edit">✏️</button>
+                    <button class="action-btn delete-btn" data-id="${budget.id}" title="Delete">🗑️</button>
+                </div>
+            </div>
+
+            <div class="budget-card-row2">
+                <div class="sub-progress-bar-container">
+                    <div class="sub-progress-bar" style="width:${percent}%"></div>
+                </div>
+
+                <div class="budget-status">
+                    $${remaining.toFixed(2)} remaining — 
+                    ${isOverBudget 
+                        ? '<span class="status-over">⚠️ Over</span>' 
+                        : '<span class="status-good">On Track</span>'
+                    }
+                </div>
+            </div>
+        `;
+
 
 
             budgetCard.querySelector('.delete-btn').addEventListener('click', async () => {
