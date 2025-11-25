@@ -2645,3 +2645,8 @@ body, main {
 .subcategory-toggle:hover {
   background: #e8e8e8;
 }
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
