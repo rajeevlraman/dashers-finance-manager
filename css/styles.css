@@ -3003,6 +3003,7 @@ body, main {
 
 .budget-values {
     opacity: 0.85;
+    
 }
 
 .budget-row-1 .right button {
@@ -3028,7 +3029,7 @@ body, main {
 
 .progress-bar {
     height: 100%;
-    background: var(--accent-teal, #00d4d4);
+    background: var(--accent-teal, #000b0b);
 }
 
 .progress-status {
