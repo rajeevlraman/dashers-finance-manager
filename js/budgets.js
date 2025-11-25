@@ -128,38 +128,33 @@ export async function initBudgetsUI() {
 
             const budgetCard = document.createElement('div');
             budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''}`;
-            budgetCard.innerHTML = `
-                <div class="budget-main">
-                    <div class="budget-icon">${icon}</div>
-                    <div class="budget-details">
-                        <div class="budget-name">${cat?.name || 'Unknown'}</div>
-                        <div class="budget-meta">
-                            <span class="frequency">${budget.frequency} budget</span>
-                            <span class="view-mode">Viewing: ${viewMode}</span>
-                        </div>
-                        <div class="budget-progress">
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width:${percent}%"></div>
-                            </div>
-                            <div class="progress-info">
-                                <span class="spent">$${normalizedSpent.toFixed(2)}</span>
-                                <span class="goal"> / $${normalizedGoal.toFixed(2)}</span>
-                                <span class="percent">(${percent.toFixed(0)}%)</span>
-                            </div>
-                        </div>
-                        <div class="budget-stats">
-                            <span class="remaining">💰 $${remaining.toFixed(2)} remaining</span>
-                            <span class="status ${isOverBudget ? 'over' : 'under'}">
-                                ${isOverBudget ? '⚠️ Over Budget' : '✅ On Track'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="budget-actions">
-                    <button class="budget-btn edit-btn" data-id="${budget.id}">✏️</button>
-                    <button class="budget-btn delete-btn" data-id="${budget.id}">🗑️</button>
-                </div>
-            `;
+budgetCard.innerHTML = `
+    <div class="budget-row-1">
+        <div class="left">
+            <span class="budget-icon">${icon}</span>
+            <span class="budget-name">${cat?.name || 'Unknown'}</span>
+            <span class="budget-values">
+                $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} ${budget.frequency}
+                · ${percent.toFixed(0)}%
+            </span>
+        </div>
+        <div class="right">
+            <button class="budget-btn edit-btn" data-id="${budget.id}">✏️</button>
+            <button class="budget-btn delete-btn" data-id="${budget.id}">🗑️</button>
+        </div>
+    </div>
+
+    <div class="budget-row-2">
+        <div class="progress-bar-container">
+            <div class="progress-bar" style="width:${percent}%"></div>
+        </div>
+        <div class="progress-status">
+            $${remaining.toFixed(2)} remaining — 
+            ${isOverBudget ? '<span class="over">⚠️ Over Budget</span>' : '<span class="under">On Track</span>'}
+        </div>
+    </div>
+`;
+
 
             budgetCard.querySelector('.delete-btn').addEventListener('click', async () => {
                 if (confirm(`Delete budget for "${cat?.name}"?`)) {

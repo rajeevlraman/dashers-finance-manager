@@ -2967,3 +2967,79 @@ body, main {
 .tree-arrow {
   color: #e8fefe;
 }
+
+
+/*budget card two lines*/
+
+.budget-card {
+    background: var(--card-bg, #1b1b1b);
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    color: #e8fefe;
+}
+
+.budget-row-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.budget-row-1 .left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.budget-icon {
+    font-size: 1.4em;
+}
+
+.budget-name {
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.budget-values {
+    opacity: 0.85;
+}
+
+.budget-row-1 .right button {
+    margin-left: 6px;
+    font-size: 1.1em;
+}
+
+.budget-row-2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    gap: 10px;
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 6px;
+    border-radius: 4px;
+    background: #555;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--accent-teal, #00d4d4);
+}
+
+.progress-status {
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.progress-status .over {
+    color: #ff7373;
+}
+
+.progress-status .under {
+    color: #00ffbf;
+}
