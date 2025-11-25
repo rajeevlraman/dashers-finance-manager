@@ -82,15 +82,21 @@ function renderCategoryCard(category) {
 
   return `
     <div class="category-card compact" data-id="${category.id}">
-      <div class="category-header compact">
-        <div class="category-icon compact">${category.icon || guessCategoryIcon(category.name)}</div>
-        <div class="category-name compact">${category.name}</div>
-        <div class="category-actions">
-          <button class="action-btn edit-btn" data-id="${category.id}" data-action="edit">✏️</button>
-          <button class="action-btn add-btn" data-id="${category.id}" data-action="addSub">➕</button>
-          <button class="action-btn delete-btn" data-id="${category.id}" data-action="delete">🗑️</button>
-        </div>
-      </div>
+<div class="category-header compact">
+  <span class="tree-arrow ${children.length ? 'closed' : 'empty'}" 
+        data-id="${category.id}">
+  </span>
+
+  <div class="category-icon compact">${category.icon || guessCategoryIcon(category.name)}</div>
+  <div class="category-name compact">${category.name}</div>
+
+  <div class="category-actions">
+    <button class="action-btn edit-btn" data-id="${category.id}" data-action="edit">✏️</button>
+    <button class="action-btn add-btn" data-id="${category.id}" data-action="addSub">➕</button>
+    <button class="action-btn delete-btn" data-id="${category.id}" data-action="delete">🗑️</button>
+  </div>
+</div>
+
 
       ${children.length > 0 ? `
         <div class="subcategory-toggle" data-id="${category.id}">
@@ -144,34 +150,33 @@ function attachCategoryEventListeners() {
     });
   });
 
-// Handle subcategory dropdown toggle (ACCORDION MODE)
-catList.querySelectorAll('.subcategory-toggle').forEach(toggle => {
-  toggle.addEventListener('click', () => {
-    const id = toggle.dataset.id;
-    const currentSubList = document.getElementById(`sub-${id}`);
+// TREE COLLAPSE / EXPAND
+catList.querySelectorAll('.tree-arrow').forEach(arrow => {
+  arrow.addEventListener('click', () => {
+    const id = arrow.dataset.id;
+    const list = document.getElementById(`sub-${id}`);
+    if (!list) return;
 
-    if (!currentSubList) return;
+    const isOpen = arrow.classList.contains('open');
 
-    // 1. Close all others
-    catList.querySelectorAll('.subcategories-list').forEach(list => {
-      if (list.id !== `sub-${id}`) {
-        list.style.display = 'none';
-      }
-    });
+    // Close all nodes
+    catList.querySelectorAll('.subcategories-list').forEach(el => el.style.display = 'none');
+    catList.querySelectorAll('.tree-arrow').forEach(a => a.classList.remove('open'));
+    catList.querySelectorAll('.tree-arrow').forEach(a => a.classList.add('closed'));
 
-    // 2. Reset all toggles to closed
-    catList.querySelectorAll('.subcategory-toggle').forEach(t => {
-      if (t.dataset.id !== id) {
-        t.textContent = '▼ Subcategories';
-      }
-    });
-
-    // 3. Toggle only the clicked one
-    const isHidden = currentSubList.style.display === 'none';
-    currentSubList.style.display = isHidden ? 'block' : 'none';
-    toggle.textContent = isHidden ? '▲ Subcategories' : '▼ Subcategories';
+    // Toggle current node
+    if (!isOpen) {
+      list.style.display = 'block';
+      arrow.classList.remove('closed');
+      arrow.classList.add('open');
+    } else {
+      list.style.display = 'none';
+      arrow.classList.remove('open');
+      arrow.classList.add('closed');
+    }
   });
 });
+
 
 
 }

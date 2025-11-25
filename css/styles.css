@@ -2837,3 +2837,107 @@ body, main {
 .categories-actions button {
   margin-left: 6px;
 }
+
+/* colapsible categories style */
+/* ---------------------------------------------------
+   CATEGORY TREE VIEW (Collapsible)
+--------------------------------------------------- */
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Tree Node – Main Category */
+.category-card.compact {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 10px 14px 6px;
+  border: 1px solid #2a2a2a;
+  transition: 0.2s ease;
+  position: relative;
+}
+
+.category-card.compact:hover {
+  border-color: #008080;
+  box-shadow: 0 0 8px #00808060;
+}
+
+/* Expand/Collapse Arrow */
+.tree-arrow {
+  font-size: 1rem;
+  margin-right: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: 0.2s ease;
+}
+
+.tree-arrow.closed::before {
+  content: "▶";
+}
+
+.tree-arrow.open::before {
+  content: "▼";
+}
+
+/* Header aligns icon → title → actions */
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Indent children with a line */
+.subcategories-list {
+  margin-left: 26px;
+  border-left: 2px solid #006b6b;
+  padding-left: 12px;
+  margin-top: 6px;
+  display: none; /* JS will open it */
+}
+
+/* Subcategory node */
+.subcategory-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #181818;
+  padding: 7px 10px;
+  margin: 6px 0;
+  border-radius: 6px;
+  border: 1px solid #2a2a2a;
+  transition: 0.2s ease;
+}
+
+.subcategory-item:hover {
+  border-color: #008080;
+}
+
+/* Icons */
+.category-icon,
+.sub-icon {
+  font-size: 1.2rem;
+  margin-right: 8px;
+}
+
+/* Name */
+.category-name,
+.sub-name {
+  flex: 1;
+  font-size: 1.05rem;
+}
+
+.action-btn {
+  background: #2d2d2d;
+  border: none;
+  padding: 4px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #008080;
+  color: white;
+}
