@@ -3039,7 +3039,7 @@ body, main {
     flex: 1;
     height: 6px;
     border-radius: 4px;
-    background: #233036; /* same as category sub-header background */
+    background: #f7f9f9; /* same as category sub-header background */
     overflow: hidden;
 }
 
