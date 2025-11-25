@@ -77,42 +77,43 @@ export async function initCategoriesUI() {
     // Add event listeners
     attachCategoryEventListeners();
     
-    function renderCategoryCard(category) {
-      const children = subCats.filter(s => s.parentId === category.id);
-      
-      return `
-        <div class="category-card compact" data-id="${category.id}">
-          <div class="category-header compact">
-            <div class="category-icon compact">${category.icon || guessCategoryIcon(category.name)}</div>
-            <div class="category-name compact">${category.name}</div>
-            <div class="category-actions">
-              <button class="action-btn edit-btn" data-id="${category.id}" data-action="edit" title="Edit">✏️</button>
-              <button class="action-btn add-btn" data-id="${category.id}" data-action="addSub" title="Add Subcategory">➕</button>
-              <button class="action-btn delete-btn" data-id="${category.id}" data-action="delete" title="Delete">🗑️</button>
-            </div>
-          </div>
-          
-    ${children.length > 0 ? `
-      <div class="subcategory-toggle" data-id="${category.id}">
-          ▼ Subcategories (${children.length})
+function renderCategoryCard(category) {
+  const children = subCats.filter(s => s.parentId === category.id);
+
+  return `
+    <div class="category-card compact" data-id="${category.id}">
+      <div class="category-header compact">
+        <div class="category-icon compact">${category.icon || guessCategoryIcon(category.name)}</div>
+        <div class="category-name compact">${category.name}</div>
+        <div class="category-actions">
+          <button class="action-btn edit-btn" data-id="${category.id}" data-action="edit">✏️</button>
+          <button class="action-btn add-btn" data-id="${category.id}" data-action="addSub">➕</button>
+          <button class="action-btn delete-btn" data-id="${category.id}" data-action="delete">🗑️</button>
+        </div>
       </div>
-      <div class="subcategories-list compact" style="display:none;" id="sub-${category.id}">
+
+      ${children.length > 0 ? `
+        <div class="subcategory-toggle" data-id="${category.id}">
+          ▼ Subcategories (${children.length})
+        </div>
+
+        <div class="subcategories-list compact" id="sub-${category.id}" style="display:none;">
           ${children.map(sub => `
             <div class="subcategory-item compact" data-id="${sub.id}">
               <span class="sub-icon">${sub.icon || guessCategoryIcon(sub.name)}</span>
               <span class="sub-name">${sub.name}</span>
               <div class="subcategory-actions">
-                <button class="action-btn edit-btn" data-id="${sub.id}" data-action="edit" title="Edit">✏️</button>
-                <button class="action-btn delete-btn" data-id="${sub.id}" data-action="delete" title="Delete">🗑️</button>
+                <button class="action-btn edit-btn" data-id="${sub.id}" data-action="edit">✏️</button>
+                <button class="action-btn delete-btn" data-id="${sub.id}" data-action="delete">🗑️</button>
               </div>
             </div>
           `).join('')}
-      </div>
-    ` : ''}
-
         </div>
-      `;
-    }
+      ` : ''}
+    </div>
+  `;
+}
+
 
 function attachCategoryEventListeners() {
   // Handle main + subcategory action buttons
