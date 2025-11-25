@@ -172,6 +172,7 @@ catList.querySelectorAll('.subcategory-toggle').forEach(toggle => {
   });
 });
 
+
 }
 
   } // <-- This was missing
