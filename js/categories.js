@@ -143,22 +143,35 @@ function attachCategoryEventListeners() {
     });
   });
 
-  // Handle subcategory dropdown toggle
-  catList.querySelectorAll('.subcategory-toggle').forEach(toggle => {
-    toggle.addEventListener('click', () => {
-      const id = toggle.dataset.id;
-      const subList = document.getElementById(`sub-${id}`);
+// Handle subcategory dropdown toggle (ACCORDION MODE)
+catList.querySelectorAll('.subcategory-toggle').forEach(toggle => {
+  toggle.addEventListener('click', () => {
+    const id = toggle.dataset.id;
+    const currentSubList = document.getElementById(`sub-${id}`);
 
-      if (!subList) return;
+    if (!currentSubList) return;
 
-      const isHidden = subList.style.display === 'none';
-
-      subList.style.display = isHidden ? 'block' : 'none';
-      toggle.textContent = isHidden
-        ? `▲ Subcategories`
-        : `▼ Subcategories`;
+    // 1. Close all others
+    catList.querySelectorAll('.subcategories-list').forEach(list => {
+      if (list.id !== `sub-${id}`) {
+        list.style.display = 'none';
+      }
     });
+
+    // 2. Reset all toggles to closed
+    catList.querySelectorAll('.subcategory-toggle').forEach(t => {
+      if (t.dataset.id !== id) {
+        t.textContent = '▼ Subcategories';
+      }
+    });
+
+    // 3. Toggle only the clicked one
+    const isHidden = currentSubList.style.display === 'none';
+    currentSubList.style.display = isHidden ? 'block' : 'none';
+    toggle.textContent = isHidden ? '▲ Subcategories' : '▼ Subcategories';
   });
+});
+
 }
 
   } // <-- This was missing
