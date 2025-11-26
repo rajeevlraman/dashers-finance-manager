@@ -1654,7 +1654,7 @@ table th, table td {
 
 .card-container {
   display: flex;
-  flex-direction: row;  /* Align items vertically */
+  flex-direction: column;  /* Align items vertically */
   gap: 20px;  /* Space between cards */
   align-items: flex-start; /* Align all content to the left */
 }
@@ -1689,4 +1689,23 @@ table th, table td {
   display: flex;
   gap: 10px;
   justify-content: flex-start;
+}
+
+.account-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.account-name {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: left;
+}
+
+.account-balance {
+  font-size: 16px;
+  color: green;
 }
