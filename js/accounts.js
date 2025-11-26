@@ -140,7 +140,6 @@ function refreshAccountList() {
   });
 }
 
-
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
   details.style.display = details.style.display === 'none' ? 'block' : 'none';
@@ -200,7 +199,7 @@ function showAccountForm(acc) {
       <option value="${loan.id}" ${acc.linkedLoanId === loan.id ? 'selected' : ''}>
         ${loan.name}
       </option>
-    `).join('');
+    `).join('');    
 
     main.innerHTML = `
       <div class="page-container">
@@ -315,5 +314,3 @@ function showAccountForm(acc) {
     });
   });
 }
-
-
