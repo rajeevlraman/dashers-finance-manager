@@ -297,6 +297,10 @@ function showAccountForm(acc) {
         newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
       }
 
+      if (newAcc.type === 'offset') {
+        newAcc.linkedLoanId = data.get('linkedLoanId') || '';
+      }
+
       if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
       else await addItem(STORE_NAMES.accounts, newAcc);
 
