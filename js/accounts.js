@@ -89,7 +89,8 @@ function refreshAccountList() {
       return;
     }
 
-    listEl.innerHTML = await Promise.all(accounts.map(async account => {
+    // Use Promise.all to resolve the account and loan data asynchronously
+    const accountsHtml = await Promise.all(accounts.map(async account => {
       const isNegative = account.balance < 0;
       const isCredit = account.type === 'credit';
       const balanceClass = isNegative ? 'negative' : 'positive';
@@ -97,7 +98,7 @@ function refreshAccountList() {
 
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch linked loan info and wait for the loan name
+        // Fetch the loan name and wait for the result
         const loanName = await getLoanName(account.linkedLoanId);
         linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${loanName}</div>`;
       }
@@ -126,7 +127,10 @@ function refreshAccountList() {
           </div>
         </div>
       `;
-    })).join('');
+    }));
+
+    // Set the HTML of the account list with the resolved HTML strings
+    listEl.innerHTML = accountsHtml.join('');
 
     listEl.querySelectorAll('.account-header').forEach(header => {
       header.addEventListener('click', (e) => {
@@ -149,6 +153,7 @@ function refreshAccountList() {
     });
   });
 }
+
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
