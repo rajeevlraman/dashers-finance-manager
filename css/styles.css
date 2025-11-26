@@ -1378,6 +1378,7 @@ main#mainContent {
   justify-content: space-between;
   margin-top: 6px;
   gap: 10px;
+  height: 6px;
 }
 
 .sub-progress-bar-container {
