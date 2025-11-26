@@ -89,16 +89,14 @@ function refreshAccountList() {
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
-      // If the account is a mortgage offset account, display linked loan info
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch linked loan details
         linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`;
       }
 
       return `
         <div class="account-card">
-          <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
+          <div class="account-header" data-id="${account.id}">
             <div class="account-icon">${icon}</div>
             <div class="account-info">
               <h4 class="account-name">${account.name}</h4>
@@ -122,6 +120,7 @@ function refreshAccountList() {
       `;
     }).join('');
 
+    // This handles the click event properly
     listEl.querySelectorAll('.account-header').forEach(header => {
       header.addEventListener('click', (e) => {
         const id = e.target.closest('.account-header').dataset.id;
