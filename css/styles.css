@@ -1631,7 +1631,7 @@ table th, table td {
   margin: 10px 0;
   border-radius: 8px;
   width: 100%;
-  display: flex;
+  display: grid;
   justify-content: space-between;
   align-items: center;
 }
