@@ -1632,13 +1632,13 @@ table th, table td {
   border-radius: 8px;
   width: 100%;
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
 }
 
 .account-header {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
   margin-bottom: 10px;
@@ -1647,7 +1647,7 @@ table th, table td {
 .account-name {
   font-size: 18px;
   font-weight: bold;
-  text-align: left;
+  text-align: center;
 }
 
 .account-balance {
