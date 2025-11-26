@@ -73,82 +73,82 @@ function toggleAccountDetails(accountId) {
   details.style.display = details.style.display === 'none' ? 'block' : 'none';
 }
 
-function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(async accounts => {
-    const listEl = document.getElementById('accList');
+async function refreshAccountList() {
+  const accounts = await getAllItems(STORE_NAMES.accounts);
+  const listEl = document.getElementById('accList');
 
-    if (!accounts.length) {
-      listEl.innerHTML = `
-        <div class="empty-state">
-          <p>No accounts yet.</p>
-          <button class="btn btn-primary" id="btnAddDefaultsEmpty">📦 Add Default Accounts</button>
-        </div>
-      `;
-      document.getElementById('btnAddDefaultsEmpty').addEventListener('click', addDefaultAccounts);
-      return;
+  if (!accounts.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <p>No accounts yet.</p>
+        <button class="btn btn-primary" id="btnAddDefaultsEmpty">📦 Add Default Accounts</button>
+      </div>
+    `;
+    document.getElementById('btnAddDefaultsEmpty').addEventListener('click', addDefaultAccounts);
+    return;
+  }
+
+  // Use Promise.all to resolve the account and loan data asynchronously
+  const accountsHtml = await Promise.all(accounts.map(async account => {
+    const isNegative = account.balance < 0;
+    const isCredit = account.type === 'credit';
+    const balanceClass = isNegative ? 'negative' : 'positive';
+    const icon = getAccountIcon(account.type);
+
+    let linkedLoanInfo = '';
+    if (account.type === 'offset' && account.linkedLoanId) {
+      // Fetch the loan name and wait for the result
+      const loanName = await getLoanName(account.linkedLoanId);
+      linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${loanName}</div>`;
     }
 
-    // Use Promise.all to resolve the account and loan data asynchronously
-    const accountsHtml = await Promise.all(accounts.map(async account => {
-      const isNegative = account.balance < 0;
-      const isCredit = account.type === 'credit';
-      const balanceClass = isNegative ? 'negative' : 'positive';
-      const icon = getAccountIcon(account.type);
-
-      let linkedLoanInfo = '';
-      if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch the loan name and wait for the result
-        const loanName = await getLoanName(account.linkedLoanId);
-        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${loanName}</div>`;
-      }
-
-      return `
-        <div class="account-card">
-          <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
-            <div class="account-icon">${icon}</div>
-            <div class="account-info">
-              <h4 class="account-name">${account.name}</h4>
-              <p class="account-type">${getAccountTypeLabel(account.type)}</p>
-            </div>
-            <div class="account-balance ${balanceClass}">
-              ${formatCurrency(account.balance, account.currency)}
-              ${isCredit && account.creditLimit ? `
-                <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
-              ` : ''}
-              ${linkedLoanInfo}
-            </div>
+    return `
+      <div class="account-card">
+        <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
+          <div class="account-icon">${icon}</div>
+          <div class="account-info">
+            <h4 class="account-name">${account.name}</h4>
+            <p class="account-type">${getAccountTypeLabel(account.type)}</p>
           </div>
-          <div id="details-${account.id}" class="account-details" style="display: none;">
-            <div class="account-actions">
-              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
-            </div>
+          <div class="account-balance ${balanceClass}">
+            ${formatCurrency(account.balance, account.currency)}
+            ${isCredit && account.creditLimit ? `
+              <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
+            ` : ''}
+            ${linkedLoanInfo}
           </div>
         </div>
-      `;
-    }));
+        <div id="details-${account.id}" class="account-details" style="display: none;">
+          <div class="account-actions">
+            <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+            <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }));
 
-    // Set the HTML of the account list with the resolved HTML strings
-    listEl.innerHTML = accountsHtml.join('');
+  // Set the HTML of the account list with the resolved HTML strings
+  listEl.innerHTML = accountsHtml.join('');
 
-    listEl.querySelectorAll('.account-header').forEach(header => {
-      header.addEventListener('click', (e) => {
-        const id = e.target.closest('.account-header').dataset.id;
-        toggleAccountDetails(id);
-      });
+  // Attach event listeners for dynamic elements
+  listEl.querySelectorAll('.account-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      const id = e.target.closest('.account-header').dataset.id;
+      toggleAccountDetails(id);
     });
+  });
 
-    listEl.querySelectorAll('.btn').forEach(btn => {
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
-      btn.addEventListener('click', () => {
-        if (action === 'edit') openAccountEditor(id);
-        else if (action === 'delete') {
-          if (confirm('Delete this account?')) {
-            deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
-          }
+  listEl.querySelectorAll('.btn').forEach(btn => {
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    btn.addEventListener('click', () => {
+      if (action === 'edit') openAccountEditor(id);
+      else if (action === 'delete') {
+        if (confirm('Delete this account?')) {
+          deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
         }
-      });
+      }
     });
   });
 }
