@@ -582,6 +582,41 @@ main#mainContent {
   color: #b91c1c;
 }
 
+/* added for dropdown after cleaning styles*/
+
+/* ================================
+   FIX: Make subcategory toggle visible
+   ================================ */
+.subcategory-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;        /* light grey contrast */
+  color: #374151;             /* visible dark text */
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-size: 0.86rem;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+}
+
+.subcategory-toggle:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* Ensure the arrow remains visible */
+.subcategory-toggle::before {
+  font-weight: bold;
+}
+
+/* Ensure JS can toggle visibility */
+.subcategories-list {
+  display: none;  /* JS will set block */
+}
+
+
 /* =========================================================
    BUDGETS – LIGHT THEME, COMPACT
    ========================================================= */
