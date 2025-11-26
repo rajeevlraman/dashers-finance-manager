@@ -69,7 +69,10 @@ export function initAccountsUI() {
 }
 
 function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(accounts => {
+  Promise.all([
+    getAllItems(STORE_NAMES.accounts),
+    getAllItems(STORE_NAMES.loans) // Fetch loans too
+  ]).then(([accounts, loans]) => {
     const listEl = document.getElementById('accList');
 
     if (!accounts.length) {
@@ -83,15 +86,23 @@ function refreshAccountList() {
       return;
     }
 
+    // Create a mapping of loan IDs to loan names
+    const loanMap = {};
+    loans.forEach(loan => {
+      loanMap[loan.id] = loan.name;
+    });
+
     listEl.innerHTML = accounts.map(account => {
       const isNegative = account.balance < 0;
       const isCredit = account.type === 'credit';
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
+      // FIX: Look up the loan name instead of showing the ID
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`;
+        const loanName = loanMap[account.linkedLoanId] || 'Unknown Loan';
+        linkedLoanInfo = `<div class="linked-loan">Linked to: ${loanName}</div>`;
       }
 
       return `
@@ -120,7 +131,6 @@ function refreshAccountList() {
       `;
     }).join('');
 
-    // This handles the click event properly
     listEl.querySelectorAll('.account-header').forEach(header => {
       header.addEventListener('click', (e) => {
         const id = e.target.closest('.account-header').dataset.id;
