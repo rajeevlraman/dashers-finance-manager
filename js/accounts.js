@@ -6,9 +6,10 @@ const DEFAULT_ACCOUNTS = [
   { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
   { id: 'credit1', name: 'Visa Credit Card', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 5000 },
   { id: 'credit2', name: 'MasterCard', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 3000 },
-  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD' }
+  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD', linkedLoanId: '' }
 ];
 
+// Generate unique ID for accounts
 function generateId() {
   if (crypto.randomUUID) return crypto.randomUUID();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -89,6 +90,11 @@ function refreshAccountList() {
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
+      // If the account is a mortgage offset account, display linked loan info
+      const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId 
+        ? `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`
+        : '';
+
       return `
         <div class="account-card">
           <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
@@ -102,6 +108,7 @@ function refreshAccountList() {
               ${isCredit && account.creditLimit ? `
                 <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
               ` : ''}
+              ${linkedLoanInfo}
             </div>
           </div>
           <div id="details-${account.id}" class="account-details" style="display: none;">
@@ -114,14 +121,7 @@ function refreshAccountList() {
       `;
     }).join('');
 
-    listEl.querySelectorAll('.account-header').forEach(header => {
-      header.addEventListener('click', (e) => {
-        const id = e.target.closest('.account-header').dataset.id;
-        toggleAccountDetails(id);
-      });
-    });
-
-    listEl.querySelectorAll('.btn').forEach(btn => {
+    listEl.querySelectorAll('button').forEach(btn => {
       const id = btn.dataset.id;
       const action = btn.dataset.action;
       btn.addEventListener('click', () => {
@@ -235,6 +235,12 @@ function showAccountForm(acc) {
             <input type="number" step="0.01" name="creditLimit" value="${acc.creditLimit || 0}" class="form-input">
           </div>
 
+          <div id="linkedLoan" class="form-group" style="display:${acc.type === 'offset' ? 'block' : 'none'};">
+            <label>Linked Loan</label>
+            <input type="text" name="linkedLoanId" value="${acc.linkedLoanId || ''}" class="form-input">
+            <small class="form-hint">Enter the loan ID this account is linked to (for offsets).</small>
+          </div>
+
           <div class="form-actions">
             <button class="btn btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account</button>
             <button class="btn btn-secondary" type="button" id="btnCancel">Cancel</button>
@@ -248,6 +254,7 @@ function showAccountForm(acc) {
 
   document.querySelector('select[name="type"]').addEventListener('change', function() {
     document.getElementById('creditFields').style.display = this.value === 'credit' ? 'block' : 'none';
+    document.getElementById('linkedLoan').style.display = this.value === 'offset' ? 'block' : 'none';
   });
 
   document.getElementById('btnCancel').addEventListener('click', initAccountsUI);
@@ -269,6 +276,10 @@ function showAccountForm(acc) {
 
     if (newAcc.type === 'credit') {
       newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
+    }
+
+    if (newAcc.type === 'offset') {
+      newAcc.linkedLoanId = data.get('linkedLoanId') || '';
     }
 
     if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
