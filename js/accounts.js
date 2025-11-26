@@ -6,10 +6,9 @@ const DEFAULT_ACCOUNTS = [
   { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
   { id: 'credit1', name: 'Visa Credit Card', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 5000 },
   { id: 'credit2', name: 'MasterCard', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 3000 },
-  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD' }
+  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD', linkedLoanId: '' }
 ];
 
-// Generate unique ID for accounts
 function generateId() {
   if (crypto.randomUUID) return crypto.randomUUID();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -69,8 +68,8 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
-async function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(async accounts => {
+function refreshAccountList() {
+  getAllItems(STORE_NAMES.accounts).then(accounts => {
     const listEl = document.getElementById('accList');
 
     if (!accounts.length) {
@@ -84,9 +83,6 @@ async function refreshAccountList() {
       return;
     }
 
-    // Fetch all loans to check for linked loans
-    const loans = await getAllItems(STORE_NAMES.loans);
-
     listEl.innerHTML = accounts.map(account => {
       const isNegative = account.balance < 0;
       const isCredit = account.type === 'credit';
@@ -94,9 +90,11 @@ async function refreshAccountList() {
       const icon = getAccountIcon(account.type);
 
       // If the account is a mortgage offset account, display linked loan info
-      const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId
-        ? `<div class="linked-loan">Linked Loan: ${loans.find(loan => loan.id === account.linkedLoanId)?.name || 'Unknown Loan'}</div>`
-        : '';
+      let linkedLoanInfo = '';
+      if (account.type === 'offset' && account.linkedLoanId) {
+        // Fetch linked loan details
+        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`;
+      }
 
       return `
         <div class="account-card">
@@ -201,7 +199,7 @@ function showAccountForm(acc) {
 
   // Fetch all loans
   getAllItems(STORE_NAMES.loans).then(loans => {
-    const loanOptions = loans.map(loan => `
+    const loanOptions = loans.map(loan => ` 
       <option value="${loan.id}" ${acc.linkedLoanId === loan.id ? 'selected' : ''}>
         ${loan.name}
       </option>
@@ -242,7 +240,7 @@ function showAccountForm(acc) {
             <div class="form-group">
               <label>Currency</label>
               <select name="currency" class="form-select" required>
-                ${['AUD', 'USD', 'EUR', 'GBP', 'CAD'].map(cur => `
+                ${['AUD','USD','EUR','GBP','CAD'].map(cur => `
                   <option value="${cur}" ${acc.currency === cur ? 'selected' : ''}>${cur}</option>
                 `).join('')}
               </select>
