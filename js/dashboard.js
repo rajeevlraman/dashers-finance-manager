@@ -8,7 +8,7 @@ export async function initDashboardUI() {
 // Insert welcome / datetime / weather section
 const now = new Date();
 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2‑digit', minute: '2‑digit' };
-const dateTimeStr = now.toLocaleDateString('en‑AU', options) + ' • ' + now.toLocaleTimeString('en‑AU', { hour: '2‑digit', minute: '2‑digit' });
+const dateTimeStr = now.toLocaleDateString('en-AU', options) + ' • ' + now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
 
 mainContent.innerHTML = `
   <div class="dashboard‑header">
