@@ -157,11 +157,8 @@ async function getLoanName(linkedLoanId) {
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
-  if (details) {
-    details.style.display = details.style.display === 'none' ? 'block' : 'none';
-  }
+  details.style.display = details.style.display === 'none' ? 'block' : 'none';
 }
-
 
 function getAccountIcon(type) {
   const icons = {
