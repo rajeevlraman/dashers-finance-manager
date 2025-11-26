@@ -19,12 +19,26 @@ export async function initTransactionsUI() {
       <div class="page-header">
         <h2>💸 Transactions</h2>
         <div class="page-actions">
-          <button class="btn btn-primary" id="btnAddTx">Add</button>
-          <button class="btn btn-secondary" id="btnExportTx">Export</button>
+          <button class="btn btn-primary" id="btnAddTx">Add Transaction</button>
+          <button class="btn btn-secondary" id="btnFilterTx">Filter</button>
         </div>
       </div>
 
-      <div class="section-card">
+      <div id="txList" class="section-card">
+        <table class="table">
+          <thead>
+            <tr><th>Date</th><th>Type</th><th>Amount</th><th>Main Category</th><th>Subcategory</th><th>Account</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <!-- Transactions will go here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Bottom Sheet for Add Transaction -->
+    <div id="addTxModal" class="modal bottom-sheet">
+      <div class="modal-content">
         <h3>➕ Add New Transaction</h3>
         <form id="txForm" class="styled-form">
           <div class="form-row">
@@ -35,7 +49,6 @@ export async function initTransactionsUI() {
                 <option value="income">📥 Income</option>
               </select>
             </div>
-
             <div class="form-group">
               <label>Amount</label>
               <input type="number" name="amount" class="form-input" step="0.01" placeholder="0.00" required>
@@ -47,7 +60,6 @@ export async function initTransactionsUI() {
               <label>Date</label>
               <input type="date" name="date" class="form-input" value="${today}" required>
             </div>
-
             <div class="form-group">
               <label>Account</label>
               <select name="accountId" class="form-select" required>
@@ -64,7 +76,6 @@ export async function initTransactionsUI() {
                 ${mainCats.map(c => `<option value="${c.id}">${c.icon || '📁'} ${c.name}</option>`).join('')}
               </select>
             </div>
-
             <div class="form-group">
               <label>Subcategory</label>
               <select id="subCategory" class="form-select">
@@ -79,8 +90,11 @@ export async function initTransactionsUI() {
           </div>
         </form>
       </div>
+    </div>
 
-      <div class="section-card">
+    <!-- Bottom Sheet for Filter -->
+    <div id="filterTxModal" class="modal bottom-sheet">
+      <div class="modal-content">
         <h3>🔍 Filter Transactions</h3>
         <form id="filterForm" class="styled-form">
           <div class="form-row">
@@ -123,8 +137,6 @@ export async function initTransactionsUI() {
           <button class="btn btn-secondary" type="submit">🔍 Apply Filters</button>
         </form>
       </div>
-
-      <div id="txList" class="section-card"></div>
     </div>
   `;
 
@@ -165,6 +177,7 @@ export async function initTransactionsUI() {
 
     await addItem(STORE_NAMES.transactions, tx);
     initTransactionsUI();
+    closeModal('addTxModal');
   });
 
   // === Filter linking ===
@@ -184,9 +197,11 @@ export async function initTransactionsUI() {
     const data = new FormData(e.target);
     const filters = Object.fromEntries(data.entries());
     renderTransactions(transactions, categories, accounts, filters);
+    closeModal('filterTxModal');
   });
 
   renderTransactions(transactions, categories, accounts);
+  setupModalTriggers();
 }
 
 function renderTransactions(transactions, categories, accounts, filters = {}) {
@@ -248,11 +263,24 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
       </tbody>
     </table>
   `;
-
+  
   txList.querySelectorAll('.btn-danger').forEach(btn => {
     btn.addEventListener('click', async () => {
       await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
       initTransactionsUI();
     });
   });
+}
+
+function setupModalTriggers() {
+  document.getElementById('btnAddTx').addEventListener('click', () => openModal('addTxModal'));
+  document.getElementById('btnFilterTx').addEventListener('click', () => openModal('filterTxModal'));
+}
+
+function openModal(modalId) {
+  document.getElementById(modalId).classList.add('show');
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('show');
 }
