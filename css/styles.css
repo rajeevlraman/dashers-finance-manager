@@ -1691,6 +1691,28 @@ table th, table td {
   justify-content: flex-start;
 }
 
+
+/*grid card*/
+
+/* Using grid layout for uniform card alignment */
+.page-container {
+  display: grid;
+  grid-template-columns: 1fr; /* One column layout */
+  gap: 20px; /* Space between each card */
+}
+
+.account-card {
+  background-color: #fff;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  margin: 10px 0;
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .account-header {
   display: flex;
   justify-content: space-between;
@@ -1708,4 +1730,12 @@ table th, table td {
 .account-balance {
   font-size: 16px;
   color: green;
+}
+
+
+.linked-loan {
+  font-size: 14px;
+  color: #666;
+  text-align: left;
+  margin-top: 5px;
 }
