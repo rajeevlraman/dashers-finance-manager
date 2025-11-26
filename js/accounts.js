@@ -68,6 +68,11 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
+function toggleAccountDetails(accountId) {
+  const details = document.getElementById(`details-${accountId}`);
+  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+}
+
 function refreshAccountList() {
   getAllItems(STORE_NAMES.accounts).then(accounts => {
     const listEl = document.getElementById('accList');
@@ -142,18 +147,13 @@ function refreshAccountList() {
     });
   });
 }
-async function toggleAccountDetails(accountId) {
-  const details = document.getElementById(`details-${accountId}`);
-  details.style.display = details.style.display === 'none' ? 'block' : 'none';
-}
+
 
 async function getLoanName(linkedLoanId) {
   const loans = await getAllItems(STORE_NAMES.loans);
   const loan = loans.find(l => l.id === linkedLoanId);
   return loan ? loan.name : 'Unknown Loan';
 }
-
-
 
 
 function getAccountIcon(type) {
