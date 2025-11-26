@@ -1431,7 +1431,6 @@ main#mainContent {
     height: 6px; /* consistency for all cards */
 }
 
-
 /* Glassmorphism effect for bottom sheets */
 .modal.bottom-sheet {
   display: none;
