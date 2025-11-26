@@ -68,8 +68,8 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
-async function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(async accounts => {
+function refreshAccountList() {
+  getAllItems(STORE_NAMES.accounts).then(accounts => {
     const listEl = document.getElementById('accList');
 
     if (!accounts.length) {
@@ -83,18 +83,16 @@ async function refreshAccountList() {
       return;
     }
 
-    listEl.innerHTML = await Promise.all(accounts.map(async account => {
+    listEl.innerHTML = accounts.map(account => {
       const isNegative = account.balance < 0;
       const isCredit = account.type === 'credit';
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
-      // Fetch linked loan info if the account is of type 'offset'
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Ensure we await the loan name resolution
-        const loanName = await getLoanName(account.linkedLoanId);
-        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${loanName}</div>`;
+        // Fetch linked loan details by linkedLoanId
+        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${getLoanName(account.linkedLoanId)}</div>`;
       }
 
       return `
@@ -121,8 +119,8 @@ async function refreshAccountList() {
           </div>
         </div>
       `;
-    })).join('');
-    
+    }).join('');
+
     listEl.querySelectorAll('.account-header').forEach(header => {
       header.addEventListener('click', (e) => {
         const id = e.target.closest('.account-header').dataset.id;
@@ -146,13 +144,11 @@ async function refreshAccountList() {
 }
 
 
-
 async function getLoanName(linkedLoanId) {
   const loans = await getAllItems(STORE_NAMES.loans);
   const loan = loans.find(l => l.id === linkedLoanId);
-  return loan ? loan.name : 'Unknown Loan'; // Return 'Unknown Loan' if the loan is not found
+  return loan ? loan.name : 'Unknown Loan';
 }
-
 
 
 function toggleAccountDetails(accountId) {
