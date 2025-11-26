@@ -1654,7 +1654,7 @@ table th, table td {
 
 .card-container {
   display: flex;
-  flex-direction: column;  /* Align items vertically */
+  flex-direction: row;  /* Align items vertically */
   gap: 20px;  /* Space between cards */
   align-items: flex-start; /* Align all content to the left */
 }
