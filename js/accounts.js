@@ -84,42 +84,46 @@ function refreshAccountList() {
       return;
     }
 
-    listEl.innerHTML = accounts.map(account => {
-      const isNegative = account.balance < 0;
-      const isCredit = account.type === 'credit';
-      const balanceClass = isNegative ? 'negative' : 'positive';
-      const icon = getAccountIcon(account.type);
+    // Update the account list layout to use flexbox in a vertical column
+    listEl.innerHTML = `
+      <div class="accounts-grid">
+        ${accounts.map(account => {
+          const isNegative = account.balance < 0;
+          const isCredit = account.type === 'credit';
+          const balanceClass = isNegative ? 'negative' : 'positive';
+          const icon = getAccountIcon(account.type);
 
-      // If the account is a mortgage offset account, display linked loan info
-      const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId 
-        ? `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`
-        : '';
+          const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId
+            ? `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`
+            : '';
 
-      return `
-        <div class="account-card">
-          <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
-            <div class="account-icon">${icon}</div>
-            <div class="account-info">
-              <h4 class="account-name">${account.name}</h4>
-              <p class="account-type">${getAccountTypeLabel(account.type)}</p>
+          return `
+            <div class="account-card">
+              <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
+                <div class="account-icon">${icon}</div>
+                <div class="account-info">
+                  <h4 class="account-name">${account.name}</h4>
+                  <p class="account-type">${getAccountTypeLabel(account.type)}</p>
+                </div>
+                <div class="account-balance ${balanceClass}">
+                  ${formatCurrency(account.balance, account.currency)}
+                  ${isCredit && account.creditLimit ? `
+                    <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
+                  ` : ''}
+                  ${linkedLoanInfo}
+                </div>
+              </div>
+              <div id="details-${account.id}" class="account-details" style="display: none;">
+                <div class="account-actions">
+                  <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+                  <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+                </div>
+              </div>
             </div>
-            <div class="account-balance ${balanceClass}">
-              ${formatCurrency(account.balance, account.currency)}
-              ${isCredit && account.creditLimit ? `
-                <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
-              ` : ''}
-              ${linkedLoanInfo}
-            </div>
-          </div>
-          <div id="details-${account.id}" class="account-details" style="display: none;">
-            <div class="account-actions">
-              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+          `;
+        }).join('')}
+      </div>
+    `;
 
     listEl.querySelectorAll('button').forEach(btn => {
       const id = btn.dataset.id;
@@ -135,6 +139,7 @@ function refreshAccountList() {
     });
   });
 }
+
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
