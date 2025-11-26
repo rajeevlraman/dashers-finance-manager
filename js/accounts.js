@@ -6,7 +6,7 @@ const DEFAULT_ACCOUNTS = [
   { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
   { id: 'credit1', name: 'Visa Credit Card', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 5000 },
   { id: 'credit2', name: 'MasterCard', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 3000 },
-  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD', linkedLoanId: '' }
+  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD' }
 ];
 
 // Generate unique ID for accounts
@@ -69,8 +69,8 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
-function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(accounts => {
+async function refreshAccountList() {
+  getAllItems(STORE_NAMES.accounts).then(async accounts => {
     const listEl = document.getElementById('accList');
 
     if (!accounts.length) {
@@ -84,11 +84,19 @@ function refreshAccountList() {
       return;
     }
 
+    // Fetch all loans to check for linked loans
+    const loans = await getAllItems(STORE_NAMES.loans);
+
     listEl.innerHTML = accounts.map(account => {
       const isNegative = account.balance < 0;
       const isCredit = account.type === 'credit';
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
+
+      // If the account is a mortgage offset account, display linked loan info
+      const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId
+        ? `<div class="linked-loan">Linked Loan: ${loans.find(loan => loan.id === account.linkedLoanId)?.name || 'Unknown Loan'}</div>`
+        : '';
 
       return `
         <div class="account-card">
@@ -103,6 +111,7 @@ function refreshAccountList() {
               ${isCredit && account.creditLimit ? `
                 <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
               ` : ''}
+              ${linkedLoanInfo}
             </div>
           </div>
           <div id="details-${account.id}" class="account-details" style="display: none;">
