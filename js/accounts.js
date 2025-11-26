@@ -68,8 +68,8 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
-function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(accounts => {
+async function refreshAccountList() {
+  getAllItems(STORE_NAMES.accounts).then(async accounts => {
     const listEl = document.getElementById('accList');
 
     if (!accounts.length) {
@@ -83,16 +83,18 @@ function refreshAccountList() {
       return;
     }
 
-    listEl.innerHTML = accounts.map(account => {
+    listEl.innerHTML = await Promise.all(accounts.map(async account => {
       const isNegative = account.balance < 0;
       const isCredit = account.type === 'credit';
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
+      // Fetch linked loan info if the account is of type 'offset'
       let linkedLoanInfo = '';
-      // Only display linked loan for offset account type
       if (account.type === 'offset' && account.linkedLoanId) {
-        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${getLoanName(account.linkedLoanId)}</div>`;
+        // Ensure we await the loan name resolution
+        const loanName = await getLoanName(account.linkedLoanId);
+        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${loanName}</div>`;
       }
 
       return `
@@ -119,8 +121,8 @@ function refreshAccountList() {
           </div>
         </div>
       `;
-    }).join('');
-
+    })).join('');
+    
     listEl.querySelectorAll('.account-header').forEach(header => {
       header.addEventListener('click', (e) => {
         const id = e.target.closest('.account-header').dataset.id;
@@ -144,6 +146,7 @@ function refreshAccountList() {
 }
 
 
+
 async function getLoanName(linkedLoanId) {
   const loans = await getAllItems(STORE_NAMES.loans);
   const loan = loans.find(l => l.id === linkedLoanId);
@@ -154,8 +157,11 @@ async function getLoanName(linkedLoanId) {
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
-  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+  if (details) {
+    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+  }
 }
+
 
 function getAccountIcon(type) {
   const icons = {
