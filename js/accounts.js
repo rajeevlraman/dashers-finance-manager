@@ -90,8 +90,8 @@ function refreshAccountList() {
       const icon = getAccountIcon(account.type);
 
       let linkedLoanInfo = '';
+      // Only display linked loan for offset account type
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch linked loan details by linkedLoanId
         linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${getLoanName(account.linkedLoanId)}</div>`;
       }
 
@@ -147,8 +147,9 @@ function refreshAccountList() {
 async function getLoanName(linkedLoanId) {
   const loans = await getAllItems(STORE_NAMES.loans);
   const loan = loans.find(l => l.id === linkedLoanId);
-  return loan ? loan.name : 'Unknown Loan';
+  return loan ? loan.name : 'Unknown Loan'; // Return 'Unknown Loan' if the loan is not found
 }
+
 
 
 function toggleAccountDetails(accountId) {
