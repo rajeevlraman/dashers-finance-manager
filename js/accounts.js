@@ -85,7 +85,7 @@ function refreshAccountList() {
     }
 
     // Update the account list layout to use flexbox in a vertical column
-    listEl.innerHTML = `
+    listEl.innerHTML = `    
       <div class="accounts-grid">
         ${accounts.map(account => {
           const isNegative = account.balance < 0;
@@ -125,20 +125,22 @@ function refreshAccountList() {
       </div>
     `;
 
-    listEl.querySelectorAll('button').forEach(btn => {
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
-      btn.addEventListener('click', () => {
-        if (action === 'edit') openAccountEditor(id);
-        else if (action === 'delete') {
-          if (confirm('Delete this account?')) {
-            deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
-          }
+    // Use event delegation to handle edit and delete actions
+    listEl.addEventListener('click', (event) => {
+      const action = event.target.dataset.action;
+      const id = event.target.dataset.id;
+
+      if (action === 'edit') {
+        openAccountEditor(id);
+      } else if (action === 'delete') {
+        if (confirm('Delete this account?')) {
+          deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
         }
-      });
+      }
     });
   });
 }
+
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
