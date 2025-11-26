@@ -1408,3 +1408,22 @@ main#mainContent {
 .status-over {
   color: #dc2626;
 }
+
+
+/* ----------------------------------------------
+   GLOBAL PROGRESS BAR (used across the whole app)
+---------------------------------------------- */
+.progress-bar-container {
+    flex: 1;
+    height: 6px;
+    background: #e5e7eb;      /* light grey track */
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: #00c7b4;      /* 🟦 teal theme to match categories */
+    border-radius: 4px;
+    transition: width 0.35s ease;
+}
