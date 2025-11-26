@@ -20,11 +20,12 @@ export async function initTransactionsUI() {
         <h2>💸 Transactions</h2>
         <div class="page-actions">
           <button class="btn btn-primary" id="btnAddTx">Add</button>
+          <button class="btn btn-secondary" id="btnFilterTx">Filter</button>
           <button class="btn btn-secondary" id="btnExportTx">Export</button>
         </div>
       </div>
 
-      <div class="section-card">
+      <div id="addTxForm" class="section-card form-section" style="display: none;">
         <h3>➕ Add New Transaction</h3>
         <form id="txForm" class="styled-form">
           <div class="form-row">
@@ -80,7 +81,7 @@ export async function initTransactionsUI() {
         </form>
       </div>
 
-      <div class="section-card">
+      <div id="filterTxForm" class="section-card form-section" style="display: none;">
         <h3>🔍 Filter Transactions</h3>
         <form id="filterForm" class="styled-form">
           <div class="form-row">
@@ -130,7 +131,21 @@ export async function initTransactionsUI() {
 
   setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
-  // === Dynamic category linking ===
+  // === Toggle Forms ===
+  const btnAddTx = document.getElementById('btnAddTx');
+  const btnFilterTx = document.getElementById('btnFilterTx');
+  const addTxForm = document.getElementById('addTxForm');
+  const filterTxForm = document.getElementById('filterTxForm');
+
+  btnAddTx.addEventListener('click', () => {
+    addTxForm.style.display = addTxForm.style.display === 'none' ? 'block' : 'none';
+  });
+
+  btnFilterTx.addEventListener('click', () => {
+    filterTxForm.style.display = filterTxForm.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // === Dynamic category linking for Add Transaction ===
   const txForm = document.getElementById('txForm');
   const mainSelect = document.getElementById('mainCategory');
   const subSelect = document.getElementById('subCategory');
@@ -164,10 +179,10 @@ export async function initTransactionsUI() {
     };
 
     await addItem(STORE_NAMES.transactions, tx);
-    initTransactionsUI();
+    initTransactionsUI();  // Re-render transactions after adding
   });
 
-  // === Filter linking ===
+  // === Filter linking for Filter Form ===
   const filterMain = document.querySelector('#filterForm [name="mainCategoryId"]');
   const filterSub = document.querySelector('#filterForm [name="subCategoryId"]');
 
@@ -186,7 +201,7 @@ export async function initTransactionsUI() {
     renderTransactions(transactions, categories, accounts, filters);
   });
 
-  renderTransactions(transactions, categories, accounts);
+  renderTransactions(transactions, categories, accounts);  // Initially render all transactions
 }
 
 function renderTransactions(transactions, categories, accounts, filters = {}) {
@@ -252,7 +267,7 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
   txList.querySelectorAll('.btn-danger').forEach(btn => {
     btn.addEventListener('click', async () => {
       await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
-      initTransactionsUI();
+      initTransactionsUI();  // Re-render transactions after deletion
     });
   });
 }
