@@ -6,10 +6,9 @@ const DEFAULT_ACCOUNTS = [
   { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
   { id: 'credit1', name: 'Visa Credit Card', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 5000 },
   { id: 'credit2', name: 'MasterCard', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 3000 },
-  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD', linkedLoanId: '' }
+  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD' }
 ];
 
-// Generate unique ID for accounts
 function generateId() {
   if (crypto.randomUUID) return crypto.randomUUID();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -84,63 +83,58 @@ function refreshAccountList() {
       return;
     }
 
-    // Update the account list layout to use flexbox in a vertical column
-    listEl.innerHTML = `    
-      <div class="accounts-grid">
-        ${accounts.map(account => {
-          const isNegative = account.balance < 0;
-          const isCredit = account.type === 'credit';
-          const balanceClass = isNegative ? 'negative' : 'positive';
-          const icon = getAccountIcon(account.type);
+    listEl.innerHTML = accounts.map(account => {
+      const isNegative = account.balance < 0;
+      const isCredit = account.type === 'credit';
+      const balanceClass = isNegative ? 'negative' : 'positive';
+      const icon = getAccountIcon(account.type);
 
-          const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId
-            ? `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`
-            : '';
-
-          return `
-            <div class="account-card">
-              <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
-                <div class="account-icon">${icon}</div>
-                <div class="account-info">
-                  <h4 class="account-name">${account.name}</h4>
-                  <p class="account-type">${getAccountTypeLabel(account.type)}</p>
-                </div>
-                <div class="account-balance ${balanceClass}">
-                  ${formatCurrency(account.balance, account.currency)}
-                  ${isCredit && account.creditLimit ? `
-                    <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
-                  ` : ''}
-                  ${linkedLoanInfo}
-                </div>
-              </div>
-              <div id="details-${account.id}" class="account-details" style="display: none;">
-                <div class="account-actions">
-                  <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-                  <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
-                </div>
-              </div>
+      return `
+        <div class="account-card">
+          <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
+            <div class="account-icon">${icon}</div>
+            <div class="account-info">
+              <h4 class="account-name">${account.name}</h4>
+              <p class="account-type">${getAccountTypeLabel(account.type)}</p>
             </div>
-          `;
-        }).join('')}
-      </div>
-    `;
+            <div class="account-balance ${balanceClass}">
+              ${formatCurrency(account.balance, account.currency)}
+              ${isCredit && account.creditLimit ? `
+                <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
+              ` : ''}
+            </div>
+          </div>
+          <div id="details-${account.id}" class="account-details" style="display: none;">
+            <div class="account-actions">
+              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-    // Use event delegation to handle edit and delete actions
-    listEl.addEventListener('click', (event) => {
-      const action = event.target.dataset.action;
-      const id = event.target.dataset.id;
+    listEl.querySelectorAll('.account-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        const id = e.target.closest('.account-header').dataset.id;
+        toggleAccountDetails(id);
+      });
+    });
 
-      if (action === 'edit') {
-        openAccountEditor(id);
-      } else if (action === 'delete') {
-        if (confirm('Delete this account?')) {
-          deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
+    listEl.querySelectorAll('.btn').forEach(btn => {
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      btn.addEventListener('click', () => {
+        if (action === 'edit') openAccountEditor(id);
+        else if (action === 'delete') {
+          if (confirm('Delete this account?')) {
+            deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
+          }
         }
-      }
+      });
     });
   });
 }
-
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
@@ -195,124 +189,91 @@ function showAccountForm(acc) {
   const main = document.getElementById('mainContent');
   main.classList.add('page-transition');
 
-  // Fetch all loans
-  getAllItems(STORE_NAMES.loans).then(loans => {
-    const loanOptions = loans.map(loan => `
-      <option value="${loan.id}" ${acc.linkedLoanId === loan.id ? 'selected' : ''}>
-        ${loan.name}
-      </option>
-    `).join('');    
-
-    main.innerHTML = `
-      <div class="page-container">
-        <div class="page-header">
-          <h2>${acc.id ? '✏️ Edit' : '➕ New'} Account</h2>
-        </div>
-
-        <div class="section-card">
-          <form id="accForm" class="styled-form">
-            <div class="form-group">
-              <label>Name</label>
-              <input type="text" name="name" value="${acc.name}" class="form-input" required>
-            </div>
-
-            <div class="form-group">
-              <label>Type</label>
-              <select name="type" class="form-select" required>
-                <option value="bank" ${acc.type === 'bank' ? 'selected' : ''}>🏦 Bank</option>
-                <option value="credit" ${acc.type === 'credit' ? 'selected' : ''}>💳 Credit</option>
-                <option value="cash" ${acc.type === 'cash' ? 'selected' : ''}>💵 Cash</option>
-                <option value="investment" ${acc.type === 'investment' ? 'selected' : ''}>📈 Investment</option>
-                <option value="savings" ${acc.type === 'savings' ? 'selected' : ''}>💰 Savings</option>
-                <option value="offset" ${acc.type === 'offset' ? 'selected' : ''}>⚖️ Offset</option>
-                <option value="other" ${acc.type === 'other' ? 'selected' : ''}>📁 Other</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Starting Balance</label>
-              <input type="number" step="0.01" name="balance" value="${acc.balance}" class="form-input" required>
-              <small class="form-hint">Use negative for owed balances.</small>
-            </div>
-
-            <div class="form-group">
-              <label>Currency</label>
-              <select name="currency" class="form-select" required>
-                ${['AUD','USD','EUR','GBP','CAD'].map(cur => `
-                  <option value="${cur}" ${acc.currency === cur ? 'selected' : ''}>${cur}</option>
-                `).join('')}
-              </select>
-            </div>
-
-            <div id="creditFields" class="form-group" style="display:${acc.type === 'credit' ? 'block' : 'none'};">
-              <label>Credit Limit</label>
-              <input type="number" step="0.01" name="creditLimit" value="${acc.creditLimit || 0}" class="form-input">
-            </div>
-
-            <div id="linkedLoan" class="form-group" style="display:${acc.type === 'offset' ? 'block' : 'none'};">
-              <label>Linked Loan</label>
-              <select name="linkedLoanId" class="form-select">
-                <option value="">-- Select Loan --</option>
-                ${loanOptions}
-              </select>
-              <small class="form-hint">Select the loan this account is linked to.</small>
-            </div>
-
-            <div class="form-actions">
-              <button class="btn btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account</button>
-              <button class="btn btn-secondary" type="button" id="btnCancel">Cancel</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="section-card">
-          <button class="btn btn-secondary" id="btnAddNewLoan" style="display:${loans.length === 0 ? 'block' : 'none'}">Add a New Loan</button>
-        </div>
+  main.innerHTML = `
+    <div class="page-container">
+      <div class="page-header">
+        <h2>${acc.id ? '✏️ Edit' : '➕ New'} Account</h2>
       </div>
-    `;
 
-    // Show the link to loans page if no loans available
-    document.getElementById('btnAddNewLoan').addEventListener('click', () => {
-      window.location.href = '/loans.html'; // Navigate to the loans page
-    });
+      <div class="section-card">
+        <form id="accForm" class="styled-form">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="name" value="${acc.name}" class="form-input" required>
+          </div>
 
-    setTimeout(() => main.classList.remove('page-transition'), 400);
+          <div class="form-group">
+            <label>Type</label>
+            <select name="type" class="form-select" required>
+              <option value="bank" ${acc.type === 'bank' ? 'selected' : ''}>🏦 Bank</option>
+              <option value="credit" ${acc.type === 'credit' ? 'selected' : ''}>💳 Credit</option>
+              <option value="cash" ${acc.type === 'cash' ? 'selected' : ''}>💵 Cash</option>
+              <option value="investment" ${acc.type === 'investment' ? 'selected' : ''}>📈 Investment</option>
+              <option value="savings" ${acc.type === 'savings' ? 'selected' : ''}>💰 Savings</option>
+              <option value="offset" ${acc.type === 'offset' ? 'selected' : ''}>⚖️ Offset</option>
+              <option value="other" ${acc.type === 'other' ? 'selected' : ''}>📁 Other</option>
+            </select>
+          </div>
 
-    // Toggle credit fields based on account type
-    document.querySelector('select[name="type"]').addEventListener('change', function() {
-      document.getElementById('creditFields').style.display = this.value === 'credit' ? 'block' : 'none';
-      document.getElementById('linkedLoan').style.display = this.value === 'offset' ? 'block' : 'none';
-    });
+          <div class="form-group">
+            <label>Starting Balance</label>
+            <input type="number" step="0.01" name="balance" value="${acc.balance}" class="form-input" required>
+            <small class="form-hint">Use negative for owed balances.</small>
+          </div>
 
-    document.getElementById('btnCancel').addEventListener('click', initAccountsUI);
+          <div class="form-group">
+            <label>Currency</label>
+            <select name="currency" class="form-select" required>
+              ${['AUD','USD','EUR','GBP','CAD'].map(cur => `
+                <option value="${cur}" ${acc.currency === cur ? 'selected' : ''}>${cur}</option>
+              `).join('')}
+            </select>
+          </div>
 
-    document.getElementById('accForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const form = e.target;
-      const data = new FormData(form);
+          <div id="creditFields" class="form-group" style="display:${acc.type === 'credit' ? 'block' : 'none'};">
+            <label>Credit Limit</label>
+            <input type="number" step="0.01" name="creditLimit" value="${acc.creditLimit || 0}" class="form-input">
+          </div>
 
-      const newAcc = {
-        id: acc.id || generateId(),
-        name: data.get('name').trim(),
-        type: data.get('type'),
-        balance: parseFloat(data.get('balance')),
-        currency: data.get('currency'),
-        createdAt: acc.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account</button>
+            <button class="btn btn-secondary" type="button" id="btnCancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
 
-      if (newAcc.type === 'credit') {
-        newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
-      }
+  setTimeout(() => main.classList.remove('page-transition'), 400);
 
-      if (newAcc.type === 'offset') {
-        newAcc.linkedLoanId = data.get('linkedLoanId') || '';
-      }
+  document.querySelector('select[name="type"]').addEventListener('change', function() {
+    document.getElementById('creditFields').style.display = this.value === 'credit' ? 'block' : 'none';
+  });
 
-      if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
-      else await addItem(STORE_NAMES.accounts, newAcc);
+  document.getElementById('btnCancel').addEventListener('click', initAccountsUI);
 
-      initAccountsUI();
-    });
+  document.getElementById('accForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+
+    const newAcc = {
+      id: acc.id || generateId(),
+      name: data.get('name').trim(),
+      type: data.get('type'),
+      balance: parseFloat(data.get('balance')),
+      currency: data.get('currency'),
+      createdAt: acc.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (newAcc.type === 'credit') {
+      newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
+    }
+
+    if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
+    else await addItem(STORE_NAMES.accounts, newAcc);
+
+    initAccountsUI();
   });
 }
