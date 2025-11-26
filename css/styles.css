@@ -1632,7 +1632,7 @@ table th, table td {
   border-radius: 8px;
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
 }
 
