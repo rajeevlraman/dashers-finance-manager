@@ -89,10 +89,11 @@ function refreshAccountList() {
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
+      // If the account is a mortgage offset account, display linked loan info
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch linked loan details by linkedLoanId
-        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${getLoanName(account.linkedLoanId)}</div>`;
+        // Fetch linked loan details
+        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`;
       }
 
       return `
@@ -142,19 +143,11 @@ function refreshAccountList() {
     });
   });
 }
+
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
   details.style.display = details.style.display === 'none' ? 'block' : 'none';
 }
-
-async function getLoanName(linkedLoanId) {
-  const loans = await getAllItems(STORE_NAMES.loans);
-  const loan = loans.find(l => l.id === linkedLoanId);
-  return loan ? loan.name : 'Unknown Loan';
-}
-
-
-
 
 function getAccountIcon(type) {
   const icons = {
@@ -302,10 +295,6 @@ function showAccountForm(acc) {
 
       if (newAcc.type === 'credit') {
         newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
-      }
-
-      if (newAcc.type === 'offset') {
-        newAcc.linkedLoanId = data.get('linkedLoanId') || '';
       }
 
       if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
