@@ -1152,3 +1152,54 @@ main#mainContent {
     margin-left: 240px;
   }
 }
+
+
+/* =========================================================
+   CORRECTED TREE / ACCORDION PATCH
+   ========================================================= */
+
+/* Restore accordion visuals */
+.subcategory-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-muted);
+  color: var(--text-main);
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+
+.subcategory-toggle:hover {
+  background: #e5e7eb;
+}
+
+/* Restore indentation + border for the dropdown area */
+.subcategories-list {
+  margin-left: 22px !important;
+  margin-top: 8px !important;
+  padding-left: 12px !important;
+  border-left: 2px solid var(--accent) !important;
+  display: none; /* JS toggles to block */
+}
+
+/* Subcategory item formatting */
+.subcategory-item {
+  padding: 6px 10px;
+  margin: 4px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Make the arrow visible */
+.subcategory-toggle::before {
+  content: "";
+}
