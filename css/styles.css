@@ -1509,3 +1509,26 @@ table th, table td {
 .tag.expense {
   background-color: #ffe0e0;
 }
+
+
+/* Add this CSS rule to ensure loan cards stack vertically */
+.loans-grid {
+  display: block;  /* Stack the loan cards vertically */
+  gap: 1rem;  /* Space between cards */
+}
+
+/* Style for each loan card */
+.loan-card {
+  background: var(--bg-card);  /* Background of the card */
+  border-radius: var(--radius-lg);  /* Rounded corners */
+  padding: 1.25rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid #e5e7eb;  /* Light border */
+  margin-bottom: 1rem;  /* Space between each card */
+}
+
+/* Optional: Hover effect for cards */
+.loan-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
