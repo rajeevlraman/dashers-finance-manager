@@ -1,5 +1,6 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES } from './db.js';
 
+// Default demo accounts
 const DEFAULT_ACCOUNTS = [
   { id: 'bank1', name: 'Main Checking', type: 'bank', balance: 0, currency: 'AUD' },
   { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
@@ -90,7 +91,7 @@ function refreshAccountList() {
 
       return `
         <div class="account-card">
-          <div class="account-header">
+          <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
             <div class="account-icon">${icon}</div>
             <div class="account-info">
               <h4 class="account-name">${account.name}</h4>
@@ -103,15 +104,24 @@ function refreshAccountList() {
               ` : ''}
             </div>
           </div>
-          <div class="account-actions">
-            <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-            <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+          <div id="details-${account.id}" class="account-details" style="display: none;">
+            <div class="account-actions">
+              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+            </div>
           </div>
         </div>
       `;
     }).join('');
 
-    listEl.querySelectorAll('button').forEach(btn => {
+    listEl.querySelectorAll('.account-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        const id = e.target.closest('.account-header').dataset.id;
+        toggleAccountDetails(id);
+      });
+    });
+
+    listEl.querySelectorAll('.btn').forEach(btn => {
       const id = btn.dataset.id;
       const action = btn.dataset.action;
       btn.addEventListener('click', () => {
@@ -126,7 +136,11 @@ function refreshAccountList() {
   });
 }
 
-// Helpers
+function toggleAccountDetails(accountId) {
+  const details = document.getElementById(`details-${accountId}`);
+  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+}
+
 function getAccountIcon(type) {
   const icons = {
     bank: '🏦',
