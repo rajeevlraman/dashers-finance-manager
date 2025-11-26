@@ -5,20 +5,6 @@ export async function initDashboardUI() {
   const mainContent = document.getElementById('mainContent');
   mainContent.innerHTML = '<p>⏳ Loading dashboard...</p>';
 
-// Insert welcome / datetime / weather section
-const now = new Date();
-const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2‑digit', minute: '2‑digit' };
-const dateTimeStr = now.toLocaleDateString('en-AU', options) + ' • ' + now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
-
-mainContent.innerHTML = `
-  <div class="dashboard‑header">
-    <h1>Welcome back!</h1>
-    <p class="datetime">${dateTimeStr}</p>
-    <p class="weather">📍 Cranbourne, VIC — Currently: <span id="weatherTemp">‑‑°C</span>, <span id="weatherCond">Loading…</span></p>
-  </div>
-` + mainContent.innerHTML;
-
-
   try {
     // === Fetch all core + property data ===
     const [transactions, bills, categories, properties, tenants, loans, maintenance] = await Promise.all([
@@ -160,21 +146,6 @@ mainContent.innerHTML = `
         }
       });
     }
-
-// Example: fetch weather via an API (you’ll need to supply API key / endpoint)
-fetch(`https://api.openweathermap.org/data/2.5/weather?q=Cranbourne,AU&units=metric&appid=YOUR_API_KEY`)
-  .then(res => res.json())
-  .then(data => {
-    const temp = Math.round(data.main.temp);
-    const cond = data.weather[0].description;
-    document.getElementById('weatherTemp').textContent = `${temp}°C`;
-    document.getElementById('weatherCond').textContent = cond.charAt(0).toUpperCase() + cond.slice(1);
-  })
-  .catch(err => {
-    console.warn('Weather fetch failed:', err);
-    document.getElementById('weatherCond').textContent = 'Unavailable';
-  });
-
 
     // ---------- COMPARISON CHART ----------
     function renderComparisonChart(selectedMonth) {
