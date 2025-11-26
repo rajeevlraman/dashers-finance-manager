@@ -121,13 +121,18 @@ function refreshAccountList() {
               ${linkedLoanInfo}
             </div>
           </div>
-          <div id="details-${account.id}" class="account-details" style="display: none;">
-            <div class="account-actions">
-              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
-            </div>
+        <div id="details-${account.id}" class="account-details" style="display: none;">
+          <div class="account-actions">
+            <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+            <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+          </div>
+
+          <div class="recent-transactions" id="recent-${account.id}">
+            <p class="rt-title">Recent Transactions</p>
+            <div class="rt-loading">Loading…</div>
           </div>
         </div>
+
       `;
     }).join('');
 
@@ -155,8 +160,40 @@ function refreshAccountList() {
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
-  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+  const container = document.getElementById(`recent-${accountId}`);
+
+  const isOpening = details.style.display === "none";
+
+  details.style.display = isOpening ? "block" : "none";
+
+  if (!isOpening) return; // Do not reload when closing
+
+  // Load last 5 transactions for this account
+  getAllItems(STORE_NAMES.transactions).then(allTx => {
+    const tx = allTx
+      .filter(t => t.accountId === accountId)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
+
+    if (tx.length === 0) {
+      container.innerHTML = `<p class="rt-none">No transactions yet.</p>`;
+      return;
+    }
+
+    container.innerHTML = tx
+      .map(t => `
+        <div class="rt-item">
+          <span class="rt-date">${t.date}</span>
+          <span class="rt-desc">${t.description}</span>
+          <span class="rt-amt ${t.type === 'expense' ? 'neg' : 'pos'}">
+            ${formatCurrency(t.amount, 'AUD')}
+          </span>
+        </div>
+      `)
+      .join('');
+  });
 }
+
 
 function getAccountIcon(type) {
   const icons = {

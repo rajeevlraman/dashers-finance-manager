@@ -1613,3 +1613,42 @@ table th, table td {
 .account-actions button:hover {
   background-color: #f1f1f1;
 }
+
+.recent-transactions {
+  padding: 10px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.rt-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.rt-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 0.9em;
+}
+
+.rt-date {
+  color: #888;
+  width: 80px;
+}
+
+.rt-desc {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.rt-amt.pos {
+  color: #16c784;
+}
+
+.rt-amt.neg {
+  color: #e63946;
+}
+
