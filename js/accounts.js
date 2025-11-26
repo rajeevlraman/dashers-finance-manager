@@ -89,11 +89,10 @@ function refreshAccountList() {
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
-      // If the account is a mortgage offset account, display linked loan info
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch linked loan details
-        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`;
+        // Fetch linked loan details by linkedLoanId
+        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${getLoanName(account.linkedLoanId)}</div>`;
       }
 
       return `
@@ -143,6 +142,14 @@ function refreshAccountList() {
     });
   });
 }
+
+
+async function getLoanName(linkedLoanId) {
+  const loans = await getAllItems(STORE_NAMES.loans);
+  const loan = loans.find(l => l.id === linkedLoanId);
+  return loan ? loan.name : 'Unknown Loan';
+}
+
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
