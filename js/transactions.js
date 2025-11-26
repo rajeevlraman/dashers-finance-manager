@@ -131,18 +131,30 @@ export async function initTransactionsUI() {
 
   setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
-  // === Toggle Forms ===
+  // === Toggle Forms (Add and Filter) ===
   const btnAddTx = document.getElementById('btnAddTx');
   const btnFilterTx = document.getElementById('btnFilterTx');
   const addTxForm = document.getElementById('addTxForm');
   const filterTxForm = document.getElementById('filterTxForm');
 
+  // Toggle Add Transaction Form
   btnAddTx.addEventListener('click', () => {
-    addTxForm.style.display = addTxForm.style.display === 'none' ? 'block' : 'none';
+    if (addTxForm.style.display === 'none') {
+      addTxForm.style.display = 'block';
+      filterTxForm.style.display = 'none';  // Hide Filter form when Add form is shown
+    } else {
+      addTxForm.style.display = 'none';  // Hide Add form when it's clicked again
+    }
   });
 
+  // Toggle Filter Transactions Form
   btnFilterTx.addEventListener('click', () => {
-    filterTxForm.style.display = filterTxForm.style.display === 'none' ? 'block' : 'none';
+    if (filterTxForm.style.display === 'none') {
+      filterTxForm.style.display = 'block';
+      addTxForm.style.display = 'none';  // Hide Add form when Filter form is shown
+    } else {
+      filterTxForm.style.display = 'none';  // Hide Filter form when it's clicked again
+    }
   });
 
   // === Dynamic category linking for Add Transaction ===
