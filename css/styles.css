@@ -1637,7 +1637,7 @@ table th, table td {
 }
 
 .account-header {
-  display: flex;
+  display: grid;
   justify-content: space-between;
   align-items: left;
   width: 100%;
