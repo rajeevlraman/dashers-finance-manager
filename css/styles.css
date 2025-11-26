@@ -1427,3 +1427,6 @@ main#mainContent {
     border-radius: 4px;
     transition: width 0.35s ease;
 }
+.budget-card-row2 .progress-bar-container {
+    height: 6px; /* consistency for all cards */
+}
