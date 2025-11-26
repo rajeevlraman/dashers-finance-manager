@@ -1621,7 +1621,7 @@ table th, table td {
 .page-container {
   display: grid;
   grid-template-columns: 1fr; /* One column layout */
-  gap: 20px; /* Space between each card */
+  gap: 10px; /* Space between each card */
 }
 
 .account-card {
