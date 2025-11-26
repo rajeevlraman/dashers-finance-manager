@@ -142,7 +142,10 @@ function refreshAccountList() {
     });
   });
 }
-
+async function toggleAccountDetails(accountId) {
+  const details = document.getElementById(`details-${accountId}`);
+  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+}
 
 async function getLoanName(linkedLoanId) {
   const loans = await getAllItems(STORE_NAMES.loans);
@@ -151,10 +154,7 @@ async function getLoanName(linkedLoanId) {
 }
 
 
-function toggleAccountDetails(accountId) {
-  const details = document.getElementById(`details-${accountId}`);
-  details.style.display = details.style.display === 'none' ? 'block' : 'none';
-}
+
 
 function getAccountIcon(type) {
   const icons = {
