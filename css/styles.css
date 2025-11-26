@@ -1647,7 +1647,7 @@ table th, table td {
 .account-name {
   font-size: 18px;
   font-weight: bold;
-  text-align: center;
+  text-align: left;
 }
 
 .account-balance {
