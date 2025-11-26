@@ -68,13 +68,7 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
-async function getLoanName(linkedLoanId) {
-  const loans = await getAllItems(STORE_NAMES.loans);
-  const loan = loans.find(l => l.id === linkedLoanId);
-  return loan ? loan.name : 'Unknown Loan';
-}
-
-function refreshAccountList() {
+async function refreshAccountList() {
   getAllItems(STORE_NAMES.accounts).then(async accounts => {
     const listEl = document.getElementById('accList');
 
@@ -95,9 +89,10 @@ function refreshAccountList() {
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
 
+      // Fetch linked loan info if the account is of type 'offset'
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch linked loan info and wait for the loan name
+        // Ensure we await the loan name resolution
         const loanName = await getLoanName(account.linkedLoanId);
         linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${loanName}</div>`;
       }
@@ -127,7 +122,7 @@ function refreshAccountList() {
         </div>
       `;
     })).join('');
-
+    
     listEl.querySelectorAll('.account-header').forEach(header => {
       header.addEventListener('click', (e) => {
         const id = e.target.closest('.account-header').dataset.id;
@@ -150,10 +145,23 @@ function refreshAccountList() {
   });
 }
 
+
+
+async function getLoanName(linkedLoanId) {
+  const loans = await getAllItems(STORE_NAMES.loans);
+  const loan = loans.find(l => l.id === linkedLoanId);
+  return loan ? loan.name : 'Unknown Loan'; // Return 'Unknown Loan' if the loan is not found
+}
+
+
+
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
-  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+  if (details) {
+    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+  }
 }
+
 
 function getAccountIcon(type) {
   const icons = {
@@ -301,6 +309,10 @@ function showAccountForm(acc) {
 
       if (newAcc.type === 'credit') {
         newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
+      }
+
+      if (newAcc.type === 'offset') {
+        newAcc.linkedLoanId = data.get('linkedLoanId') || '';
       }
 
       if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
