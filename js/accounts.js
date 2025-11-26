@@ -68,13 +68,14 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
-function toggleAccountDetails(accountId) {
-  const details = document.getElementById(`details-${accountId}`);
-  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+async function getLoanName(linkedLoanId) {
+  const loans = await getAllItems(STORE_NAMES.loans);
+  const loan = loans.find(l => l.id === linkedLoanId);
+  return loan ? loan.name : 'Unknown Loan';
 }
 
 function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(accounts => {
+  getAllItems(STORE_NAMES.accounts).then(async accounts => {
     const listEl = document.getElementById('accList');
 
     if (!accounts.length) {
@@ -88,7 +89,7 @@ function refreshAccountList() {
       return;
     }
 
-    listEl.innerHTML = accounts.map(account => {
+    listEl.innerHTML = await Promise.all(accounts.map(async account => {
       const isNegative = account.balance < 0;
       const isCredit = account.type === 'credit';
       const balanceClass = isNegative ? 'negative' : 'positive';
@@ -96,8 +97,9 @@ function refreshAccountList() {
 
       let linkedLoanInfo = '';
       if (account.type === 'offset' && account.linkedLoanId) {
-        // Fetch linked loan details by linkedLoanId
-        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${getLoanName(account.linkedLoanId)}</div>`;
+        // Fetch linked loan info and wait for the loan name
+        const loanName = await getLoanName(account.linkedLoanId);
+        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${loanName}</div>`;
       }
 
       return `
@@ -124,7 +126,7 @@ function refreshAccountList() {
           </div>
         </div>
       `;
-    }).join('');
+    })).join('');
 
     listEl.querySelectorAll('.account-header').forEach(header => {
       header.addEventListener('click', (e) => {
@@ -148,13 +150,10 @@ function refreshAccountList() {
   });
 }
 
-
-async function getLoanName(linkedLoanId) {
-  const loans = await getAllItems(STORE_NAMES.loans);
-  const loan = loans.find(l => l.id === linkedLoanId);
-  return loan ? loan.name : 'Unknown Loan';
+function toggleAccountDetails(accountId) {
+  const details = document.getElementById(`details-${accountId}`);
+  details.style.display = details.style.display === 'none' ? 'block' : 'none';
 }
-
 
 function getAccountIcon(type) {
   const icons = {
@@ -302,10 +301,6 @@ function showAccountForm(acc) {
 
       if (newAcc.type === 'credit') {
         newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
-      }
-
-      if (newAcc.type === 'offset') {
-        newAcc.linkedLoanId = data.get('linkedLoanId') || '';
       }
 
       if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
