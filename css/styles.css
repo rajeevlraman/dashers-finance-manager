@@ -1631,13 +1631,13 @@ table th, table td {
   margin: 10px 0;
   border-radius: 8px;
   width: 100%;
-  display: grid;
+  display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .account-header {
-  display: grid;
+  display: flex;
   justify-content: space-between;
   align-items: left;
   width: 100%;
