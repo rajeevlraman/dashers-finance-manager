@@ -9,7 +9,6 @@ const DEFAULT_ACCOUNTS = [
   { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD', linkedLoanId: '' }
 ];
 
-// Generate unique ID for accounts
 function generateId() {
   if (crypto.randomUUID) return crypto.randomUUID();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -84,48 +83,53 @@ function refreshAccountList() {
       return;
     }
 
-    // Update the account list layout to use flexbox in a vertical column
-    listEl.innerHTML = `
-      <div class="accounts-grid">
-        ${accounts.map(account => {
-          const isNegative = account.balance < 0;
-          const isCredit = account.type === 'credit';
-          const balanceClass = isNegative ? 'negative' : 'positive';
-          const icon = getAccountIcon(account.type);
+    listEl.innerHTML = accounts.map(account => {
+      const isNegative = account.balance < 0;
+      const isCredit = account.type === 'credit';
+      const balanceClass = isNegative ? 'negative' : 'positive';
+      const icon = getAccountIcon(account.type);
 
-          const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId
-            ? `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`
-            : '';
+      // If the account is a mortgage offset account, display linked loan info
+      let linkedLoanInfo = '';
+      if (account.type === 'offset' && account.linkedLoanId) {
+        // Fetch linked loan details
+        linkedLoanInfo = `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`;
+      }
 
-          return `
-            <div class="account-card">
-              <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
-                <div class="account-icon">${icon}</div>
-                <div class="account-info">
-                  <h4 class="account-name">${account.name}</h4>
-                  <p class="account-type">${getAccountTypeLabel(account.type)}</p>
-                </div>
-                <div class="account-balance ${balanceClass}">
-                  ${formatCurrency(account.balance, account.currency)}
-                  ${isCredit && account.creditLimit ? `
-                    <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
-                  ` : ''}
-                  ${linkedLoanInfo}
-                </div>
-              </div>
-              <div id="details-${account.id}" class="account-details" style="display: none;">
-                <div class="account-actions">
-                  <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-                  <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
-                </div>
-              </div>
+      return `
+        <div class="account-card">
+          <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
+            <div class="account-icon">${icon}</div>
+            <div class="account-info">
+              <h4 class="account-name">${account.name}</h4>
+              <p class="account-type">${getAccountTypeLabel(account.type)}</p>
             </div>
-          `;
-        }).join('')}
-      </div>
-    `;
+            <div class="account-balance ${balanceClass}">
+              ${formatCurrency(account.balance, account.currency)}
+              ${isCredit && account.creditLimit ? `
+                <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
+              ` : ''}
+              ${linkedLoanInfo}
+            </div>
+          </div>
+          <div id="details-${account.id}" class="account-details" style="display: none;">
+            <div class="account-actions">
+              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-    listEl.querySelectorAll('button').forEach(btn => {
+    listEl.querySelectorAll('.account-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        const id = e.target.closest('.account-header').dataset.id;
+        toggleAccountDetails(id);
+      });
+    });
+
+    listEl.querySelectorAll('.btn').forEach(btn => {
       const id = btn.dataset.id;
       const action = btn.dataset.action;
       btn.addEventListener('click', () => {
@@ -139,7 +143,6 @@ function refreshAccountList() {
     });
   });
 }
-
 
 function toggleAccountDetails(accountId) {
   const details = document.getElementById(`details-${accountId}`);
@@ -196,7 +199,7 @@ function showAccountForm(acc) {
 
   // Fetch all loans
   getAllItems(STORE_NAMES.loans).then(loans => {
-    const loanOptions = loans.map(loan => `
+    const loanOptions = loans.map(loan => ` 
       <option value="${loan.id}" ${acc.linkedLoanId === loan.id ? 'selected' : ''}>
         ${loan.name}
       </option>
@@ -263,21 +266,11 @@ function showAccountForm(acc) {
             </div>
           </form>
         </div>
-
-        <div class="section-card">
-          <button class="btn btn-secondary" id="btnAddNewLoan" style="display:${loans.length === 0 ? 'block' : 'none'}">Add a New Loan</button>
-        </div>
       </div>
     `;
 
-    // Show the link to loans page if no loans available
-    document.getElementById('btnAddNewLoan').addEventListener('click', () => {
-      window.location.href = '/loans.html'; // Navigate to the loans page
-    });
-
     setTimeout(() => main.classList.remove('page-transition'), 400);
 
-    // Toggle credit fields based on account type
     document.querySelector('select[name="type"]').addEventListener('change', function() {
       document.getElementById('creditFields').style.display = this.value === 'credit' ? 'block' : 'none';
       document.getElementById('linkedLoan').style.display = this.value === 'offset' ? 'block' : 'none';
@@ -312,73 +305,6 @@ function showAccountForm(acc) {
       else await addItem(STORE_NAMES.accounts, newAcc);
 
       initAccountsUI();
-    });
-  });
-}
-
-function refreshAccountList() {
-  getAllItems(STORE_NAMES.accounts).then(accounts => {
-    const listEl = document.getElementById('accList');
-
-    if (!accounts.length) {
-      listEl.innerHTML = `
-        <div class="empty-state">
-          <p>No accounts yet.</p>
-          <button class="btn btn-primary" id="btnAddDefaultsEmpty">📦 Add Default Accounts</button>
-        </div>
-      `;
-      document.getElementById('btnAddDefaultsEmpty').addEventListener('click', addDefaultAccounts);
-      return;
-    }
-
-    listEl.innerHTML = accounts.map(account => {
-      const isNegative = account.balance < 0;
-      const isCredit = account.type === 'credit';
-      const balanceClass = isNegative ? 'negative' : 'positive';
-      const icon = getAccountIcon(account.type);
-
-      // If the account is a mortgage offset account, display linked loan info
-      const linkedLoanInfo = account.type === 'offset' && account.linkedLoanId
-        ? `<div class="linked-loan">Linked Loan: ${account.linkedLoanId}</div>`
-        : '';
-
-      return `
-        <div class="account-card">
-          <div class="account-header" data-id="${account.id}" onclick="toggleAccountDetails('${account.id}')">
-            <div class="account-icon">${icon}</div>
-            <div class="account-info">
-              <h4 class="account-name">${account.name}</h4>
-              <p class="account-type">${getAccountTypeLabel(account.type)}</p>
-            </div>
-            <div class="account-balance ${balanceClass}">
-              ${formatCurrency(account.balance, account.currency)}
-              ${isCredit && account.creditLimit ? `
-                <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
-              ` : ''}
-              ${linkedLoanInfo}
-            </div>
-          </div>
-          <div id="details-${account.id}" class="account-details" style="display: none;">
-            <div class="account-actions">
-              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    listEl.querySelectorAll('button').forEach(btn => {
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
-      btn.addEventListener('click', () => {
-        if (action === 'edit') openAccountEditor(id);
-        else if (action === 'delete') {
-          if (confirm('Delete this account?')) {
-            deleteItem(STORE_NAMES.accounts, id).then(refreshAccountList);
-          }
-        }
-      });
     });
   });
 }
