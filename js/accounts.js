@@ -68,10 +68,9 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
-async function getLoanName(linkedLoanId) {
-  const loans = await getAllItems(STORE_NAMES.loans);
-  const loan = loans.find(l => l.id === linkedLoanId);
-  return loan ? loan.name : 'Unknown Loan';
+function toggleAccountDetails(accountId) {
+  const details = document.getElementById(`details-${accountId}`);
+  details.style.display = details.style.display === 'none' ? 'block' : 'none';
 }
 
 function refreshAccountList() {
@@ -154,10 +153,10 @@ function refreshAccountList() {
   });
 }
 
-
-function toggleAccountDetails(accountId) {
-  const details = document.getElementById(`details-${accountId}`);
-  details.style.display = details.style.display === 'none' ? 'block' : 'none';
+async function getLoanName(linkedLoanId) {
+  const loans = await getAllItems(STORE_NAMES.loans);
+  const loan = loans.find(l => l.id === linkedLoanId);
+  return loan ? loan.name : 'Unknown Loan';
 }
 
 function getAccountIcon(type) {
