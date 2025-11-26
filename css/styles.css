@@ -1532,3 +1532,17 @@ table th, table td {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
+
+.dashboard‑header {
+  margin‑bottom: 1.5rem;
+  text‑align: center;
+}
+.dashboard‑header .datetime {
+  color: var(--text‑muted);
+  font‑size: 0.9rem;
+}
+.dashboard‑header .weather {
+  margin‑top: 0.3rem;
+  color: var(--text‑main);
+  font‑size: 1.1rem;
+}
