@@ -1,45 +1,31 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 
-// --- NEW HELPER FUNCTION ---
-/**
- * Calculates the start date of the current period based on view mode.
- * @param {string} viewMode - 'weekly', 'monthly', 'yearly', etc.
- * @returns {Date} The starting date of the current period.
- */
+// --- HELPER FUNCTION ---
 function getPeriodStartDate(viewMode) {
     const now = new Date();
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     switch (viewMode) {
         case 'weekly':
-            // Start of the current week (Sunday)
             date.setDate(now.getDate() - now.getDay());
             break;
         case 'fortnightly':
-            // Custom fortnight logic: use a fixed anchor date (e.g., the first day of the epoch)
-            // For simplicity, let's just go back 14 days from a Monday anchor
-            date.setDate(now.getDate() - (now.getDay() + 6) % 7 - 14); 
-            // Better to use transaction date or a fixed start point
+            date.setDate(now.getDate() - 14);
             break;
         case 'monthly':
-            // Start of the current month
             date.setDate(1);
             break;
         case 'quarterly':
-            // Start of the current quarter
             const currentQuarter = Math.floor(now.getMonth() / 3);
             date.setMonth(currentQuarter * 3, 1);
             break;
         case 'yearly':
-            // Start of the current year
             date.setMonth(0, 1);
             break;
     }
-    // Reset time to 00:00:00 for accurate comparison
     date.setHours(0, 0, 0, 0);
     return date;
 }
-// --- END NEW HELPER FUNCTION ---
 
 export async function initBudgetsUI() {
     console.log("✅ initBudgetsUI running…");
@@ -49,7 +35,6 @@ export async function initBudgetsUI() {
         return;
     }
 
-    // Preserve the current view mode selection across re-renders
     const currentViewMode = document.getElementById('budgetViewMode')?.value || 'monthly';
 
     mainContent.innerHTML = `
@@ -74,6 +59,7 @@ export async function initBudgetsUI() {
             <div class="card green"><h3>Total Income</h3><p id="totalIncome">$0.00</p></div>
             <div class="card red"><h3>Total Expenses</h3><p id="totalExpenses">$0.00</p></div>
             <div class="card blue"><h3>Total Budget</h3><p id="totalBudget">$0.00</p></div>
+            <div class="card purple"><h3>Balance</h3><p id="totalBalance">$0.00</p></div>
         </div>
 
         <div id="budgetContainer" class="budgets-container"></div>
@@ -97,26 +83,48 @@ export async function initBudgetsUI() {
     const container = document.getElementById('budgetContainer');
     container.innerHTML = '';
 
-    // Filter income categories (hardcoded categories list for income)
-    const incomeCategoryIds = [
-        'Spouse_Salary', 'Business Income', 'Government Payments', 
-        'Investment Income', 'Rental Income', 'Salary / Wages', 
-        'Tax Refund'
-    ];
+    // Get income categories dynamically from your categories data
+    const incomeCategories = categories.filter(cat => 
+        cat.type === 'income' || 
+        cat.name?.toLowerCase().includes('salary') || 
+        cat.name?.toLowerCase().includes('income')
+    ).map(cat => cat.id);
 
-    // Calculate Total Income, Total Expenses, and Budget Totals from the budget page
-    const totalIncome = budgets.filter(budget => incomeCategoryIds.includes(budget.categoryId))
-                               .reduce((sum, budget) => sum + (budget.amount || 0), 0);
+    const expenseCategories = categories.filter(cat => 
+        cat.type === 'expense' || 
+        !incomeCategories.includes(cat.id)
+    ).map(cat => cat.id);
 
-    const totalExpenses = budgets.filter(budget => !incomeCategoryIds.includes(budget.categoryId))
-                                 .reduce((sum, budget) => sum + (budget.amount || 0), 0);
+    console.log('Income categories:', incomeCategories);
+    console.log('Expense categories:', expenseCategories);
 
-    const totalBudget = budgets.reduce((sum, budget) => sum + (budget.amount || 0), 0);
+    // Calculate totals with frequency conversion
+    let totalIncome = 0;
+    let totalExpenses = 0;
+
+    budgets.forEach(budget => {
+        const normalizedAmount = convertAmount(
+            budget.amount || 0, 
+            budget.frequency || 'monthly', 
+            viewMode
+        );
+
+        if (incomeCategories.includes(budget.categoryId)) {
+            totalIncome += normalizedAmount;
+        } else if (expenseCategories.includes(budget.categoryId)) {
+            totalExpenses += normalizedAmount;
+        }
+    });
+
+    const totalBudget = totalIncome + totalExpenses;
+    const balance = totalIncome - totalExpenses;
 
     // Update the totals on the UI
     document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
     document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
     document.getElementById('totalBudget').textContent = `$${totalBudget.toFixed(2)}`;
+    document.getElementById('totalBalance').textContent = `$${balance.toFixed(2)}`;
+    document.getElementById('totalBalance').className = balance >= 0 ? 'positive' : 'negative';
 
     if (budgets.length === 0) {
         container.innerHTML = `
@@ -125,7 +133,6 @@ export async function initBudgetsUI() {
             </div>
         `;
     } else {
-        // Calculate the start of the current period based on the selected viewMode
         const periodStartDate = getPeriodStartDate(viewMode);
         const periodStartISO = periodStartDate.toISOString();
 
@@ -134,25 +141,34 @@ export async function initBudgetsUI() {
             const icon = budget.icon || guessCategoryIcon(cat?.name);
             const goal = budget.amount || 0;
 
-            // 1. Filter transactions to the current time period AND category
+            // Filter transactions to current period AND category
             const spentInPeriod = transactions
-                .filter(t => 
-                    t.type === 'expense' && 
-                    t.categoryId === budget.categoryId &&
-                    // CRITICAL FILTER: Only transactions after the period start date
-                    t.date >= periodStartISO 
-                )
+                .filter(t => {
+                    // For income budgets, track income transactions; for expense budgets, track expense transactions
+                    const isCorrectType = incomeCategories.includes(budget.categoryId) 
+                        ? t.type === 'income' 
+                        : t.type === 'expense';
+                    
+                    return isCorrectType && 
+                           t.categoryId === budget.categoryId &&
+                           t.date >= periodStartISO;
+                })
                 .reduce((sum, t) => sum + t.amount, 0);
 
-            // 2. Normalize the budget GOAL amount from its stored frequency to the view mode frequency
+            // Normalize both goal and spent to current view mode
             const normalizedGoal = convertAmount(goal, budget.frequency || 'monthly', viewMode);
-            
-            // 3. Normalized Spent is now simply the total spent in the current period
             const normalizedSpent = spentInPeriod; 
             
-            const remaining = Math.max(normalizedGoal - normalizedSpent, 0);
+            // For income budgets, we want to track how much we've earned vs goal
+            // For expense budgets, we track how much we've spent vs goal
+            const remaining = incomeCategories.includes(budget.categoryId) 
+                ? Math.max(normalizedGoal - normalizedSpent, 0)
+                : Math.max(normalizedGoal - normalizedSpent, 0);
+            
             const percent = normalizedGoal > 0 ? Math.min((normalizedSpent / normalizedGoal) * 100, 100) : 0;
-            const isOverBudget = normalizedSpent > normalizedGoal;
+            const isOverBudget = incomeCategories.includes(budget.categoryId) 
+                ? normalizedSpent < normalizedGoal // For income, we're "over" if we earned less than goal
+                : normalizedSpent > normalizedGoal; // For expenses, we're over if we spent more than goal
 
             const budgetCard = document.createElement('div');
             budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''}`;
@@ -160,10 +176,12 @@ export async function initBudgetsUI() {
                 <div class="budget-card-row1">
                     <div class="budget-left">
                         <span class="category-icon">${icon}</span>
-                        <span class="category-name">${cat?.name || 'Unknown'}</span>
+                        <span class="category-name">${cat?.name || 'Unknown'} 
+                            <span class="budget-type-badge">${incomeCategories.includes(budget.categoryId) ? '💰 Income' : '💸 Expense'}</span>
+                        </span>
 
                         <span class="budget-values">
-                            $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} ${budget.frequency}
+                            $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} 
                             · ${percent.toFixed(0)}%
                         </span>
                     </div>
@@ -180,9 +198,9 @@ export async function initBudgetsUI() {
                     </div>
 
                     <div class="budget-status">
-                        $${remaining.toFixed(2)} remaining — 
+                        $${remaining.toFixed(2)} ${incomeCategories.includes(budget.categoryId) ? 'to earn' : 'remaining'} — 
                         ${isOverBudget 
-                            ? '<span class="status-over">⚠️ Over</span>' 
+                            ? '<span class="status-over">⚠️ ' + (incomeCategories.includes(budget.categoryId) ? 'Behind' : 'Over') + '</span>' 
                             : '<span class="status-good">On Track</span>'
                         }
                     </div>
@@ -209,12 +227,6 @@ export async function initBudgetsUI() {
     });
 }
 
-
-
-
-
-// KEEP THE ORIGINAL WORKING showInlineEditor FUNCTION
-// Modified `showInlineEditor` function with duplicate check
 function showInlineEditor(existing, categories) {
     const container = document.getElementById('budgetContainer');
     container.querySelectorAll('.budget-editor').forEach(el => el.remove());
@@ -237,7 +249,8 @@ function showInlineEditor(existing, categories) {
                         <option value="">-- Select Category --</option>
                         ${categories.map(c => {
                             const icon = c.icon || guessCategoryIcon(c.name || '');
-                            return `<option value="${c.id}" ${c.id === existing?.categoryId ? 'selected' : ''}>${icon} ${c.name}</option>`;
+                            const type = c.type === 'income' ? '💰 Income' : '💸 Expense';
+                            return `<option value="${c.id}" ${c.id === existing?.categoryId ? 'selected' : ''}>${icon} ${c.name} (${type})</option>`;
                         }).join('')}
                     </select>
                 </div>
@@ -274,7 +287,6 @@ function showInlineEditor(existing, categories) {
         }
     });
 
-    // Handle Save Button Click
     document.getElementById('saveBudgetBtn').addEventListener('click', async () => {
         const categoryId = document.getElementById('categoryInput').value;
         const amount = parseFloat(document.getElementById('goalInput').value);
@@ -286,12 +298,11 @@ function showInlineEditor(existing, categories) {
             return;
         }
 
-        // Check for duplicate budget: Same category and frequency
         const existingBudgets = await getAllItems(STORE_NAMES.budgets);
         const duplicate = existingBudgets.some(budget => 
             budget.categoryId === categoryId && 
             budget.frequency === frequency &&
-            budget.id !== existing?.id // Ensure we're not comparing the same budget (in case of edit)
+            budget.id !== existing?.id
         );
 
         if (duplicate) {
@@ -330,18 +341,16 @@ function showInlineEditor(existing, categories) {
     });
 }
 
-
-// KEEP THE ORIGINAL HELPER FUNCTIONS
 function convertAmount(amount, fromFreq, toFreq) {
-    const correctMultipliers = {
-        weekly:      { weekly: 1,     fortnightly: 2,   monthly: 4.33,     quarterly: 13,    yearly: 52 },
-        fortnightly: { weekly: 0.5,   fortnightly: 1,   monthly: 2.17,     quarterly: 6.5,   yearly: 26 },
-        monthly:     { weekly: 1/4.33, fortnightly: 1/2.17, monthly: 1,    quarterly: 3,     yearly: 12 },
-        quarterly:   { weekly: 1/13,   fortnightly: 1/6.5,  monthly: 1/3,  quarterly: 1,     yearly: 4 }, 
-        yearly:      { weekly: 1/52,   fortnightly: 1/26,   monthly: 1/12, quarterly: 1/4,   yearly: 1 } 
+    const multipliers = {
+        weekly:      { weekly: 1,     fortnightly: 0.5,   monthly: 1/4.33,  quarterly: 1/13,   yearly: 1/52 },
+        fortnightly: { weekly: 2,     fortnightly: 1,     monthly: 1/2.17,  quarterly: 1/6.5,  yearly: 1/26 },
+        monthly:     { weekly: 4.33,  fortnightly: 2.17,  monthly: 1,       quarterly: 1/3,    yearly: 1/12 },
+        quarterly:   { weekly: 13,    fortnightly: 6.5,   monthly: 3,       quarterly: 1,      yearly: 1/4 }, 
+        yearly:      { weekly: 52,    fortnightly: 26,    monthly: 12,      quarterly: 4,      yearly: 1 } 
     };
     
-    const map = correctMultipliers[fromFreq];
+    const map = multipliers[fromFreq];
     
     if (!map) {
         console.warn('Unknown fromFreq:', fromFreq, '– using no conversion');
@@ -363,7 +372,9 @@ function guessCategoryIcon(name = '') {
         food: '🍽️', groceries: '🛒', utilities: '💡', rent: '🏠',
         transport: '🚗', travel: '✈️', entertainment: '🎬',
         savings: '💰', salary: '💵', health: '⚕️', shopping: '🛍️',
-        pets: '🐾', kids: '🧒', gifts: '🎁'
+        pets: '🐾', kids: '🧒', gifts: '🎁', income: '💰',
+        business: '💼', government: '🏛️', investment: '📈',
+        rental: '🏠', tax: '📝'
     };
     const key = Object.keys(map).find(k => name?.toLowerCase().includes(k));
     return map[key] || '💼';
