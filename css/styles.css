@@ -1669,10 +1669,11 @@ table th, table td {
 
 
 /* Container for the transaction cards */
+/* Container for the transaction cards in a single-column layout */
 .transactions-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column; /* Align items in a single column */
+  gap: 1rem; /* Space between each card */
   padding: 1rem;
 }
 
