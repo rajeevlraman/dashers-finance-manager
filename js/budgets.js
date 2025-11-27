@@ -97,9 +97,20 @@ export async function initBudgetsUI() {
     const container = document.getElementById('budgetContainer');
     container.innerHTML = '';
 
-    // Calculate Total Income, Total Expenses and Budget Totals
-    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    // Filter income categories (hardcoded categories list for income)
+    const incomeCategoryIds = [
+        'Spouse_Salary', 'Business Income', 'Government Payments', 
+        'Investment Income', 'Rental Income', 'Salary / Wages', 
+        'Tax Refund'
+    ];
+
+    // Calculate Total Income, Total Expenses and Budget Totals from the budget page
+    const totalIncome = budgets.filter(budget => incomeCategoryIds.includes(budget.categoryId))
+                               .reduce((sum, budget) => sum + (budget.amount || 0), 0);
+
+    const totalExpenses = budgets.filter(budget => !incomeCategoryIds.includes(budget.categoryId))
+                                 .reduce((sum, budget) => sum + (budget.amount || 0), 0);
+
     const totalBudget = budgets.reduce((sum, budget) => sum + (budget.amount || 0), 0);
 
     // Update the totals on the UI
@@ -197,6 +208,7 @@ export async function initBudgetsUI() {
         showInlineEditor(null, categories);
     });
 }
+
 
 
 
