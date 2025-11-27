@@ -52,9 +52,23 @@ export async function initBudgetsUI() {
     // Preserve the current view mode selection across re-renders
     const currentViewMode = document.getElementById('budgetViewMode')?.value || 'monthly';
 
+    // Fetch budgets, transactions, and categories
+    const [budgets, transactions, categories] = await Promise.all([
+        getAllItems(STORE_NAMES.budgets),
+        getAllItems(STORE_NAMES.transactions),
+        getAllItems(STORE_NAMES.categories)
+    ]);
+
+    // Calculate the total budget for the selected view mode
+    const totalBudget = budgets.reduce((total, budget) => {
+        const normalizedGoal = convertAmount(budget.amount, budget.frequency || 'monthly', currentViewMode);
+        return total + normalizedGoal;
+    }, 0);
+
+    // Update the page content with the total budget for the selected frequency
     mainContent.innerHTML = `
         <div class="budgets-header">
-            <h2>🎯 Budgets</h2>
+            <h2>🎯 Budgets <span class="total-budget">Total: $${totalBudget.toFixed(2)}</span></h2>
             <div class="budgets-controls">
                 <div class="view-mode">
                     <label class="form-label">View As:</label>
@@ -72,20 +86,15 @@ export async function initBudgetsUI() {
         <div id="budgetContainer" class="budgets-container"></div>
     `;
 
+    // Handle view mode change and re-render budgets
     const viewModeSelect = document.getElementById('budgetViewMode');
     viewModeSelect.addEventListener('change', () => {
         console.log('Global view mode changed to:', viewModeSelect.value);
-        initBudgetsUI(); 
+        initBudgetsUI();
     });
 
     const viewMode = viewModeSelect.value;
     console.log('Rendering budgets in view mode:', viewMode);
-
-    const [budgets, transactions, categories] = await Promise.all([
-        getAllItems(STORE_NAMES.budgets),
-        getAllItems(STORE_NAMES.transactions),
-        getAllItems(STORE_NAMES.categories)
-    ]);
 
     const container = document.getElementById('budgetContainer');
     container.innerHTML = '';
@@ -128,40 +137,38 @@ export async function initBudgetsUI() {
 
             const budgetCard = document.createElement('div');
             budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''}`;
-        budgetCard.innerHTML = `
-            <div class="budget-card-row1">
-                <div class="budget-left">
-                    <span class="category-icon">${icon}</span>
-                    <span class="category-name">${cat?.name || 'Unknown'}</span>
+            budgetCard.innerHTML = `
+                <div class="budget-card-row1">
+                    <div class="budget-left">
+                        <span class="category-icon">${icon}</span>
+                        <span class="category-name">${cat?.name || 'Unknown'}</span>
 
-                    <span class="budget-values">
-                        $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} ${budget.frequency}
-                        · ${percent.toFixed(0)}%
-                    </span>
+                        <span class="budget-values">
+                            $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} ${budget.frequency}
+                            · ${percent.toFixed(0)}%
+                        </span>
+                    </div>
+
+                    <div class="budget-actions">
+                        <button class="action-btn edit-btn" data-id="${budget.id}" title="Edit">✏️</button>
+                        <button class="action-btn delete-btn" data-id="${budget.id}" title="Delete">🗑️</button>
+                    </div>
                 </div>
 
-                <div class="budget-actions">
-                    <button class="action-btn edit-btn" data-id="${budget.id}" title="Edit">✏️</button>
-                    <button class="action-btn delete-btn" data-id="${budget.id}" title="Delete">🗑️</button>
+                <div class="budget-card-row2">
+                    <div class="sub-progress-bar-container">
+                        <div class="sub-progress-bar" style="width:${percent}%"></div>
+                    </div>
+
+                    <div class="budget-status">
+                        $${remaining.toFixed(2)} remaining — 
+                        ${isOverBudget 
+                            ? '<span class="status-over">⚠️ Over</span>' 
+                            : '<span class="status-good">On Track</span>'
+                        }
+                    </div>
                 </div>
-            </div>
-
-            <div class="budget-card-row2">
-                <div class="sub-progress-bar-container">
-                    <div class="sub-progress-bar" style="width:${percent}%"></div>
-                </div>
-
-                <div class="budget-status">
-                    $${remaining.toFixed(2)} remaining — 
-                    ${isOverBudget 
-                        ? '<span class="status-over">⚠️ Over</span>' 
-                        : '<span class="status-good">On Track</span>'
-                    }
-                </div>
-            </div>
-        `;
-
-
+            `;
 
             budgetCard.querySelector('.delete-btn').addEventListener('click', async () => {
                 if (confirm(`Delete budget for "${cat?.name}"?`)) {
@@ -182,6 +189,7 @@ export async function initBudgetsUI() {
         showInlineEditor(null, categories);
     });
 }
+
 
 // KEEP THE ORIGINAL WORKING showInlineEditor FUNCTION
 function showInlineEditor(existing, categories) {
