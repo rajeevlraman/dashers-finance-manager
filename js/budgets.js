@@ -343,11 +343,41 @@ function showInlineEditor(existing, categories) {
 
 function convertAmount(amount, fromFreq, toFreq) {
     const multipliers = {
-        weekly:      { weekly: 1,     fortnightly: 0.5,   monthly: 1/4.33,  quarterly: 1/13,   yearly: 1/52 },
-        fortnightly: { weekly: 2,     fortnightly: 1,     monthly: 1/2.17,  quarterly: 1/6.5,  yearly: 1/26 },
-        monthly:     { weekly: 4.33,  fortnightly: 2.17,  monthly: 1,       quarterly: 1/3,    yearly: 1/12 },
-        quarterly:   { weekly: 13,    fortnightly: 6.5,   monthly: 3,       quarterly: 1,      yearly: 1/4 }, 
-        yearly:      { weekly: 52,    fortnightly: 26,    monthly: 12,      quarterly: 4,      yearly: 1 } 
+        weekly: { 
+            weekly: 1,     
+            fortnightly: 1/2,   
+            monthly: 1/4.33,     
+            quarterly: 1/13,    
+            yearly: 1/52 
+        },
+        fortnightly: { 
+            weekly: 2,     
+            fortnightly: 1,     
+            monthly: 1/2.17,  
+            quarterly: 1/6.5,   
+            yearly: 1/26 
+        },
+        monthly: { 
+            weekly: 4.33,  
+            fortnightly: 2.17,  
+            monthly: 1,       
+            quarterly: 1/3,    
+            yearly: 1/12 
+        },
+        quarterly: { 
+            weekly: 13,    
+            fortnightly: 6.5,   
+            monthly: 3,       
+            quarterly: 1,      
+            yearly: 1/4 
+        }, 
+        yearly: { 
+            weekly: 52,    
+            fortnightly: 26,    
+            monthly: 12,      
+            quarterly: 4,      
+            yearly: 1 
+        }
     };
     
     const map = multipliers[fromFreq];
