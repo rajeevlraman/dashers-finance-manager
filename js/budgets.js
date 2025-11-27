@@ -200,6 +200,7 @@ export async function initBudgetsUI() {
 
 
 
+
 // KEEP THE ORIGINAL WORKING showInlineEditor FUNCTION
 // Modified `showInlineEditor` function with duplicate check
 function showInlineEditor(existing, categories) {
