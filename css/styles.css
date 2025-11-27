@@ -1842,3 +1842,14 @@ table th, table td {
 .card.gold { background: #f59e0b; color: white; }
 .card.purple { background: #8b5cf6; color: white; }
 .card.gray { background: #6b7280; color: white; }
+
+/* transaction page notes field added*/
+.transaction-notes {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding: 6px 10px;
+  background: var(--bg-muted);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
+}

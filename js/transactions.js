@@ -74,6 +74,11 @@ export async function initTransactionsUI() {
             </div>
           </div>
 
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea name="notes" class="form-input" placeholder="Optional details about the transaction..."></textarea>
+          </div>
+
           <div class="form-actions">
             <button class="btn btn-primary" type="submit">💾 Add Transaction</button>
             <button class="btn btn-secondary" type="reset">🧹 Clear</button>
@@ -187,7 +192,8 @@ export async function initTransactionsUI() {
       amount: parseFloat(f.amount.value),
       date: f.date.value,
       categoryId: chosenCategoryId,
-      accountId: f.accountId.value
+      accountId: f.accountId.value,
+      notes: f.notes.value.trim() || "",   // NEW NOTE FIELD
     };
 
     await addItem(STORE_NAMES.transactions, tx);
@@ -269,6 +275,7 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
               <p class="transaction-description">${cat.main} - ${cat.sub || '-'}</p>
               <span class="transaction-amount">$${tx.amount.toFixed(2)}</span>
               <span class="transaction-account">Account: ${acc}</span>
+              ${tx.notes ? `<p class="transaction-notes">📝 ${tx.notes}</p>` : ''}  <!-- Display notes if they exist -->
             </div>
             <div class="transaction-actions">
               <button class="btn btn-danger" data-id="${tx.id}">🗑️</button>
@@ -287,4 +294,3 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
     });
   });
 }
-
