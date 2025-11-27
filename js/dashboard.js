@@ -30,21 +30,10 @@ export async function initDashboardUI() {
     const avgROI = calcAvgROI(properties, tenants);
     const netPropertyWorth = totalValue - totalLoan;
 
-    // === Get available months from transactions ===
-    const uniqueMonths = Array.from(
-      new Set(
-        transactions.map(t => {
-          const d = new Date(t.date);
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        })
-      )
-    ).sort();
-
-    const latestMonth = uniqueMonths.at(-1) || new Date().toISOString().slice(0, 7);
-
     // === Main HTML Layout ===
     mainContent.innerHTML = `
       <h2>Dashboard</h2>
+      <!-- Financial Summary Row -->
       <div class="summary-cards">
         <div class="card green"><h3>Total Income</h3><p>$${safe(income)}</p></div>
         <div class="card red"><h3>Total Expenses</h3><p>$${safe(expenses)}</p></div>
@@ -66,8 +55,10 @@ export async function initDashboardUI() {
         <p>💎 Net Worth (Properties – Loans): <strong>$${safe(netPropertyWorth)}</strong></p>
       </div>
 
+      <!-- Expense Charts -->
       <canvas id="summaryChart" height="180"></canvas>
 
+      <!-- Expenses by Category -->
       <div style="margin-top:2rem;">
         <h3>Expenses by Category</h3>
         <label>Select Month:
@@ -78,11 +69,13 @@ export async function initDashboardUI() {
         <canvas id="expenseByCatChart" height="220"></canvas>
       </div>
 
+      <!-- Monthly Comparison -->
       <div style="margin-top:2rem;">
         <h3>Monthly Comparison (Selected vs Previous)</h3>
         <canvas id="monthCompareChart" height="200"></canvas>
       </div>
 
+      <!-- Trend Chart -->
       <div id="trendContainer" style="margin-top:2rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <h3>Spending Trend (Income vs Expenses Over Time)</h3>
