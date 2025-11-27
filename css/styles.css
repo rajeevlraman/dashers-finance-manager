@@ -1666,3 +1666,89 @@ table th, table td {
   text-align: left;
   margin-top: 5px;
 }
+
+
+/* Container for the transaction cards */
+.transactions-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* Styling for each transaction card */
+.transaction-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transaction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Header of the transaction card (date and category) */
+.transaction-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.transaction-date {
+  color: #374151; /* Darker text for date */
+}
+
+.transaction-category {
+  font-weight: bold;
+  color: var(--accent);
+}
+
+/* Body of the transaction card (description and amount) */
+.transaction-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.transaction-description {
+  font-size: 1rem;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.transaction-amount {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--success); /* Green color for amount */
+}
+
+.transaction-account {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Actions (Delete button) */
+.transaction-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.transaction-actions .btn-danger {
+  background: var(--danger);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.transaction-actions .btn-danger:hover {
+  background: #b91c1c;
+}

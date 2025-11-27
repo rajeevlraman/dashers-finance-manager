@@ -220,6 +220,7 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
   const txList = document.getElementById('txList');
   let filtered = [...transactions];
 
+  // Apply filters to the transactions
   if (filters.type) filtered = filtered.filter(t => t.type === filters.type);
   if (filters.mainCategoryId) {
     const allSubIds = categories
@@ -235,6 +236,7 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
 
   filtered.sort((a, b) => b.date.localeCompare(a.date));
 
+  // Helper function to get main and subcategory names
   const getMainSub = id => {
     const cat = categories.find(c => c.id === id);
     if (!cat) return { main: 'Unknown', sub: '' };
@@ -248,34 +250,36 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
     return;
   }
 
+  // Generate HTML for transactions in cards
   txList.innerHTML = `
-    <table class="table">
-      <thead>
-        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Main Category</th><th>Subcategory</th><th>Account</th><th>Actions</th></tr>
-      </thead>
-      <tbody>
-        ${filtered.map(tx => {
-          const cat = getMainSub(tx.categoryId);
-          const acc = accounts.find(a => a.id === tx.accountId)?.name || 'Unknown';
-          const typeTag = tx.type === 'income'
-            ? `<span class="tag income">Income</span>`
-            : `<span class="tag expense">Expense</span>`;
-          return `
-            <tr>
-              <td>${tx.date}</td>
-              <td>${typeTag}</td>
-              <td>$${tx.amount.toFixed(2)}</td>
-              <td>${cat.main}</td>
-              <td>${cat.sub || '-'}</td>
-              <td>${acc}</td>
-              <td><button class="btn btn-danger" data-id="${tx.id}">🗑️</button></td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
+    <div class="transactions-container">
+      ${filtered.map(tx => {
+        const cat = getMainSub(tx.categoryId);
+        const acc = accounts.find(a => a.id === tx.accountId)?.name || 'Unknown';
+        const typeTag = tx.type === 'income'
+          ? `<span class="tag income">Income</span>`
+          : `<span class="tag expense">Expense</span>`;
+        return `
+          <div class="transaction-card">
+            <div class="transaction-header">
+              <span class="transaction-date">${tx.date}</span>
+              <span class="transaction-category">${typeTag}</span>
+            </div>
+            <div class="transaction-body">
+              <p class="transaction-description">${cat.main} - ${cat.sub || '-'}</p>
+              <span class="transaction-amount">$${tx.amount.toFixed(2)}</span>
+              <span class="transaction-account">Account: ${acc}</span>
+            </div>
+            <div class="transaction-actions">
+              <button class="btn btn-danger" data-id="${tx.id}">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
   `;
 
+  // Add event listener for the delete button
   txList.querySelectorAll('.btn-danger').forEach(btn => {
     btn.addEventListener('click', async () => {
       await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
@@ -283,3 +287,4 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
     });
   });
 }
+
