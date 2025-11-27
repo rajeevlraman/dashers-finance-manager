@@ -793,7 +793,8 @@ main#mainContent {
 /* =========================================================
    TABLES / TRANSACTIONS / GENERIC TABLE
    ========================================================= */
-.table {
+/*
+   .table {
   width: 100%;
   border-collapse: collapse;
   background: var(--bg-card);
@@ -832,6 +833,44 @@ main#mainContent {
 }
 .transactions-list {
   margin-top: 1.5rem;
+}
+*//* new one added on 27-11-25*/
+
+/* =========================================================
+   TABLE RESPONSIVENESS – ALLOW HORIZONTAL SCROLL IF NECESSARY
+   ========================================================= */
+@media (max-width: 768px) {
+  .transactions-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .transactions-list {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  .table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+  }
+
+  .table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Ensure no clipping of the transactions list */
+  .transactions-header h2 {
+    font-size: 1.2rem;
+  }
 }
 
 /* =========================================================
