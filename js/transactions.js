@@ -276,6 +276,10 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
         const typeTag = tx.type === 'income'
           ? `<span class="tag income">Income</span>`
           : `<span class="tag expense">Expense</span>`;
+
+        // Only show notes if they are available
+        const notesDisplay = tx.notes ? `<p class="transaction-notes">Notes: ${tx.notes}</p>` : '';
+
         return `
           <div class="transaction-card">
             <div class="transaction-header">
@@ -286,7 +290,7 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
               <p class="transaction-description">${cat.main} - ${cat.sub || '-'}</p>
               <span class="transaction-amount">$${tx.amount.toFixed(2)}</span>
               <span class="transaction-account">Account: ${acc}</span>
-              <p class="transaction-notes">Notes: ${tx.notes || '-'}</p>
+              ${notesDisplay} <!-- Display notes if they exist -->
             </div>
             <div class="transaction-actions">
               <button class="btn btn-danger" data-id="${tx.id}">🗑️</button>
