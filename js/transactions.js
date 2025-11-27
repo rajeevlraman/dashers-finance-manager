@@ -1,4 +1,4 @@
-import { getAllItems, addItem, deleteItem, STORE_NAMES } from './db.js';
+import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES } from './db.js';
 
 export async function initTransactionsUI() {
   const mainContent = document.getElementById('mainContent');
@@ -27,7 +27,7 @@ export async function initTransactionsUI() {
 
       <div id="addTxForm" class="section-card form-section" style="display: none;">
         <h3>➕ Add New Transaction</h3>
-        <form id="txForm" class="styled-form">
+        <form id="txForm" class="styled-form" data-id="">
           <div class="form-row">
             <div class="form-group">
               <label>Type</label>
@@ -74,9 +74,11 @@ export async function initTransactionsUI() {
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Notes</label>
-            <textarea name="notes" class="form-input" placeholder="Optional details about the transaction..."></textarea>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea name="notes" class="form-input" placeholder="Add notes here..."></textarea>
+            </div>
           </div>
 
           <div class="form-actions">
@@ -193,11 +195,20 @@ export async function initTransactionsUI() {
       date: f.date.value,
       categoryId: chosenCategoryId,
       accountId: f.accountId.value,
-      notes: f.notes.value.trim() || "",   // NEW NOTE FIELD
+      notes: f.notes.value.trim() || "",  // Save notes
     };
 
-    await addItem(STORE_NAMES.transactions, tx);
-    initTransactionsUI();  // Re-render transactions after adding
+    const txId = f.dataset.id;  // Get the ID from the form if it's being edited
+
+    if (txId) {
+      // Edit existing transaction
+      await updateItem(STORE_NAMES.transactions, txId, tx);
+    } else {
+      // Add new transaction
+      await addItem(STORE_NAMES.transactions, tx);
+    }
+
+    initTransactionsUI();  // Re-render transactions after adding/editing
   });
 
   // === Filter linking for Filter Form ===
@@ -208,7 +219,7 @@ export async function initTransactionsUI() {
     const parentId = filterMain.value;
     const filteredSubs = subCats.filter(s => s.parentId === parentId);
     filterSub.innerHTML = `<option value="">All Subcategories</option>` +
-      filteredSubs.map(s => `<option value="${s.id}">${s.icon || '📄'} ${s.name}</option>`).join('');
+      filteredSubs.map(s => `<option value="${s.id}">${s.icon || '📄'} ${s.name}</option>`).join(''); 
   });
 
   // === Filter submit ===
@@ -275,10 +286,11 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
               <p class="transaction-description">${cat.main} - ${cat.sub || '-'}</p>
               <span class="transaction-amount">$${tx.amount.toFixed(2)}</span>
               <span class="transaction-account">Account: ${acc}</span>
-              ${tx.notes ? `<p class="transaction-notes">📝 ${tx.notes}</p>` : ''}  <!-- Display notes if they exist -->
+              <p class="transaction-notes">Notes: ${tx.notes || '-'}</p>
             </div>
             <div class="transaction-actions">
               <button class="btn btn-danger" data-id="${tx.id}">🗑️</button>
+              <button class="btn btn-primary edit-btn" data-id="${tx.id}">✏️</button>  <!-- Edit Button -->
             </div>
           </div>
         `;
@@ -291,6 +303,32 @@ function renderTransactions(transactions, categories, accounts, filters = {}) {
     btn.addEventListener('click', async () => {
       await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
       initTransactionsUI();  // Re-render transactions after deletion
+    });
+  });
+
+  // Add event listener for the edit button
+  txList.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const txId = btn.dataset.id;
+      const txToEdit = filtered.find(tx => tx.id === txId);
+
+      // Pre-fill the form with the transaction data
+      const txForm = document.getElementById('txForm');
+      const mainSelect = document.getElementById('mainCategory');
+      const subSelect = document.getElementById('subCategory');
+
+      txForm.dataset.id = txToEdit.id;  // Set the transaction ID for editing
+      txForm.type.value = txToEdit.type;
+      txForm.amount.value = txToEdit.amount;
+      txForm.date.value = txToEdit.date;
+      txForm.accountId.value = txToEdit.accountId;
+      mainSelect.value = txToEdit.categoryId;  // Main category selection
+      subSelect.value = txToEdit.subCategoryId || '';  // Subcategory selection
+      txForm.notes.value = txToEdit.notes || '';  // Notes field
+
+      // Show the form for editing
+      addTxForm.style.display = 'block';
+      filterTxForm.style.display = 'none';  // Hide filter form
     });
   });
 }
