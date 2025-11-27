@@ -192,6 +192,7 @@ export async function initBudgetsUI() {
 
 
 // KEEP THE ORIGINAL WORKING showInlineEditor FUNCTION
+// Modified `showInlineEditor` function with duplicate check
 function showInlineEditor(existing, categories) {
     const container = document.getElementById('budgetContainer');
     container.querySelectorAll('.budget-editor').forEach(el => el.remove());
@@ -251,6 +252,7 @@ function showInlineEditor(existing, categories) {
         }
     });
 
+    // Handle Save Button Click
     document.getElementById('saveBudgetBtn').addEventListener('click', async () => {
         const categoryId = document.getElementById('categoryInput').value;
         const amount = parseFloat(document.getElementById('goalInput').value);
@@ -259,6 +261,19 @@ function showInlineEditor(existing, categories) {
 
         if (!categoryId || isNaN(amount)) {
             alert('Please select a category and enter a goal amount.');
+            return;
+        }
+
+        // Check for duplicate budget: Same category and frequency
+        const existingBudgets = await getAllItems(STORE_NAMES.budgets);
+        const duplicate = existingBudgets.some(budget => 
+            budget.categoryId === categoryId && 
+            budget.frequency === frequency &&
+            budget.id !== existing?.id // Ensure we're not comparing the same budget (in case of edit)
+        );
+
+        if (duplicate) {
+            alert('A budget for this category and frequency already exists!');
             return;
         }
 
@@ -292,6 +307,7 @@ function showInlineEditor(existing, categories) {
         form.remove();
     });
 }
+
 
 // KEEP THE ORIGINAL HELPER FUNCTIONS
 function convertAmount(amount, fromFreq, toFreq) {
