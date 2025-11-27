@@ -52,23 +52,9 @@ export async function initBudgetsUI() {
     // Preserve the current view mode selection across re-renders
     const currentViewMode = document.getElementById('budgetViewMode')?.value || 'monthly';
 
-    // Fetch budgets, transactions, and categories
-    const [budgets, transactions, categories] = await Promise.all([
-        getAllItems(STORE_NAMES.budgets),
-        getAllItems(STORE_NAMES.transactions),
-        getAllItems(STORE_NAMES.categories)
-    ]);
-
-    // Calculate the total budget for the selected view mode
-    const totalBudget = budgets.reduce((total, budget) => {
-        const normalizedGoal = convertAmount(budget.amount, budget.frequency || 'monthly', currentViewMode);
-        return total + normalizedGoal;
-    }, 0);
-
-    // Update the page content with the total budget for the selected frequency
     mainContent.innerHTML = `
         <div class="budgets-header">
-            <h2>🎯 Budgets <span class="total-budget">Total: $${totalBudget.toFixed(2)}</span></h2>
+            <h2>🎯 Budgets</h2>
             <div class="budgets-controls">
                 <div class="view-mode">
                     <label class="form-label">View As:</label>
@@ -83,21 +69,43 @@ export async function initBudgetsUI() {
                 <button id="addBudgetBtn" class="btn-primary">➕ Add Budget</button>
             </div>
         </div>
+
+        <div class="summary-cards">
+            <div class="card green"><h3>Total Income</h3><p id="totalIncome">$0.00</p></div>
+            <div class="card red"><h3>Total Expenses</h3><p id="totalExpenses">$0.00</p></div>
+            <div class="card blue"><h3>Total Budget</h3><p id="totalBudget">$0.00</p></div>
+        </div>
+
         <div id="budgetContainer" class="budgets-container"></div>
     `;
 
-    // Handle view mode change and re-render budgets
     const viewModeSelect = document.getElementById('budgetViewMode');
     viewModeSelect.addEventListener('change', () => {
         console.log('Global view mode changed to:', viewModeSelect.value);
-        initBudgetsUI();
+        initBudgetsUI(); 
     });
 
     const viewMode = viewModeSelect.value;
     console.log('Rendering budgets in view mode:', viewMode);
 
+    const [budgets, transactions, categories] = await Promise.all([
+        getAllItems(STORE_NAMES.budgets),
+        getAllItems(STORE_NAMES.transactions),
+        getAllItems(STORE_NAMES.categories)
+    ]);
+
     const container = document.getElementById('budgetContainer');
     container.innerHTML = '';
+
+    // Calculate Total Income, Total Expenses and Budget Totals
+    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const totalBudget = budgets.reduce((sum, budget) => sum + (budget.amount || 0), 0);
+
+    // Update the totals on the UI
+    document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
+    document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
+    document.getElementById('totalBudget').textContent = `$${totalBudget.toFixed(2)}`;
 
     if (budgets.length === 0) {
         container.innerHTML = `
@@ -189,6 +197,7 @@ export async function initBudgetsUI() {
         showInlineEditor(null, categories);
     });
 }
+
 
 
 // KEEP THE ORIGINAL WORKING showInlineEditor FUNCTION
