@@ -104,7 +104,7 @@ export async function initBudgetsUI() {
         'Tax Refund'
     ];
 
-    // Calculate Total Income, Total Expenses and Budget Totals from the budget page
+    // Calculate Total Income, Total Expenses, and Budget Totals from the budget page
     const totalIncome = budgets.filter(budget => incomeCategoryIds.includes(budget.categoryId))
                                .reduce((sum, budget) => sum + (budget.amount || 0), 0);
 
