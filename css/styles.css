@@ -1755,7 +1755,7 @@ table th, table td {
 
 /*dashboard*/
 
-/* Summary cards layout for dashboard */
+/* Summary cards layout for dashboard 
 .summary-cards {
   display: flex;
   justify-content: space-between;
@@ -1777,6 +1777,56 @@ table th, table td {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.property-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Add colors for card types */
+/*
+.card.green { background: #16a34a; color: white; }
+.card.red { background: #dc2626; color: white; }
+.card.blue { background: #1d4ed8; color: white; }
+.card.teal { background: #14b8a6; color: white; }
+.card.gold { background: #f59e0b; color: white; }
+.card.purple { background: #8b5cf6; color: white; }
+.card.gray { background: #6b7280; color: white; }
+
+*/
+/* Main container for the dashboard layout */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;  /* Adds spacing between rows */
+  margin-bottom: 2rem;  /* Adds bottom margin for spacing */
+}
+
+/* Financial Summary Row */
+.summary-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-cards .card {
+  flex: 1;
+  padding: 1rem;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.3s ease;
+  text-align: center;
+}
+
+/* Hover effect for cards */
+.summary-cards .card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Property Summary Row */
 .property-row {
   display: flex;
   justify-content: space-between;
