@@ -45,11 +45,15 @@ export async function initDashboardUI() {
     // === Main HTML Layout ===
     mainContent.innerHTML = `
       <h2>Dashboard</h2>
+      <!-- Main container for all cards -->
+    <div class="dashboard-container">
+      <!-- Financial Summary Row -->
       <div class="summary-cards">
-        <div class="card green"><h3>Total Income</h3><p>$${safe(income)}</p></div>
-        <div class="card red"><h3>Total Expenses</h3><p>$${safe(expenses)}</p></div>
-        <div class="card blue"><h3>Balance</h3><p>$${safe(balance)}</p></div>
-      </div>
+      <div class="card green"><h3>Total Income</h3><p>$${safe(income)}</p></div>
+      <div class="card red"><h3>Total Expenses</h3><p>$${safe(expenses)}</p></div>
+      <div class="card blue"><h3>Balance</h3><p>$${safe(balance)}</p></div>
+    </div>
+
 
       <!-- 🏠 Property Summary Row -->
       <div class="summary-cards property-row">
