@@ -1,5 +1,5 @@
 // ============================================================================
-// 🏦 loans.js — Enhanced Loans Module for Budget Tracker
+// 🏦 loans.js — Enhanced Loans Module with Interest-Only Support
 // ============================================================================
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
@@ -60,11 +60,25 @@ const DEFAULT_LOANS = [
     termMonths: 120, 
     paymentFrequency: 'monthly',
     icon: '🎓'
+  },
+  { 
+    id: 'loan5', 
+    name: 'Investment Property Loan', 
+    type: 'investment', 
+    originalAmount: 500000, 
+    currentBalance: 500000, 
+    interestRate: 5.2, 
+    currency: 'AUD', 
+    startDate: new Date().toISOString().split('T')[0], 
+    termMonths: 360,
+    interestOnlyMonths: 24, // 2 years interest-only period
+    paymentFrequency: 'monthly',
+    icon: '🏢'
   }
 ];
 
 // ============================================================================
-// 🎨 Helper Functions (MOVE THESE TO TOP)
+// 🎨 Helper Functions
 // ============================================================================
 function getLoanIcon(type) { 
   const icons = {
@@ -72,7 +86,8 @@ function getLoanIcon(type) {
     vehicle: '🚗', 
     personal: '👤', 
     education: '🎓', 
-    business: '💼'
+    business: '💼',
+    investment: '🏢'
   };
   return icons[type] || '🏦'; 
 }
@@ -83,7 +98,8 @@ function getLoanTypeLabel(type) {
     vehicle: 'Vehicle', 
     personal: 'Personal', 
     education: 'Education', 
-    business: 'Business'
+    business: 'Business',
+    investment: 'Investment'
   };
   return labels[type] || 'Loan'; 
 }
@@ -96,7 +112,17 @@ function formatCurrency(amount, currency) {
 }
 
 // ============================================================================
-// 🧹 Utility Functions (MOVE THESE TO TOP)
+// 🧮 Helper function for P&I payment calculation
+// ============================================================================
+function calculatePAndIPayment(balance, monthlyRate, remainingMonths) {
+  if (monthlyRate === 0) return balance / remainingMonths;
+  if (remainingMonths === 0) return balance;
+  return balance * monthlyRate * Math.pow(1 + monthlyRate, remainingMonths) / 
+         (Math.pow(1 + monthlyRate, remainingMonths) - 1);
+}
+
+// ============================================================================
+// 🧹 Utility Functions
 // ============================================================================
 async function addDefaultLoans() {
   const existing = await getAllItems(STORE_NAMES.loans);
@@ -122,7 +148,7 @@ async function refreshLoansList() {
 }
 
 // ============================================================================
-// 💰 Process Loan Payment (MOVE THESE TO TOP)
+// 💰 Process Loan Payment with Interest-Only Support
 // ============================================================================
 export async function processLoanPayment(loanId, paymentData) {
   const { amount, fromAccountId, paymentDate = new Date().toISOString().split('T')[0] } = paymentData;
@@ -136,9 +162,30 @@ export async function processLoanPayment(loanId, paymentData) {
   const fromAccount = accounts.find(a => a.id === fromAccountId);
   if (!fromAccount) throw new Error('Source account not found');
 
+  // Calculate months passed since loan start
+  const startDate = new Date(loan.startDate);
+  const currentDate = new Date(paymentDate);
+  const monthsPassed = (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                      (currentDate.getMonth() - startDate.getMonth());
+  
+  const isInterestOnlyPeriod = loan.interestOnlyMonths && monthsPassed < loan.interestOnlyMonths;
+  
   const monthlyRate = loan.interestRate / 100 / 12;
   const interest = loan.currentBalance * monthlyRate;
-  const principal = Math.min(amount - interest, loan.currentBalance);
+  
+  let principal = 0;
+  if (isInterestOnlyPeriod) {
+    // Interest-only payment - principal remains the same
+    principal = 0;
+    if (amount < interest) {
+      throw new Error(`Interest-only payment must be at least ${formatCurrency(interest, loan.currency)}`);
+    }
+    // Any amount over interest goes to principal (optional early repayment)
+    principal = Math.min(amount - interest, loan.currentBalance);
+  } else {
+    // Standard P&I payment
+    principal = Math.min(amount - interest, loan.currentBalance);
+  }
 
   loan.currentBalance -= principal;
   loan.updatedAt = new Date().toISOString();
@@ -152,9 +199,10 @@ export async function processLoanPayment(loanId, paymentData) {
     amount,
     principal,
     interest,
+    isInterestOnly: isInterestOnlyPeriod,
     date: paymentDate,
     fromAccountId,
-    description: `Loan payment - ${loan.name}`,
+    description: `Loan payment - ${loan.name}${isInterestOnlyPeriod ? ' (Interest Only)' : ''}`,
     createdAt: new Date().toISOString()
   };
 
@@ -165,7 +213,7 @@ export async function processLoanPayment(loanId, paymentData) {
     date: paymentDate,
     categoryId: await getLoanExpenseCategoryId(),
     accountId: fromAccountId,
-    description: `Loan payment - ${loan.name}`,
+    description: `Loan payment - ${loan.name}${isInterestOnlyPeriod ? ' (Interest Only)' : ''}`,
     createdAt: new Date().toISOString()
   };
 
@@ -174,11 +222,16 @@ export async function processLoanPayment(loanId, paymentData) {
   await addItem(STORE_NAMES.loanTransactions, loanTransaction);
   await addItem(STORE_NAMES.transactions, paymentTransaction);
 
-  return { principal, interest, newBalance: loan.currentBalance };
+  return { 
+    principal, 
+    interest, 
+    newBalance: loan.currentBalance,
+    isInterestOnly: isInterestOnlyPeriod
+  };
 }
 
 // ============================================================================
-// 🧮 Offset Interest Calculation (MOVE THESE TO TOP)
+// 🧮 Offset Interest Calculation
 // ============================================================================
 export async function calculateOffsetInterest(loanId) {
   const [loan, accounts] = await Promise.all([
@@ -196,7 +249,7 @@ export async function calculateOffsetInterest(loanId) {
 }
 
 // ============================================================================
-// 📂 Get or Create Loan Expense Category (MOVE THESE TO TOP)
+// 📂 Get or Create Loan Expense Category
 // ============================================================================
 async function getLoanExpenseCategoryId() {
   const categories = await getAllItems(STORE_NAMES.categories);
@@ -229,8 +282,19 @@ export async function initLoansUI() {
 
   // Calculate summary stats
   const totalBalance = loans.reduce((sum, loan) => sum + loan.currentBalance, 0);
-  const totalMonthlyPayments = loans.reduce((sum, loan) => sum + calculatePaymentAmount(loan), 0);
+  const totalMonthlyPayments = loans.reduce((sum, loan) => {
+    const payment = calculatePaymentAmount(loan);
+    return sum + (payment || 0);
+  }, 0);
   const paidOffLoans = loans.filter(loan => loan.currentBalance <= 0).length;
+  const interestOnlyLoans = loans.filter(loan => {
+    if (!loan.interestOnlyMonths) return false;
+    const startDate = new Date(loan.startDate);
+    const now = new Date();
+    const monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12 + 
+                        (now.getMonth() - startDate.getMonth());
+    return monthsPassed < loan.interestOnlyMonths;
+  }).length;
 
   mainContent.innerHTML = `
     <div class="page-container">
@@ -265,11 +329,11 @@ export async function initLoansUI() {
             <div class="compact-label">Paid Off</div>
           </div>
         </div>
-        <div class="compact-card purple">
-          <div class="compact-icon">📊</div>
+        <div class="compact-card orange">
+          <div class="compact-icon">⏰</div>
           <div class="compact-content">
-            <div class="compact-value">${loans.length}</div>
-            <div class="compact-label">Total Loans</div>
+            <div class="compact-value">${interestOnlyLoans}</div>
+            <div class="compact-label">Interest Only</div>
           </div>
         </div>
       </div>
@@ -295,6 +359,7 @@ export async function initLoansUI() {
                   <option value="personal">👤 Personal</option>
                   <option value="education">🎓 Education</option>
                   <option value="business">💼 Business</option>
+                  <option value="investment">🏢 Investment</option>
                 </select>
               </div>
             </div>
@@ -336,6 +401,18 @@ export async function initLoansUI() {
               </div>
             </div>
 
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Interest-Only Period (months)</label>
+                <input type="number" name="interestOnlyMonths" class="form-input" placeholder="0" min="0" value="0">
+                <small class="form-hint">Set to 0 for Principal & Interest from start</small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Remaining Interest-Only</label>
+                <input type="number" name="remainingInterestOnlyMonths" class="form-input" placeholder="Auto-calculated" readonly>
+              </div>
+            </div>
+
             <div class="form-actions">
               <button class="btn btn-primary" type="submit">💾 Save Loan</button>
               <button class="btn btn-secondary" type="reset">🧹 Clear</button>
@@ -356,6 +433,7 @@ export async function initLoansUI() {
               <option value="interest-desc">Highest Interest</option>
               <option value="name-asc">Name A-Z</option>
               <option value="type-asc">Loan Type</option>
+              <option value="interest-only">Interest Only First</option>
             </select>
           </div>
         </div>
@@ -402,6 +480,12 @@ async function renderLoansList(loans, accounts) {
       case 'interest-desc': return b.interestRate - a.interestRate;
       case 'name-asc': return a.name.localeCompare(b.name);
       case 'type-asc': return a.type.localeCompare(b.type);
+      case 'interest-only':
+        const aIsInterestOnly = isLoanInterestOnly(a);
+        const bIsInterestOnly = isLoanInterestOnly(b);
+        if (aIsInterestOnly && !bIsInterestOnly) return -1;
+        if (!aIsInterestOnly && bIsInterestOnly) return 1;
+        return b.currentBalance - a.currentBalance;
       default: return b.currentBalance - a.currentBalance;
     }
   });
@@ -415,17 +499,32 @@ async function renderLoansList(loans, accounts) {
   attachLoanCardEventListeners(loans);
 }
 
+// Helper function to check if loan is in interest-only period
+function isLoanInterestOnly(loan) {
+  if (!loan.interestOnlyMonths) return false;
+  const startDate = new Date(loan.startDate);
+  const now = new Date();
+  const monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12 + 
+                      (now.getMonth() - startDate.getMonth());
+  return monthsPassed < loan.interestOnlyMonths;
+}
+
 // ============================================================================
-// 💳 Enhanced Loan Card
+// 💳 Enhanced Loan Card with Interest-Only Support
 // ============================================================================
 async function renderLoanCard(loan, accounts) {
   const progress = ((loan.originalAmount - loan.currentBalance) / loan.originalAmount * 100).toFixed(1);
   const monthlyPayment = calculatePaymentAmount(loan);
   const offsetSavings = await calculateOffsetInterest(loan.id);
   const isPaidOff = loan.currentBalance <= 0;
+  
+  // Calculate interest-only status
+  const isInterestOnly = isLoanInterestOnly(loan);
+  const remainingInterestOnlyMonths = isInterestOnly ? 
+    Math.max(loan.interestOnlyMonths - calculateMonthsPassed(loan.startDate), 0) : 0;
 
   return `
-    <div class="transaction-card ${isPaidOff ? 'paid' : 'active'}" data-id="${loan.id}">
+    <div class="transaction-card ${isPaidOff ? 'paid' : 'active'} ${isInterestOnly ? 'interest-only' : ''}" data-id="${loan.id}">
       <div class="transaction-main">
         <div class="transaction-icon">${loan.icon || getLoanIcon(loan.type)}</div>
         <div class="transaction-details">
@@ -433,7 +532,8 @@ async function renderLoanCard(loan, accounts) {
           <div class="transaction-meta">
             <span class="transaction-type ${loan.type}">${getLoanTypeLabel(loan.type)}</span>
             <span class="transaction-interest">${loan.interestRate}% APR</span>
-            <span class="transaction-term">${loan.termMonths} months</span>
+            ${isInterestOnly ? `<span class="interest-only-badge">Interest Only</span>` : ''}
+            ${remainingInterestOnlyMonths > 0 ? `<span class="interest-only-months">${remainingInterestOnlyMonths} months left</span>` : ''}
           </div>
           <div class="loan-progress">
             <div class="progress-bar">
@@ -461,11 +561,19 @@ async function renderLoanCard(loan, accounts) {
       </div>
       ${!isPaidOff ? `
         <div class="loan-payment-info">
-          <small>Next payment: ${formatCurrency(monthlyPayment, loan.currency)} ${loan.paymentFrequency}</small>
+          <small>Next payment: ${formatCurrency(monthlyPayment, loan.currency)} ${loan.paymentFrequency} ${isInterestOnly ? '(Interest Only)' : '(P&I)'}</small>
         </div>
       ` : ''}
     </div>
   `;
+}
+
+// Helper function to calculate months passed
+function calculateMonthsPassed(startDateStr) {
+  const startDate = new Date(startDateStr);
+  const now = new Date();
+  return (now.getFullYear() - startDate.getFullYear()) * 12 + 
+         (now.getMonth() - startDate.getMonth());
 }
 
 // ============================================================================
@@ -486,7 +594,11 @@ function setupLoansEventListeners(loans, accounts) {
     loanForm.reset();
     loanForm.dataset.id = '';
     document.getElementById('loanFormTitle').textContent = '➕ Add New Loan';
-    loanForm.startDate.value = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    loanForm.startDate.value = today;
+    
+    // Setup interest-only calculation
+    setupInterestOnlyCalculation();
     
     if (!isVisible) {
       loanFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -515,6 +627,7 @@ function setupLoansEventListeners(loans, accounts) {
       termMonths: parseInt(formData.get('termMonths')),
       startDate: formData.get('startDate'),
       paymentFrequency: formData.get('paymentFrequency'),
+      interestOnlyMonths: parseInt(formData.get('interestOnlyMonths')) || 0,
       currency: 'AUD',
       icon: getLoanIcon(formData.get('type')),
       createdAt: new Date().toISOString(),
@@ -539,6 +652,38 @@ function setupLoansEventListeners(loans, accounts) {
   sortSelect.addEventListener('change', () => {
     renderLoansList(loans, accounts);
   });
+
+  // Setup interest-only calculation
+  setupInterestOnlyCalculation();
+}
+
+function setupInterestOnlyCalculation() {
+  const interestOnlyInput = document.querySelector('input[name="interestOnlyMonths"]');
+  const startDateInput = document.querySelector('input[name="startDate"]');
+  const remainingInput = document.querySelector('input[name="remainingInterestOnlyMonths"]');
+
+  if (interestOnlyInput && startDateInput && remainingInput) {
+    const calculateRemaining = () => {
+      const startDate = startDateInput.value;
+      const interestOnlyMonths = parseInt(interestOnlyInput.value) || 0;
+      
+      if (startDate && interestOnlyMonths > 0) {
+        const start = new Date(startDate);
+        const now = new Date();
+        const monthsPassed = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+        const remaining = Math.max(interestOnlyMonths - monthsPassed, 0);
+        remainingInput.value = remaining;
+      } else {
+        remainingInput.value = interestOnlyMonths;
+      }
+    };
+
+    interestOnlyInput.addEventListener('input', calculateRemaining);
+    startDateInput.addEventListener('change', calculateRemaining);
+    
+    // Calculate initial value
+    calculateRemaining();
+  }
 }
 
 function attachLoanCardEventListeners(loans) {
@@ -600,7 +745,16 @@ function openLoanEditor(loanId) {
     loanForm.termMonths.value = loan.termMonths;
     loanForm.startDate.value = loan.startDate;
     loanForm.paymentFrequency.value = loan.paymentFrequency;
+    loanForm.interestOnlyMonths.value = loan.interestOnlyMonths || 0;
     loanForm.dataset.id = loan.id;
+
+    // Calculate remaining interest-only months
+    const remainingInput = document.querySelector('input[name="remainingInterestOnlyMonths"]');
+    if (remainingInput && loan.interestOnlyMonths) {
+      const monthsPassed = calculateMonthsPassed(loan.startDate);
+      const remaining = Math.max(loan.interestOnlyMonths - monthsPassed, 0);
+      remainingInput.value = remaining;
+    }
 
     loanFormSection.style.display = 'block';
     loanFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -608,7 +762,7 @@ function openLoanEditor(loanId) {
 }
 
 // ============================================================================
-// 💳 Enhanced Payment Modal
+// 💳 Enhanced Payment Modal with Interest-Only Support
 // ============================================================================
 async function populatePaymentAccounts(loanId) {
   const accounts = await getAllItems(STORE_NAMES.accounts);
@@ -622,9 +776,19 @@ async function populatePaymentAccounts(loanId) {
 async function calculatePaymentBreakdown(loanId, amount) {
   const loan = await getAllItems(STORE_NAMES.loans).then(ls => ls.find(l => l.id === loanId));
   if (!loan || amount <= 0) return;
+  
   const monthlyRate = loan.interestRate / 100 / 12;
   const interest = loan.currentBalance * monthlyRate;
-  const principal = Math.min(amount - interest, loan.currentBalance);
+  
+  let principal = 0;
+  const isInterestOnly = isLoanInterestOnly(loan);
+  
+  if (isInterestOnly) {
+    principal = Math.min(amount - interest, loan.currentBalance);
+  } else {
+    principal = Math.min(amount - interest, loan.currentBalance);
+  }
+
   document.getElementById('paymentBreakdown').style.display = 'block';
   document.getElementById('breakdownPrincipal').textContent = formatCurrency(principal, loan.currency);
   document.getElementById('breakdownInterest').textContent = formatCurrency(interest, loan.currency);
@@ -638,7 +802,8 @@ async function processLoanPaymentForm(loanId, modal) {
   if (!amount || !fromAccountId) return alert('Fill all fields');
   try {
     const res = await processLoanPayment(loanId, { amount, fromAccountId, paymentDate });
-    alert(`✅ Payment success!\nPrincipal: ${formatCurrency(res.principal, 'AUD')}\nInterest: ${formatCurrency(res.interest, 'AUD')}\nNew Balance: ${formatCurrency(res.newBalance, 'AUD')}`);
+    const message = `✅ Payment success!\nPrincipal: ${formatCurrency(res.principal, 'AUD')}\nInterest: ${formatCurrency(res.interest, 'AUD')}\nNew Balance: ${formatCurrency(res.newBalance, 'AUD')}${res.isInterestOnly ? '\n(Interest Only Payment)' : ''}`;
+    alert(message);
     modal.remove();
     initLoansUI();
   } catch (err) {
@@ -647,91 +812,105 @@ async function processLoanPaymentForm(loanId, modal) {
 }
 
 function showPaymentModal(loanId) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay active';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>💳 Make Payment</h3>
-        <button class="btn btn-text close-modal">✕</button>
+  getAllItems(STORE_NAMES.loans).then(loans => {
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan) return;
+
+    // Calculate interest-only status
+    const isInterestOnly = isLoanInterestOnly(loan);
+    const monthlyRate = loan.interestRate / 100 / 12;
+    const interestOnlyPayment = loan.currentBalance * monthlyRate;
+    const minimumPayment = isInterestOnly ? interestOnlyPayment : calculatePaymentAmount(loan);
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>💳 Make Payment - ${loan.name}</h3>
+          ${isInterestOnly ? '<div class="interest-only-alert">⚠️ This loan is in interest-only period</div>' : ''}
+          <button class="btn btn-text close-modal">✕</button>
+        </div>
+        <form id="paymentForm" class="styled-form">
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <input type="number" id="paymentAmount" class="form-input" step="0.01" placeholder="0.00" required min="${minimumPayment}">
+            <small class="form-hint">Minimum payment: ${formatCurrency(minimumPayment, loan.currency)} ${isInterestOnly ? '(Interest Only)' : '(P&I)'}</small>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">From Account</label>
+            <select id="paymentAccount" class="form-select" required>
+              <option value="">-- Select Account --</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" id="paymentDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+          </div>
+
+          <div id="paymentBreakdown" class="payment-breakdown" style="display: none;">
+            <h4>Payment Breakdown</h4>
+            <div class="breakdown-item">
+              <span>Principal:</span>
+              <strong id="breakdownPrincipal">$0.00</strong>
+            </div>
+            <div class="breakdown-item">
+              <span>Interest:</span>
+              <strong id="breakdownInterest">$0.00</strong>
+            </div>
+            <div class="breakdown-item total">
+              <span>Total Payment:</span>
+              <strong id="breakdownTotal">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💳 Process Payment</button>
+            <button type="button" class="btn btn-secondary" id="cancelPayment">Cancel</button>
+          </div>
+        </form>
       </div>
-      <form id="paymentForm" class="styled-form">
-        <div class="form-group">
-          <label class="form-label">Amount</label>
-          <input type="number" id="paymentAmount" class="form-input" step="0.01" placeholder="0.00" required>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">From Account</label>
-          <select id="paymentAccount" class="form-select" required>
-            <option value="">-- Select Account --</option>
-          </select>
-        </div>
+    `;
+    
+    document.body.appendChild(modal);
 
-        <div class="form-group">
-          <label class="form-label">Date</label>
-          <input type="date" id="paymentDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
-        </div>
+    populatePaymentAccounts(loanId);
 
-        <div id="paymentBreakdown" class="payment-breakdown" style="display: none;">
-          <h4>Payment Breakdown</h4>
-          <div class="breakdown-item">
-            <span>Principal:</span>
-            <strong id="breakdownPrincipal">$0.00</strong>
-          </div>
-          <div class="breakdown-item">
-            <span>Interest:</span>
-            <strong id="breakdownInterest">$0.00</strong>
-          </div>
-          <div class="breakdown-item total">
-            <span>Total Payment:</span>
-            <strong id="breakdownTotal">$0.00</strong>
-          </div>
-        </div>
+    // Event listeners
+    document.getElementById('cancelPayment').onclick = () => modal.remove();
+    document.querySelector('.close-modal').onclick = () => modal.remove();
+    
+    document.getElementById('paymentAmount').oninput = (e) =>
+      calculatePaymentBreakdown(loanId, parseFloat(e.target.value) || 0);
+    
+    document.getElementById('paymentForm').onsubmit = async (e) => {
+      e.preventDefault();
+      await processLoanPaymentForm(loanId, modal);
+    };
 
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">💳 Process Payment</button>
-          <button type="button" class="btn btn-secondary" id="cancelPayment">Cancel</button>
-        </div>
-      </form>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-
-  populatePaymentAccounts(loanId);
-
-  // Event listeners
-  document.getElementById('cancelPayment').onclick = () => modal.remove();
-  document.querySelector('.close-modal').onclick = () => modal.remove();
-  
-  document.getElementById('paymentAmount').oninput = (e) =>
-    calculatePaymentBreakdown(loanId, parseFloat(e.target.value) || 0);
-  
-  document.getElementById('paymentForm').onsubmit = async (e) => {
-    e.preventDefault();
-    await processLoanPaymentForm(loanId, modal);
-  };
-
-  // Close modal on background click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.remove();
+    // Close modal on background click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
   });
 }
 
 // ============================================================================
-// 📅 Enhanced Amortization Schedule Modal
+// 📅 Enhanced Amortization Schedule with Interest-Only Support
 // ============================================================================
 function viewAmortizationSchedule(loanId) {
   getAllItems(STORE_NAMES.loans).then(loans => {
     const loan = loans.find(l => l.id === loanId);
     if (!loan) return;
 
-    const schedule = calculateAmortizationSchedule(loan);
-    const totalInterest = calculateTotalInterest(loan);
+    const schedule = calculateEnhancedAmortizationSchedule(loan);
+    const totalInterest = schedule.reduce((sum, p) => sum + p.interest, 0);
     const totalPayments = schedule.reduce((sum, p) => sum + p.payment, 0);
     const finalPayment = schedule[schedule.length - 1];
     const payoffDate = finalPayment ? new Date(finalPayment.date).toLocaleDateString() : 'N/A';
+    const interestOnlyPayments = schedule.filter(p => p.isInterestOnly).length;
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
@@ -756,8 +935,8 @@ function viewAmortizationSchedule(loanId) {
             <div class="summary-label">Total Payments</div>
           </div>
           <div class="summary-card">
-            <div class="summary-value">${payoffDate}</div>
-            <div class="summary-label">Payoff Date</div>
+            <div class="summary-value">${interestOnlyPayments}</div>
+            <div class="summary-label">Interest-Only Payments</div>
           </div>
         </div>
 
@@ -771,22 +950,24 @@ function viewAmortizationSchedule(loanId) {
                 <th>Principal</th>
                 <th>Interest</th>
                 <th>Balance</th>
+                <th>Type</th>
               </tr>
             </thead>
             <tbody>
               ${schedule.slice(0, 12).map(p => `
-                <tr>
+                <tr class="${p.isInterestOnly ? 'interest-only-row' : ''}">
                   <td>${p.period}</td>
                   <td>${new Date(p.date).toLocaleDateString()}</td>
                   <td>${formatCurrency(p.payment, loan.currency)}</td>
                   <td>${formatCurrency(p.principal, loan.currency)}</td>
                   <td>${formatCurrency(p.interest, loan.currency)}</td>
                   <td>${formatCurrency(p.balance, loan.currency)}</td>
+                  <td>${p.isInterestOnly ? 'Interest Only' : 'P&I'}</td>
                 </tr>
               `).join('')}
               ${schedule.length > 12 ? `
                 <tr class="schedule-more">
-                  <td colspan="6" class="text-center">
+                  <td colspan="7" class="text-center">
                     ... and ${schedule.length - 12} more payments
                   </td>
                 </tr>
@@ -810,4 +991,62 @@ function viewAmortizationSchedule(loanId) {
       if (e.target === modal) modal.remove();
     });
   });
+}
+
+// Enhanced amortization schedule with interest-only support
+function calculateEnhancedAmortizationSchedule(loan) {
+  const schedule = [];
+  const monthlyRate = loan.interestRate / 100 / 12;
+  let balance = loan.currentBalance;
+  const startDate = new Date(loan.startDate);
+  
+  // Calculate months passed
+  const now = new Date();
+  const monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12 + 
+                      (now.getMonth() - startDate.getMonth());
+  
+  const remainingInterestOnlyMonths = Math.max((loan.interestOnlyMonths || 0) - monthsPassed, 0);
+  
+  for (let period = 1; period <= loan.termMonths - monthsPassed; period++) {
+    const periodDate = new Date(startDate);
+    periodDate.setMonth(periodDate.getMonth() + monthsPassed + period);
+    
+    const interest = balance * monthlyRate;
+    
+    let principal, payment;
+    const isInterestOnlyPeriod = period <= remainingInterestOnlyMonths;
+    
+    if (isInterestOnlyPeriod) {
+      // Interest-only payment
+      payment = interest;
+      principal = 0;
+    } else {
+      // Standard P&I payment after interest-only period
+      const remainingMonths = loan.termMonths - monthsPassed - remainingInterestOnlyMonths - (period - remainingInterestOnlyMonths - 1);
+      payment = calculatePAndIPayment(balance, monthlyRate, remainingMonths);
+      principal = payment - interest;
+    }
+    
+    // Ensure we don't overpay in the final period
+    if (principal > balance) {
+      principal = balance;
+      payment = principal + interest;
+    }
+    
+    balance -= principal;
+    
+    schedule.push({
+      period: monthsPassed + period,
+      date: periodDate.toISOString().split('T')[0],
+      payment,
+      principal,
+      interest,
+      balance: Math.max(balance, 0),
+      isInterestOnly: isInterestOnlyPeriod
+    });
+    
+    if (balance <= 0) break;
+  }
+  
+  return schedule;
 }

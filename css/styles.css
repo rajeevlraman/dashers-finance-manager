@@ -3186,3 +3186,79 @@ table th, table td {
   color: var(--text-light);
   font-style: italic;
 }
+
+/*loans*/
+
+/* Interest-Only Loan Styling */
+.interest-only-badge {
+  background: #ffd700;
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.interest-only-months {
+  background: #ff6b6b;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+}
+
+.interest-only-alert {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 10px 0;
+  font-size: 0.9em;
+}
+
+.transaction-card.interest-only {
+  border-left: 4px solid #ffd700;
+}
+
+.interest-only-row {
+  background-color: #fff9e6;
+}
+
+.compact-card.orange {
+  background: linear-gradient(135deg, #ffa726, #fb8c00);
+  color: white;
+}
+
+/* Payment breakdown styling */
+.payment-breakdown {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+}
+
+.payment-breakdown h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 1em;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.breakdown-item:last-child {
+  border-bottom: none;
+}
+
+.breakdown-item.total {
+  font-weight: bold;
+  border-top: 2px solid #495057;
+  padding-top: 8px;
+  margin-top: 8px;
+}
