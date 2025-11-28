@@ -3,32 +3,54 @@ import { getAllItems, STORE_NAMES } from './db.js';
 export async function initDashboardUI() {
   console.log("✅ initDashboardUI() executing...");
   const mainContent = document.getElementById('mainContent');
-  mainContent.innerHTML = '<p>⏳ Loading dashboard...</p>';
+  mainContent.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading dashboard...</p></div>';
 
   try {
     // === Fetch all core + property data ===
-    const [transactions, bills, categories, properties, tenants, loans, maintenance] = await Promise.all([
+    const [transactions, bills, categories, properties, tenants, loans, maintenance, accounts, budgets] = await Promise.all([
       getAllItems(STORE_NAMES.transactions),
       getAllItems(STORE_NAMES.bills),
       getAllItems(STORE_NAMES.categories),
       getAllItems(STORE_NAMES.properties || 'properties').catch(() => []),
       getAllItems(STORE_NAMES.tenants || 'tenants').catch(() => []),
       getAllItems(STORE_NAMES.loans || 'loans').catch(() => []),
-      getAllItems(STORE_NAMES.maintenance || 'maintenance').catch(() => [])
+      getAllItems(STORE_NAMES.maintenance || 'maintenance').catch(() => []),
+      getAllItems(STORE_NAMES.accounts).catch(() => []),
+      getAllItems(STORE_NAMES.budgets).catch(() => [])
     ]);
+
+    // === Current period calculations ===
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthIncome = transactions
+      .filter(t => t.type === 'income' && t.date?.startsWith(currentMonth))
+      .reduce((sum, t) => sum + t.amount, 0);
+    const currentMonthExpenses = transactions
+      .filter(t => t.type === 'expense' && t.date?.startsWith(currentMonth))
+      .reduce((sum, t) => sum + t.amount, 0);
+    const currentMonthBalance = currentMonthIncome - currentMonthExpenses;
 
     // === Financial totals ===
     const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
     const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
     const balance = income - expenses;
 
-    // === Property-specific calculations (safe defaults) ===
+    // === Account balances ===
+    const totalCashBalance = accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+    const totalCreditBalance = accounts
+      .filter(acc => acc.type === 'credit')
+      .reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+
+    // === Property-specific calculations ===
     const totalValue = properties.reduce((sum, p) => sum + (parseFloat(p.currentValue) || 0), 0);
     const totalLoan = loans.reduce((sum, l) => sum + (parseFloat(l.currentBalance) || 0), 0);
     const totalRent = tenants.reduce((sum, t) => sum + (parseFloat(t.rent) || 0), 0);
     const maintCost = maintenance.reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
     const avgROI = calcAvgROI(properties, tenants);
     const netPropertyWorth = totalValue - totalLoan;
+    const totalNetWorth = totalCashBalance + netPropertyWorth - Math.abs(totalCreditBalance);
+
+    // === Budget performance ===
+    const budgetPerformance = calculateBudgetPerformance(budgets, transactions, currentMonth);
 
     // === Get available months from transactions ===
     const uniqueMonths = Array.from(
@@ -40,90 +62,195 @@ export async function initDashboardUI() {
       )
     ).sort();
 
-    const latestMonth = uniqueMonths.at(-1) || new Date().toISOString().slice(0, 7);
+    const latestMonth = uniqueMonths.at(-1) || currentMonth;
 
     // === Main HTML Layout ===
     mainContent.innerHTML = `
-      <h2>Dashboard</h2>
-      <!-- Main container for all cards -->
-    <div class="dashboard-container">
-      <!-- Financial Summary Row -->
-      <div class="summary-cards">
-      <div class="card green"><h3>Total Income</h3><p>$${safe(income)}</p></div>
-      <div class="card red"><h3>Total Expenses</h3><p>$${safe(expenses)}</p></div>
-      <div class="card blue"><h3>Balance</h3><p>$${safe(balance)}</p></div>
-    </div>
-
-
-      <!-- 🏠 Property Summary Row -->
-      <div class="summary-cards property-row">
-        <div class="card teal"><h3>Total Property Value</h3><p>$${safe(totalValue)}</p></div>
-        <div class="card gold"><h3>Rent (Monthly)</h3><p>$${safe(totalRent)}</p></div>
-        <div class="card purple"><h3>Loan Balance</h3><p>$${safe(totalLoan)}</p></div>
-        <div class="card gray"><h3>Maintenance YTD</h3><p>$${safe(maintCost)}</p></div>
+      <div class="dashboard-header">
+        <h2>📊 Dashboard</h2>
+        <div class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
       </div>
 
-      <div class="property-stats">
-        <p>🏘️ Properties: <strong>${properties.length}</strong></p>
-        <p>👥 Tenants: <strong>${tenants.length}</strong></p>
-        <p>📈 Avg ROI: <strong>${avgROI}%</strong></p>
-        <p>💎 Net Worth (Properties – Loans): <strong>$${safe(netPropertyWorth)}</strong></p>
-      </div>
-
-      <canvas id="summaryChart" height="180"></canvas>
-
-      <div style="margin-top:2rem;">
-        <h3>Expenses by Category</h3>
-        <label>Select Month:
-          <select id="monthSelect">
-            ${uniqueMonths.map(m => `<option value="${m}" ${m === latestMonth ? 'selected' : ''}>${m}</option>`).join('')}
-          </select>
-        </label>
-        <canvas id="expenseByCatChart" height="220"></canvas>
-      </div>
-
-      <div style="margin-top:2rem;">
-        <h3>Monthly Comparison (Selected vs Previous)</h3>
-        <canvas id="monthCompareChart" height="200"></canvas>
-      </div>
-
-      <div id="trendContainer" style="margin-top:2rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <h3>Spending Trend (Income vs Expenses Over Time)</h3>
-          <button id="toggleTrend" class="button">📉 Hide</button>
+      <div class="dashboard-container">
+        <!-- Financial Health Summary -->
+        <div class="dashboard-section">
+          <h3>💰 Financial Health</h3>
+          <div class="summary-cards">
+            <div class="card ${currentMonthBalance >= 0 ? 'green' : 'red'}">
+              <div class="card-icon">💵</div>
+              <div class="card-content">
+                <h4>This Month</h4>
+                <p class="card-value">$${safe(currentMonthBalance)}</p>
+                <small>Income: $${safe(currentMonthIncome)} • Expenses: $${safe(currentMonthExpenses)}</small>
+              </div>
+            </div>
+            
+            <div class="card ${totalNetWorth >= 0 ? 'blue' : 'orange'}">
+              <div class="card-icon">🏦</div>
+              <div class="card-content">
+                <h4>Net Worth</h4>
+                <p class="card-value">$${safe(totalNetWorth)}</p>
+                <small>Cash: $${safe(totalCashBalance)} • Properties: $${safe(netPropertyWorth)}</small>
+              </div>
+            </div>
+            
+            <div class="card ${budgetPerformance.overBudgetCount === 0 ? 'teal' : 'yellow'}">
+              <div class="card-icon">🎯</div>
+              <div class="card-content">
+                <h4>Budget Status</h4>
+                <p class="card-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</p>
+                <small>${budgetPerformance.overBudgetCount} over budget</small>
+              </div>
+            </div>
+          </div>
         </div>
-        <canvas id="trendChart" height="250" style="transition:all 0.4s ease;"></canvas>
+
+        <!-- Property Portfolio -->
+        <div class="dashboard-section">
+          <h3>🏠 Property Portfolio</h3>
+          <div class="summary-cards">
+            <div class="card teal">
+              <div class="card-icon">🏘️</div>
+              <div class="card-content">
+                <h4>Properties</h4>
+                <p class="card-value">${properties.length}</p>
+                <small>Value: $${safe(totalValue)}</small>
+              </div>
+            </div>
+            
+            <div class="card gold">
+              <div class="card-icon">👥</div>
+              <div class="card-content">
+                <h4>Tenants</h4>
+                <p class="card-value">${tenants.length}</p>
+                <small>Rent: $${safe(totalRent)}/mo</small>
+              </div>
+            </div>
+            
+            <div class="card purple">
+              <div class="card-icon">📈</div>
+              <div class="card-content">
+                <h4>ROI</h4>
+                <p class="card-value">${avgROI}%</p>
+                <small>Average Return</small>
+              </div>
+            </div>
+            
+            <div class="card ${netPropertyWorth >= 0 ? 'green' : 'red'}">
+              <div class="card-icon">💎</div>
+              <div class="card-content">
+                <h4>Equity</h4>
+                <p class="card-value">$${safe(netPropertyWorth)}</p>
+                <small>Loans: $${safe(totalLoan)}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">Total Income</span>
+            <span class="stat-value">$${safe(income)}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Expenses</span>
+            <span class="stat-value">$${safe(expenses)}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Cash Balance</span>
+            <span class="stat-value">$${safe(totalCashBalance)}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Credit Balance</span>
+            <span class="stat-value">$${safe(totalCreditBalance)}</span>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h4>Monthly Overview</h4>
+              <select id="monthSelect" class="chart-select">
+                ${uniqueMonths.map(m => `<option value="${m}" ${m === latestMonth ? 'selected' : ''}>${m}</option>`).join('')}
+              </select>
+            </div>
+            <canvas id="summaryChart" height="200"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h4>Expense Categories</h4>
+              <span id="selectedMonthDisplay">${latestMonth}</span>
+            </div>
+            <canvas id="expenseByCatChart" height="220"></canvas>
+          </div>
+
+          <div class="chart-card full-width">
+            <div class="chart-header">
+              <h4>Income vs Expenses Trend</h4>
+              <button id="toggleTrend" class="btn-secondary">📉 Hide Chart</button>
+            </div>
+            <canvas id="trendChart" height="250"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="dashboard-section">
+          <h3>📝 Recent Activity</h3>
+          <div class="recent-activity">
+            ${getRecentActivity(transactions, bills, maintenance).slice(0, 5).map(item => `
+              <div class="activity-item">
+                <span class="activity-icon">${item.icon}</span>
+                <span class="activity-desc">${item.description}</span>
+                <span class="activity-amount ${item.amount < 0 ? 'negative' : 'positive'}">${item.amount < 0 ? '-' : '+'}$${Math.abs(item.amount).toFixed(2)}</span>
+                <span class="activity-date">${item.date}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
       </div>
     `;
 
     if (typeof Chart === 'undefined') throw new Error('Chart.js not loaded');
 
-    // === SUMMARY CHART ===
+    // === IMPROVED CHARTS ===
+    
+    // Summary Chart (Bar)
     new Chart(document.getElementById('summaryChart'), {
       type: 'bar',
       data: {
-        labels: ['Income', 'Expenses', 'Balance', 'Rent'],
+        labels: ['Income', 'Expenses', 'Balance', 'Rent Income'],
         datasets: [{
-          label: 'Overview',
-          data: [income, expenses, balance, totalRent],
-          backgroundColor: ['#2ecc71', '#e74c3c', '#3498db', '#f1c40f']
+          label: 'Amount ($)',
+          data: [currentMonthIncome, currentMonthExpenses, currentMonthBalance, totalRent],
+          backgroundColor: ['#2ecc71', '#e74c3c', '#3498db', '#f39c12'],
+          borderColor: ['#27ae60', '#c0392b', '#2980b9', '#e67e22'],
+          borderWidth: 1
         }]
       },
-      options: { plugins: { legend: { display: false } } }
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toFixed(2)}` } }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: (value) => '$' + value }
+          }
+        }
+      }
     });
 
-    // === Setup Chart Containers ===
-    let catChart, compareChart, trendChart;
-    const ctxCat = document.getElementById('expenseByCatChart');
-    const ctxCompare = document.getElementById('monthCompareChart');
-    const ctxTrend = document.getElementById('trendChart');
-    const monthSelect = document.getElementById('monthSelect');
-
-    // ---------- CATEGORY CHART ----------
+    // Category Chart (Doughnut)
     function renderCategoryChart(selectedMonth) {
       const filteredTx = transactions.filter(
         t => t.type === 'expense' && t.date?.startsWith(selectedMonth)
       );
+      
       const expensesByCategory = {};
       filteredTx.forEach(t => {
         const cat = t.categoryId || 'Uncategorized';
@@ -134,126 +261,208 @@ export async function initDashboardUI() {
         id => categories.find(c => c.id === id)?.name || 'Other'
       );
       const catData = Object.values(expensesByCategory);
-      if (catChart) catChart.destroy();
+      
+      if (window.catChart) window.catChart.destroy();
 
-      catChart = new Chart(ctxCat, {
+      document.getElementById('selectedMonthDisplay').textContent = selectedMonth;
+
+      window.catChart = new Chart(document.getElementById('expenseByCatChart'), {
         type: 'doughnut',
         data: {
           labels: catLabels,
-          datasets: [{ data: catData, backgroundColor: catLabels.map(() => randomColor()) }]
+          datasets: [{
+            data: catData,
+            backgroundColor: generateColorPalette(catLabels.length),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
         },
         options: {
+          responsive: true,
           plugins: {
-            title: { display: true, text: `Expenses by Category – ${selectedMonth}` },
-            legend: { position: 'bottom' }
+            legend: { position: 'right' },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${ctx.raw.toFixed(2)}` } }
           }
         }
       });
     }
 
-    // ---------- COMPARISON CHART ----------
-    function renderComparisonChart(selectedMonth) {
-      const [y, m] = selectedMonth.split('-').map(Number);
-      const prevMonth = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
-      const monthlyTotals = {
-        [prevMonth]: { income: 0, expense: 0 },
-        [selectedMonth]: { income: 0, expense: 0 }
-      };
-
-      transactions.forEach(t => {
-        const key = t.date?.slice(0, 7);
-        if (monthlyTotals[key]) monthlyTotals[key][t.type] += t.amount;
-      });
-
-      if (compareChart) compareChart.destroy();
-
-      compareChart = new Chart(ctxCompare, {
-        type: 'bar',
-        data: {
-          labels: ['Income', 'Expenses'],
-          datasets: [
-            {
-              label: prevMonth,
-              data: [monthlyTotals[prevMonth].income, monthlyTotals[prevMonth].expense],
-              backgroundColor: 'rgba(231,76,60,0.6)'
-            },
-            {
-              label: selectedMonth,
-              data: [monthlyTotals[selectedMonth].income, monthlyTotals[selectedMonth].expense],
-              backgroundColor: 'rgba(46,204,113,0.6)'
-            }
-          ]
-        },
-        options: {
-          plugins: {
-            title: { display: true, text: `This Month vs Previous (${selectedMonth})` },
-            legend: { position: 'bottom' }
-          },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    }
-
-    // ---------- TREND CHART ----------
+    // Trend Chart (Line)
     function renderTrendChart() {
       const monthly = {};
       transactions.forEach(t => {
         if (!t.date) return;
         const key = t.date.slice(0, 7);
-        if (!monthly[key]) monthly[key] = { income: 0, expense: 0 };
+        if (!monthly[key]) monthly[key] = { income: 0, expense: 0, net: 0 };
         monthly[key][t.type] += t.amount;
+        monthly[key].net = monthly[key].income - monthly[key].expense;
       });
 
       const months = Object.keys(monthly).sort();
       const incomeData = months.map(m => monthly[m].income);
       const expenseData = months.map(m => monthly[m].expense);
-      if (trendChart) trendChart.destroy();
+      const netData = months.map(m => monthly[m].net);
 
-      const maxY = Math.max(...incomeData, ...expenseData, 1) * 1.1;
+      if (window.trendChart) window.trendChart.destroy();
 
-      trendChart = new Chart(ctxTrend, {
+      window.trendChart = new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
-          labels: months,
+          labels: months.map(m => formatMonthLabel(m)),
           datasets: [
-            { label: 'Income', data: incomeData, borderColor: '#2ecc71', fill: false },
-            { label: 'Expenses', data: expenseData, borderColor: '#e74c3c', fill: false }
+            {
+              label: 'Income',
+              data: incomeData,
+              borderColor: '#2ecc71',
+              backgroundColor: 'rgba(46, 204, 113, 0.1)',
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: 'Expenses',
+              data: expenseData,
+              borderColor: '#e74c3c',
+              backgroundColor: 'rgba(231, 76, 60, 0.1)',
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: 'Net',
+              data: netData,
+              borderColor: '#3498db',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.4
+            }
           ]
         },
         options: {
-          plugins: { legend: { position: 'bottom' } },
-          scales: { y: { beginAtZero: true, max: maxY } }
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: (value) => '$' + value }
+            }
+          }
         }
       });
     }
 
-    // === Initial Render ===
-    renderCategoryChart(latestMonth);
-    renderComparisonChart(latestMonth);
-    renderTrendChart();
-
-    monthSelect.addEventListener('change', e => {
-      const newMonth = e.target.value;
-      renderCategoryChart(newMonth);
-      renderComparisonChart(newMonth);
+    // === Event Listeners ===
+    const monthSelect = document.getElementById('monthSelect');
+    monthSelect.addEventListener('change', (e) => {
+      renderCategoryChart(e.target.value);
     });
 
-    // === Trend Toggle ===
     const toggleBtn = document.getElementById('toggleTrend');
     toggleBtn.addEventListener('click', () => {
-      const hidden = ctxTrend.style.display === 'none';
-      ctxTrend.style.display = hidden ? 'block' : 'none';
-      toggleBtn.textContent = hidden ? '📉 Hide' : '📈 Show';
+      const trendChart = document.getElementById('trendChart');
+      const isHidden = trendChart.style.display === 'none';
+      trendChart.style.display = isHidden ? 'block' : 'none';
+      toggleBtn.textContent = isHidden ? '📉 Hide Chart' : '📈 Show Chart';
     });
 
-    console.log("✅ All charts rendered successfully");
+    // === Initial Render ===
+    renderCategoryChart(latestMonth);
+    renderTrendChart();
+
+    console.log("✅ Dashboard rendered successfully");
   } catch (err) {
     console.error("❌ Dashboard failed:", err);
-    mainContent.innerHTML = `<pre style="color:red;">Dashboard Error: ${err.message}</pre>`;
+    mainContent.innerHTML = `
+      <div class="error-state">
+        <h3>⚠️ Dashboard Error</h3>
+        <p>${err.message}</p>
+        <button onclick="initDashboardUI()" class="btn-primary">Retry</button>
+      </div>
+    `;
   }
 }
 
-// === Helpers ===
+// === NEW HELPER FUNCTIONS ===
+function calculateBudgetPerformance(budgets, transactions, currentMonth) {
+  if (!budgets.length) return { onTrackCount: 0, overBudgetCount: 0, totalBudgets: 0 };
+  
+  let onTrackCount = 0;
+  let overBudgetCount = 0;
+
+  budgets.forEach(budget => {
+    const spent = transactions
+      .filter(t => t.categoryId === budget.categoryId && t.date?.startsWith(currentMonth))
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    if (spent <= budget.amount) {
+      onTrackCount++;
+    } else {
+      overBudgetCount++;
+    }
+  });
+
+  return {
+    onTrackCount,
+    overBudgetCount,
+    totalBudgets: budgets.length
+  };
+}
+
+function getRecentActivity(transactions, bills, maintenance) {
+  const activities = [];
+  
+  // Recent transactions
+  transactions.slice(-10).forEach(t => {
+    activities.push({
+      icon: t.type === 'income' ? '💹' : '💸',
+      description: `${t.type === 'income' ? 'Income' : 'Expense'}: ${t.description || 'Transaction'}`,
+      amount: t.type === 'income' ? t.amount : -t.amount,
+      date: new Date(t.date).toLocaleDateString(),
+      timestamp: new Date(t.date).getTime()
+    });
+  });
+
+  // Recent bills
+  bills.slice(-5).forEach(bill => {
+    activities.push({
+      icon: '📄',
+      description: `Bill: ${bill.name}`,
+      amount: -bill.amount,
+      date: new Date(bill.dueDate).toLocaleDateString(),
+      timestamp: new Date(bill.dueDate).getTime()
+    });
+  });
+
+  // Recent maintenance
+  maintenance.slice(-5).forEach(maint => {
+    activities.push({
+      icon: '🔧',
+      description: `Maintenance: ${maint.description}`,
+      amount: -maint.cost,
+      date: new Date(maint.date).toLocaleDateString(),
+      timestamp: new Date(maint.date).getTime()
+    });
+  });
+
+  // Sort by date and return
+  return activities.sort((a, b) => b.timestamp - a.timestamp);
+}
+
+function formatMonthLabel(monthString) {
+  const [year, month] = monthString.split('-');
+  const date = new Date(year, month - 1);
+  return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+}
+
+function generateColorPalette(count) {
+  const baseColors = [
+    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+    '#FF9F40', '#FF6384', '#C9CBCF', '#7CFFB2', '#F465C5'
+  ];
+  return Array.from({ length: count }, (_, i) => baseColors[i % baseColors.length]);
+}
+
+// === EXISTING HELPER FUNCTIONS ===
 function calcAvgROI(properties, tenants) {
   if (!properties.length) return 0;
   const rois = properties.map(p => {
@@ -266,9 +475,4 @@ function calcAvgROI(properties, tenants) {
 
 function safe(num) {
   return isNaN(num) || num == null ? '0.00' : parseFloat(num).toFixed(2);
-}
-
-function randomColor() {
-  const h = Math.floor(Math.random() * 360);
-  return `hsl(${h},70%,60%)`;
 }
