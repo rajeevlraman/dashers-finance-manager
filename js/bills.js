@@ -1,6 +1,88 @@
 import { addItem, deleteItem, getAllItems, updateItem, STORE_NAMES, generateId } from './db.js';
 import { addItem as addTransaction } from './db.js';
 
+// === HELPER FUNCTIONS (move these to the top) ===
+function getAccountIcon(type) {
+  const icons = {
+    bank: '🏦',
+    credit: '💳',
+    cash: '💵',
+    savings: '💰',
+    investment: '📈',
+    offset: '⚖️',
+    loan: '🏠'
+  };
+  return icons[type] || '📁';
+}
+
+function formatCurrency(amount, currency) {
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD'
+  });
+  return formatter.format(amount);
+}
+
+function getDateInDays(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function formatDateDisplay(dateString) {
+  const date = new Date(dateString);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+  
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
+
+function getNextDueDate(currentDateStr, freq) {
+  const d = new Date(currentDateStr);
+  switch (freq) {
+    case 'weekly':
+      d.setDate(d.getDate() + 7);
+      break;
+    case 'fortnightly':
+      d.setDate(d.getDate() + 14);
+      break;
+    case 'monthly':
+      d.setMonth(d.getMonth() + 1);
+      break;
+    case 'quarterly':
+      d.setMonth(d.getMonth() + 3);
+      break;
+    case 'annually':
+      d.setFullYear(d.getFullYear() + 1);
+      break;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+async function getBillCategoryId(billName) {
+  const categories = await getAllItems(STORE_NAMES.categories);
+  const name = billName.toLowerCase();
+  
+  if (name.includes('electric') || name.includes('power') || name.includes('utility')) 
+    return categories.find(c => c.name.toLowerCase().includes('utility'))?.id;
+  if (name.includes('water') || name.includes('gas')) 
+    return categories.find(c => c.name.toLowerCase().includes('utility'))?.id;
+  if (name.includes('internet') || name.includes('phone') || name.includes('mobile'))
+    return categories.find(c => c.name.toLowerCase().includes('utility'))?.id;
+  if (name.includes('rent') || name.includes('mortgage'))
+    return categories.find(c => c.name.toLowerCase().includes('rent'))?.id;
+  
+  return categories.find(c => c.name.toLowerCase().includes('other'))?.id;
+}
+// === END HELPER FUNCTIONS ===
+
 export async function initBillsUI() {
   const mainContent = document.getElementById('mainContent');
   mainContent.classList.add('page-transition');
@@ -235,6 +317,7 @@ function setupBillsEventListeners(bills, accounts, categories) {
     billForm.reset();
     billForm.dataset.id = '';
     document.getElementById('billFormTitle').textContent = '➕ Add New Bill';
+    billForm.dueDate.value = new Date().toISOString().slice(0, 10);
     
     if (!isVisible) {
       billFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -354,27 +437,3 @@ function openBillEditor(bill) {
   billFormSection.style.display = 'block';
   billFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
-
-// Keep your existing helper functions but add these:
-function getDateInDays(days) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
-function formatDateDisplay(dateString) {
-  const date = new Date(dateString);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-  
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric' 
-  });
-}
-
-// Keep your existing getNextDueDate, getBillCategoryId, getAccountIcon functions
