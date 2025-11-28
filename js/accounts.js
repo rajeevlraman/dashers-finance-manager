@@ -81,7 +81,8 @@ async function addDefaultAccounts() {
   console.log(`✅ Added ${added} default accounts`);
   initAccountsUI();
 }
-
+// this is the summary cards function option 1
+/*
 function updateSummaryCards(accounts, transactions) {
   // Calculate totals - FIXED LOGIC
   const totalBalance = accounts.reduce((sum, acc) => {
@@ -133,7 +134,49 @@ function updateSummaryCards(accounts, transactions) {
   document.getElementById('totalCreditCard').querySelector('.summary-amount').textContent = 
     formatCurrency(availableCredit, 'AUD');
 }
+*/
 
+// alternat to the above function
+
+function updateSummaryCards(accounts, transactions) {
+  // Separate assets (positive) from liabilities (negative/credit cards)
+  const assets = accounts.filter(acc => acc.type !== 'credit');
+  const liabilities = accounts.filter(acc => acc.type === 'credit');
+  
+  const totalAssets = assets.reduce((sum, acc) => sum + acc.balance, 0);
+  const totalLiabilities = liabilities.reduce((sum, acc) => sum + Math.abs(acc.balance), 0);
+  const netWorth = totalAssets - totalLiabilities;
+
+  // Cash accounts count
+  const cashAccounts = accounts.filter(acc => 
+    ['bank', 'savings', 'cash', 'offset'].includes(acc.type)
+  ).length;
+
+  // Credit cards count
+  const creditCards = liabilities.length;
+  
+  // Available credit
+  const totalCreditLimit = liabilities.reduce((sum, acc) => sum + (acc.creditLimit || 0), 0);
+  const usedCredit = liabilities.reduce((sum, acc) => sum + Math.abs(acc.balance), 0);
+  const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
+
+  console.log('Account Summary Debug:', {
+    netWorth,
+    totalAssets,
+    totalLiabilities,
+    cashAccounts,
+    creditCards,
+    availableCredit
+  });
+
+  // Update summary cards - you might want to change the labels
+  document.getElementById('totalBalanceCard').querySelector('.summary-amount').textContent = 
+    formatCurrency(netWorth, 'AUD');
+  document.getElementById('cashAccountsCard').querySelector('.summary-count').textContent = cashAccounts;
+  document.getElementById('creditCardsCard').querySelector('.summary-count').textContent = creditCards;
+  document.getElementById('totalCreditCard').querySelector('.summary-amount').textContent = 
+    formatCurrency(availableCredit, 'AUD');
+}
 function quickAddTransaction(accountId) {
   // Simple prompt for quick transaction addition
   const amount = prompt('Enter transaction amount (negative for expenses):');
