@@ -1,72 +1,302 @@
-import { addItem, deleteItem, getAllItems, updateItem, STORE_NAMES } from './db.js';
-import { addItem as addTransaction } from './db.js'; // For creating transactions
+import { addItem, deleteItem, getAllItems, updateItem, STORE_NAMES, generateId } from './db.js';
+import { addItem as addTransaction } from './db.js';
 
 export async function initBillsUI() {
   const mainContent = document.getElementById('mainContent');
-  const bills = await getAllItems(STORE_NAMES.bills);
-  const accounts = await getAllItems(STORE_NAMES.accounts); // Get accounts for selection
+  mainContent.classList.add('page-transition');
+
+  const [bills, accounts, categories] = await Promise.all([
+    getAllItems(STORE_NAMES.bills),
+    getAllItems(STORE_NAMES.accounts),
+    getAllItems(STORE_NAMES.categories)
+  ]);
+
   const today = new Date().toISOString().slice(0, 10);
+  
+  // Calculate summary stats
+  const upcomingBills = bills.filter(b => !b.paid && b.dueDate >= today).length;
+  const overdueBills = bills.filter(b => !b.paid && b.dueDate < today).length;
+  const totalDue = bills.filter(b => !b.paid).reduce((sum, b) => sum + b.amount, 0);
 
   mainContent.innerHTML = `
-    <h2>Bills</h2>
-    <button id="btnNewBill" class="button">➕ Add Bill</button>
-    <div id="billsList">
-      ${bills.length === 0
-        ? '<p>No bills set.</p>'
-        : `<table class="table">
-            <thead>
-              <tr>
-                <th>Name</th><th>Amount</th><th>Due Date</th><th>Account</th><th>Recurring</th><th>Status</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${bills.map(b => {
-                const account = accounts.find(a => a.id === b.accountId);
-                const overdue = (b.dueDate < today) && !b.paid;
-                const status = b.paid
-                  ? '✅ Paid'
-                  : (overdue ? '❌ Overdue' : '⏳ Upcoming');
-                return `
-                  <tr>
-                    <td>${b.name}</td>
-                    <td>${b.amount.toFixed(2)}</td>
-                    <td>${b.dueDate}</td>
-                    <td>${account ? account.name : 'Not set'}</td>
-                    <td>${b.recurring || '-'}</td>
-                    <td>${status}</td>
-                    <td>
-                      <button class="button" data-id="${b.id}" data-action="edit">Edit</button>
-                      <button class="button red" data-id="${b.id}" data-action="delete">Delete</button>
-                      ${!b.paid ? `<button class="button green" data-id="${b.id}" data-action="markPaid">Mark Paid</button>` : ''}
-                    </td>
-                  </tr>`;
-              }).join('')}
-            </tbody>
-          </table>`}
+    <div class="page-container">
+      <div class="page-header">
+        <h2>🧾 Bills</h2>
+        <div class="page-actions">
+          <button class="btn btn-primary" id="btnNewBill">➕ Add Bill</button>
+          <button class="btn btn-secondary" id="btnPayAll">💳 Pay All Due</button>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="compact-summary-cards">
+        <div class="compact-card ${overdueBills > 0 ? 'red' : 'blue'}">
+          <div class="compact-icon">⏰</div>
+          <div class="compact-content">
+            <div class="compact-value">${overdueBills}</div>
+            <div class="compact-label">Overdue</div>
+          </div>
+        </div>
+        <div class="compact-card teal">
+          <div class="compact-icon">📅</div>
+          <div class="compact-content">
+            <div class="compact-value">${upcomingBills}</div>
+            <div class="compact-label">Upcoming</div>
+          </div>
+        </div>
+        <div class="compact-card purple">
+          <div class="compact-icon">💰</div>
+          <div class="compact-content">
+            <div class="compact-value">$${totalDue.toFixed(2)}</div>
+            <div class="compact-label">Total Due</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forms Section -->
+      <div class="forms-section">
+        <div id="billFormSection" class="section-card form-section" style="display: none;">
+          <div class="form-header">
+            <h3 id="billFormTitle">➕ Add New Bill</h3>
+            <button class="btn btn-text" id="closeBillForm">✕</button>
+          </div>
+          <form id="billForm" class="styled-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Bill Name</label>
+                <input type="text" name="name" class="form-input" placeholder="e.g., Electricity, Rent..." required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount</label>
+                <input type="number" name="amount" class="form-input" step="0.01" placeholder="0.00" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Due Date</label>
+                <input type="date" name="dueDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pay From Account</label>
+                <select name="accountId" class="form-select">
+                  <option value="">-- Select Account --</option>
+                  ${accounts.map(acc => `
+                    <option value="${acc.id}">${getAccountIcon(acc.type)} ${acc.name}</option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Recurring</label>
+                <select name="recurring" class="form-select">
+                  <option value="">None</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="fortnightly">Fortnightly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="annually">Annually</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select name="categoryId" class="form-select">
+                  <option value="">-- Auto-detect --</option>
+                  ${categories.map(cat => `
+                    <option value="${cat.id}">${cat.icon || '📁'} ${cat.name}</option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">💾 Save Bill</button>
+              <button class="btn btn-secondary" type="reset">🧹 Clear</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bills List -->
+      <div class="section-card">
+        <div class="transactions-header">
+          <h3>Your Bills</h3>
+          <div class="transactions-controls">
+            <span class="transactions-count" id="billsCount">${bills.length} bills</span>
+            <select id="sortBills" class="form-select">
+              <option value="dueDate-asc">Due Date (Soonest)</option>
+              <option value="dueDate-desc">Due Date (Latest)</option>
+              <option value="amount-desc">Highest Amount</option>
+              <option value="amount-asc">Lowest Amount</option>
+              <option value="name-asc">Name A-Z</option>
+            </select>
+          </div>
+        </div>
+        <div id="billsList"></div>
+      </div>
     </div>
   `;
 
-  document.getElementById('btnNewBill').addEventListener('click', () => openBillEditor());
+  setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
-  document.querySelectorAll('#billsList .button').forEach(btn => {
-    const id = btn.dataset.id;
-    const action = btn.dataset.action;
-    btn.addEventListener('click', async () => {
-      const all = await getAllItems(STORE_NAMES.bills);
-      const bill = all.find(b => b.id === id);
-      if (!bill) return;
+  // Initialize
+  renderBillsList(bills, accounts, categories);
 
-      if (action === 'edit') {
-        openBillEditor(id);
-      } else if (action === 'delete') {
-        if (confirm('Delete this bill?')) {
-          await deleteItem(STORE_NAMES.bills, id);
-          initBillsUI();
-        }
-      } else if (action === 'markPaid') {
-        await markBillAsPaid(bill);
+  // Event Listeners
+  setupBillsEventListeners(bills, accounts, categories);
+}
+
+function renderBillsList(bills, accounts, categories) {
+  const billsList = document.getElementById('billsList');
+  const billsCount = document.getElementById('billsCount');
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (bills.length === 0) {
+    billsList.innerHTML = `
+      <div class="empty-state">
+        <p>No bills set up yet.</p>
+        <button class="btn btn-primary" onclick="document.getElementById('btnNewBill').click()">
+          Add Your First Bill
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  // Apply sorting
+  const sortBy = document.getElementById('sortBills').value;
+  const sortedBills = [...bills].sort((a, b) => {
+    switch (sortBy) {
+      case 'dueDate-asc': return a.dueDate.localeCompare(b.dueDate);
+      case 'dueDate-desc': return b.dueDate.localeCompare(a.dueDate);
+      case 'amount-desc': return b.amount - a.amount;
+      case 'amount-asc': return a.amount - b.amount;
+      case 'name-asc': return a.name.localeCompare(b.name);
+      default: return a.dueDate.localeCompare(b.dueDate);
+    }
+  });
+
+  billsList.innerHTML = sortedBills.map(bill => {
+    const account = accounts.find(a => a.id === bill.accountId);
+    const category = categories.find(c => c.id === bill.categoryId);
+    const overdue = (bill.dueDate < today) && !bill.paid;
+    const dueSoon = (bill.dueDate >= today && bill.dueDate <= getDateInDays(7)) && !bill.paid;
+    
+    const status = bill.paid
+      ? '<span class="status-badge paid">✅ Paid</span>'
+      : (overdue 
+          ? '<span class="status-badge overdue">❌ Overdue</span>'
+          : (dueSoon 
+              ? '<span class="status-badge due-soon">⏰ Due Soon</span>'
+              : '<span class="status-badge upcoming">📅 Upcoming</span>'));
+
+    return `
+      <div class="transaction-card ${bill.paid ? 'paid' : (overdue ? 'overdue' : 'upcoming')}" data-id="${bill.id}">
+        <div class="transaction-main">
+          <div class="transaction-icon">${category?.icon || '🧾'}</div>
+          <div class="transaction-details">
+            <div class="transaction-title">${bill.name}</div>
+            <div class="transaction-meta">
+              <span class="transaction-date">Due: ${formatDateDisplay(bill.dueDate)}</span>
+              ${bill.recurring ? `<span class="transaction-recurring">🔄 ${bill.recurring}</span>` : ''}
+              ${account ? `<span class="transaction-account">${getAccountIcon(account.type)} ${account.name}</span>` : ''}
+            </div>
+            ${status}
+          </div>
+          <div class="transaction-amount ${bill.paid ? 'positive' : 'negative'}">
+            $${bill.amount.toFixed(2)}
+          </div>
+        </div>
+        <div class="transaction-actions">
+          ${!bill.paid ? `<button class="action-btn pay-btn" data-id="${bill.id}" title="Mark Paid">💳</button>` : ''}
+          <button class="action-btn edit-btn" data-id="${bill.id}" title="Edit">✏️</button>
+          <button class="action-btn delete-btn" data-id="${bill.id}" title="Delete">🗑️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  billsCount.textContent = `${bills.length} bill${bills.length !== 1 ? 's' : ''}`;
+}
+
+function setupBillsEventListeners(bills, accounts, categories) {
+  const btnNewBill = document.getElementById('btnNewBill');
+  const billFormSection = document.getElementById('billFormSection');
+  const closeBillForm = document.getElementById('closeBillForm');
+  const billForm = document.getElementById('billForm');
+  const sortSelect = document.getElementById('sortBills');
+
+  // Form toggle
+  btnNewBill.addEventListener('click', () => {
+    const isVisible = billFormSection.style.display === 'block';
+    billFormSection.style.display = isVisible ? 'none' : 'block';
+    billForm.reset();
+    billForm.dataset.id = '';
+    document.getElementById('billFormTitle').textContent = '➕ Add New Bill';
+    
+    if (!isVisible) {
+      billFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  closeBillForm.addEventListener('click', () => {
+    billFormSection.style.display = 'none';
+  });
+
+  // Form submission
+  billForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    const billData = {
+      name: formData.get('name'),
+      amount: parseFloat(formData.get('amount')),
+      dueDate: formData.get('dueDate'),
+      accountId: formData.get('accountId'),
+      recurring: formData.get('recurring'),
+      categoryId: formData.get('categoryId'),
+      paid: false
+    };
+
+    if (form.dataset.id) {
+      // Editing existing bill
+      billData.id = form.dataset.id;
+      await updateItem(STORE_NAMES.bills, billData);
+    } else {
+      // Adding new bill
+      billData.id = generateId();
+      await addItem(STORE_NAMES.bills, billData);
+    }
+
+    billFormSection.style.display = 'none';
+    initBillsUI();
+  });
+
+  // Sorting
+  sortSelect.addEventListener('change', () => {
+    renderBillsList(bills, accounts, categories);
+  });
+
+  // Bill actions
+  document.addEventListener('click', async (e) => {
+    if (e.target.closest('.pay-btn')) {
+      const billId = e.target.closest('.pay-btn').dataset.id;
+      const bill = bills.find(b => b.id === billId);
+      if (bill) await markBillAsPaid(bill);
+    } else if (e.target.closest('.edit-btn')) {
+      const billId = e.target.closest('.edit-btn').dataset.id;
+      const bill = bills.find(b => b.id === billId);
+      if (bill) openBillEditor(bill);
+    } else if (e.target.closest('.delete-btn')) {
+      const billId = e.target.closest('.delete-btn').dataset.id;
+      if (confirm('Are you sure you want to delete this bill?')) {
+        await deleteItem(STORE_NAMES.bills, billId);
+        initBillsUI();
       }
-    });
+    }
   });
 }
 
@@ -79,164 +309,72 @@ async function markBillAsPaid(bill) {
   if (bill.accountId) {
     const transaction = {
       type: 'expense',
-      amount: bill.amount,
+      amount: -bill.amount,
       date: new Date().toISOString().slice(0, 10),
-      categoryId: await getBillCategoryId(bill.name),
+      categoryId: bill.categoryId || await getBillCategoryId(bill.name),
       accountId: bill.accountId,
       description: `Bill: ${bill.name}`,
-      billId: bill.id // Link transaction to bill
+      billId: bill.id
     };
     await addTransaction(STORE_NAMES.transactions, transaction);
-    console.log(`✅ Created transaction for bill: ${bill.name}`);
   }
 
   // Handle recurring bills
   if (bill.recurring) {
-    let nextDate = getNextDueDate(bill.dueDate, bill.recurring);
-    for (let i = 0; i < 2; i++) {
-      const newBill = {
-        name: bill.name,
-        amount: bill.amount,
-        dueDate: nextDate,
-        paid: false,
-        recurring: bill.recurring,
-        accountId: bill.accountId // Preserve account selection
-      };
-      await addItem(STORE_NAMES.bills, newBill);
-      nextDate = getNextDueDate(nextDate, bill.recurring);
-    }
+    const nextDate = getNextDueDate(bill.dueDate, bill.recurring);
+    const newBill = {
+      name: bill.name,
+      amount: bill.amount,
+      dueDate: nextDate,
+      paid: false,
+      recurring: bill.recurring,
+      accountId: bill.accountId,
+      categoryId: bill.categoryId
+    };
+    await addItem(STORE_NAMES.bills, newBill);
   }
 
   initBillsUI();
 }
 
-async function getBillCategoryId(billName) {
-  // Smart category matching for bills
-  const categories = await getAllItems(STORE_NAMES.categories);
-  const name = billName.toLowerCase();
-  
-  if (name.includes('electric') || name.includes('power') || name.includes('utility')) 
-    return categories.find(c => c.name.toLowerCase().includes('utility'))?.id;
-  if (name.includes('water') || name.includes('gas')) 
-    return categories.find(c => c.name.toLowerCase().includes('utility'))?.id;
-  if (name.includes('internet') || name.includes('phone') || name.includes('mobile'))
-    return categories.find(c => c.name.toLowerCase().includes('utility'))?.id;
-  if (name.includes('rent') || name.includes('mortgage'))
-    return categories.find(c => c.name.toLowerCase().includes('rent'))?.id;
-  
-  return categories.find(c => c.name.toLowerCase().includes('other'))?.id;
+function openBillEditor(bill) {
+  const billFormSection = document.getElementById('billFormSection');
+  const billForm = document.getElementById('billForm');
+  const billFormTitle = document.getElementById('billFormTitle');
+
+  billFormTitle.textContent = '✏️ Edit Bill';
+  billForm.name.value = bill.name;
+  billForm.amount.value = bill.amount;
+  billForm.dueDate.value = bill.dueDate;
+  billForm.accountId.value = bill.accountId || '';
+  billForm.recurring.value = bill.recurring || '';
+  billForm.categoryId.value = bill.categoryId || '';
+  billForm.dataset.id = bill.id;
+
+  billFormSection.style.display = 'block';
+  billFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-async function openBillEditor(id = null) {
-  const mainContent = document.getElementById('mainContent');
-  const all = await getAllItems(STORE_NAMES.bills);
-  const accounts = await getAllItems(STORE_NAMES.accounts);
-  const bill = id
-    ? all.find(b => b.id === id)
-    : {
-        name: '',
-        amount: 0,
-        dueDate: new Date().toISOString().slice(0, 10),
-        paid: false,
-        recurring: '',
-        accountId: ''
-      };
+// Keep your existing helper functions but add these:
+function getDateInDays(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
-  mainContent.innerHTML = `
-    <h2>${id ? 'Edit' : 'New'} Bill</h2>
-    <form id="billForm">
-      <label>Name: <input name="name" value="${bill.name}" required></label><br>
-      <label>Amount: <input name="amount" type="number" step="0.01" value="${bill.amount}" required></label><br>
-      <label>Due Date: <input name="dueDate" type="date" value="${bill.dueDate}" required></label><br>
-      <label>Pay From Account:
-        <select name="accountId">
-          <option value="">-- Select Account --</option>
-          ${accounts.map(acc => `
-            <option value="${acc.id}" ${acc.id === bill.accountId ? 'selected' : ''}>
-              ${getAccountIcon(acc.type)} ${acc.name} (${formatCurrency(acc.balance, acc.currency)})
-            </option>
-          `).join('')}
-        </select>
-      </label><br>
-      <label>Recurring:
-        <select name="recurring">
-          <option value="">None</option>
-          <option value="weekly" ${bill.recurring === 'weekly' ? 'selected' : ''}>Weekly</option>
-          <option value="fortnightly" ${bill.recurring === 'fortnightly' ? 'selected' : ''}>Fortnightly</option>
-          <option value="monthly" ${bill.recurring === 'monthly' ? 'selected' : ''}>Monthly</option>
-          <option value="quarterly" ${bill.recurring === 'quarterly' ? 'selected' : ''}>Quarterly</option>
-          <option value="annually" ${bill.recurring === 'annually' ? 'selected' : ''}>Annually</option>
-        </select>
-      </label><br>
-      <button class="button" type="submit">💾 Save</button>
-      <button class="button red" type="button" id="cancelBtn">Cancel</button>
-    </form>
-  `;
+function formatDateDisplay(dateString) {
+  const date = new Date(dateString);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
-  document.getElementById('cancelBtn').addEventListener('click', initBillsUI);
-  document.getElementById('billForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const form = e.target;
-    const updated = {
-      name: form.name.value,
-      amount: parseFloat(form.amount.value),
-      dueDate: form.dueDate.value,
-      paid: bill.paid || false,
-      recurring: form.recurring.value,
-      accountId: form.accountId.value
-    };
-
-    if (id) {
-      updated.id = bill.id;
-      await updateItem(STORE_NAMES.bills, updated);
-    } else {
-      await addItem(STORE_NAMES.bills, updated);
-    }
-
-    initBillsUI();
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+  
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
   });
 }
 
-function getNextDueDate(currentDateStr, freq) {
-  const d = new Date(currentDateStr);
-  switch (freq) {
-    case 'weekly':
-      d.setDate(d.getDate() + 7);
-      break;
-    case 'fortnightly':
-      d.setDate(d.getDate() + 14);
-      break;
-    case 'monthly':
-      d.setMonth(d.getMonth() + 1);
-      break;
-    case 'quarterly':
-      d.setMonth(d.getMonth() + 3);
-      break;
-    case 'annually':
-      d.setFullYear(d.getFullYear() + 1);
-      break;
-  }
-  return d.toISOString().slice(0, 10);
-}
-
-// Helper functions
-function getAccountIcon(type) {
-  const icons = {
-    bank: '🏦',
-    credit: '💳',
-    cash: '💵',
-    savings: '💰',
-    investment: '📈',
-    offset: '⚖️',
-    loan: '🏠'
-  };
-  return icons[type] || '📁';
-}
-
-function formatCurrency(amount, currency) {
-  const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'USD'
-  });
-  return formatter.format(amount);
-}
+// Keep your existing getNextDueDate, getBillCategoryId, getAccountIcon functions
