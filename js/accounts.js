@@ -83,20 +83,47 @@ async function addDefaultAccounts() {
 }
 
 function updateSummaryCards(accounts, transactions) {
-  // Calculate totals
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const cashAccounts = accounts.filter(acc => ['bank', 'savings', 'cash'].includes(acc.type)).length;
+  // Calculate totals - FIXED LOGIC
+  const totalBalance = accounts.reduce((sum, acc) => {
+    // For credit cards, balance is negative (what you owe), so we add it as negative
+    // For other accounts, balance is positive (what you have)
+    return sum + acc.balance;
+  }, 0);
+
+  // Cash accounts: bank, savings, cash, offset (positive balances)
+  const cashAccounts = accounts.filter(acc => 
+    ['bank', 'savings', 'cash', 'offset'].includes(acc.type)
+  ).length;
+
+  // Credit cards count
   const creditCards = accounts.filter(acc => acc.type === 'credit').length;
   
+  // Available credit calculation - FIXED
   const totalCreditLimit = accounts
     .filter(acc => acc.type === 'credit' && acc.creditLimit)
-    .reduce((sum, acc) => sum + acc.creditLimit, 0);
+    .reduce((sum, acc) => sum + (acc.creditLimit || 0), 0);
   
+  // For credit cards, balance is negative (what you owe), so used credit is the absolute value
   const usedCredit = accounts
     .filter(acc => acc.type === 'credit')
     .reduce((sum, acc) => sum + Math.abs(Math.min(acc.balance, 0)), 0);
   
-  const availableCredit = totalCreditLimit - usedCredit;
+  const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
+
+  console.log('Account Summary Debug:', {
+    totalBalance,
+    cashAccounts,
+    creditCards,
+    totalCreditLimit,
+    usedCredit,
+    availableCredit,
+    accountDetails: accounts.map(acc => ({
+      name: acc.name,
+      type: acc.type,
+      balance: acc.balance,
+      creditLimit: acc.creditLimit
+    }))
+  });
 
   // Update summary cards
   document.getElementById('totalBalanceCard').querySelector('.summary-amount').textContent = 
