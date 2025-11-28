@@ -64,6 +64,158 @@ const DEFAULT_LOANS = [
 ];
 
 // ============================================================================
+// 🎨 Helper Functions (MOVE THESE TO TOP)
+// ============================================================================
+function getLoanIcon(type) { 
+  const icons = {
+    mortgage: '🏠', 
+    vehicle: '🚗', 
+    personal: '👤', 
+    education: '🎓', 
+    business: '💼'
+  };
+  return icons[type] || '🏦'; 
+}
+
+function getLoanTypeLabel(type) { 
+  const labels = {
+    mortgage: 'Mortgage', 
+    vehicle: 'Vehicle', 
+    personal: 'Personal', 
+    education: 'Education', 
+    business: 'Business'
+  };
+  return labels[type] || 'Loan'; 
+}
+
+function formatCurrency(amount, currency) { 
+  return new Intl.NumberFormat('en-US', { 
+    style: 'currency', 
+    currency: currency || 'AUD' 
+  }).format(amount); 
+}
+
+// ============================================================================
+// 🧹 Utility Functions (MOVE THESE TO TOP)
+// ============================================================================
+async function addDefaultLoans() {
+  const existing = await getAllItems(STORE_NAMES.loans);
+  const ids = existing.map(l => l.id);
+  for (const loan of DEFAULT_LOANS) {
+    if (!ids.includes(loan.id)) {
+      await addItem(STORE_NAMES.loans, { 
+        ...loan, 
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString() 
+      });
+    }
+  }
+  await refreshLoansList();
+}
+
+async function refreshLoansList() {
+  const [loans, accounts] = await Promise.all([
+    getAllItems(STORE_NAMES.loans),
+    getAllItems(STORE_NAMES.accounts)
+  ]);
+  renderLoansList(loans, accounts);
+}
+
+// ============================================================================
+// 💰 Process Loan Payment (MOVE THESE TO TOP)
+// ============================================================================
+export async function processLoanPayment(loanId, paymentData) {
+  const { amount, fromAccountId, paymentDate = new Date().toISOString().split('T')[0] } = paymentData;
+
+  const [loan, accounts] = await Promise.all([
+    getAllItems(STORE_NAMES.loans).then(loans => loans.find(l => l.id === loanId)),
+    getAllItems(STORE_NAMES.accounts)
+  ]);
+
+  if (!loan) throw new Error('Loan not found');
+  const fromAccount = accounts.find(a => a.id === fromAccountId);
+  if (!fromAccount) throw new Error('Source account not found');
+
+  const monthlyRate = loan.interestRate / 100 / 12;
+  const interest = loan.currentBalance * monthlyRate;
+  const principal = Math.min(amount - interest, loan.currentBalance);
+
+  loan.currentBalance -= principal;
+  loan.updatedAt = new Date().toISOString();
+  fromAccount.balance -= amount;
+  fromAccount.updatedAt = new Date().toISOString();
+
+  const loanTransaction = {
+    id: generateId(),
+    loanId,
+    type: 'payment',
+    amount,
+    principal,
+    interest,
+    date: paymentDate,
+    fromAccountId,
+    description: `Loan payment - ${loan.name}`,
+    createdAt: new Date().toISOString()
+  };
+
+  const paymentTransaction = {
+    id: generateId(),
+    type: 'expense',
+    amount,
+    date: paymentDate,
+    categoryId: await getLoanExpenseCategoryId(),
+    accountId: fromAccountId,
+    description: `Loan payment - ${loan.name}`,
+    createdAt: new Date().toISOString()
+  };
+
+  await updateItem(STORE_NAMES.loans, loan);
+  await updateItem(STORE_NAMES.accounts, fromAccount);
+  await addItem(STORE_NAMES.loanTransactions, loanTransaction);
+  await addItem(STORE_NAMES.transactions, paymentTransaction);
+
+  return { principal, interest, newBalance: loan.currentBalance };
+}
+
+// ============================================================================
+// 🧮 Offset Interest Calculation (MOVE THESE TO TOP)
+// ============================================================================
+export async function calculateOffsetInterest(loanId) {
+  const [loan, accounts] = await Promise.all([
+    getAllItems(STORE_NAMES.loans).then(loans => loans.find(l => l.id === loanId)),
+    getAllItems(STORE_NAMES.accounts)
+  ]);
+  if (!loan?.linkedOffsetId) return 0;
+
+  const offsetAccount = accounts.find(a => a.id === loan.linkedOffsetId);
+  if (!offsetAccount) return 0;
+
+  const monthlyRate = loan.interestRate / 100 / 12;
+  const effectiveBalance = Math.max(loan.currentBalance - offsetAccount.balance, 0);
+  return (loan.currentBalance - effectiveBalance) * monthlyRate;
+}
+
+// ============================================================================
+// 📂 Get or Create Loan Expense Category (MOVE THESE TO TOP)
+// ============================================================================
+async function getLoanExpenseCategoryId() {
+  const categories = await getAllItems(STORE_NAMES.categories);
+  let cat = categories.find(c => c.name.toLowerCase().includes('loan') && c.type === 'expense');
+  if (!cat) {
+    cat = { 
+      id: generateId(), 
+      name: 'Loan Interest', 
+      type: 'expense', 
+      icon: '🏦', 
+      createdAt: new Date().toISOString(), 
+      updatedAt: new Date().toISOString() 
+    };
+    await addItem(STORE_NAMES.categories, cat);
+  }
+  return cat.id;
+}
+
+// ============================================================================
 // 🧱 UI Initialization
 // ============================================================================
 export async function initLoansUI() {
@@ -458,6 +610,42 @@ function openLoanEditor(loanId) {
 // ============================================================================
 // 💳 Enhanced Payment Modal
 // ============================================================================
+async function populatePaymentAccounts(loanId) {
+  const accounts = await getAllItems(STORE_NAMES.accounts);
+  const select = document.getElementById('paymentAccount');
+  select.innerHTML += accounts
+    .filter(a => a.balance > 0)
+    .map(a => `<option value="${a.id}">${a.name} (${formatCurrency(a.balance, a.currency)})</option>`)
+    .join('');
+}
+
+async function calculatePaymentBreakdown(loanId, amount) {
+  const loan = await getAllItems(STORE_NAMES.loans).then(ls => ls.find(l => l.id === loanId));
+  if (!loan || amount <= 0) return;
+  const monthlyRate = loan.interestRate / 100 / 12;
+  const interest = loan.currentBalance * monthlyRate;
+  const principal = Math.min(amount - interest, loan.currentBalance);
+  document.getElementById('paymentBreakdown').style.display = 'block';
+  document.getElementById('breakdownPrincipal').textContent = formatCurrency(principal, loan.currency);
+  document.getElementById('breakdownInterest').textContent = formatCurrency(interest, loan.currency);
+  document.getElementById('breakdownTotal').textContent = formatCurrency(amount, loan.currency);
+}
+
+async function processLoanPaymentForm(loanId, modal) {
+  const amount = parseFloat(document.getElementById('paymentAmount').value);
+  const fromAccountId = document.getElementById('paymentAccount').value;
+  const paymentDate = document.getElementById('paymentDate').value;
+  if (!amount || !fromAccountId) return alert('Fill all fields');
+  try {
+    const res = await processLoanPayment(loanId, { amount, fromAccountId, paymentDate });
+    alert(`✅ Payment success!\nPrincipal: ${formatCurrency(res.principal, 'AUD')}\nInterest: ${formatCurrency(res.interest, 'AUD')}\nNew Balance: ${formatCurrency(res.newBalance, 'AUD')}`);
+    modal.remove();
+    initLoansUI();
+  } catch (err) {
+    alert('❌ ' + err.message);
+  }
+}
+
 function showPaymentModal(loanId) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay active';
@@ -622,44 +810,4 @@ function viewAmortizationSchedule(loanId) {
       if (e.target === modal) modal.remove();
     });
   });
-}
-
-// ============================================================================
-// 🧹 Keep Existing Utility Functions (processLoanPayment, calculateOffsetInterest, etc.)
-// ============================================================================
-
-// ... (Keep all your existing functions like processLoanPayment, calculateOffsetInterest, 
-// getLoanExpenseCategoryId, populatePaymentAccounts, calculatePaymentBreakdown, 
-// processLoanPaymentForm, addDefaultLoans, and helper functions)
-
-// ============================================================================
-// 🎨 Helper Functions
-// ============================================================================
-function getLoanIcon(type) { 
-  const icons = {
-    mortgage: '🏠', 
-    vehicle: '🚗', 
-    personal: '👤', 
-    education: '🎓', 
-    business: '💼'
-  };
-  return icons[type] || '🏦'; 
-}
-
-function getLoanTypeLabel(type) { 
-  const labels = {
-    mortgage: 'Mortgage', 
-    vehicle: 'Vehicle', 
-    personal: 'Personal', 
-    education: 'Education', 
-    business: 'Business'
-  };
-  return labels[type] || 'Loan'; 
-}
-
-function formatCurrency(amount, currency) { 
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency: currency || 'AUD' 
-  }).format(amount); 
 }
