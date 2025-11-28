@@ -18,6 +18,48 @@ function generateId() {
   });
 }
 
+// Helper functions moved to top
+function formatCurrency(amount, currency) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'AUD'
+  }).format(amount);
+}
+
+function formatDate(date) {
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+function getAccountIcon(type) {
+  const icons = {
+    bank: '🏦',
+    credit: '💳',
+    cash: '💵',
+    savings: '💰',
+    investment: '📈',
+    offset: '⚖️',
+    other: '📁'
+  };
+  return icons[type] || '📁';
+}
+
+function getAccountTypeLabel(type) {
+  const labels = {
+    bank: 'Bank Account',
+    credit: 'Credit Card',
+    cash: 'Cash',
+    savings: 'Savings',
+    investment: 'Investment',
+    offset: 'Offset Account',
+    other: 'Other'
+  };
+  return labels[type] || 'Account';
+}
+
 // Add default accounts
 async function addDefaultAccounts() {
   console.log('📦 Adding default accounts...');
@@ -38,6 +80,93 @@ async function addDefaultAccounts() {
 
   console.log(`✅ Added ${added} default accounts`);
   initAccountsUI();
+}
+
+function updateSummaryCards(accounts, transactions) {
+  // Calculate totals
+  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+  const cashAccounts = accounts.filter(acc => ['bank', 'savings', 'cash'].includes(acc.type)).length;
+  const creditCards = accounts.filter(acc => acc.type === 'credit').length;
+  
+  const totalCreditLimit = accounts
+    .filter(acc => acc.type === 'credit' && acc.creditLimit)
+    .reduce((sum, acc) => sum + acc.creditLimit, 0);
+  
+  const usedCredit = accounts
+    .filter(acc => acc.type === 'credit')
+    .reduce((sum, acc) => sum + Math.abs(Math.min(acc.balance, 0)), 0);
+  
+  const availableCredit = totalCreditLimit - usedCredit;
+
+  // Update summary cards
+  document.getElementById('totalBalanceCard').querySelector('.summary-amount').textContent = 
+    formatCurrency(totalBalance, 'AUD');
+  document.getElementById('cashAccountsCard').querySelector('.summary-count').textContent = cashAccounts;
+  document.getElementById('creditCardsCard').querySelector('.summary-count').textContent = creditCards;
+  document.getElementById('totalCreditCard').querySelector('.summary-amount').textContent = 
+    formatCurrency(availableCredit, 'AUD');
+}
+
+function quickAddTransaction(accountId) {
+  // Simple prompt for quick transaction addition
+  const amount = prompt('Enter transaction amount (negative for expenses):');
+  if (amount === null) return;
+  
+  const description = prompt('Enter description:');
+  if (description === null) return;
+
+  const transaction = {
+    id: generateId(),
+    accountId: accountId,
+    amount: parseFloat(amount),
+    description: description,
+    date: new Date().toISOString().split('T')[0],
+    type: parseFloat(amount) < 0 ? 'expense' : 'income',
+    categoryId: '', // You might want to add category selection
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  addItem(STORE_NAMES.transactions, transaction).then(() => {
+    alert('Transaction added successfully!');
+    refreshAccountList();
+  });
+}
+
+function toggleAccountDetails(accountId) {
+  const details = document.getElementById(`details-${accountId}`);
+  const container = document.getElementById(`recent-${accountId}`);
+
+  const isOpening = details.style.display === "none";
+
+  details.style.display = isOpening ? "block" : "none";
+
+  if (!isOpening) return;
+
+  // Load last 5 transactions for this account
+  getAllItems(STORE_NAMES.transactions).then(allTx => {
+    const tx = allTx
+      .filter(t => t.accountId === accountId)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
+
+    if (tx.length === 0) {
+      container.innerHTML = `<p class="rt-none">No transactions yet.</p>`;
+      return;
+    }
+
+    container.innerHTML = tx
+      .map(t => `
+        <div class="rt-item">
+          <span class="rt-date">${formatDate(new Date(t.date))}</span>
+          <span class="rt-desc">${t.description || 'No description'}</span>
+          <span class="rt-amt ${t.amount < 0 ? 'neg' : 'pos'}">
+            ${formatCurrency(t.amount, 'AUD')}
+          </span>
+        </div>
+      `)
+      .join('');
+  });
 }
 
 export function initAccountsUI() {
@@ -273,99 +402,129 @@ function refreshAccountList() {
   });
 }
 
-function updateSummaryCards(accounts, transactions) {
-  // Calculate totals
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const cashAccounts = accounts.filter(acc => ['bank', 'savings', 'cash'].includes(acc.type)).length;
-  const creditCards = accounts.filter(acc => acc.type === 'credit').length;
-  
-  const totalCreditLimit = accounts
-    .filter(acc => acc.type === 'credit' && acc.creditLimit)
-    .reduce((sum, acc) => sum + acc.creditLimit, 0);
-  
-  const usedCredit = accounts
-    .filter(acc => acc.type === 'credit')
-    .reduce((sum, acc) => sum + Math.abs(Math.min(acc.balance, 0)), 0);
-  
-  const availableCredit = totalCreditLimit - usedCredit;
-
-  // Update summary cards
-  document.getElementById('totalBalanceCard').querySelector('.summary-amount').textContent = 
-    formatCurrency(totalBalance, 'AUD');
-  document.getElementById('cashAccountsCard').querySelector('.summary-count').textContent = cashAccounts;
-  document.getElementById('creditCardsCard').querySelector('.summary-count').textContent = creditCards;
-  document.getElementById('totalCreditCard').querySelector('.summary-amount').textContent = 
-    formatCurrency(availableCredit, 'AUD');
+function openAccountEditor(id) {
+  if (id) {
+    getAllItems(STORE_NAMES.accounts).then(list => {
+      const acc = list.find(x => x.id === id);
+      showAccountForm(acc);
+    });
+  } else {
+    showAccountForm({ name: '', type: 'bank', balance: 0, currency: 'AUD' });
+  }
 }
 
-function quickAddTransaction(accountId) {
-  // Simple prompt for quick transaction addition
-  const amount = prompt('Enter transaction amount (negative for expenses):');
-  if (amount === null) return;
-  
-  const description = prompt('Enter description:');
-  if (description === null) return;
+function showAccountForm(acc) {
+  const main = document.getElementById('mainContent');
+  main.classList.add('page-transition');
 
-  const transaction = {
-    id: generateId(),
-    accountId: accountId,
-    amount: parseFloat(amount),
-    description: description,
-    date: new Date().toISOString().split('T')[0],
-    type: parseFloat(amount) < 0 ? 'expense' : 'income',
-    categoryId: '', // You might want to add category selection
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  // Fetch all loans
+  getAllItems(STORE_NAMES.loans).then(loans => {
+    const loanOptions = loans.map(loan => ` 
+      <option value="${loan.id}" ${acc.linkedLoanId === loan.id ? 'selected' : ''}>
+        ${loan.name}
+      </option>
+    `).join('');
 
-  addItem(STORE_NAMES.transactions, transaction).then(() => {
-    alert('Transaction added successfully!');
-    refreshAccountList();
-  });
-}
-
-function toggleAccountDetails(accountId) {
-  const details = document.getElementById(`details-${accountId}`);
-  const container = document.getElementById(`recent-${accountId}`);
-
-  const isOpening = details.style.display === "none";
-
-  details.style.display = isOpening ? "block" : "none";
-
-  if (!isOpening) return;
-
-  // Load last 5 transactions for this account
-  getAllItems(STORE_NAMES.transactions).then(allTx => {
-    const tx = allTx
-      .filter(t => t.accountId === accountId)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 5);
-
-    if (tx.length === 0) {
-      container.innerHTML = `<p class="rt-none">No transactions yet.</p>`;
-      return;
-    }
-
-    container.innerHTML = tx
-      .map(t => `
-        <div class="rt-item">
-          <span class="rt-date">${formatDate(new Date(t.date))}</span>
-          <span class="rt-desc">${t.description || 'No description'}</span>
-          <span class="rt-amt ${t.amount < 0 ? 'neg' : 'pos'}">
-            ${formatCurrency(t.amount, 'AUD')}
-          </span>
+    main.innerHTML = `
+      <div class="page-container">
+        <div class="page-header">
+          <h2>${acc.id ? '✏️ Edit' : '➕ New'} Account</h2>
         </div>
-      `)
-      .join('');
+
+        <div class="section-card">
+          <form id="accForm" class="styled-form">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" name="name" value="${acc.name}" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label>Type</label>
+              <select name="type" class="form-select" required>
+                <option value="bank" ${acc.type === 'bank' ? 'selected' : ''}>🏦 Bank</option>
+                <option value="credit" ${acc.type === 'credit' ? 'selected' : ''}>💳 Credit</option>
+                <option value="cash" ${acc.type === 'cash' ? 'selected' : ''}>💵 Cash</option>
+                <option value="investment" ${acc.type === 'investment' ? 'selected' : ''}>📈 Investment</option>
+                <option value="savings" ${acc.type === 'savings' ? 'selected' : ''}>💰 Savings</option>
+                <option value="offset" ${acc.type === 'offset' ? 'selected' : ''}>⚖️ Offset</option>
+                <option value="other" ${acc.type === 'other' ? 'selected' : ''}>📁 Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Starting Balance</label>
+              <input type="number" step="0.01" name="balance" value="${acc.balance}" class="form-input" required>
+              <small class="form-hint">Use negative for owed balances.</small>
+            </div>
+
+            <div class="form-group">
+              <label>Currency</label>
+              <select name="currency" class="form-select" required>
+                ${['AUD','USD','EUR','GBP','CAD'].map(cur => `
+                  <option value="${cur}" ${acc.currency === cur ? 'selected' : ''}>${cur}</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div id="creditFields" class="form-group" style="display:${acc.type === 'credit' ? 'block' : 'none'};">
+              <label>Credit Limit</label>
+              <input type="number" step="0.01" name="creditLimit" value="${acc.creditLimit || 0}" class="form-input">
+            </div>
+
+            <div id="linkedLoan" class="form-group" style="display:${acc.type === 'offset' ? 'block' : 'none'};">
+              <label>Linked Loan</label>
+              <select name="linkedLoanId" class="form-select">
+                <option value="">-- Select Loan --</option>
+                ${loanOptions}
+              </select>
+              <small class="form-hint">Select the loan this account is linked to.</small>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account</button>
+              <button class="btn btn-secondary" type="button" id="btnCancel">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    setTimeout(() => main.classList.remove('page-transition'), 400);
+
+    document.querySelector('select[name="type"]').addEventListener('change', function() {
+      document.getElementById('creditFields').style.display = this.value === 'credit' ? 'block' : 'none';
+      document.getElementById('linkedLoan').style.display = this.value === 'offset' ? 'block' : 'none';
+    });
+
+    document.getElementById('btnCancel').addEventListener('click', initAccountsUI);
+
+    document.getElementById('accForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+
+      const newAcc = {
+        id: acc.id || generateId(),
+        name: data.get('name').trim(),
+        type: data.get('type'),
+        balance: parseFloat(data.get('balance')),
+        currency: data.get('currency'),
+        createdAt: acc.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (newAcc.type === 'credit') {
+        newAcc.creditLimit = parseFloat(data.get('creditLimit')) || 0;
+      }
+
+      if (newAcc.type === 'offset') {
+        newAcc.linkedLoanId = data.get('linkedLoanId') || '';
+      }
+
+      if (acc.id) await updateItem(STORE_NAMES.accounts, newAcc);
+      else await addItem(STORE_NAMES.accounts, newAcc);
+
+      initAccountsUI();
+    });
   });
 }
-
-function formatDate(date) {
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric',
-    year: 'numeric'
-  });
-}
-
-// ... rest of your existing functions (getAccountIcon, getAccountTypeLabel, formatCurrency, openAccountEditor, showAccountForm) remain the same
