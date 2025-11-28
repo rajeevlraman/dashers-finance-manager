@@ -1869,3 +1869,44 @@ table th, table td {
 
 .positive { color: var(--success); }
 .negative { color: var(--danger); }
+
+/* Budget Section Headers */
+.budgets-section-header {
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.budgets-section-header h3 {
+    color: var(--text-main);
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+/* Income Budget Styling */
+.income-budget {
+    border-left: 4px solid #10b981 !important;
+    background: linear-gradient(135deg, #ffffff, #f0fdf4) !important;
+}
+
+/* Expense Budget Styling */
+.expense-budget {
+    border-left: 4px solid #ef4444 !important;
+    background: linear-gradient(135deg, #ffffff, #fef2f2) !important;
+}
+
+/* Teal color for Actual Balance */
+.card.teal {
+    background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+}
+
+/* Ensure budget cards maintain their styling */
+.budget-card {
+    border-left: 4px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.budget-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}

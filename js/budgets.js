@@ -59,7 +59,7 @@ export async function initBudgetsUI() {
             <div class="card green"><h3>Budget Income</h3><p id="totalIncome">$0.00</p></div>
             <div class="card red"><h3>Budget Expenses</h3><p id="totalExpenses">$0.00</p></div>
             <div class="card blue"><h3>Budget Surplus</h3><p id="totalBudget">$0.00</p></div>
-            <div class="card purple"><h3>Actual Balance</h3><p id="totalBalance">$0.00</p></div>
+            <div class="card teal"><h3>Actual Balance</h3><p id="totalBalance">$0.00</p></div>
         </div>
 
         <div id="budgetContainer" class="budgets-container"></div>
@@ -147,95 +147,123 @@ export async function initBudgetsUI() {
             </div>
         `;
     } else {
-        budgets.forEach(budget => {
-            const cat = categories.find(c => c.id === budget.categoryId);
-            const icon = budget.icon || guessCategoryIcon(cat?.name);
-            const goal = budget.amount || 0;
+        // Separate income and expense budgets
+        const incomeBudgets = budgets.filter(budget => incomeCategories.includes(budget.categoryId));
+        const expenseBudgets = budgets.filter(budget => expenseCategories.includes(budget.categoryId));
 
-            // Filter transactions to current period AND category
-            const spentInPeriod = transactions
-                .filter(t => {
-                    // For income budgets, track income transactions; for expense budgets, track expense transactions
-                    const isCorrectType = incomeCategories.includes(budget.categoryId) 
-                        ? t.type === 'income' 
-                        : t.type === 'expense';
-                    
-                    return isCorrectType && 
-                           t.categoryId === budget.categoryId &&
-                           t.date >= periodStartISO;
-                })
-                .reduce((sum, t) => sum + t.amount, 0);
+        // Add income section header if there are income budgets
+        if (incomeBudgets.length > 0) {
+            const incomeHeader = document.createElement('div');
+            incomeHeader.className = 'budgets-section-header';
+            incomeHeader.innerHTML = `<h3>💰 Income Budgets</h3>`;
+            container.appendChild(incomeHeader);
+        }
 
-            // Normalize both goal and spent to current view mode
-            const normalizedGoal = convertAmount(goal, budget.frequency || 'monthly', viewMode);
-            const normalizedSpent = spentInPeriod; 
-            
-            // For income budgets, we want to track how much we've earned vs goal
-            // For expense budgets, we track how much we've spent vs goal
-            const remaining = incomeCategories.includes(budget.categoryId) 
-                ? Math.max(normalizedGoal - normalizedSpent, 0)
-                : Math.max(normalizedGoal - normalizedSpent, 0);
-            
-            const percent = normalizedGoal > 0 ? Math.min((normalizedSpent / normalizedGoal) * 100, 100) : 0;
-            const isOverBudget = incomeCategories.includes(budget.categoryId) 
-                ? normalizedSpent < normalizedGoal // For income, we're "over" if we earned less than goal
-                : normalizedSpent > normalizedGoal; // For expenses, we're over if we spent more than goal
+        // Render income budgets first
+        incomeBudgets.forEach(budget => {
+            renderBudgetCard(budget, categories, transactions, incomeCategories, periodStartISO, viewMode, container);
+        });
 
-            const budgetCard = document.createElement('div');
-            budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''}`;
-            budgetCard.innerHTML = `
-                <div class="budget-card-row1">
-                    <div class="budget-left">
-                        <span class="category-icon">${icon}</span>
-                        <span class="category-name">${cat?.name || 'Unknown'} 
-                            <span class="budget-type-badge">${incomeCategories.includes(budget.categoryId) ? '💰 Income' : '💸 Expense'}</span>
-                        </span>
+        // Add expense section header if there are expense budgets
+        if (expenseBudgets.length > 0) {
+            const expenseHeader = document.createElement('div');
+            expenseHeader.className = 'budgets-section-header';
+            expenseHeader.innerHTML = `<h3>💸 Expense Budgets</h3>`;
+            container.appendChild(expenseHeader);
+        }
 
-                        <span class="budget-values">
-                            $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} 
-                            · ${percent.toFixed(0)}%
-                        </span>
-                    </div>
-
-                    <div class="budget-actions">
-                        <button class="action-btn edit-btn" data-id="${budget.id}" title="Edit">✏️</button>
-                        <button class="action-btn delete-btn" data-id="${budget.id}" title="Delete">🗑️</button>
-                    </div>
-                </div>
-
-                <div class="budget-card-row2">
-                    <div class="sub-progress-bar-container">
-                        <div class="sub-progress-bar" style="width:${percent}%"></div>
-                    </div>
-
-                    <div class="budget-status">
-                        $${remaining.toFixed(2)} ${incomeCategories.includes(budget.categoryId) ? 'to earn' : 'remaining'} — 
-                        ${isOverBudget 
-                            ? '<span class="status-over">⚠️ ' + (incomeCategories.includes(budget.categoryId) ? 'Behind' : 'Over') + '</span>' 
-                            : '<span class="status-good">On Track</span>'
-                        }
-                    </div>
-                </div>
-            `;
-
-            budgetCard.querySelector('.delete-btn').addEventListener('click', async () => {
-                if (confirm(`Delete budget for "${cat?.name}"?`)) {
-                    await deleteItem(STORE_NAMES.budgets, budget.id);
-                    initBudgetsUI();
-                }
-            });
-
-            budgetCard.querySelector('.edit-btn').addEventListener('click', () => {
-                showInlineEditor(budget, categories);
-            });
-
-            container.appendChild(budgetCard);
+        // Render expense budgets after income
+        expenseBudgets.forEach(budget => {
+            renderBudgetCard(budget, categories, transactions, incomeCategories, periodStartISO, viewMode, container);
         });
     }
 
     document.getElementById('addBudgetBtn').addEventListener('click', () => {
         showInlineEditor(null, categories);
     });
+}
+
+function renderBudgetCard(budget, categories, transactions, incomeCategories, periodStartISO, viewMode, container) {
+    const cat = categories.find(c => c.id === budget.categoryId);
+    const icon = budget.icon || guessCategoryIcon(cat?.name);
+    const goal = budget.amount || 0;
+
+    // Filter transactions to current period AND category
+    const spentInPeriod = transactions
+        .filter(t => {
+            // For income budgets, track income transactions; for expense budgets, track expense transactions
+            const isCorrectType = incomeCategories.includes(budget.categoryId) 
+                ? t.type === 'income' 
+                : t.type === 'expense';
+            
+            return isCorrectType && 
+                   t.categoryId === budget.categoryId &&
+                   t.date >= periodStartISO;
+        })
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    // Normalize both goal and spent to current view mode
+    const normalizedGoal = convertAmount(goal, budget.frequency || 'monthly', viewMode);
+    const normalizedSpent = spentInPeriod; 
+    
+    // For income budgets, we want to track how much we've earned vs goal
+    // For expense budgets, we track how much we've spent vs goal
+    const remaining = incomeCategories.includes(budget.categoryId) 
+        ? Math.max(normalizedGoal - normalizedSpent, 0)
+        : Math.max(normalizedGoal - normalizedSpent, 0);
+    
+    const percent = normalizedGoal > 0 ? Math.min((normalizedSpent / normalizedGoal) * 100, 100) : 0;
+    const isOverBudget = incomeCategories.includes(budget.categoryId) 
+        ? normalizedSpent < normalizedGoal // For income, we're "over" if we earned less than goal
+        : normalizedSpent > normalizedGoal; // For expenses, we're over if we spent more than goal
+
+    const budgetCard = document.createElement('div');
+    budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''} ${incomeCategories.includes(budget.categoryId) ? 'income-budget' : 'expense-budget'}`;
+    budgetCard.innerHTML = `
+        <div class="budget-card-row1">
+            <div class="budget-left">
+                <span class="category-icon">${icon}</span>
+                <span class="category-name">${cat?.name || 'Unknown'}</span>
+
+                <span class="budget-values">
+                    $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} 
+                    · ${percent.toFixed(0)}%
+                </span>
+            </div>
+
+            <div class="budget-actions">
+                <button class="action-btn edit-btn" data-id="${budget.id}" title="Edit">✏️</button>
+                <button class="action-btn delete-btn" data-id="${budget.id}" title="Delete">🗑️</button>
+            </div>
+        </div>
+
+        <div class="budget-card-row2">
+            <div class="sub-progress-bar-container">
+                <div class="sub-progress-bar" style="width:${percent}%"></div>
+            </div>
+
+            <div class="budget-status">
+                $${remaining.toFixed(2)} ${incomeCategories.includes(budget.categoryId) ? 'to earn' : 'remaining'} — 
+                ${isOverBudget 
+                    ? '<span class="status-over">⚠️ ' + (incomeCategories.includes(budget.categoryId) ? 'Behind' : 'Over') + '</span>' 
+                    : '<span class="status-good">On Track</span>'
+                }
+            </div>
+        </div>
+    `;
+
+    budgetCard.querySelector('.delete-btn').addEventListener('click', async () => {
+        if (confirm(`Delete budget for "${cat?.name}"?`)) {
+            await deleteItem(STORE_NAMES.budgets, budget.id);
+            initBudgetsUI();
+        }
+    });
+
+    budgetCard.querySelector('.edit-btn').addEventListener('click', () => {
+        showInlineEditor(budget, categories);
+    });
+
+    container.appendChild(budgetCard);
 }
 
 function showInlineEditor(existing, categories) {
@@ -351,7 +379,7 @@ function showInlineEditor(existing, categories) {
         form.remove();
     });
 }
-//conversion 
+
 function convertAmount(amount, fromFreq, toFreq) {
     const multipliers = {
         weekly: { 
