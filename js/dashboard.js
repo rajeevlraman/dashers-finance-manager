@@ -1,5 +1,10 @@
 import { getAllItems, STORE_NAMES } from './db.js';
 
+// Chart instances stored globally
+let catChart = null;
+let trendChart = null;
+let summaryChart = null;
+
 export async function initDashboardUI() {
   console.log("✅ initDashboardUI() executing...");
   const mainContent = document.getElementById('mainContent');
@@ -217,33 +222,42 @@ export async function initDashboardUI() {
 
     // === IMPROVED CHARTS ===
     
+    // Destroy existing charts before creating new ones
+    if (summaryChart) {
+      summaryChart.destroy();
+      summaryChart = null;
+    }
+
     // Summary Chart (Bar)
-    new Chart(document.getElementById('summaryChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Income', 'Expenses', 'Balance', 'Rent Income'],
-        datasets: [{
-          label: 'Amount ($)',
-          data: [currentMonthIncome, currentMonthExpenses, currentMonthBalance, totalRent],
-          backgroundColor: ['#2ecc71', '#e74c3c', '#3498db', '#f39c12'],
-          borderColor: ['#27ae60', '#c0392b', '#2980b9', '#e67e22'],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toFixed(2)}` } }
+    const summaryCtx = document.getElementById('summaryChart');
+    if (summaryCtx) {
+      summaryChart = new Chart(summaryCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Income', 'Expenses', 'Balance', 'Rent Income'],
+          datasets: [{
+            label: 'Amount ($)',
+            data: [currentMonthIncome, currentMonthExpenses, currentMonthBalance, totalRent],
+            backgroundColor: ['#2ecc71', '#e74c3c', '#3498db', '#f39c12'],
+            borderColor: ['#27ae60', '#c0392b', '#2980b9', '#e67e22'],
+            borderWidth: 1
+          }]
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { callback: (value) => '$' + value }
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toFixed(2)}` } }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: (value) => '$' + value }
+            }
           }
         }
-      }
-    });
+      });
+    }
 
     // Category Chart (Doughnut)
     function renderCategoryChart(selectedMonth) {
@@ -262,29 +276,39 @@ export async function initDashboardUI() {
       );
       const catData = Object.values(expensesByCategory);
       
-      if (window.catChart) window.catChart.destroy();
+      // Destroy existing chart
+      if (catChart) {
+        catChart.destroy();
+        catChart = null;
+      }
 
       document.getElementById('selectedMonthDisplay').textContent = selectedMonth;
 
-      window.catChart = new Chart(document.getElementById('expenseByCatChart'), {
-        type: 'doughnut',
-        data: {
-          labels: catLabels,
-          datasets: [{
-            data: catData,
-            backgroundColor: generateColorPalette(catLabels.length),
-            borderWidth: 2,
-            borderColor: '#fff'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'right' },
-            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${ctx.raw.toFixed(2)}` } }
+      const catCtx = document.getElementById('expenseByCatChart');
+      if (catCtx && catData.length > 0) {
+        catChart = new Chart(catCtx, {
+          type: 'doughnut',
+          data: {
+            labels: catLabels,
+            datasets: [{
+              data: catData,
+              backgroundColor: generateColorPalette(catLabels.length),
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'right' },
+              tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${ctx.raw.toFixed(2)}` } }
+            }
           }
-        }
-      });
+        });
+      } else if (catCtx) {
+        // Show message if no data
+        catCtx.parentElement.innerHTML += '<p class="no-data">No expense data for this month</p>';
+      }
     }
 
     // Trend Chart (Line)
@@ -303,67 +327,83 @@ export async function initDashboardUI() {
       const expenseData = months.map(m => monthly[m].expense);
       const netData = months.map(m => monthly[m].net);
 
-      if (window.trendChart) window.trendChart.destroy();
+      // Destroy existing chart
+      if (trendChart) {
+        trendChart.destroy();
+        trendChart = null;
+      }
 
-      window.trendChart = new Chart(document.getElementById('trendChart'), {
-        type: 'line',
-        data: {
-          labels: months.map(m => formatMonthLabel(m)),
-          datasets: [
-            {
-              label: 'Income',
-              data: incomeData,
-              borderColor: '#2ecc71',
-              backgroundColor: 'rgba(46, 204, 113, 0.1)',
-              fill: true,
-              tension: 0.4
-            },
-            {
-              label: 'Expenses',
-              data: expenseData,
-              borderColor: '#e74c3c',
-              backgroundColor: 'rgba(231, 76, 60, 0.1)',
-              fill: true,
-              tension: 0.4
-            },
-            {
-              label: 'Net',
-              data: netData,
-              borderColor: '#3498db',
-              borderDash: [5, 5],
-              fill: false,
-              tension: 0.4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'bottom' }
+      const trendCtx = document.getElementById('trendChart');
+      if (trendCtx && months.length > 0) {
+        trendChart = new Chart(trendCtx, {
+          type: 'line',
+          data: {
+            labels: months.map(m => formatMonthLabel(m)),
+            datasets: [
+              {
+                label: 'Income',
+                data: incomeData,
+                borderColor: '#2ecc71',
+                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                fill: true,
+                tension: 0.4
+              },
+              {
+                label: 'Expenses',
+                data: expenseData,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                fill: true,
+                tension: 0.4
+              },
+              {
+                label: 'Net',
+                data: netData,
+                borderColor: '#3498db',
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.4
+              }
+            ]
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { callback: (value) => '$' + value }
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { callback: (value) => '$' + value }
+              }
             }
           }
-        }
-      });
+        });
+      } else if (trendCtx) {
+        // Show message if no data
+        trendCtx.parentElement.innerHTML += '<p class="no-data">No trend data available</p>';
+      }
     }
 
     // === Event Listeners ===
     const monthSelect = document.getElementById('monthSelect');
-    monthSelect.addEventListener('change', (e) => {
-      renderCategoryChart(e.target.value);
-    });
+    if (monthSelect) {
+      monthSelect.addEventListener('change', (e) => {
+        renderCategoryChart(e.target.value);
+      });
+    }
 
     const toggleBtn = document.getElementById('toggleTrend');
-    toggleBtn.addEventListener('click', () => {
-      const trendChart = document.getElementById('trendChart');
-      const isHidden = trendChart.style.display === 'none';
-      trendChart.style.display = isHidden ? 'block' : 'none';
-      toggleBtn.textContent = isHidden ? '📉 Hide Chart' : '📈 Show Chart';
-    });
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const trendChartEl = document.getElementById('trendChart');
+        if (trendChartEl) {
+          const isHidden = trendChartEl.style.display === 'none';
+          trendChartEl.style.display = isHidden ? 'block' : 'none';
+          toggleBtn.textContent = isHidden ? '📉 Hide Chart' : '📈 Show Chart';
+        }
+      });
+    }
 
     // === Initial Render ===
     renderCategoryChart(latestMonth);
@@ -384,7 +424,7 @@ export async function initDashboardUI() {
 
 // === NEW HELPER FUNCTIONS ===
 function calculateBudgetPerformance(budgets, transactions, currentMonth) {
-  if (!budgets.length) return { onTrackCount: 0, overBudgetCount: 0, totalBudgets: 0 };
+  if (!budgets || !budgets.length) return { onTrackCount: 0, overBudgetCount: 0, totalBudgets: 0 };
   
   let onTrackCount = 0;
   let overBudgetCount = 0;
@@ -412,37 +452,43 @@ function getRecentActivity(transactions, bills, maintenance) {
   const activities = [];
   
   // Recent transactions
-  transactions.slice(-10).forEach(t => {
-    activities.push({
-      icon: t.type === 'income' ? '💹' : '💸',
-      description: `${t.type === 'income' ? 'Income' : 'Expense'}: ${t.description || 'Transaction'}`,
-      amount: t.type === 'income' ? t.amount : -t.amount,
-      date: new Date(t.date).toLocaleDateString(),
-      timestamp: new Date(t.date).getTime()
+  if (transactions && transactions.length > 0) {
+    transactions.slice(-10).forEach(t => {
+      activities.push({
+        icon: t.type === 'income' ? '💹' : '💸',
+        description: `${t.type === 'income' ? 'Income' : 'Expense'}: ${t.description || 'Transaction'}`,
+        amount: t.type === 'income' ? t.amount : -t.amount,
+        date: new Date(t.date).toLocaleDateString(),
+        timestamp: new Date(t.date).getTime()
+      });
     });
-  });
+  }
 
   // Recent bills
-  bills.slice(-5).forEach(bill => {
-    activities.push({
-      icon: '📄',
-      description: `Bill: ${bill.name}`,
-      amount: -bill.amount,
-      date: new Date(bill.dueDate).toLocaleDateString(),
-      timestamp: new Date(bill.dueDate).getTime()
+  if (bills && bills.length > 0) {
+    bills.slice(-5).forEach(bill => {
+      activities.push({
+        icon: '📄',
+        description: `Bill: ${bill.name}`,
+        amount: -bill.amount,
+        date: new Date(bill.dueDate).toLocaleDateString(),
+        timestamp: new Date(bill.dueDate).getTime()
+      });
     });
-  });
+  }
 
   // Recent maintenance
-  maintenance.slice(-5).forEach(maint => {
-    activities.push({
-      icon: '🔧',
-      description: `Maintenance: ${maint.description}`,
-      amount: -maint.cost,
-      date: new Date(maint.date).toLocaleDateString(),
-      timestamp: new Date(maint.date).getTime()
+  if (maintenance && maintenance.length > 0) {
+    maintenance.slice(-5).forEach(maint => {
+      activities.push({
+        icon: '🔧',
+        description: `Maintenance: ${maint.description}`,
+        amount: -maint.cost,
+        date: new Date(maint.date).toLocaleDateString(),
+        timestamp: new Date(maint.date).getTime()
+      });
     });
-  });
+  }
 
   // Sort by date and return
   return activities.sort((a, b) => b.timestamp - a.timestamp);
@@ -464,7 +510,7 @@ function generateColorPalette(count) {
 
 // === EXISTING HELPER FUNCTIONS ===
 function calcAvgROI(properties, tenants) {
-  if (!properties.length) return 0;
+  if (!properties || !properties.length) return 0;
   const rois = properties.map(p => {
     const t = tenants.find(t => t.propertyId === p.id);
     if (!p.purchasePrice || !t?.rent) return 0;
