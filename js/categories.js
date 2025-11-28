@@ -20,67 +20,68 @@ export async function initCategoriesUI() {
     categories = await getAllItems(STORE_NAMES.categories);
   }
 
-  mainContent.innerHTML = `
-    <div class="page-container">
-      <div class="page-header">
-        <h2>📂 Categories</h2>
-        <div class="page-actions">
-          <button id="btnNewCat" class="btn btn-primary">➕ Add Category</button>
-          <button id="btnResetDefaults" class="btn btn-secondary">🔄 Reset to Defaults</button>
-        </div>
-      </div>
-
-      <!-- Summary Cards like Budgets Page -->
-      <div class="summary-cards">
-        <div class="card green">
-          <div class="card-icon">📂</div>
-          <div class="card-content">
-            <h4>Total Categories</h4>
-            <p class="card-value">${categories.length}</p>
-          </div>
-        </div>
-        <div class="card blue">
-          <div class="card-icon">💰</div>
-          <div class="card-content">
-            <h4>Income Categories</h4>
-            <p class="card-value">${categories.filter(c => c.type === 'income').length}</p>
-          </div>
-        </div>
-        <div class="card red">
-          <div class="card-icon">💸</div>
-          <div class="card-content">
-            <h4>Expense Categories</h4>
-            <p class="card-value">${categories.filter(c => c.type === 'expense').length}</p>
-          </div>
-        </div>
-        <div class="card teal">
-          <div class="card-icon">↪️</div>
-          <div class="card-content">
-            <h4>Subcategories</h4>
-            <p class="card-value">${categories.filter(c => c.parentId).length}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="section-card">
-        <div class="categories-controls">
-          <div class="search-box">
-            <input type="text" id="categorySearch" placeholder="🔍 Search categories..." class="form-input">
-          </div>
-          <div class="filter-controls">
-            <select id="categoryTypeFilter" class="form-select">
-              <option value="all">All Types</option>
-              <option value="income">💰 Income</option>
-              <option value="expense">💸 Expense</option>
-              <option value="parent">📁 Main Categories</option>
-              <option value="child">↪️ Subcategories</option>
-            </select>
-          </div>
-        </div>
-        <div id="catList" class="categories-container"></div>
+// In your categories.js, replace the summary cards section with this:
+mainContent.innerHTML = `
+  <div class="page-container">
+    <div class="page-header">
+      <h2>📂 Categories</h2>
+      <div class="page-actions">
+        <button id="btnNewCat" class="btn btn-primary">➕ Add Category</button>
+        <button id="btnResetDefaults" class="btn btn-secondary">🔄 Reset to Defaults</button>
       </div>
     </div>
-  `;
+
+    <!-- Compact Summary Cards -->
+    <div class="compact-summary-cards">
+      <div class="compact-card green">
+        <div class="compact-icon">📂</div>
+        <div class="compact-content">
+          <div class="compact-value">${categories.length}</div>
+          <div class="compact-label">Total</div>
+        </div>
+      </div>
+      <div class="compact-card blue">
+        <div class="compact-icon">💰</div>
+        <div class="compact-content">
+          <div class="compact-value">${categories.filter(c => c.type === 'income').length}</div>
+          <div class="compact-label">Income</div>
+        </div>
+      </div>
+      <div class="compact-card red">
+        <div class="compact-icon">💸</div>
+        <div class="compact-content">
+          <div class="compact-value">${categories.filter(c => c.type === 'expense').length}</div>
+          <div class="compact-label">Expense</div>
+        </div>
+      </div>
+      <div class="compact-card teal">
+        <div class="compact-icon">↪️</div>
+        <div class="compact-content">
+          <div class="compact-value">${categories.filter(c => c.parentId).length}</div>
+          <div class="compact-label">Subcategories</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="categories-controls">
+        <div class="search-box">
+          <input type="text" id="categorySearch" placeholder="🔍 Search categories..." class="form-input">
+        </div>
+        <div class="filter-controls">
+          <select id="categoryTypeFilter" class="form-select">
+            <option value="all">All Types</option>
+            <option value="income">💰 Income</option>
+            <option value="expense">💸 Expense</option>
+            <option value="parent">📁 Main Categories</option>
+            <option value="child">↪️ Subcategories</option>
+          </select>
+        </div>
+      </div>
+      <div id="catList" class="categories-container"></div>
+    </div>
+  </div>
+`;
 
   setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 

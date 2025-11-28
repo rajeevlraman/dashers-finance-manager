@@ -2771,3 +2771,119 @@ table th, table td {
     flex-direction: column;
   }
 }
+
+/*alternate compact dash for ccategories*/
+
+/* Compact Summary Cards */
+.compact-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.compact-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+  border-left: 4px solid;
+  transition: transform 0.2s ease;
+}
+
+.compact-card:hover {
+  transform: translateY(-1px);
+}
+
+.compact-card.green {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+}
+
+.compact-card.blue {
+  border-left-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+}
+
+.compact-card.red {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2, #ffffff);
+}
+
+.compact-card.teal {
+  border-left-color: #14b8a6;
+  background: linear-gradient(135deg, #f0fdfa, #ffffff);
+}
+
+.compact-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+}
+
+.compact-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.compact-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.compact-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+/* Even more compact version for really tight spaces */
+@media (max-width: 640px) {
+  .compact-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .compact-card {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .compact-icon {
+    font-size: 1.25rem;
+    width: 32px;
+    height: 32px;
+  }
+  
+  .compact-value {
+    font-size: 1.1rem;
+  }
+  
+  .compact-label {
+    font-size: 0.7rem;
+  }
+}
+
+/* Alternative: Horizontal layout for even more compact */
+.compact-summary-cards.horizontal {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.compact-summary-cards.horizontal .compact-card {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
