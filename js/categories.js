@@ -30,23 +30,35 @@ export async function initCategoriesUI() {
         </div>
       </div>
 
-      <!-- Summary Cards -->
+      <!-- Summary Cards like Budgets Page -->
       <div class="summary-cards">
         <div class="card green">
-          <h3>Total Categories</h3>
-          <p class="summary-count">${categories.length}</p>
+          <div class="card-icon">📂</div>
+          <div class="card-content">
+            <h4>Total Categories</h4>
+            <p class="card-value">${categories.length}</p>
+          </div>
         </div>
         <div class="card blue">
-          <h3>Income Categories</h3>
-          <p class="summary-count">${categories.filter(c => c.type === 'income').length}</p>
+          <div class="card-icon">💰</div>
+          <div class="card-content">
+            <h4>Income Categories</h4>
+            <p class="card-value">${categories.filter(c => c.type === 'income').length}</p>
+          </div>
         </div>
         <div class="card red">
-          <h3>Expense Categories</h3>
-          <p class="summary-count">${categories.filter(c => c.type === 'expense').length}</p>
+          <div class="card-icon">💸</div>
+          <div class="card-content">
+            <h4>Expense Categories</h4>
+            <p class="card-value">${categories.filter(c => c.type === 'expense').length}</p>
+          </div>
         </div>
         <div class="card teal">
-          <h3>Subcategories</h3>
-          <p class="summary-count">${categories.filter(c => c.parentId).length}</p>
+          <div class="card-icon">↪️</div>
+          <div class="card-content">
+            <h4>Subcategories</h4>
+            <p class="card-value">${categories.filter(c => c.parentId).length}</p>
+          </div>
         </div>
       </div>
 
@@ -65,7 +77,7 @@ export async function initCategoriesUI() {
             </select>
           </div>
         </div>
-        <div id="catList"></div>
+        <div id="catList" class="categories-container"></div>
       </div>
     </div>
   `;
@@ -73,17 +85,17 @@ export async function initCategoriesUI() {
   setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
   const catList = document.getElementById('catList');
-  renderCategoryTable(categories);
+  renderCategoryList(categories);
 
   document.getElementById('btnNewCat').addEventListener('click', () => openCatEditor());
   document.getElementById('btnResetDefaults').addEventListener('click', resetToDefaultCategories);
   
   // Add search and filter functionality
-  document.getElementById('categorySearch').addEventListener('input', () => renderCategoryTable(categories));
-  document.getElementById('categoryTypeFilter').addEventListener('change', () => renderCategoryTable(categories));
+  document.getElementById('categorySearch').addEventListener('input', () => renderCategoryList(categories));
+  document.getElementById('categoryTypeFilter').addEventListener('change', () => renderCategoryList(categories));
 
-  // ========== IMPROVED RENDER CATEGORY TABLE ==========
-  function renderCategoryTable(cats) {
+  // ========== BUDGETS-STYLE RENDER FUNCTION ==========
+  function renderCategoryList(cats) {
     const searchTerm = document.getElementById('categorySearch').value.toLowerCase();
     const typeFilter = document.getElementById('categoryTypeFilter').value;
 
@@ -116,7 +128,7 @@ export async function initCategoriesUI() {
       catList.innerHTML = `
         <div class="empty-state">
           <p>No categories match your search criteria.</p>
-          <button class="btn btn-secondary" onclick="document.getElementById('categorySearch').value=''; document.getElementById('categoryTypeFilter').value='all'; renderCategoryTable(categories)">Clear Filters</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('categorySearch').value=''; document.getElementById('categoryTypeFilter').value='all'; renderCategoryList(categories)">Clear Filters</button>
         </div>
       `;
       return;
@@ -129,46 +141,38 @@ export async function initCategoriesUI() {
     const expenseCats = topCats.filter(c => c.type === 'expense');
 
     catList.innerHTML = `
-      <div class="categories-grid">
-        <!-- Income Section -->
-        ${incomeCats.length > 0 ? `
-          <div class="category-section">
-            <h3 class="section-title income-title">
-              <span class="section-count">${incomeCats.length}</span>
-              💰 INCOME CATEGORIES
-            </h3>
-            <div class="categories-list">
-              ${incomeCats.map(c => renderCategoryCard(c)).join('')}
-            </div>
-          </div>
-        ` : ''}
+      <!-- Income Section -->
+      ${incomeCats.length > 0 ? `
+        <div class="budgets-section-header">
+          <h3>💰 Income Categories</h3>
+          <span class="section-count">${incomeCats.length}</span>
+        </div>
+        <div class="budgets-container">
+          ${incomeCats.map(c => renderCategoryCard(c)).join('')}
+        </div>
+      ` : ''}
 
-        <!-- Expense Section -->
-        ${expenseCats.length > 0 ? `
-          <div class="category-section">
-            <h3 class="section-title expense-title">
-              <span class="section-count">${expenseCats.length}</span>
-              💸 EXPENSE CATEGORIES
-            </h3>
-            <div class="categories-list">
-              ${expenseCats.map(c => renderCategoryCard(c)).join('')}
-            </div>
-          </div>
-        ` : ''}
+      <!-- Expense Section -->
+      ${expenseCats.length > 0 ? `
+        <div class="budgets-section-header">
+          <h3>💸 Expense Categories</h3>
+          <span class="section-count">${expenseCats.length}</span>
+        </div>
+        <div class="budgets-container">
+          ${expenseCats.map(c => renderCategoryCard(c)).join('')}
+        </div>
+      ` : ''}
 
-        <!-- Subcategories Only Section (when filtered) -->
-        ${typeFilter === 'child' && subCats.length > 0 ? `
-          <div class="category-section">
-            <h3 class="section-title">
-              <span class="section-count">${subCats.length}</span>
-              ↪️ SUBCATEGORIES
-            </h3>
-            <div class="categories-list">
-              ${subCats.map(sub => renderSubcategoryCard(sub, cats)).join('')}
-            </div>
-          </div>
-        ` : ''}
-      </div>
+      <!-- Subcategories Only Section (when filtered) -->
+      ${typeFilter === 'child' && subCats.length > 0 ? `
+        <div class="budgets-section-header">
+          <h3>↪️ Subcategories</h3>
+          <span class="section-count">${subCats.length}</span>
+        </div>
+        <div class="budgets-container">
+          ${subCats.map(sub => renderSubcategoryCard(sub, cats)).join('')}
+        </div>
+      ` : ''}
     `;
 
     // Add event listeners
@@ -180,26 +184,30 @@ export async function initCategoriesUI() {
     const hasChildren = children.length > 0;
 
     return `
-      <div class="category-card ${category.type}" data-id="${category.id}">
-        <div class="category-header">
-          <span class="tree-arrow ${hasChildren ? 'closed' : 'empty'}" data-id="${category.id}">
-            ${hasChildren ? '▶' : ''}
-          </span>
-
-          <div class="category-icon">${category.icon || guessCategoryIcon(category.name)}</div>
-          
-          <div class="category-info">
-            <div class="category-name">${category.name}</div>
-            <div class="category-meta">
-              <span class="category-type-badge ${category.type}">${category.type === 'income' ? '💰 Income' : '💸 Expense'}</span>
+      <div class="budget-card ${category.type === 'income' ? 'income-budget' : 'expense-budget'}">
+        <div class="budget-card-row1">
+          <div class="budget-left">
+            <span class="category-icon">${category.icon || guessCategoryIcon(category.name)}</span>
+            <span class="category-name">
+              ${category.name}
               ${hasChildren ? `<span class="subcount-badge">${children.length} sub</span>` : ''}
-            </div>
+            </span>
           </div>
 
-          <div class="category-actions">
+          <div class="budget-actions">
             <button class="action-btn add-btn" data-id="${category.id}" data-action="addSub" title="Add Subcategory">➕</button>
             <button class="action-btn edit-btn" data-id="${category.id}" data-action="edit" title="Edit">✏️</button>
             <button class="action-btn delete-btn" data-id="${category.id}" data-action="delete" title="Delete">🗑️</button>
+          </div>
+        </div>
+
+        <div class="budget-card-row2">
+          <div class="subcategories-toggle">
+            ${hasChildren ? `
+              <button class="btn btn-secondary toggle-subcategories" data-id="${category.id}">
+                📂 Show ${children.length} Subcategor${children.length === 1 ? 'y' : 'ies'}
+              </button>
+            ` : '<span class="no-subcategories">No subcategories</span>'}
           </div>
         </div>
 
@@ -216,17 +224,20 @@ export async function initCategoriesUI() {
     const parent = allCategories.find(c => c.id === subcategory.parentId);
     
     return `
-      <div class="subcategory-item" data-id="${subcategory.id}">
-        <span class="sub-icon">${subcategory.icon || guessCategoryIcon(subcategory.name)}</span>
-        
-        <div class="subcategory-info">
-          <span class="sub-name">${subcategory.name}</span>
-          <small class="sub-parent">Under: ${parent?.name || 'Unknown'}</small>
-        </div>
-        
-        <div class="subcategory-actions">
-          <button class="action-btn edit-btn" data-id="${subcategory.id}" data-action="edit" title="Edit">✏️</button>
-          <button class="action-btn delete-btn" data-id="${subcategory.id}" data-action="delete" title="Delete">🗑️</button>
+      <div class="budget-card subcategory-card">
+        <div class="budget-card-row1">
+          <div class="budget-left">
+            <span class="category-icon">${subcategory.icon || guessCategoryIcon(subcategory.name)}</span>
+            <span class="category-name">
+              ${subcategory.name}
+              <small class="subcategory-parent">Under: ${parent?.name || 'Unknown'}</small>
+            </span>
+          </div>
+
+          <div class="budget-actions">
+            <button class="action-btn edit-btn" data-id="${subcategory.id}" data-action="edit" title="Edit">✏️</button>
+            <button class="action-btn delete-btn" data-id="${subcategory.id}" data-action="delete" title="Delete">🗑️</button>
+          </div>
         </div>
       </div>
     `;
@@ -265,11 +276,11 @@ export async function initCategoriesUI() {
       });
     });
 
-    // Improved tree collapse/expand
-    catList.querySelectorAll('.tree-arrow:not(.empty)').forEach(arrow => {
-      arrow.addEventListener('click', (e) => {
+    // Toggle subcategories
+    catList.querySelectorAll('.toggle-subcategories').forEach(btn => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const id = arrow.dataset.id;
+        const id = btn.dataset.id;
         const list = document.getElementById(`sub-${id}`);
         if (!list) return;
 
@@ -277,14 +288,10 @@ export async function initCategoriesUI() {
         
         if (isOpening) {
           list.style.display = 'block';
-          arrow.classList.remove('closed');
-          arrow.classList.add('open');
-          arrow.innerHTML = '▼';
+          btn.textContent = btn.textContent.replace('Show', 'Hide');
         } else {
           list.style.display = 'none';
-          arrow.classList.remove('open');
-          arrow.classList.add('closed');
-          arrow.innerHTML = '▶';
+          btn.textContent = btn.textContent.replace('Hide', 'Show');
         }
       });
     });
@@ -310,7 +317,7 @@ export async function initCategoriesUI() {
     }
   }
 
-  // ========== IMPROVED CATEGORY EDITOR ==========
+  // ========== BUDGETS-STYLE CATEGORY EDITOR ==========
   async function openCatEditor(id = null, parentId = null) {
     const allCats = await getAllItems(STORE_NAMES.categories);
     const cat = id
