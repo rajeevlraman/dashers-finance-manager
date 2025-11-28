@@ -244,7 +244,7 @@ export async function initTransactionsUI() {
   let currentFilters = {};
   renderTransactions(transactions, categories, accounts, currentFilters);
 
-  // === Event Listeners ===
+  // === DOM Elements ===
   const btnAddTx = document.getElementById('btnAddTx');
   const btnFilterTx = document.getElementById('btnFilterTx');
   const addTxForm = document.getElementById('addTxForm');
@@ -253,13 +253,29 @@ export async function initTransactionsUI() {
   const closeFilterForm = document.getElementById('closeFilterForm');
   const clearFilters = document.getElementById('clearFilters');
   const sortSelect = document.getElementById('sortTransactions');
+  const formsSection = document.querySelector('.forms-section');
 
-  // Form Toggle Logic
-  function showAddForm() {
+  // === Form Toggle Logic ===
+  function showAddForm(positionAfterElement = null) {
+    // If we have a specific position, move the form there
+    if (positionAfterElement) {
+      positionAfterElement.insertAdjacentElement('afterend', addTxForm);
+    } else {
+      // Otherwise put it back in the forms section (for new transactions)
+      if (formsSection && !formsSection.contains(addTxForm)) {
+        formsSection.appendChild(addTxForm);
+      }
+    }
+    
     addTxForm.style.display = 'block';
     filterTxForm.style.display = 'none';
     btnAddTx.classList.add('active');
     btnFilterTx.classList.remove('active');
+    
+    // Scroll to form if it's not in view
+    setTimeout(() => {
+      addTxForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   }
 
   function showFilterForm() {
@@ -267,6 +283,11 @@ export async function initTransactionsUI() {
     addTxForm.style.display = 'none';
     btnFilterTx.classList.add('active');
     btnAddTx.classList.remove('active');
+    
+    // Scroll to filter form
+    setTimeout(() => {
+      filterTxForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   }
 
   function hideAllForms() {
@@ -274,16 +295,28 @@ export async function initTransactionsUI() {
     filterTxForm.style.display = 'none';
     btnAddTx.classList.remove('active');
     btnFilterTx.classList.remove('active');
+    
+    // Reset form position back to forms section
+    if (formsSection && !formsSection.contains(addTxForm)) {
+      formsSection.appendChild(addTxForm);
+    }
   }
 
+  // Event Listeners
   btnAddTx.addEventListener('click', () => {
-    if (addTxForm.style.display === 'none') showAddForm();
-    else hideAllForms();
+    if (addTxForm.style.display === 'none') {
+      showAddForm(); // Show at default position for new transactions
+    } else {
+      hideAllForms();
+    }
   });
 
   btnFilterTx.addEventListener('click', () => {
-    if (filterTxForm.style.display === 'none') showFilterForm();
-    else hideAllForms();
+    if (filterTxForm.style.display === 'none') {
+      showFilterForm();
+    } else {
+      hideAllForms();
+    }
   });
 
   closeAddForm.addEventListener('click', hideAllForms);
@@ -500,7 +533,7 @@ export async function initTransactionsUI() {
   function attachTransactionEventListeners() {
     // Edit transaction
     document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async (e) => {
         const txId = btn.dataset.id;
         const txToEdit = transactions.find(tx => tx.id === txId);
         if (!txToEdit) return;
@@ -531,7 +564,9 @@ export async function initTransactionsUI() {
           }
         }, 100);
 
-        showAddForm();
+        // Get the transaction card and show form below it
+        const transactionCard = btn.closest('.transaction-card');
+        showAddForm(transactionCard);
       });
     });
 
