@@ -8,6 +8,7 @@ let summaryChart = null;
 export async function initDashboardUI() {
   console.log("✅ initDashboardUI() executing...");
   const mainContent = document.getElementById('mainContent');
+  mainContent.classList.add('page-transition');
   mainContent.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading dashboard...</p></div>';
 
   try {
@@ -71,152 +72,196 @@ export async function initDashboardUI() {
 
     // === Main HTML Layout ===
     mainContent.innerHTML = `
-      <div class="dashboard-header">
-        <h2>📊 Dashboard</h2>
-        <div class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-      </div>
+      <div class="page-container">
+        <div class="page-header">
+          <h2>📊 Dashboard</h2>
+          <div class="page-actions">
+            <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
+        </div>
 
-      <div class="dashboard-container">
         <!-- Financial Health Summary -->
-        <div class="dashboard-section">
+        <div class="section-card">
           <h3>💰 Financial Health</h3>
-          <div class="summary-cards">
-            <div class="card ${currentMonthBalance >= 0 ? 'green' : 'red'}">
-              <div class="card-icon">💵</div>
-              <div class="card-content">
-                <h4>This Month</h4>
-                <p class="card-value">$${safe(currentMonthBalance)}</p>
-                <small>Income: $${safe(currentMonthIncome)} • Expenses: $${safe(currentMonthExpenses)}</small>
+          <div class="compact-summary-cards">
+            <div class="compact-card ${currentMonthBalance >= 0 ? 'green' : 'red'}">
+              <div class="compact-icon">💵</div>
+              <div class="compact-content">
+                <div class="compact-value">$${safe(currentMonthBalance)}</div>
+                <div class="compact-label">This Month</div>
+                <div class="compact-subtext">Income: $${safe(currentMonthIncome)}</div>
+                <div class="compact-subtext">Expenses: $${safe(currentMonthExpenses)}</div>
               </div>
             </div>
             
-            <div class="card ${totalNetWorth >= 0 ? 'blue' : 'orange'}">
-              <div class="card-icon">🏦</div>
-              <div class="card-content">
-                <h4>Net Worth</h4>
-                <p class="card-value">$${safe(totalNetWorth)}</p>
-                <small>Cash: $${safe(totalCashBalance)} • Properties: $${safe(netPropertyWorth)}</small>
+            <div class="compact-card ${totalNetWorth >= 0 ? 'blue' : 'orange'}">
+              <div class="compact-icon">🏦</div>
+              <div class="compact-content">
+                <div class="compact-value">$${safe(totalNetWorth)}</div>
+                <div class="compact-label">Net Worth</div>
+                <div class="compact-subtext">Cash: $${safe(totalCashBalance)}</div>
+                <div class="compact-subtext">Properties: $${safe(netPropertyWorth)}</div>
               </div>
             </div>
             
-            <div class="card ${budgetPerformance.overBudgetCount === 0 ? 'teal' : 'yellow'}">
-              <div class="card-icon">🎯</div>
-              <div class="card-content">
-                <h4>Budget Status</h4>
-                <p class="card-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</p>
-                <small>${budgetPerformance.overBudgetCount} over budget</small>
+            <div class="compact-card ${budgetPerformance.overBudgetCount === 0 ? 'teal' : 'yellow'}">
+              <div class="compact-icon">🎯</div>
+              <div class="compact-content">
+                <div class="compact-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</div>
+                <div class="compact-label">On Track</div>
+                <div class="compact-subtext">${budgetPerformance.overBudgetCount} over budget</div>
+                <div class="compact-subtext">${budgetPerformance.totalBudgets} total budgets</div>
+              </div>
+            </div>
+
+            <div class="compact-card purple">
+              <div class="compact-icon">📈</div>
+              <div class="compact-content">
+                <div class="compact-value">$${safe(totalRent)}</div>
+                <div class="compact-label">Monthly Rent</div>
+                <div class="compact-subtext">From ${tenants.length} tenants</div>
+                <div class="compact-subtext">${properties.length} properties</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Property Portfolio -->
-        <div class="dashboard-section">
+        <div class="section-card">
           <h3>🏠 Property Portfolio</h3>
-          <div class="summary-cards">
-            <div class="card teal">
-              <div class="card-icon">🏘️</div>
-              <div class="card-content">
-                <h4>Properties</h4>
-                <p class="card-value">${properties.length}</p>
-                <small>Value: $${safe(totalValue)}</small>
+          <div class="compact-summary-cards">
+            <div class="compact-card teal">
+              <div class="compact-icon">🏘️</div>
+              <div class="compact-content">
+                <div class="compact-value">${properties.length}</div>
+                <div class="compact-label">Properties</div>
+                <div class="compact-subtext">Value: $${safe(totalValue)}</div>
               </div>
             </div>
             
-            <div class="card gold">
-              <div class="card-icon">👥</div>
-              <div class="card-content">
-                <h4>Tenants</h4>
-                <p class="card-value">${tenants.length}</p>
-                <small>Rent: $${safe(totalRent)}/mo</small>
+            <div class="compact-card gold">
+              <div class="compact-icon">👥</div>
+              <div class="compact-content">
+                <div class="compact-value">${tenants.length}</div>
+                <div class="compact-label">Tenants</div>
+                <div class="compact-subtext">Rent: $${safe(totalRent)}/mo</div>
               </div>
             </div>
             
-            <div class="card purple">
-              <div class="card-icon">📈</div>
-              <div class="card-content">
-                <h4>ROI</h4>
-                <p class="card-value">${avgROI}%</p>
-                <small>Average Return</small>
+            <div class="compact-card ${avgROI > 5 ? 'green' : 'orange'}">
+              <div class="compact-icon">📊</div>
+              <div class="compact-content">
+                <div class="compact-value">${avgROI}%</div>
+                <div class="compact-label">Avg ROI</div>
+                <div class="compact-subtext">Property Returns</div>
               </div>
             </div>
             
-            <div class="card ${netPropertyWorth >= 0 ? 'green' : 'red'}">
-              <div class="card-icon">💎</div>
-              <div class="card-content">
-                <h4>Equity</h4>
-                <p class="card-value">$${safe(netPropertyWorth)}</p>
-                <small>Loans: $${safe(totalLoan)}</small>
+            <div class="compact-card ${netPropertyWorth >= 0 ? 'blue' : 'red'}">
+              <div class="compact-icon">💎</div>
+              <div class="compact-content">
+                <div class="compact-value">$${safe(netPropertyWorth)}</div>
+                <div class="compact-label">Equity</div>
+                <div class="compact-subtext">Loans: $${safe(totalLoan)}</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Quick Stats Grid -->
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-label">Total Income</span>
-            <span class="stat-value">$${safe(income)}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Total Expenses</span>
-            <span class="stat-value">$${safe(expenses)}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Cash Balance</span>
-            <span class="stat-value">$${safe(totalCashBalance)}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Credit Balance</span>
-            <span class="stat-value">$${safe(totalCreditBalance)}</span>
+        <div class="section-card">
+          <h3>⚡ Quick Stats</h3>
+          <div class="stats-grid">
+            <div class="stat-item ${income >= expenses ? 'positive' : 'negative'}">
+              <span class="stat-icon">💰</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(income)}</span>
+                <span class="stat-label">Total Income</span>
+              </div>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">💸</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(expenses)}</span>
+                <span class="stat-label">Total Expenses</span>
+              </div>
+            </div>
+            <div class="stat-item positive">
+              <span class="stat-icon">💳</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(totalCashBalance)}</span>
+                <span class="stat-label">Cash Balance</span>
+              </div>
+            </div>
+            <div class="stat-item negative">
+              <span class="stat-icon">🏦</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(totalCreditBalance)}</span>
+                <span class="stat-label">Credit Balance</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Charts Section -->
         <div class="charts-container">
-          <div class="chart-card">
+          <div class="section-card">
             <div class="chart-header">
-              <h4>Monthly Overview</h4>
-              <select id="monthSelect" class="chart-select">
+              <h4>📅 Monthly Overview</h4>
+              <select id="monthSelect" class="form-select">
                 ${uniqueMonths.map(m => `<option value="${m}" ${m === latestMonth ? 'selected' : ''}>${m}</option>`).join('')}
               </select>
             </div>
             <canvas id="summaryChart" height="200"></canvas>
           </div>
 
-          <div class="chart-card">
+          <div class="section-card">
             <div class="chart-header">
-              <h4>Expense Categories</h4>
-              <span id="selectedMonthDisplay">${latestMonth}</span>
+              <h4>📊 Expense Categories</h4>
+              <span id="selectedMonthDisplay" class="month-badge">${latestMonth}</span>
             </div>
             <canvas id="expenseByCatChart" height="220"></canvas>
           </div>
 
-          <div class="chart-card full-width">
+          <div class="section-card full-width">
             <div class="chart-header">
-              <h4>Income vs Expenses Trend</h4>
-              <button id="toggleTrend" class="btn-secondary">📉 Hide Chart</button>
+              <h4>📈 Income vs Expenses Trend</h4>
+              <button id="toggleTrend" class="btn btn-secondary">📉 Hide Chart</button>
             </div>
             <canvas id="trendChart" height="250"></canvas>
           </div>
         </div>
 
         <!-- Recent Activity -->
-        <div class="dashboard-section">
-          <h3>📝 Recent Activity</h3>
+        <div class="section-card">
+          <div class="transactions-header">
+            <h3>📝 Recent Activity</h3>
+            <span class="transactions-count">Last ${Math.min(getRecentActivity(transactions, bills, maintenance).length, 5)} activities</span>
+          </div>
           <div class="recent-activity">
             ${getRecentActivity(transactions, bills, maintenance).slice(0, 5).map(item => `
               <div class="activity-item">
                 <span class="activity-icon">${item.icon}</span>
-                <span class="activity-desc">${item.description}</span>
-                <span class="activity-amount ${item.amount < 0 ? 'negative' : 'positive'}">${item.amount < 0 ? '-' : '+'}$${Math.abs(item.amount).toFixed(2)}</span>
-                <span class="activity-date">${item.date}</span>
+                <div class="activity-details">
+                  <div class="activity-desc">${item.description}</div>
+                  <div class="activity-date">${item.date}</div>
+                </div>
+                <span class="activity-amount ${item.amount < 0 ? 'negative' : 'positive'}">
+                  ${item.amount < 0 ? '-' : '+'}$${Math.abs(item.amount).toFixed(2)}
+                </span>
               </div>
             `).join('')}
+            ${getRecentActivity(transactions, bills, maintenance).length === 0 ? `
+              <div class="empty-state">
+                <p>No recent activity found</p>
+              </div>
+            ` : ''}
           </div>
         </div>
       </div>
     `;
+
+    setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
     if (typeof Chart === 'undefined') throw new Error('Chart.js not loaded');
 
@@ -416,7 +461,7 @@ export async function initDashboardUI() {
       <div class="error-state">
         <h3>⚠️ Dashboard Error</h3>
         <p>${err.message}</p>
-        <button onclick="initDashboardUI()" class="btn-primary">Retry</button>
+        <button onclick="initDashboardUI()" class="btn btn-primary">Retry</button>
       </div>
     `;
   }
