@@ -56,10 +56,10 @@ export async function initBudgetsUI() {
         </div>
 
         <div class="summary-cards">
-            <div class="card green"><h3>Total Income</h3><p id="totalIncome">$0.00</p></div>
-            <div class="card red"><h3>Total Expenses</h3><p id="totalExpenses">$0.00</p></div>
-            <div class="card blue"><h3>Total Budget</h3><p id="totalBudget">$0.00</p></div>
-            <div class="card purple"><h3>Balance</h3><p id="totalBalance">$0.00</p></div>
+            <div class="card green"><h3>Budget Income</h3><p id="totalIncome">$0.00</p></div>
+            <div class="card red"><h3>Budget Expenses</h3><p id="totalExpenses">$0.00</p></div>
+            <div class="card blue"><h3>Budget Surplus</h3><p id="totalBudget">$0.00</p></div>
+            <div class="card purple"><h3>Actual Balance</h3><p id="totalBalance">$0.00</p></div>
         </div>
 
         <div id="budgetContainer" class="budgets-container"></div>
@@ -116,15 +116,29 @@ export async function initBudgetsUI() {
         }
     });
 
-    const totalBudget = totalIncome + totalExpenses;
-    const balance = totalIncome - totalExpenses;
+    const budgetSurplus = totalIncome - totalExpenses;
+    
+    // Calculate actual balance from transactions in current period
+    const periodStartDate = getPeriodStartDate(viewMode);
+    const periodStartISO = periodStartDate.toISOString();
+    
+    const actualIncome = transactions
+        .filter(t => t.type === 'income' && t.date >= periodStartISO)
+        .reduce((sum, t) => sum + t.amount, 0);
+        
+    const actualExpenses = transactions
+        .filter(t => t.type === 'expense' && t.date >= periodStartISO)
+        .reduce((sum, t) => sum + t.amount, 0);
+        
+    const actualBalance = actualIncome - actualExpenses;
 
     // Update the totals on the UI
     document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
     document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
-    document.getElementById('totalBudget').textContent = `$${totalBudget.toFixed(2)}`;
-    document.getElementById('totalBalance').textContent = `$${balance.toFixed(2)}`;
-    document.getElementById('totalBalance').className = balance >= 0 ? 'positive' : 'negative';
+    document.getElementById('totalBudget').textContent = `$${budgetSurplus.toFixed(2)}`;
+    document.getElementById('totalBudget').className = budgetSurplus >= 0 ? 'positive' : 'negative';
+    document.getElementById('totalBalance').textContent = `$${actualBalance.toFixed(2)}`;
+    document.getElementById('totalBalance').className = actualBalance >= 0 ? 'positive' : 'negative';
 
     if (budgets.length === 0) {
         container.innerHTML = `
@@ -133,9 +147,6 @@ export async function initBudgetsUI() {
             </div>
         `;
     } else {
-        const periodStartDate = getPeriodStartDate(viewMode);
-        const periodStartISO = periodStartDate.toISOString();
-
         budgets.forEach(budget => {
             const cat = categories.find(c => c.id === budget.categoryId);
             const icon = budget.icon || guessCategoryIcon(cat?.name);
