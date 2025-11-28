@@ -2351,3 +2351,11 @@ table th, table td {
     text-align: center;
   }
 }
+
+.summary-amount.positive {
+  color: var(--success);
+}
+
+.summary-amount.negative {
+  color: var(--danger);
+}
