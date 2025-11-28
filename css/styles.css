@@ -2539,3 +2539,235 @@ table th, table td {
 .account-card.other {
   border-left: 4px solid #95a5a6;
 }
+
+/* categories styled as budgets page*/
+
+/* Categories Page - Budgets Style */
+.categories-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.budgets-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.budgets-section-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 1.2rem;
+}
+
+.section-count {
+  background: var(--primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Budget Card Style for Categories */
+.budget-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  transition: all 0.2s ease;
+}
+
+.budget-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.budget-card.income-budget {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(135deg, #ffffff, #f0fdf4);
+}
+
+.budget-card.expense-budget {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(135deg, #ffffff, #fef2f2);
+}
+
+.budget-card.subcategory-card {
+  border-left: 4px solid #6b7280;
+  background: linear-gradient(135deg, #ffffff, #f9fafb);
+  margin-left: 2rem;
+}
+
+/* Row Layout */
+.budget-card-row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.budget-card-row2 {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.budget-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.category-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-muted);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.category-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subcount-badge {
+  background: var(--primary);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.subcategory-parent {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+/* Actions */
+.budget-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.action-btn {
+  background: #eef2ff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--primary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.action-btn:hover {
+  background: #e0e7ff;
+  transform: translateY(-1px);
+}
+
+.action-btn.delete-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.action-btn.delete-btn:hover {
+  background: #fecaca;
+}
+
+.action-btn.add-btn {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.action-btn.add-btn:hover {
+  background: #bbf7d0;
+}
+
+/* Subcategories */
+.subcategories-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-subcategories {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.no-subcategories {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.subcategories-list {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Controls */
+.categories-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-controls {
+  min-width: 200px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .budget-card-row1 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .budget-actions {
+    align-self: flex-end;
+  }
+  
+  .budget-card.subcategory-card {
+    margin-left: 1rem;
+  }
+  
+  .categories-controls {
+    flex-direction: column;
+  }
+}
