@@ -137,13 +137,9 @@ export async function initTransactionsUI() {
             </div>
 
             <div class="form-group">
-              <label class="form-label">Description</label>
-              <input type="text" name="description" class="form-input" placeholder="Enter transaction description...">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Notes</label>
-              <textarea name="notes" class="form-input" placeholder="Add additional notes here..." rows="2"></textarea>
+              <label class="form-label">Description (Optional)</label>
+              <input type="text" name="description" class="form-input" placeholder="e.g., Groceries at Coles, Dinner out...">
+              <small class="form-hint">Add specific details about this transaction</small>
             </div>
 
             <div class="form-actions">
@@ -300,7 +296,6 @@ export async function initTransactionsUI() {
       const txForm = document.getElementById('txForm');
       txForm.type.value = btn.dataset.amount > 0 ? 'income' : 'expense';
       txForm.amount.value = Math.abs(parseFloat(btn.dataset.amount));
-      // You could auto-select category based on data-category
     });
   });
 
@@ -363,7 +358,6 @@ export async function initTransactionsUI() {
         categoryId: chosenCategoryId,
         accountId: form.accountId.value,
         description: form.description.value.trim(),
-        notes: form.notes.value.trim(),
         createdAt: form.dataset.id ? undefined : new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -471,20 +465,25 @@ export async function initTransactionsUI() {
     const category = categories.find(c => c.id === tx.categoryId);
     const account = accounts.find(a => a.id === tx.accountId);
     const isIncome = tx.amount > 0;
+    
+    // Get main category (if this is a subcategory, find its parent)
     const mainCategory = category?.parentId ? 
       categories.find(c => c.id === category.parentId) : category;
+    
+    // Get subcategory name (if this is a subcategory)
+    const subCategory = category?.parentId ? category : null;
 
     return `
       <div class="transaction-card ${isIncome ? 'income' : 'expense'}" data-id="${tx.id}">
         <div class="transaction-main">
-          <div class="transaction-icon">${category?.icon || (isIncome ? '💰' : '💸')}</div>
+          <div class="transaction-icon">${mainCategory?.icon || (isIncome ? '💰' : '💸')}</div>
           <div class="transaction-details">
-            <div class="transaction-title">${tx.description || 'No description'}</div>
+            <div class="transaction-title">${mainCategory?.name || 'Unknown Category'}</div>
             <div class="transaction-meta">
-              <span class="transaction-category">${mainCategory?.name || 'Unknown'}${category?.parentId ? ` › ${category.name}` : ''}</span>
-              <span class="transaction-account">${account?.name || 'Unknown'}</span>
+              ${subCategory ? `<span class="transaction-subcategory">${subCategory.name}</span>` : ''}
+              <span class="transaction-account">${account?.name || 'Unknown Account'}</span>
             </div>
-            ${tx.notes ? `<div class="transaction-notes">${tx.notes}</div>` : ''}
+            ${tx.description ? `<div class="transaction-description">${tx.description}</div>` : ''}
           </div>
           <div class="transaction-amount ${isIncome ? 'positive' : 'negative'}">
             ${isIncome ? '+' : '-'}$${Math.abs(tx.amount).toFixed(2)}
@@ -520,7 +519,6 @@ export async function initTransactionsUI() {
         txForm.date.value = txToEdit.date;
         txForm.accountId.value = txToEdit.accountId;
         txForm.description.value = txToEdit.description || '';
-        txForm.notes.value = txToEdit.notes || '';
 
         // Set main category and trigger subcategory update
         mainSelect.value = mainCategoryId;

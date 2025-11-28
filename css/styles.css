@@ -3160,3 +3160,29 @@ table th, table td {
     justify-content: flex-start;
   }
 }
+
+.transaction-title {
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+}
+
+.transaction-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.transaction-subcategory {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.transaction-description {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  font-style: italic;
+}
