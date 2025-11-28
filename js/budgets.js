@@ -219,6 +219,7 @@ function renderBudgetCard(budget, categories, transactions, incomeCategories, pe
 
     const budgetCard = document.createElement('div');
     budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''} ${incomeCategories.includes(budget.categoryId) ? 'income-budget' : 'expense-budget'}`;
+    budgetCard.setAttribute('data-id', budget.id); // Add data-id for finding the card later
     budgetCard.innerHTML = `
         <div class="budget-card-row1">
             <div class="budget-left">
@@ -260,13 +261,13 @@ function renderBudgetCard(budget, categories, transactions, incomeCategories, pe
     });
 
     budgetCard.querySelector('.edit-btn').addEventListener('click', () => {
-        showInlineEditor(budget, categories);
+        showInlineEditor(budget, categories, true); // Pass true to scroll to form
     });
 
     container.appendChild(budgetCard);
 }
 
-function showInlineEditor(existing, categories) {
+function showInlineEditor(existing, categories, scrollToForm = true) {
     const container = document.getElementById('budgetContainer');
     container.querySelectorAll('.budget-editor').forEach(el => el.remove());
 
@@ -315,7 +316,29 @@ function showInlineEditor(existing, categories) {
         </div>
     `;
 
-    container.prepend(form);
+    // Insert form at the right position
+    if (existing) {
+        // Find the budget card being edited and insert form after it
+        const budgetCard = container.querySelector(`.budget-card[data-id="${existing.id}"]`);
+        if (budgetCard) {
+            budgetCard.insertAdjacentElement('afterend', form);
+        } else {
+            container.prepend(form);
+        }
+    } else {
+        // For new budgets, insert at the top
+        container.prepend(form);
+    }
+
+    // Scroll to form if requested
+    if (scrollToForm) {
+        setTimeout(() => {
+            form.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 100);
+    }
 
     const catInput = document.getElementById('categoryInput');
     const iconInput = document.getElementById('iconInput');
