@@ -351,7 +351,7 @@ function showInlineEditor(existing, categories) {
         form.remove();
     });
 }
-
+//conversion 
 function convertAmount(amount, fromFreq, toFreq) {
     const multipliers = {
         weekly: { 
