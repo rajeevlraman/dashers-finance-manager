@@ -356,37 +356,37 @@ function convertAmount(amount, fromFreq, toFreq) {
     const multipliers = {
         weekly: { 
             weekly: 1,     
-            fortnightly: 1/2,   
-            monthly: 1/4.33,     
-            quarterly: 1/13,    
-            yearly: 1/52 
+            fortnightly: 2,   
+            monthly: 4.33,     
+            quarterly: 13,    
+            yearly: 52 
         },
         fortnightly: { 
-            weekly: 2,     
+            weekly: 0.5,     
             fortnightly: 1,     
-            monthly: 1/2.17,  
-            quarterly: 1/6.5,   
-            yearly: 1/26 
+            monthly: 2.17,  
+            quarterly: 6.5,   
+            yearly: 26 
         },
         monthly: { 
-            weekly: 4.33,  
-            fortnightly: 2.17,  
+            weekly: 1/4.33,  
+            fortnightly: 1/2.17,  
             monthly: 1,       
-            quarterly: 1/3,    
-            yearly: 1/12 
+            quarterly: 3,    
+            yearly: 12 
         },
         quarterly: { 
-            weekly: 13,    
-            fortnightly: 6.5,   
-            monthly: 3,       
+            weekly: 1/13,    
+            fortnightly: 1/6.5,   
+            monthly: 1/3,       
             quarterly: 1,      
-            yearly: 1/4 
+            yearly: 4 
         }, 
         yearly: { 
-            weekly: 52,    
-            fortnightly: 26,    
-            monthly: 12,      
-            quarterly: 4,      
+            weekly: 1/52,    
+            fortnightly: 1/26,    
+            monthly: 1/12,      
+            quarterly: 1/4,      
             yearly: 1 
         }
     };
