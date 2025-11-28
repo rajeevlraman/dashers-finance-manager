@@ -2159,3 +2159,195 @@ table th, table td {
     min-width: auto;
   }
 }
+
+/*style of accounts completely changed*/
+
+
+/* Accounts Page Improvements */
+.accounts-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-controls {
+  min-width: 200px;
+}
+
+/* Account Type Specific Styling */
+.account-card.bank {
+  border-left: 4px solid #3498db;
+}
+
+.account-card.credit {
+  border-left: 4px solid #e74c3c;
+}
+
+.account-card.savings {
+  border-left: 4px solid #2ecc71;
+}
+
+.account-card.investment {
+  border-left: 4px solid #9b59b6;
+}
+
+.account-card.offset {
+  border-left: 4px solid #f39c12;
+}
+
+.account-card.cash {
+  border-left: 4px solid #e67e22;
+}
+
+/* Credit Utilization */
+.credit-utilization {
+  margin-top: 0.5rem;
+}
+
+.utilization-bar {
+  width: 100%;
+  height: 6px;
+  background: #ecf0f1;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.utilization-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+  transition: width 0.3s ease;
+}
+
+/* Account Stats */
+.account-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--bg-muted);
+  border-radius: var(--radius-md);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.stat-value.positive {
+  color: var(--success);
+}
+
+/* Last Activity */
+.last-activity {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Improved Transaction List */
+.rt-item {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+
+.rt-item:last-child {
+  border-bottom: none;
+}
+
+.rt-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rt-desc {
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.rt-amt {
+  font-weight: 600;
+  text-align: right;
+}
+
+.rt-amt.pos {
+  color: var(--success);
+}
+
+.rt-amt.neg {
+  color: var(--danger);
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.summary-count {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Quick Add Button */
+.btn-primary[data-action="quick-add"] {
+  background: var(--success);
+}
+
+.btn-primary[data-action="quick-add"]:hover {
+  background: #27ae60;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .accounts-controls {
+    flex-direction: column;
+  }
+  
+  .account-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .rt-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .rt-amt {
+    text-align: center;
+  }
+}
