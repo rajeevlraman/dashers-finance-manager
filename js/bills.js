@@ -1,3 +1,5 @@
+// bills.js - WITH THE FIXED calculateStats METHOD
+
 import { addItem, deleteItem, getAllItems, updateItem, STORE_NAMES, generateId } from './db.js';
 import { addItem as addTransaction } from './db.js';
 
@@ -502,13 +504,17 @@ export class BillsManager {
         this.downloadCSV(csv, 'bills-export.csv');
     }
 
-    // Helper methods
+    // Helper methods - FIXED calculateStats method
     calculateStats(today) {
         const overdue = this.bills.filter(b => !b.paid && b.dueDate < today);
-        const dueSoon = this.bills.filter(b => !b.paid && {
+        
+        // FIXED: Properly calculate dueSoon with daysUntilDue
+        const dueSoon = this.bills.filter(b => {
+            if (b.paid) return false;
             const daysUntilDue = Math.floor((new Date(b.dueDate) - new Date(today)) / (1000 * 60 * 60 * 24));
             return daysUntilDue <= 7 && daysUntilDue >= 0;
         });
+        
         const upcoming = this.bills.filter(b => !b.paid && b.dueDate >= today);
         const unpaid = this.bills.filter(b => !b.paid);
 
@@ -571,7 +577,7 @@ export class BillsManager {
         return { text: 'Upcoming', class: 'upcoming', icon: '📅' };
     }
 
-    // Your existing helper methods (keep these)
+    // Your existing helper methods
     getAccountIcon(type) {
         const icons = {
             bank: '🏦', credit: '💳', cash: '💵', savings: '💰',
