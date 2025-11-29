@@ -4,7 +4,7 @@
 // Full offline support, background updates, and iOS PWA caching fixes.
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v33'; // 🚨 Bumped version
+const CACHE_NAME = 'budget-tracker-v34'; // 🚨 Bumped version again
 
 // 🔹 Files to cache for offline support - EXPANDED LIST
 const PRECACHE_URLS = [
@@ -69,26 +69,34 @@ self.addEventListener('install', event => {
       try {
         const cache = await caches.open(CACHE_NAME);
         
-        // Cache files individually with error handling
-        const cachePromises = PRECACHE_URLS.map(async url => {
-          try {
-            const response = await fetch(url);
-            if (response.ok) {
-              await cache.put(url, response);
-              console.log(`✅ Cached: ${url}`);
-            } else {
-              console.warn(`⚠️ Failed to cache ${url}: ${response.status}`);
+        // Use Promise.allSettled to handle failures gracefully
+        const cacheResults = await Promise.allSettled(
+          PRECACHE_URLS.map(async url => {
+            try {
+              const response = await fetch(url);
+              if (response.ok) {
+                await cache.put(url, response);
+                console.log(`✅ Cached: ${url}`);
+                return { url, status: 'success' };
+              } else {
+                console.warn(`⚠️ Failed to cache ${url}: ${response.status}`);
+                return { url, status: 'failed', reason: `HTTP ${response.status}` };
+              }
+            } catch (err) {
+              console.warn(`⚠️ Could not cache ${url}:`, err.message);
+              return { url, status: 'failed', reason: err.message };
             }
-          } catch (err) {
-            console.warn(`⚠️ Could not cache ${url}:`, err.message);
-          }
-        });
-        
-        await Promise.all(cachePromises);
-        console.log('✅ [SW] Pre-caching completed');
-        
-        // iOS fix – force immediate activation
+          })
+        );
+
+        // Log cache results summary
+        const successful = cacheResults.filter(r => r.status === 'fulfilled' && r.value.status === 'success').length;
+        const failed = cacheResults.length - successful;
+        console.log(`📊 Cache summary: ${successful} successful, ${failed} failed`);
+
+        // Force immediate activation (iOS fix)
         await self.skipWaiting();
+        console.log('✅ [SW] Installation completed, skipping waiting');
       } catch (err) {
         console.error('❌ [SW] Installation failed:', err);
       }
@@ -107,18 +115,18 @@ self.addEventListener('activate', event => {
       try {
         // Clean up old caches
         const keys = await caches.keys();
-        await Promise.all(
-          keys.map(key => {
-            if (key !== CACHE_NAME) {
-              console.log(`🗑️ Deleting old cache: ${key}`);
-              return caches.delete(key);
-            }
-          })
-        );
+        const deletePromises = keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log(`🗑️ Deleting old cache: ${key}`);
+            return caches.delete(key);
+          }
+        });
+        
+        await Promise.all(deletePromises);
         
         // Take control of all clients immediately (iOS fix)
         await self.clients.claim();
-        console.log('✅ [SW] Activated and controlling clients.');
+        console.log('✅ [SW] Activated and controlling all clients');
       } catch (err) {
         console.error('❌ [SW] Activation failed:', err);
       }
@@ -127,7 +135,7 @@ self.addEventListener('activate', event => {
 });
 
 // ============================================================================
-// 🌍 FETCH – Network-first with cache fallback (better for iOS)
+// 🌍 FETCH – Enhanced caching strategy for offline support
 // ============================================================================
 self.addEventListener('fetch', event => {
   const request = event.request;
@@ -144,24 +152,39 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Special handling for HTML navigation requests
+  // For HTML navigation requests - cache first with network update
   if (request.mode === 'navigate') {
     event.respondWith(
       (async () => {
         try {
-          // Try network first for navigation
-          const networkResponse = await fetch(request);
-          if (networkResponse.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, networkResponse.clone());
-            return networkResponse;
-          }
-          throw new Error('Network response not ok');
-        } catch (error) {
-          // Fallback to cached version
+          // Try cache first for fast loading
           const cache = await caches.open(CACHE_NAME);
           const cachedResponse = await cache.match('./index.html');
-          return cachedResponse || new Response('Offline', { status: 503 });
+          
+          // Always try to update from network in background
+          if ('caches' in self) {
+            event.waitUntil(
+              (async () => {
+                try {
+                  const networkResponse = await fetch(request);
+                  if (networkResponse.ok) {
+                    await cache.put(request, networkResponse);
+                    console.log('🔄 Updated HTML from network');
+                  }
+                } catch (err) {
+                  // Silently fail - we have cached version
+                }
+              })()
+            );
+          }
+          
+          return cachedResponse || fetch(request);
+        } catch (error) {
+          console.error('❌ Navigation fetch failed:', error);
+          return new Response('Offline - Please check connection', { 
+            status: 503,
+            headers: { 'Content-Type': 'text/html' }
+          });
         }
       })()
     );
@@ -172,40 +195,53 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      const cachedResponse = await cache.match(request);
-
-      if (cachedResponse) {
-        // Return cached version but update cache in background
-        event.waitUntil(
-          (async () => {
-            try {
-              const networkResponse = await fetch(request);
-              if (networkResponse.ok) {
-                await cache.put(request, networkResponse);
-              }
-            } catch (error) {
-              // Silently fail - we have cached version
-            }
-          })()
-        );
-        return cachedResponse;
-      }
-
-      // Not in cache - try network
+      
       try {
+        // Try cache first
+        const cachedResponse = await cache.match(request);
+        if (cachedResponse) {
+          // Update cache in background if online
+          if (navigator.onLine) {
+            event.waitUntil(
+              (async () => {
+                try {
+                  const networkResponse = await fetch(request);
+                  if (networkResponse.ok) {
+                    await cache.put(request, networkResponse);
+                  }
+                } catch (error) {
+                  // Silently fail
+                }
+              })()
+            );
+          }
+          return cachedResponse;
+        }
+
+        // Not in cache - try network
         const networkResponse = await fetch(request);
         if (networkResponse.ok) {
           await cache.put(request, networkResponse.clone());
         }
         return networkResponse;
       } catch (error) {
-        // Final fallback for critical resources
-        if (request.destination === 'script' || request.destination === 'style') {
-          return new Response('console.log("Resource unavailable offline")', {
+        // Network failed and not in cache
+        console.warn('📴 Offline resource not available:', request.url);
+        
+        // Return appropriate fallback based on file type
+        if (request.destination === 'script') {
+          return new Response('console.log("Script offline: ' + request.url + '")', {
             headers: { 'Content-Type': 'application/javascript' }
           });
         }
-        return new Response('📴 Offline', {
+        
+        if (request.destination === 'style') {
+          return new Response('/* Styles offline */', {
+            headers: { 'Content-Type': 'text/css' }
+          });
+        }
+        
+        return new Response('📴 Offline - Resource not available', {
           status: 503,
           headers: { 'Content-Type': 'text/plain' }
         });
@@ -215,31 +251,69 @@ self.addEventListener('fetch', event => {
 });
 
 // ============================================================================
-// 🔄 MESSAGES – Handle skipWaiting from app
+// 🔄 MESSAGES – Handle app messages
 // ============================================================================
 self.addEventListener('message', event => {
+  console.log('📨 [SW] Received message:', event.data);
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     console.log('⚡ [SW] Skip waiting triggered by app.');
     self.skipWaiting();
   }
+  
+  if (event.data && event.data.type === 'UPDATE_CACHE') {
+    console.log('🔄 [SW] Update cache requested');
+    updateCache();
+  }
 });
 
 // ============================================================================
-// 🛰️ Notify all clients when new update is available
+// 🛰️ Cache management functions
 // ============================================================================
-async function notifyClientsAboutUpdate() {
-  const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-  for (const client of clientsList) {
-    client.postMessage({ type: 'UPDATE_AVAILABLE' });
+async function updateCache() {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const updatePromises = PRECACHE_URLS.map(async url => {
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          await cache.put(url, response);
+          console.log(`🔄 Updated cache: ${url}`);
+        }
+      } catch (err) {
+        // Silently fail for cache updates
+      }
+    });
+    
+    await Promise.allSettled(updatePromises);
+    console.log('✅ Cache update completed');
+  } catch (err) {
+    console.error('❌ Cache update failed:', err);
   }
 }
 
+async function notifyClientsAboutUpdate() {
+  try {
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+      client.postMessage({ 
+        type: 'UPDATE_AVAILABLE',
+        version: CACHE_NAME 
+      });
+    });
+  } catch (err) {
+    console.error('❌ Failed to notify clients:', err);
+  }
+}
+
+// ============================================================================
+// 📡 Event listeners for lifecycle
+// ============================================================================
 self.addEventListener('controllerchange', () => {
   console.log('🔁 [SW] Controller changed – new version active.');
 });
 
-// Listen for waiting state to notify about updates
 self.addEventListener('waiting', () => {
-  console.log('🕓 [SW] Update waiting.');
+  console.log('🕓 [SW] Update waiting, notifying clients...');
   notifyClientsAboutUpdate();
 });
