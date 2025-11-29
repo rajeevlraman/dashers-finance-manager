@@ -1,5 +1,5 @@
 // ============================================================================
-// 🧰 maintenance.js — ENHANCED Property Maintenance Manager
+// 🧰 maintenance.js — ENHANCED Property Maintenance Manager (FIXED)
 // ============================================================================
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
@@ -35,11 +35,65 @@ const RECURRENCE_OPTIONS = [
 ];
 
 // ============================================================================
+// 🔄 Data Migration for Existing Records
+// ============================================================================
+async function migrateMaintenanceData() {
+    const logs = await getAllItems(STORE_NAMES.maintenance);
+    let needsMigration = false;
+    
+    const migratedLogs = logs.map(log => {
+        const migrated = { ...log };
+        
+        // Add missing fields with default values
+        if (!migrated.category) {
+            migrated.category = 'General';
+            needsMigration = true;
+        }
+        if (!migrated.priority) {
+            migrated.priority = 'medium';
+            needsMigration = true;
+        }
+        if (!migrated.status) {
+            migrated.status = 'Reported';
+            needsMigration = true;
+        }
+        if (!migrated.cost) {
+            migrated.cost = 0;
+            needsMigration = true;
+        }
+        if (!migrated.date) {
+            migrated.date = new Date().toISOString().split('T')[0];
+            needsMigration = true;
+        }
+        if (!migrated.images) {
+            migrated.images = [];
+            needsMigration = true;
+        }
+        
+        return migrated;
+    });
+    
+    // Save migrated data back to database
+    if (needsMigration) {
+        console.log('🔄 Migrating maintenance data...');
+        for (const log of migratedLogs) {
+            await updateItem(STORE_NAMES.maintenance, log);
+        }
+        console.log('✅ Maintenance data migration completed');
+    }
+    
+    return migratedLogs;
+}
+
+// ============================================================================
 // 🏗️ Initialize Enhanced Maintenance UI
 // ============================================================================
 export async function initMaintenanceUI(propertyId = null) {
     console.log('🧰 Enhanced Maintenance Manager initialized');
     const main = document.getElementById('mainContent');
+
+    // Migrate data first to ensure all records have required fields
+    await migrateMaintenanceData();
 
     const properties = await getAllItems(STORE_NAMES.properties);
     const currentProperty = propertyId ? properties.find(p => p.id === propertyId) : null;
@@ -129,17 +183,17 @@ export async function initMaintenanceUI(propertyId = null) {
 
     // Event Listeners
     if (propertyId) {
-        document.getElementById('btnBackToProperties').addEventListener('click', () => initPropertiesUI());
+        document.getElementById('btnBackToProperties')?.addEventListener('click', () => initPropertiesUI());
     }
 
-    document.getElementById('btnNewMaintenance').addEventListener('click', () => openMaintenanceModal(propertyId));
+    document.getElementById('btnNewMaintenance')?.addEventListener('click', () => openMaintenanceModal(propertyId));
     
     // Filter and Search Events
-    document.getElementById('filterStatus').addEventListener('change', () => refreshMaintenanceList(propertyId));
-    document.getElementById('filterCategory').addEventListener('change', () => refreshMaintenanceList(propertyId));
-    document.getElementById('filterPriority').addEventListener('change', () => refreshMaintenanceList(propertyId));
-    document.getElementById('sortMaintenance').addEventListener('change', () => refreshMaintenanceList(propertyId));
-    document.getElementById('searchMaintenance').addEventListener('input', debounce(() => refreshMaintenanceList(propertyId), 300));
+    document.getElementById('filterStatus')?.addEventListener('change', () => refreshMaintenanceList(propertyId));
+    document.getElementById('filterCategory')?.addEventListener('change', () => refreshMaintenanceList(propertyId));
+    document.getElementById('filterPriority')?.addEventListener('change', () => refreshMaintenanceList(propertyId));
+    document.getElementById('sortMaintenance')?.addEventListener('change', () => refreshMaintenanceList(propertyId));
+    document.getElementById('searchMaintenance')?.addEventListener('input', debounce(() => refreshMaintenanceList(propertyId), 300));
 
     await refreshMaintenanceList(propertyId);
     setupModalEvents(propertyId);
@@ -149,90 +203,99 @@ export async function initMaintenanceUI(propertyId = null) {
 // 📊 Statistics Dashboard
 // ============================================================================
 async function renderMaintenanceStats(propertyId = null) {
-    const logs = await getAllItems(STORE_NAMES.maintenance);
+    let logs = await getAllItems(STORE_NAMES.maintenance);
+    logs = await migrateMaintenanceData(); // Use migrated data
+    
     const filtered = propertyId ? logs.filter(l => l.propertyId === propertyId) : logs;
     
     const totalCost = filtered.reduce((sum, log) => sum + (parseFloat(log.cost) || 0), 0);
-    const completed = filtered.filter(log => log.status === 'Completed').length;
-    const pending = filtered.filter(log => log.status !== 'Completed').length;
-    const highPriority = filtered.filter(log => log.priority === 'high' || log.priority === 'emergency').length;
+    const completed = filtered.filter(log => (log.status || 'Reported') === 'Completed').length;
+    const pending = filtered.filter(log => (log.status || 'Reported') !== 'Completed').length;
+    const highPriority = filtered.filter(log => 
+        (log.priority || 'medium') === 'high' || (log.priority || 'medium') === 'emergency'
+    ).length;
     
     const thisYear = new Date().getFullYear();
     const ytdCost = filtered
-        .filter(log => new Date(log.date).getFullYear() === thisYear)
+        .filter(log => new Date(log.date || new Date()).getFullYear() === thisYear)
         .reduce((sum, log) => sum + (parseFloat(log.cost) || 0), 0);
 
     const statsContainer = document.getElementById('maintenanceStats');
-    statsContainer.innerHTML = `
-        <div class="stats-grid">
-            <div class="stat-card total">
-                <div class="stat-icon">📋</div>
-                <div class="stat-content">
-                    <div class="stat-value">${filtered.length}</div>
-                    <div class="stat-label">Total Records</div>
+    if (statsContainer) {
+        statsContainer.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${filtered.length}</div>
+                        <div class="stat-label">Total Records</div>
+                    </div>
+                </div>
+                <div class="stat-card cost">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${formatCurrency(totalCost)}</div>
+                        <div class="stat-label">Total Maintenance</div>
+                        <div class="stat-subtext">${formatCurrency(ytdCost)} YTD</div>
+                    </div>
+                </div>
+                <div class="stat-card completed">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${completed}</div>
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-subtext">${pending} pending</div>
+                    </div>
+                </div>
+                <div class="stat-card priority">
+                    <div class="stat-icon">🚨</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${highPriority}</div>
+                        <div class="stat-label">High Priority</div>
+                        <div class="stat-subtext">Needs attention</div>
+                    </div>
                 </div>
             </div>
-            <div class="stat-card cost">
-                <div class="stat-icon">💰</div>
-                <div class="stat-content">
-                    <div class="stat-value">${formatCurrency(totalCost)}</div>
-                    <div class="stat-label">Total Maintenance</div>
-                    <div class="stat-subtext">${formatCurrency(ytdCost)} YTD</div>
-                </div>
-            </div>
-            <div class="stat-card completed">
-                <div class="stat-icon">✅</div>
-                <div class="stat-content">
-                    <div class="stat-value">${completed}</div>
-                    <div class="stat-label">Completed</div>
-                    <div class="stat-subtext">${pending} pending</div>
-                </div>
-            </div>
-            <div class="stat-card priority">
-                <div class="stat-icon">🚨</div>
-                <div class="stat-content">
-                    <div class="stat-value">${highPriority}</div>
-                    <div class="stat-label">High Priority</div>
-                    <div class="stat-subtext">Needs attention</div>
-                </div>
-            </div>
-        </div>
-    `;
+        `;
+    }
 }
 
 // ============================================================================
 // 🔄 Refresh Maintenance List with Filtering
 // ============================================================================
 async function refreshMaintenanceList(propertyId = null) {
-    const logs = await getAllItems(STORE_NAMES.maintenance);
+    let logs = await getAllItems(STORE_NAMES.maintenance);
     const properties = await getAllItems(STORE_NAMES.properties);
+    
+    // Migrate existing data if needed
+    logs = await migrateMaintenanceData();
     
     let filtered = propertyId ? logs.filter(l => l.propertyId === propertyId) : logs;
     
-    // Apply filters
-    const statusFilter = document.getElementById('filterStatus').value;
-    const categoryFilter = document.getElementById('filterCategory').value;
-    const priorityFilter = document.getElementById('filterPriority').value;
-    const searchTerm = document.getElementById('searchMaintenance').value.toLowerCase();
-    const sortBy = document.getElementById('sortMaintenance').value;
+    // Apply filters with safe property access
+    const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+    const categoryFilter = document.getElementById('filterCategory')?.value || 'all';
+    const priorityFilter = document.getElementById('filterPriority')?.value || 'all';
+    const searchTerm = document.getElementById('searchMaintenance')?.value.toLowerCase() || '';
+    const sortBy = document.getElementById('sortMaintenance')?.value || 'date-desc';
 
     if (statusFilter !== 'all') {
-        filtered = filtered.filter(log => log.status === statusFilter);
+        filtered = filtered.filter(log => (log.status || 'Reported') === statusFilter);
     }
     
     if (categoryFilter !== 'all') {
-        filtered = filtered.filter(log => log.category === categoryFilter);
+        filtered = filtered.filter(log => (log.category || 'General') === categoryFilter);
     }
     
     if (priorityFilter !== 'all') {
-        filtered = filtered.filter(log => log.priority === priorityFilter);
+        filtered = filtered.filter(log => (log.priority || 'medium') === priorityFilter);
     }
     
     if (searchTerm) {
         filtered = filtered.filter(log => 
-            log.title.toLowerCase().includes(searchTerm) ||
-            log.description.toLowerCase().includes(searchTerm) ||
-            (log.vendor && log.vendor.toLowerCase().includes(searchTerm))
+            (log.title || '').toLowerCase().includes(searchTerm) ||
+            (log.description || '').toLowerCase().includes(searchTerm) ||
+            (log.vendor || '').toLowerCase().includes(searchTerm)
         );
     }
 
@@ -250,7 +313,7 @@ async function refreshMaintenanceList(propertyId = null) {
                 <button class="btn btn-primary" id="emptyAddMaintenance">Add First Maintenance Record</button>
             </div>
         `;
-        document.getElementById('emptyAddMaintenance').addEventListener('click', () => openMaintenanceModal(propertyId));
+        document.getElementById('emptyAddMaintenance')?.addEventListener('click', () => openMaintenanceModal(propertyId));
         return;
     }
 
@@ -272,20 +335,24 @@ async function refreshMaintenanceList(propertyId = null) {
 }
 
 // ============================================================================
-// 🧾 Enhanced Maintenance Card
+// 🧾 Enhanced Maintenance Card (FIXED - Safe Property Access)
 // ============================================================================
 function renderMaintenanceCard(log, properties) {
     const property = properties.find(p => p.id === log.propertyId);
     const priorityConfig = PRIORITY_LEVELS.find(p => p.value === (log.priority || 'medium'));
     const statusConfig = getStatusConfig(log.status);
+    
+    // Safe category handling - FIXED THE ERROR HERE
+    const category = log.category || 'General';
+    const safeCategory = category.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
     return html`
         <div class="maintenance-card priority-${log.priority || 'medium'}">
             <div class="maintenance-card-header">
                 <div class="maintenance-title-section">
-                    <h3 class="maintenance-title">${log.title}</h3>
+                    <h3 class="maintenance-title">${log.title || 'Untitled Maintenance'}</h3>
                     <div class="maintenance-meta">
-                        <span class="maintenance-date">${new Date(log.date).toLocaleDateString()}</span>
+                        <span class="maintenance-date">${new Date(log.date || new Date()).toLocaleDateString()}</span>
                         ${log.dueDate ? `
                             <span class="due-date ${isOverdue(log.dueDate) ? 'overdue' : ''}">
                                 📅 Due: ${new Date(log.dueDate).toLocaleDateString()}
@@ -294,11 +361,11 @@ function renderMaintenanceCard(log, properties) {
                     </div>
                 </div>
                 <div class="maintenance-badges">
-                    <span class="priority-badge" style="background: ${priorityConfig.color}">
-                        ${priorityConfig.label}
+                    <span class="priority-badge" style="background: ${priorityConfig?.color || '#95a5a6'}">
+                        ${priorityConfig?.label || '🟡 Medium'}
                     </span>
                     <span class="status-badge" style="color: ${statusConfig.color}">
-                        ${statusConfig.icon} ${log.status}
+                        ${statusConfig.icon} ${log.status || 'Reported'}
                     </span>
                 </div>
             </div>
@@ -307,15 +374,15 @@ function renderMaintenanceCard(log, properties) {
                 <div class="maintenance-details-grid">
                     <div class="detail-item">
                         <span class="detail-label">📍 Property:</span>
-                        <span class="detail-value">${property ? property.name : 'Unknown'}</span>
+                        <span class="detail-value">${property ? property.name : 'Unknown Property'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">📂 Category:</span>
-                        <span class="detail-value category-${log.category.toLowerCase()}">${log.category}</span>
+                        <span class="detail-value category-${safeCategory}">${category}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">💰 Cost:</span>
-                        <span class="detail-value cost">${formatCurrency(log.cost)}</span>
+                        <span class="detail-value cost">${formatCurrency(log.cost || 0)}</span>
                     </div>
                     ${log.vendor ? `
                         <div class="detail-item">
@@ -345,10 +412,10 @@ function renderMaintenanceCard(log, properties) {
             </div>
 
             <div class="maintenance-card-actions">
-                <button class="btn-action edit" data-id="${log.id}" data-action="edit" title="Edit">
+                <button class="btn-action edit maintenance-action-btn" data-id="${log.id}" data-action="edit" title="Edit">
                     ✏️ Edit
                 </button>
-                <button class="btn-action delete" data-id="${log.id}" data-action="delete" title="Delete">
+                <button class="btn-action delete maintenance-action-btn" data-id="${log.id}" data-action="delete" title="Delete">
                     🗑️ Delete
                 </button>
             </div>
@@ -409,7 +476,7 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
                 <label>📂 Category</label>
                 <select name="category" class="form-select">
                     ${MAINTENANCE_CATEGORIES.map(cat => 
-                        `<option value="${cat}" ${cat === log.category ? 'selected' : ''}>
+                        `<option value="${cat}" ${cat === (log.category || 'General') ? 'selected' : ''}>
                             ${cat}
                         </option>`
                     ).join('')}
@@ -419,25 +486,25 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
 
         <div class="form-group">
             <label>📝 Title *</label>
-            <input type="text" name="title" value="${log.title}" 
+            <input type="text" name="title" value="${log.title || ''}" 
                    placeholder="Brief description of maintenance needed" required>
         </div>
 
         <div class="form-group">
             <label>📋 Description</label>
             <textarea name="description" rows="3" 
-                      placeholder="Detailed description of the issue, work needed, etc.">${log.description}</textarea>
+                      placeholder="Detailed description of the issue, work needed, etc.">${log.description || ''}</textarea>
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label>💰 Cost (AUD)</label>
-                <input type="number" step="0.01" name="cost" value="${log.cost}" 
+                <input type="number" step="0.01" name="cost" value="${log.cost || 0}" 
                        placeholder="0.00">
             </div>
             <div class="form-group">
                 <label>📅 Date *</label>
-                <input type="date" name="date" value="${log.date}" required>
+                <input type="date" name="date" value="${log.date || new Date().toISOString().split('T')[0]}" required>
             </div>
         </div>
 
@@ -446,7 +513,7 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
                 <label>🚨 Priority</label>
                 <select name="priority" class="form-select">
                     ${PRIORITY_LEVELS.map(p => 
-                        `<option value="${p.value}" ${p.value === log.priority ? 'selected' : ''}>
+                        `<option value="${p.value}" ${p.value === (log.priority || 'medium') ? 'selected' : ''}>
                             ${p.label}
                         </option>`
                     ).join('')}
@@ -456,7 +523,7 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
                 <label>📊 Status</label>
                 <select name="status" class="form-select">
                     ${MAINTENANCE_STATUSES.map(status => 
-                        `<option value="${status}" ${status === log.status ? 'selected' : ''}>
+                        `<option value="${status}" ${status === (log.status || 'Reported') ? 'selected' : ''}>
                             ${status}
                         </option>`
                     ).join('')}
@@ -473,7 +540,7 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
                 <label>🔄 Recurrence</label>
                 <select name="recurrence" class="form-select">
                     ${RECURRENCE_OPTIONS.map(opt => 
-                        `<option value="${opt.value}" ${opt.value === log.recurrence ? 'selected' : ''}>
+                        `<option value="${opt.value}" ${opt.value === (log.recurrence || 'once') ? 'selected' : ''}>
                             ${opt.label}
                         </option>`
                     ).join('')}
@@ -522,6 +589,7 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
 // 🎯 Helper Functions
 // ============================================================================
 function getStatusConfig(status) {
+    const safeStatus = status || 'Reported';
     const configs = {
         'Reported': { icon: '📋', color: '#3498db' },
         'Scheduled': { icon: '📅', color: '#9b59b6' },
@@ -531,7 +599,7 @@ function getStatusConfig(status) {
         'Cancelled': { icon: '❌', color: '#95a5a6' },
         'Follow-up Needed': { icon: '🔔', color: '#e74c3c' }
     };
-    return configs[status] || configs.Reported;
+    return configs[safeStatus] || configs.Reported;
 }
 
 function getRecurrenceLabel(recurrence) {
@@ -552,18 +620,18 @@ function sortMaintenanceRecords(records, sortBy) {
     return [...records].sort((a, b) => {
         switch (sortBy) {
             case 'date-desc':
-                return new Date(b.date) - new Date(a.date);
+                return new Date(b.date || new Date()) - new Date(a.date || new Date());
             case 'date-asc':
-                return new Date(a.date) - new Date(b.date);
+                return new Date(a.date || new Date()) - new Date(b.date || new Date());
             case 'cost-desc':
                 return (parseFloat(b.cost) || 0) - (parseFloat(a.cost) || 0);
             case 'cost-asc':
                 return (parseFloat(a.cost) || 0) - (parseFloat(b.cost) || 0);
             case 'priority':
                 const priorityOrder = { emergency: 0, high: 1, medium: 2, low: 3 };
-                return priorityOrder[a.priority] - priorityOrder[b.priority];
+                return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
             default:
-                return new Date(b.date) - new Date(a.date);
+                return new Date(b.date || new Date()) - new Date(a.date || new Date());
         }
     });
 }
@@ -586,6 +654,8 @@ function debounce(func, wait) {
 function setupFilePreview(existingImages = []) {
     const fileInput = document.getElementById('maintenanceFiles');
     const preview = document.getElementById('filePreview');
+    
+    if (!fileInput || !preview) return;
     
     // Show existing images
     preview.innerHTML = existingImages.map((img, index) => `
@@ -637,12 +707,14 @@ function setupFilePreview(existingImages = []) {
 // ============================================================================
 async function saveMaintenanceRecord(propertyId) {
     const form = document.getElementById('maintenanceForm');
+    if (!form) return;
+
     const formData = new FormData(form);
-    const maintenanceId = document.getElementById('editMaintenanceId').value;
+    const maintenanceId = document.getElementById('editMaintenanceId')?.value;
 
     // Get files from preview
     const filePreviews = document.getElementById('filePreview');
-    const imageElements = filePreviews.querySelectorAll('.file-preview-item img');
+    const imageElements = filePreviews?.querySelectorAll('.file-preview-item img') || [];
     const images = Array.from(imageElements).map(img => img.src);
 
     const maintenanceData = {
@@ -700,7 +772,7 @@ async function syncMaintenanceToTransaction(log) {
         id: existing?.id || generateId(),
         maintenanceId: log.id,
         type: 'expense',
-        categoryId: `maintenance-${log.category.toLowerCase()}`,
+        categoryId: `maintenance-${(log.category || 'General').toLowerCase()}`,
         description: log.title,
         amount: parseFloat(log.cost) || 0,
         date: log.date,
@@ -790,7 +862,7 @@ export async function getPropertyMaintenanceSummary(propertyId) {
     const pendingCount = propertyLogs.filter(log => log.status !== 'Completed').length;
     const currentYear = new Date().getFullYear();
     const ytdCost = propertyLogs
-        .filter(log => new Date(log.date).getFullYear() === currentYear)
+        .filter(log => new Date(log.date || new Date()).getFullYear() === currentYear)
         .reduce((sum, log) => sum + (parseFloat(log.cost) || 0), 0);
 
     return {
