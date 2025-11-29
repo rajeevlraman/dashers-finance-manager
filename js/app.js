@@ -31,31 +31,7 @@ console.log('📱 Device Detection:', {
     userAgent: navigator.userAgent
 });
 
-// --------------------------
-// Service Worker Debugging
-// --------------------------
-async function debugServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.getRegistration();
-            if (registration) {
-                console.log('🔍 SW Debug Info:', {
-                    controller: !!navigator.serviceWorker.controller,
-                    state: registration.active?.state,
-                    scope: registration.scope,
-                    version: 'v35'
-                });
-            } else {
-                console.warn('❌ No service worker registration found');
-            }
-        } catch (err) {
-            console.error('❌ SW debug failed:', err);
-        }
-    }
-}
 
-// Call this in your DOMContentLoaded after service worker registration
-setTimeout(debugServiceWorker, 2000);
 
 // --------------------------
 // Persistent Storage Request
@@ -165,46 +141,36 @@ async function verifyCacheAndRetry() {
             ];
             
             const missingFiles = [];
-// --------------------------
-// Cache Verification - FINAL WORKING VERSION
-// --------------------------
-async function verifyCacheAndRetry() {
-    if ('caches' in window) {
-        try {
-            const cache = await caches.open('budget-tracker-v35');
-            const keys = await cache.keys();
-            console.log(`📊 Cache contains ${keys.length} items`);
-            
-            // Check for critical files
-            const criticalFiles = [
-                '/dashers-finance-manager/index.html',
-                '/dashers-finance-manager/js/app.js',
-                '/dashers-finance-manager/js/db.js',
-                '/dashers-finance-manager/js/ui.js',
-                '/dashers-finance-manager/css/styles.css'
-            ];
-            
-            const missingFiles = [];
             for (const file of criticalFiles) {
                 const match = await cache.match(file);
                 if (!match) {
                     missingFiles.push(file);
+                    console.warn(`⚠️ Critical file missing from cache: ${file}`);
+                } else {
+                    console.log(`✅ Cached: ${file}`);
                 }
             }
             
-            if (missingFiles.length === 0) {
+            if (missingFiles.length > 0 && navigator.onLine) {
+                console.log(`🔄 ${missingFiles.length} files missing, triggering cache update...`);
+                // Trigger service worker to update cache
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'UPDATE_CACHE'
+                    });
+                }
+            } else if (missingFiles.length === 0) {
                 console.log('✅ All critical files cached successfully!');
-                return true;
-            } else {
-                console.warn(`⚠️ ${missingFiles.length} files missing from cache`);
-                return false;
             }
+            
+            return missingFiles;
         } catch (err) {
             console.error('❌ Cache verification failed:', err);
-            return false;
+            return [];
         }
     }
-    return false;
+    console.log('❌ Cache API not supported');
+    return [];
 }
 
 // --------------------------
@@ -258,28 +224,6 @@ async function testOfflineCapability() {
         }
     }
 }
-
-// --------------------------
-// Manual Cache Refresh
-// --------------------------
-window.forceCacheRefresh = async function() {
-    console.log('🔄 Manual cache refresh triggered');
-    if ('caches' in window) {
-        try {
-            await caches.delete('budget-tracker-v35');
-            console.log('✅ Old cache deleted');
-        } catch (err) {
-            console.error('❌ Cache deletion failed:', err);
-        }
-    }
-    
-    if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'UPDATE_CACHE' });
-    }
-    
-    // Reload to trigger fresh installation
-    setTimeout(() => window.location.reload(), 1000);
-};
 
 // --------------------------
 // Force Cache Update on App Start
