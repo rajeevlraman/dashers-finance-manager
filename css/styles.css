@@ -5371,3 +5371,231 @@ main#mainContent {
         flex-direction: column;
     }
 }
+
+/*tenants revamp*/
+
+/* Tenants Management Styles */
+.tenants-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.tenants-header {
+    margin-bottom: 25px;
+}
+
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.linked-property-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #e8f4fd;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.property-badge {
+    font-size: 1.5rem;
+}
+
+.property-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.property-address {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.tenant-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.tenants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+/* Tenant Cards */
+.tenant-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid #27ae60;
+    transition: all 0.3s ease;
+}
+
+.tenant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.tenant-card.active { border-left-color: #27ae60; }
+.tenant-card.ending { border-left-color: #f39c12; }
+.tenant-card.pending { border-left-color: #f39c12; }
+.tenant-card.vacated { border-left-color: #95a5a6; opacity: 0.7; }
+
+.tenant-header {
+    margin-bottom: 15px;
+}
+
+.tenant-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.tenant-status.active { background: #d4edda; color: #155724; }
+.tenant-status.ending { background: #fff3cd; color: #856404; }
+.tenant-status.pending { background: #fff3cd; color: #856404; }
+.tenant-status.vacated { background: #f8f9fa; color: #6c757d; }
+
+.tenant-name {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.tenant-details {
+    margin: 15px 0;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.detail-label {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.detail-value {
+    font-weight: 500;
+}
+
+.rent-amount {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.property-name {
+    color: #3498db;
+    font-weight: 500;
+}
+
+/* Lease Information */
+.lease-info {
+    margin: 15px 0;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.lease-dates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.lease-start, .lease-end {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.lease-arrow {
+    color: #666;
+}
+
+.lease-warning {
+    text-align: center;
+    background: #fff3cd;
+    color: #856404;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.tenant-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.btn-action.edit { background: #3498db; color: white; }
+.btn-action.delete { background: #e74c3c; color: white; }
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Filter Header */
+.filtered-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-main {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .tenants-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tenant-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .lease-dates {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .tenant-actions {
+        flex-direction: column;
+    }
+}
