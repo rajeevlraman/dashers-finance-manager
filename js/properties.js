@@ -1,15 +1,16 @@
 // ============================================================================
-// 🏠 properties.js — Complete Property Portfolio Manager
+// 🏠 properties.js — FIXED VERSION
 // ============================================================================
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
-import { html } from './utils/html.js';
 import { initTenantsUI } from './tenants.js';
 import { initMaintenanceUI } from './maintenance.js';
 
 export class PropertiesManager {
     constructor() {
         this.properties = [];
+        this.tenants = [];
+        this.maintenanceLogs = [];
         this.currentFilter = 'all';
         this.currentSort = 'name';
     }
@@ -21,7 +22,11 @@ export class PropertiesManager {
     }
 
     async loadData() {
-        this.properties = await getAllItems(STORE_NAMES.properties);
+        [this.properties, this.tenants, this.maintenanceLogs] = await Promise.all([
+            getAllItems(STORE_NAMES.properties),
+            getAllItems(STORE_NAMES.tenants),
+            getAllItems(STORE_NAMES.maintenance)
+        ]);
     }
 
     renderUI() {
@@ -31,7 +36,7 @@ export class PropertiesManager {
             <div class="properties-container">
                 <div class="properties-header">
                     <h2>🏠 Property Portfolio</h2>
-                    <div class="properties-actions">
+                    <div class="header-actions">
                         <button id="btnNewProperty" class="btn btn-primary">➕ Add Property</button>
                     </div>
                 </div>
@@ -57,24 +62,27 @@ export class PropertiesManager {
                 </div>
 
                 <div class="properties-content">
-                    ${this.properties.length === 0 ? this.renderEmptyState() : this.renderPropertiesGrid()}
+                    ${this.renderPropertiesGrid()}
                 </div>
 
                 ${this.renderPropertyModal()}
             </div>
         `;
+
+        this.attachStaticEventListeners();
     }
 
     renderPortfolioSummary() {
+        // Ensure we have actual numbers, not promises
         const investmentProps = this.properties.filter(p => p.propertyType === 'investment');
         const primaryProps = this.properties.filter(p => p.propertyType === 'primary');
         const vacationProps = this.properties.filter(p => p.propertyType === 'vacation');
         const commercialProps = this.properties.filter(p => p.propertyType === 'commercial');
         
-        const totalPortfolioValue = this.properties.reduce((sum, p) => sum + (p.currentValue || 0), 0);
-        const investmentValue = investmentProps.reduce((sum, p) => sum + (p.currentValue || 0), 0);
-        const monthlyRent = investmentProps.reduce((sum, p) => sum + (p.rent || 0), 0);
-        const totalMortgage = primaryProps.reduce((sum, p) => sum + (p.mortgage || 0), 0);
+        const totalPortfolioValue = this.properties.reduce((sum, p) => sum + (parseFloat(p.currentValue) || 0), 0);
+        const investmentValue = investmentProps.reduce((sum, p) => sum + (parseFloat(p.currentValue) || 0), 0);
+        const monthlyRent = investmentProps.reduce((sum, p) => sum + (parseFloat(p.rent) || 0), 0);
+        const totalMortgage = primaryProps.reduce((sum, p) => sum + (parseFloat(p.mortgage) || 0), 0);
 
         return `
             <div class="portfolio-summary">
@@ -132,10 +140,6 @@ export class PropertiesManager {
                     <span class="quick-action-icon">💰</span>
                     <span class="quick-action-text">Add Investment</span>
                 </div>
-                <div class="quick-action-item success" id="quickViewPortfolio">
-                    <span class="quick-action-icon">📊</span>
-                    <span class="quick-action-text">Portfolio View</span>
-                </div>
                 <div class="quick-action-item secondary" id="quickExport">
                     <span class="quick-action-icon">📤</span>
                     <span class="quick-action-text">Export</span>
@@ -145,25 +149,25 @@ export class PropertiesManager {
     }
 
     renderPropertiesGrid() {
+        if (this.properties.length === 0) {
+            return this.renderEmptyState();
+        }
+
         const filteredProperties = this.getFilteredProperties();
         const sortedProperties = this.getSortedProperties(filteredProperties);
         
-        return `
-            <div class="properties-grid">
-                ${sortedProperties.map(property => this.renderPropertyCard(property)).join('')}
-            </div>
-        `;
+        // Render cards synchronously - no async operations in render
+        const cardsHtml = sortedProperties.map(property => this.renderPropertyCard(property)).join('');
+        
+        return `<div class="properties-grid">${cardsHtml}</div>`;
     }
 
-    async renderPropertyCard(p) {
-        const [tenants, maintenanceLogs] = await Promise.all([
-            getAllItems(STORE_NAMES.tenants),
-            getAllItems(STORE_NAMES.maintenance)
-        ]);
-
-        const tenant = tenants.find(t => t.propertyId === p.id);
+    renderPropertyCard(p) {
+        // Use pre-loaded data instead of async calls
+        const tenant = this.tenants.find(t => t.propertyId === p.id);
+        
         const currentYear = new Date().getFullYear();
-        const propertyLogs = maintenanceLogs.filter(
+        const propertyLogs = this.maintenanceLogs.filter(
             log => log.propertyId === p.id && new Date(log.date).getFullYear() === currentYear
         );
         const totalMaintenanceYTD = propertyLogs.reduce((sum, log) => sum + (parseFloat(log.cost) || 0), 0);
@@ -171,7 +175,7 @@ export class PropertiesManager {
         const typeInfo = this.getPropertyTypeInfo(p.propertyType || 'primary');
         const metrics = this.calculatePropertyMetrics(p, tenant, totalMaintenanceYTD);
 
-        return html`
+        return `
             <div class="property-card ${typeInfo.class}">
                 <div class="property-header">
                     <div class="property-type-badge ${typeInfo.class}">
@@ -195,9 +199,7 @@ export class PropertiesManager {
                     ` : ''}
                 </div>
 
-                ${p.propertyType === 'investment' ? this.renderInvestmentContent(p, tenant, metrics) : ''}
-                ${p.propertyType === 'primary' ? this.renderPrimaryContent(p, metrics) : ''}
-                ${['vacation', 'commercial'].includes(p.propertyType) ? this.renderOtherContent(p, metrics) : ''}
+                ${this.renderPropertyTypeContent(p, tenant, metrics)}
 
                 <div class="property-maintenance">
                     <div class="maintenance-header">
@@ -227,8 +229,19 @@ export class PropertiesManager {
         `;
     }
 
+    renderPropertyTypeContent(p, tenant, metrics) {
+        switch (p.propertyType) {
+            case 'investment':
+                return this.renderInvestmentContent(p, tenant, metrics);
+            case 'primary':
+                return this.renderPrimaryContent(p, metrics);
+            default:
+                return this.renderOtherContent(p, metrics);
+        }
+    }
+
     renderInvestmentContent(p, tenant, metrics) {
-        return html`
+        return `
             <div class="investment-content">
                 <div class="rental-info">
                     <div class="rent-amount">
@@ -239,7 +252,9 @@ export class PropertiesManager {
                         <div class="tenant-status occupied">
                             <span class="tenant-icon">👤</span>
                             <span class="tenant-name">${tenant.name}</span>
-                            <span class="tenant-since">Since ${new Date(tenant.startDate).toLocaleDateString('en-AU')}</span>
+                            ${tenant.startDate ? `
+                                <span class="tenant-since">Since ${new Date(tenant.startDate).toLocaleDateString('en-AU')}</span>
+                            ` : ''}
                         </div>
                     ` : `
                         <div class="tenant-status vacant">
@@ -257,17 +272,13 @@ export class PropertiesManager {
                         <span class="metric-label">Value Change:</span>
                         <span class="metric-value ${parseFloat(metrics.valueChange) > 0 ? 'positive' : 'negative'}">${metrics.valueChange}%</span>
                     </div>
-                    <div class="metric-item">
-                        <span class="metric-label">Cap Rate:</span>
-                        <span class="metric-value">${metrics.capRate}%</span>
-                    </div>
                 </div>
             </div>
         `;
     }
 
     renderPrimaryContent(p, metrics) {
-        return html`
+        return `
             <div class="primary-content">
                 <div class="residence-info">
                     <div class="owner-occupied-badge">
@@ -286,20 +297,17 @@ export class PropertiesManager {
                         <span class="equity-label">Home Equity:</span>
                         <span class="equity-value">${this.formatCurrency(metrics.equity)}</span>
                     </div>
-                    <div class="equity-item">
-                        <span class="equity-label">Equity %:</span>
-                        <span class="equity-percent">${metrics.equityPercent}%</span>
-                    </div>
                 </div>
             </div>
         `;
     }
 
     renderOtherContent(p, metrics) {
-        return html`
+        const typeLabel = p.propertyType === 'vacation' ? '🌴 Vacation & Personal Use' : '🏢 Business & Commercial';
+        return `
             <div class="other-content">
                 <div class="property-purpose">
-                    ${p.propertyType === 'vacation' ? '🌴 Vacation & Personal Use' : '🏢 Business & Commercial'}
+                    ${typeLabel}
                 </div>
                 ${p.rent ? `
                     <div class="rental-potential">
@@ -334,7 +342,7 @@ export class PropertiesManager {
                         <div class="form-group">
                             <label>Property Name</label>
                             <input type="text" id="propertyName" class="form-input" 
-                                   placeholder="e.g., Family Home, City Apartment, Beach House" required>
+                                   placeholder="e.g., Family Home, City Apartment" required>
                         </div>
 
                         <div class="form-group">
@@ -356,12 +364,12 @@ export class PropertiesManager {
 
                         <div class="form-group" id="rentField">
                             <label>Monthly Rent</label>
-                            <input type="number" id="propertyRent" class="form-input" step="0.01" min="0">
+                            <input type="number" id="propertyRent" class="form-input" step="0.01" min="0" value="0">
                         </div>
 
                         <div class="form-group" id="mortgageField" style="display: none;">
                             <label>Monthly Mortgage Payment</label>
-                            <input type="number" id="propertyMortgage" class="form-input" step="0.01" min="0">
+                            <input type="number" id="propertyMortgage" class="form-input" step="0.01" min="0" value="0">
                         </div>
 
                         <div class="form-actions">
@@ -387,11 +395,10 @@ export class PropertiesManager {
         `;
     }
 
-    attachEventListeners() {
+    attachStaticEventListeners() {
         // Quick actions
         document.getElementById('quickAddProperty')?.addEventListener('click', () => this.openPropertyForm());
         document.getElementById('quickAddInvestment')?.addEventListener('click', () => this.openPropertyForm('investment'));
-        document.getElementById('quickViewPortfolio')?.addEventListener('click', () => this.showPortfolioView());
         document.getElementById('quickExport')?.addEventListener('click', () => this.exportPortfolio());
         document.getElementById('emptyAddProperty')?.addEventListener('click', () => this.openPropertyForm());
         document.getElementById('btnNewProperty')?.addEventListener('click', () => this.openPropertyForm());
@@ -406,8 +413,12 @@ export class PropertiesManager {
             this.currentSort = e.target.value;
             this.renderUI();
         });
+    }
 
-        // Property actions
+    attachEventListeners() {
+        this.attachStaticEventListeners();
+
+        // Property actions - use event delegation
         document.addEventListener('click', (e) => {
             const button = e.target.closest('[data-action]');
             if (!button) return;
@@ -444,12 +455,13 @@ export class PropertiesManager {
         const closeBtn = document.getElementById('closeModal');
         const cancelBtn = document.getElementById('cancelProperty');
         const typeSelect = document.getElementById('propertyType');
-        const rentField = document.getElementById('rentField');
-        const mortgageField = document.getElementById('mortgageField');
 
         // Toggle rent/mortgage fields based on property type
         typeSelect?.addEventListener('change', (e) => {
             const type = e.target.value;
+            const rentField = document.getElementById('rentField');
+            const mortgageField = document.getElementById('mortgageField');
+            
             if (type === 'primary') {
                 rentField.style.display = 'none';
                 mortgageField.style.display = 'block';
@@ -488,17 +500,19 @@ export class PropertiesManager {
         if (property) {
             title.textContent = 'Edit Property';
             document.getElementById('editPropertyId').value = property.id;
-            document.getElementById('propertyName').value = property.name;
-            document.getElementById('propertyAddress').value = property.address;
-            document.getElementById('purchasePrice').value = property.purchasePrice;
-            document.getElementById('currentValue').value = property.currentValue;
-            document.getElementById('propertyRent').value = property.rent;
-            document.getElementById('propertyMortgage').value = property.mortgage;
+            document.getElementById('propertyName').value = property.name || '';
+            document.getElementById('propertyAddress').value = property.address || '';
+            document.getElementById('purchasePrice').value = property.purchasePrice || '';
+            document.getElementById('currentValue').value = property.currentValue || '';
+            document.getElementById('propertyRent').value = property.rent || '0';
+            document.getElementById('propertyMortgage').value = property.mortgage || '0';
             typeSelect.value = property.propertyType || 'primary';
         } else {
             title.textContent = 'Add New Property';
             form.reset();
             document.getElementById('editPropertyId').value = '';
+            document.getElementById('propertyRent').value = '0';
+            document.getElementById('propertyMortgage').value = '0';
             if (prefillType) {
                 typeSelect.value = prefillType;
             }
@@ -518,12 +532,12 @@ export class PropertiesManager {
             id: propertyId || generateId(),
             name: document.getElementById('propertyName').value,
             address: document.getElementById('propertyAddress').value,
-            purchasePrice: parseFloat(document.getElementById('purchasePrice').value),
-            currentValue: parseFloat(document.getElementById('currentValue').value),
+            purchasePrice: parseFloat(document.getElementById('purchasePrice').value) || 0,
+            currentValue: parseFloat(document.getElementById('currentValue').value) || 0,
             propertyType: type,
             rent: type !== 'primary' ? parseFloat(document.getElementById('propertyRent').value) || 0 : 0,
             mortgage: type === 'primary' ? parseFloat(document.getElementById('propertyMortgage').value) || 0 : 0,
-            createdAt: propertyData?.createdAt || new Date().toISOString(),
+            createdAt: propertyId ? this.properties.find(p => p.id === propertyId)?.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
 
@@ -561,11 +575,11 @@ export class PropertiesManager {
     getSortedProperties(properties) {
         return [...properties].sort((a, b) => {
             switch (this.currentSort) {
-                case 'name': return a.name.localeCompare(b.name);
-                case 'value': return (b.currentValue || 0) - (a.currentValue || 0);
-                case 'rent': return (b.rent || 0) - (a.rent || 0);
+                case 'name': return (a.name || '').localeCompare(b.name || '');
+                case 'value': return (parseFloat(b.currentValue) || 0) - (parseFloat(a.currentValue) || 0);
+                case 'rent': return (parseFloat(b.rent) || 0) - (parseFloat(a.rent) || 0);
                 case 'type': return (a.propertyType || 'primary').localeCompare(b.propertyType || 'primary');
-                default: return a.name.localeCompare(b.name);
+                default: return (a.name || '').localeCompare(b.name || '');
             }
         });
     }
@@ -581,33 +595,24 @@ export class PropertiesManager {
     }
 
     calculatePropertyMetrics(p, tenant, maintenanceYTD) {
-        const annualRent = (p.rent || 0) * 12;
+        const annualRent = (parseFloat(p.rent) || 0) * 12;
         const netOperatingIncome = annualRent - maintenanceYTD;
-        const capRate = p.currentValue ? (netOperatingIncome / p.currentValue * 100) : 0;
         
         const roi = p.purchasePrice && p.rent
-            ? ((p.rent * 12) / p.purchasePrice * 100).toFixed(1)
+            ? ((annualRent) / parseFloat(p.purchasePrice) * 100).toFixed(1)
             : '0.0';
 
         const valueChange = p.currentValue && p.purchasePrice
-            ? (((p.currentValue - p.purchasePrice) / p.purchasePrice) * 100).toFixed(1)
+            ? (((parseFloat(p.currentValue) - parseFloat(p.purchasePrice)) / parseFloat(p.purchasePrice)) * 100).toFixed(1)
             : '0.0';
 
-        const equity = p.currentValue - (p.mortgage ? p.mortgage * 12 * 30 : 0); // Simple equity calculation
-        const equityPercent = p.currentValue ? ((equity / p.currentValue) * 100).toFixed(1) : '0.0';
+        const equity = Math.max(0, (parseFloat(p.currentValue) || 0) - (parseFloat(p.mortgage) || 0) * 12 * 30);
 
         return {
             roi,
             valueChange,
-            capRate: capRate.toFixed(1),
-            equity: Math.max(0, equity),
-            equityPercent
+            equity: equity
         };
-    }
-
-    showPortfolioView() {
-        // Implement portfolio overview with charts
-        alert('Portfolio view coming soon!');
     }
 
     exportPortfolio() {
@@ -641,7 +646,7 @@ export class PropertiesManager {
     }
 
     formatCurrency(amount) {
-        if (isNaN(amount)) return '$0.00';
+        if (isNaN(amount) || amount === null || amount === undefined) return '$0.00';
         return new Intl.NumberFormat('en-AU', { 
             style: 'currency', 
             currency: 'AUD' 
