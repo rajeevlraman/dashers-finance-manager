@@ -4516,3 +4516,136 @@ main#mainContent {
         padding: 12px 8px;
     }
 }
+
+/*recurring.js*/
+
+/* Recurring Transactions Styles */
+.recurring-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.recurring-header {
+    margin-bottom: 30px;
+}
+
+.recurring-row {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 20px;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 4px solid #3498db;
+}
+
+.recurring-row.income {
+    border-left-color: #27ae60;
+}
+
+.recurring-row.expense {
+    border-left-color: #e74c3c;
+}
+
+.recurring-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.recurring-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.recurring-details {
+    flex: 1;
+}
+
+.recurring-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+.recurring-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+}
+
+.recurring-type, .recurring-frequency, .recurring-account {
+    font-size: 12px;
+    color: #666;
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.recurring-type.income {
+    background: #d4edda;
+    color: #155724;
+}
+
+.recurring-type.expense {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.recurring-category {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+
+.recurring-amount {
+    font-size: 18px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.recurring-amount.income {
+    color: #27ae60;
+}
+
+.recurring-amount.expense {
+    color: #e74c3c;
+}
+
+.recurring-next {
+    text-align: center;
+}
+
+.next-date {
+    font-size: 12px;
+    color: #666;
+    background: #f8f9fa;
+    padding: 6px 12px;
+    border-radius: 15px;
+}
+
+.recurring-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Stats card variations */
+.stat-card.positive {
+    border-left-color: #27ae60;
+    background: #e8f6ef;
+}
+
+.stat-card.negative {
+    border-left-color: #e74c3c;
+    background: #ffeaea;
+}
+
+.stat-card.secondary {
+    border-left-color: #95a5a6;
+    background: #f8f9fa;
+}
