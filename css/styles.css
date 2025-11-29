@@ -4304,3 +4304,215 @@ main#mainContent {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Horizontal Quick Actions */
+.horizontal-quick-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.quick-action-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.quick-action-item.primary {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.quick-action-item.success {
+    background: #27ae60;
+    color: white;
+    border-color: #27ae60;
+}
+
+.quick-action-item.warning {
+    background: #f39c12;
+    color: white;
+    border-color: #f39c12;
+}
+
+.quick-action-item.secondary {
+    background: #95a5a6;
+    color: white;
+    border-color: #95a5a6;
+}
+
+.quick-action-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.quick-action-icon {
+    font-size: 16px;
+}
+
+.quick-action-text {
+    font-size: 14px;
+}
+
+.quick-action-badge {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Responsive Design for Horizontal Actions */
+@media (max-width: 768px) {
+    .horizontal-quick-actions {
+        gap: 8px;
+    }
+    
+    .quick-action-item {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+    
+    .quick-action-text {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .horizontal-quick-actions {
+        justify-content: space-between;
+    }
+    
+    .quick-action-item {
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
+    }
+    
+    .quick-action-text {
+        display: none; /* Hide text on very small screens */
+    }
+    
+    .quick-action-item {
+        padding: 12px 8px;
+    }
+}/* Horizontal Quick Actions */
+.horizontal-quick-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.quick-action-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.quick-action-item.primary {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.quick-action-item.success {
+    background: #27ae60;
+    color: white;
+    border-color: #27ae60;
+}
+
+.quick-action-item.warning {
+    background: #f39c12;
+    color: white;
+    border-color: #f39c12;
+}
+
+.quick-action-item.secondary {
+    background: #95a5a6;
+    color: white;
+    border-color: #95a5a6;
+}
+
+.quick-action-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.quick-action-icon {
+    font-size: 16px;
+}
+
+.quick-action-text {
+    font-size: 14px;
+}
+
+.quick-action-badge {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Responsive Design for Horizontal Actions */
+@media (max-width: 768px) {
+    .horizontal-quick-actions {
+        gap: 8px;
+    }
+    
+    .quick-action-item {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+    
+    .quick-action-text {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .horizontal-quick-actions {
+        justify-content: space-between;
+    }
+    
+    .quick-action-item {
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
+    }
+    
+    .quick-action-text {
+        display: none; /* Hide text on very small screens */
+    }
+    
+    .quick-action-item {
+        padding: 12px 8px;
+    }
+}
