@@ -1,4 +1,4 @@
-import { clearAllData, getAllItems, STORE_NAMES, addItem, updateItem } from './db.js';
+import { clearAllData as dbClearAllData, getAllItems, STORE_NAMES, addItem, updateItem } from './db.js';
 import { migrateIndexedDBToDexie } from './db_migration_helper.js';
 
 export async function initSettingsUI() {
@@ -121,7 +121,7 @@ export async function initSettingsUI() {
               <button class="btn btn-danger" id="clearCache">
                 🗑️ Clear Cache
               </button>
-              <button class="btn btn-danger" id="clearData">
+              <button class="btn btn-danger" id="clearAllDataBtn">
                 💥 Clear All Data
               </button>
             </div>
@@ -184,9 +184,9 @@ function setupEventListeners() {
     migrateBtn.addEventListener('click', handleMigration);
   }
   
-  // Reset - FIXED: Using the correct function names
+  // Reset - FIXED: Using unique function names
   document.getElementById('clearCache').addEventListener('click', clearCache);
-  document.getElementById('clearData').addEventListener('click', clearAllData); // Fixed this line
+  document.getElementById('clearAllDataBtn').addEventListener('click', handleClearAllData); // Fixed: unique function name
   
   // About
   document.getElementById('checkUpdates').addEventListener('click', checkForUpdates);
@@ -475,7 +475,7 @@ async function handleMigration() {
 }
 
 // ============================================================================
-// 🗑️ RESET FUNCTIONS (MISSING FUNCTIONS ADDED)
+// 🗑️ RESET FUNCTIONS (FIXED NAMING CONFLICT)
 // ============================================================================
 
 async function clearCache() {
@@ -514,28 +514,69 @@ async function clearCache() {
   }
 }
 
-async function clearAllData() {
-  if (!confirm('💥 DELETE ALL DATA?\n\n⚠️  THIS ACTION CANNOT BE UNDONE!\n\nThis will:' +
-               '\n• Delete ALL transactions, properties, budgets' +
-               '\n• Delete ALL settings and preferences' +
-               '\n• Completely reset the application' +
-               '\n• You will lose everything!')) {
-    return;
+// NEW: Enhanced clear all data with backup option
+async function handleClearAllData() {
+  // First, offer to backup data
+  const backupChoice = confirm(
+    '💾 BACKUP YOUR DATA FIRST?\n\n' +
+    'Would you like to create a backup before clearing all data?\n\n' +
+    'Click OK to create a backup, or Cancel to proceed without backup.'
+  );
+
+  if (backupChoice) {
+    // User wants to backup first
+    await exportData();
+    
+    // Ask again after backup is complete
+    const finalConfirmation = confirm(
+      '✅ Backup completed!\n\n' +
+      '💥 NOW CLEAR ALL DATA?\n\n' +
+      '⚠️ THIS ACTION CANNOT BE UNDONE!\n\n' +
+      'This will delete:\n' +
+      '• ALL transactions, properties, budgets\n' +
+      '• ALL settings and preferences\n' +
+      '• Completely reset the application\n\n' +
+      'Are you absolutely sure?'
+    );
+    
+    if (!finalConfirmation) {
+      showToast('Data clearing cancelled', 'info');
+      return;
+    }
+  } else {
+    // User doesn't want backup, ask for final confirmation
+    const finalConfirmation = confirm(
+      '💥 CLEAR ALL DATA WITHOUT BACKUP?\n\n' +
+      '⚠️ ⚠️ ⚠️  EXTREME WARNING! ⚠️ ⚠️ ⚠️\n\n' +
+      'You have chosen NOT to create a backup!\n' +
+      'ALL YOUR DATA WILL BE PERMANENTLY LOST!\n\n' +
+      'This will delete:\n' +
+      '• ALL transactions, properties, budgets\n' +
+      '• ALL settings and preferences\n' +
+      '• Completely reset the application\n\n' +
+      'Type OK to confirm permanent deletion:'
+    );
+    
+    if (!finalConfirmation) {
+      showToast('Data clearing cancelled', 'info');
+      return;
+    }
   }
 
   try {
     showToast('🗑️ Clearing all data...', 'info');
     
-    await clearAllData();
+    // Use the imported function with alias to avoid naming conflict
+    await dbClearAllData();
     localStorage.clear();
     sessionStorage.clear();
     
-    showToast('✅ All data cleared! Reloading...', 'success');
+    showToast('✅ All data cleared! Reloading application...', 'success');
     
     // Reload after a short delay
     setTimeout(() => {
       location.reload();
-    }, 2000);
+    }, 3000);
     
   } catch (error) {
     console.error('Data clearing failed:', error);
@@ -601,4 +642,3 @@ function showToast(message, type = 'info') {
     }, 300);
   });
 }
-
