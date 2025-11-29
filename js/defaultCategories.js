@@ -90,6 +90,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_rego', name: 'Registration', type: 'expense', icon: '📄', parentId: 'exp_transport' },
 { id: 'exp_car2_rego', name: '2nd car Registration', type: 'expense', icon: '📄', parentId: 'exp_transport' },
 { id: 'exp_public_transport', name: 'Public Transport', type: 'expense', icon: '🚆', parentId: 'exp_transport' },
+{ id: 'exp_citylink_toll', name: 'citylink_toll', type: 'expense', icon: '⛽', parentId: 'exp_transport' },
 { id: 'exp_Parking_Fees', name: 'parking Fees', type: 'expense', icon: '🚆', parentId: 'exp_transport' },
 
 { id: 'exp_health', name: 'Health & Medical', type: 'expense', icon: '🩺', parentId: null },
