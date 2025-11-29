@@ -1,300 +1,673 @@
 import { getAllItems, STORE_NAMES } from './db.js';
-console.log('initReportsUI running');
 
-let activeCharts = []; // 🧹 Track charts so we can destroy them safely
+console.log('📊 Enhanced Reports Manager initialized');
 
-export function initReportsUI() {
+let activeCharts = [];
+let allTransactions = [];
+let allCategories = [];
+
+export async function initReportsUI() {
   const mainContent = document.getElementById('mainContent');
 
   mainContent.innerHTML = `
-    <h2>Reports</h2>
-    <div class="charts">
-
-      <div>
-        <h3>Expenses by Main Category</h3>
-        <canvas id="catChart" height="250"></canvas>
-        <button class="button" id="backToMain" style="display:none;">⬅️ Back</button>
-        <button class="button" onclick="downloadChart('catChart', 'Expenses_by_Category')">📥 Download</button>
+    <div class="reports-container">
+      <!-- Header -->
+      <div class="reports-header">
+        <h2>📊 Financial Reports & Analytics</h2>
+        <p class="reports-subtitle">Comprehensive insights into your financial performance</p>
       </div>
 
-      <div>
-        <h3>Cash Flow Over Time</h3>
-        <canvas id="flowChart" height="250"></canvas>
-        <button class="button" onclick="downloadChart('flowChart', 'Cash_Flow')">📥 Download</button>
+      <!-- Controls -->
+      <div class="reports-controls">
+        <div class="control-group">
+          <div class="form-group">
+            <label>Date Range</label>
+            <select id="dateRange" class="form-select">
+              <option value="all">All Time</option>
+              <option value="year">This Year</option>
+              <option value="month">This Month</option>
+              <option value="quarter">This Quarter</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+          <div class="form-group" id="customDateRange" style="display: none;">
+            <label>Custom Range</label>
+            <div class="date-inputs">
+              <input type="date" id="startDate" class="form-input">
+              <span>to</span>
+              <input type="date" id="endDate" class="form-input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Report Type</label>
+            <select id="reportType" class="form-select">
+              <option value="overview">Overview Dashboard</option>
+              <option value="expenses">Expense Analysis</option>
+              <option value="income">Income Analysis</option>
+              <option value="cashflow">Cash Flow</option>
+              <option value="comparison">Period Comparison</option>
+            </select>
+          </div>
+        </div>
+        <div class="control-actions">
+          <button class="btn btn-primary" id="refreshReports">
+            🔄 Refresh Reports
+          </button>
+          <button class="btn btn-secondary" id="exportAllReports">
+            📤 Export All Reports
+          </button>
+        </div>
       </div>
 
-      <div>
-        <h3>Monthly Income vs Expense</h3>
-        <canvas id="monthBarChart" height="250"></canvas>
-        <button class="button" onclick="downloadChart('monthBarChart', 'Monthly_Income_vs_Expense')">📥 Download</button>
+      <!-- Quick Stats -->
+      <div id="quickStats" class="quick-stats">
+        <div class="loading-spinner">Loading financial statistics...</div>
       </div>
 
-      <div>
-        <h3>Income & Expense by Main Category</h3>
-        <label>Select Month:
-          <select id="monthSelect"></select>
-        </label>
-        <canvas id="monthCategoryChart" height="250"></canvas>
-        <button class="button" onclick="downloadChart('monthCategoryChart', 'Category_Breakdown_By_Month')">📥 Download</button>
+      <!-- Reports Grid -->
+      <div class="reports-grid" id="reportsGrid">
+        <div class="loading-spinner">Generating reports...</div>
       </div>
 
+      <!-- Detailed Analysis Section -->
+      <div class="analysis-section" id="analysisSection" style="display: none;">
+        <div class="section-header">
+          <h3>📈 Detailed Analysis</h3>
+          <button class="btn btn-secondary" id="backToOverview">⬅️ Back to Overview</button>
+        </div>
+        <div id="analysisContent"></div>
+      </div>
     </div>
   `;
 
-  renderCharts();
+  await initializeReports();
+  setupReportsEventListeners();
 }
 
-async function renderCharts() {
-  const [transactions, categories] = await Promise.all([
-    getAllItems(STORE_NAMES.transactions),
-    getAllItems(STORE_NAMES.categories)
-  ]);
+// ============================================================================
+// 🏗️ INITIALIZATION
+// ============================================================================
 
-  // 🧹 Destroy old charts before redrawing
-  activeCharts.forEach(ch => { try { ch.destroy(); } catch {} });
+async function initializeReports() {
+  try {
+    [allTransactions, allCategories] = await Promise.all([
+      getAllItems(STORE_NAMES.transactions),
+      getAllItems(STORE_NAMES.categories)
+    ]);
+
+    await renderQuickStats();
+    await renderReportsGrid();
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize reports:', error);
+    showError('Failed to load reports data');
+  }
+}
+
+function setupReportsEventListeners() {
+  // Date range controls
+  document.getElementById('dateRange').addEventListener('change', function(e) {
+    const customRange = document.getElementById('customDateRange');
+    customRange.style.display = e.target.value === 'custom' ? 'block' : 'none';
+    refreshAllCharts();
+  });
+
+  document.getElementById('startDate').addEventListener('change', refreshAllCharts);
+  document.getElementById('endDate').addEventListener('change', refreshAllCharts);
+  document.getElementById('reportType').addEventListener('change', refreshAllCharts);
+
+  // Action buttons
+  document.getElementById('refreshReports').addEventListener('click', refreshAllCharts);
+  document.getElementById('exportAllReports').addEventListener('click', exportAllReports);
+  document.getElementById('backToOverview').addEventListener('click', showOverview);
+}
+
+// ============================================================================
+// 📊 QUICK STATS DASHBOARD
+// ============================================================================
+
+async function renderQuickStats() {
+  const filteredTransactions = getFilteredTransactions();
+  const stats = calculateFinancialStats(filteredTransactions);
+
+  const statsContainer = document.getElementById('quickStats');
+  statsContainer.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card total-income">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.totalIncome)}</div>
+          <div class="stat-label">Total Income</div>
+          <div class="stat-trend ${stats.incomeGrowth >= 0 ? 'positive' : 'negative'}">
+            ${stats.incomeGrowth >= 0 ? '↗️' : '↘️'} ${Math.abs(stats.incomeGrowth)}%
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card total-expenses">
+        <div class="stat-icon">💸</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.totalExpenses)}</div>
+          <div class="stat-label">Total Expenses</div>
+          <div class="stat-trend ${stats.expenseGrowth >= 0 ? 'negative' : 'positive'}">
+            ${stats.expenseGrowth >= 0 ? '↗️' : '↘️'} ${Math.abs(stats.expenseGrowth)}%
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card net-cashflow">
+        <div class="stat-icon">📈</div>
+        <div class="stat-content">
+          <div class="stat-value ${stats.netCashFlow >= 0 ? 'positive' : 'negative'}">
+            ${formatCurrency(stats.netCashFlow)}
+          </div>
+          <div class="stat-label">Net Cash Flow</div>
+          <div class="stat-subtext">${stats.netCashFlow >= 0 ? 'Surplus' : 'Deficit'}</div>
+        </div>
+      </div>
+
+      <div class="stat-card savings-rate">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-content">
+          <div class="stat-value ${stats.savingsRate >= 20 ? 'positive' : stats.savingsRate >= 10 ? 'warning' : 'negative'}">
+            ${stats.savingsRate.toFixed(1)}%
+          </div>
+          <div class="stat-label">Savings Rate</div>
+          <div class="stat-subtext">${getSavingsRateRating(stats.savingsRate)}</div>
+        </div>
+      </div>
+
+      <div class="stat-card avg-monthly">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.avgMonthlyIncome)}</div>
+          <div class="stat-label">Avg Monthly Income</div>
+          <div class="stat-subtext">${formatCurrency(stats.avgMonthlyExpenses)} expenses</div>
+        </div>
+      </div>
+
+      <div class="stat-card largest-expense">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.largestExpense.amount)}</div>
+          <div class="stat-label">Largest Expense</div>
+          <div class="stat-subtext">${stats.largestExpense.category || 'Unknown'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function calculateFinancialStats(transactions) {
+  const income = transactions.filter(t => t.type === 'income');
+  const expenses = transactions.filter(t => t.type === 'expense');
+  
+  const totalIncome = income.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const totalExpenses = expenses.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const netCashFlow = totalIncome - totalExpenses;
+  const savingsRate = totalIncome > 0 ? (netCashFlow / totalIncome) * 100 : 0;
+
+  // Find largest expense
+  const largestExpense = expenses.reduce((max, t) => 
+    t.amount > max.amount ? { amount: t.amount, category: getCategoryName(t.categoryId) } : max, 
+    { amount: 0, category: '' }
+  );
+
+  // Calculate growth (simplified - compared to previous period)
+  const previousPeriodStats = calculatePreviousPeriodStats();
+  const incomeGrowth = previousPeriodStats.totalIncome > 0 ? 
+    ((totalIncome - previousPeriodStats.totalIncome) / previousPeriodStats.totalIncome) * 100 : 0;
+  const expenseGrowth = previousPeriodStats.totalExpenses > 0 ? 
+    ((totalExpenses - previousPeriodStats.totalExpenses) / previousPeriodStats.totalExpenses) * 100 : 0;
+
+  return {
+    totalIncome,
+    totalExpenses,
+    netCashFlow,
+    savingsRate,
+    incomeGrowth,
+    expenseGrowth,
+    avgMonthlyIncome: totalIncome / Math.max(1, getMonthCount(transactions)),
+    avgMonthlyExpenses: totalExpenses / Math.max(1, getMonthCount(transactions)),
+    largestExpense
+  };
+}
+
+// ============================================================================
+// 📈 REPORTS GRID
+// ============================================================================
+
+async function renderReportsGrid() {
+  const reportType = document.getElementById('reportType').value;
+  const filteredTransactions = getFilteredTransactions();
+
+  const reportsGrid = document.getElementById('reportsGrid');
+  
+  switch (reportType) {
+    case 'overview':
+      reportsGrid.innerHTML = await renderOverviewReports(filteredTransactions);
+      break;
+    case 'expenses':
+      reportsGrid.innerHTML = await renderExpenseReports(filteredTransactions);
+      break;
+    case 'income':
+      reportsGrid.innerHTML = await renderIncomeReports(filteredTransactions);
+      break;
+    case 'cashflow':
+      reportsGrid.innerHTML = await renderCashFlowReports(filteredTransactions);
+      break;
+    case 'comparison':
+      reportsGrid.innerHTML = await renderComparisonReports(filteredTransactions);
+      break;
+  }
+
+  // Re-render charts after HTML is updated
+  setTimeout(() => {
+    renderChartsForCurrentView(filteredTransactions);
+  }, 100);
+}
+
+async function renderOverviewReports(transactions) {
+  return `
+    <div class="report-card full-width">
+      <div class="report-header">
+        <h3>📈 Monthly Performance Trend</h3>
+        <button class="btn btn-sm btn-secondary" onclick="downloadChart('monthlyTrendChart', 'Monthly_Performance_Trend')">
+          📥 Download
+        </button>
+      </div>
+      <canvas id="monthlyTrendChart" height="300"></canvas>
+    </div>
+
+    <div class="report-card">
+      <div class="report-header">
+        <h3>💰 Income Sources</h3>
+        <button class="btn btn-sm btn-secondary" onclick="downloadChart('incomeSourcesChart', 'Income_Sources')">
+          📥 Download
+        </button>
+      </div>
+      <canvas id="incomeSourcesChart" height="250"></canvas>
+    </div>
+
+    <div class="report-card">
+      <div class="report-header">
+        <h3>💸 Expense Breakdown</h3>
+        <button class="btn btn-sm btn-secondary" onclick="showDetailedAnalysis('expenses')">
+          🔍 Analyze
+        </button>
+      </div>
+      <canvas id="expenseBreakdownChart" height="250"></canvas>
+    </div>
+
+    <div class="report-card">
+      <div class="report-header">
+        <h3>🎯 Savings Progress</h3>
+        <button class="btn btn-sm btn-secondary" onclick="downloadChart('savingsChart', 'Savings_Progress')">
+          📥 Download
+        </button>
+      </div>
+      <canvas id="savingsChart" height="250"></canvas>
+    </div>
+
+    <div class="report-card full-width">
+      <div class="report-header">
+        <h3>📊 Cash Flow Timeline</h3>
+        <button class="btn btn-sm btn-secondary" onclick="downloadChart('cashFlowTimelineChart', 'Cash_Flow_Timeline')">
+          📥 Download
+        </button>
+      </div>
+      <canvas id="cashFlowTimelineChart" height="300"></canvas>
+    </div>
+  `;
+}
+
+// ============================================================================
+// 🎨 CHART RENDERING
+// ============================================================================
+
+function renderChartsForCurrentView(transactions) {
+  // Clear existing charts
+  activeCharts.forEach(chart => {
+    try { chart.destroy(); } catch (e) {}
+  });
   activeCharts = [];
 
-  // 🧭 Helper: find main category
-  const getMainCategory = id => {
-    const cat = categories.find(c => c.id === id);
-    if (!cat) return null;
-    return cat.parentId
-      ? categories.find(p => p.id === cat.parentId) || cat
-      : cat;
-  };
+  const reportType = document.getElementById('reportType').value;
 
-  // 🧩 Handle no transactions
-  if (!transactions.length) {
-    console.warn("No transactions found for reports.");
-    document.getElementById('mainContent').innerHTML += `
-      <p style="color:gray;margin-top:1rem;">📉 No transactions yet. Add some to see reports.</p>`;
-    return;
+  switch (reportType) {
+    case 'overview':
+      renderOverviewCharts(transactions);
+      break;
+    case 'expenses':
+      renderExpenseCharts(transactions);
+      break;
+    case 'income':
+      renderIncomeCharts(transactions);
+      break;
+    case 'cashflow':
+      renderCashFlowCharts(transactions);
+      break;
+    case 'comparison':
+      renderComparisonCharts(transactions);
+      break;
   }
+}
 
-  // === 1️⃣ Expenses by Main Category (with drill-down) ===
-  const expenseTx = transactions.filter(t => t.type === 'expense');
-  const grouped = {};
-  expenseTx.forEach(t => {
-    const mainCat = getMainCategory(t.categoryId);
-    const mainName = mainCat?.name || 'Uncategorized';
-    grouped[mainName] = (grouped[mainName] || 0) + t.amount;
-  });
-
-  const catChartCanvas = document.getElementById('catChart');
-  let catChart;
-  const backBtn = document.getElementById('backToMain');
-  const mainLabels = Object.keys(grouped);
-  const mainValues = Object.values(grouped);
-
-  function drawMainExpenseChart() {
-    if (catChart) { try { catChart.destroy(); } catch {} }
-    catChart = new Chart(catChartCanvas, {
-      type: 'doughnut',
-      data: {
-        labels: mainLabels,
-        datasets: [{
-          data: mainValues,
-          backgroundColor: mainLabels.map(() => randomColor())
-        }]
-      },
-      options: {
-        plugins: {
-          title: { display: true, text: 'Expenses by Main Category' },
-          legend: { position: 'bottom' }
-        },
-        onClick: (e, elements) => {
-          if (elements.length) {
-            const idx = elements[0].index;
-            const clickedMain = mainLabels[idx];
-            drillDownToSubcategories(clickedMain);
-          }
-        }
-      }
-    });
-    activeCharts.push(catChart);
-  }
-
-  function drillDownToSubcategories(mainName) {
-    const mainCat = categories.find(c => c.name === mainName && !c.parentId);
-    if (!mainCat) return;
-    const subCats = categories.filter(c => c.parentId === mainCat.id);
-    if (subCats.length === 0) {
-      alert(`No subcategories under "${mainName}"`);
-      return;
-    }
-
-    const subs = {};
-    expenseTx
-      .filter(t => subCats.some(s => s.id === t.categoryId))
-      .forEach(t => {
-        const sub = categories.find(c => c.id === t.categoryId);
-        if (!sub) return;
-        subs[sub.name] = (subs[sub.name] || 0) + t.amount;
-      });
-
-    if (catChart) { try { catChart.destroy(); } catch {} }
-    catChart = new Chart(catChartCanvas, {
-      type: 'pie',
-      data: {
-        labels: Object.keys(subs),
-        datasets: [{
-          data: Object.values(subs),
-          backgroundColor: Object.keys(subs).map(() => randomColor())
-        }]
-      },
-      options: {
-        plugins: {
-          title: { display: true, text: `Subcategory Breakdown: ${mainName}` },
-          legend: { position: 'bottom' }
-        }
-      }
-    });
-    backBtn.style.display = 'inline-block';
-    activeCharts.push(catChart);
-  }
-
-  drawMainExpenseChart();
-  backBtn.addEventListener('click', () => {
-    drawMainExpenseChart();
-    backBtn.style.display = 'none';
-  });
-
-  // === 2️⃣ Cash Flow Over Time ===
-  const flow = {};
-  transactions.forEach(t => {
-    const date = new Date(t.date).toISOString().slice(0, 10);
-    flow[date] = (flow[date] || 0) + (t.type === 'income' ? t.amount : -t.amount);
-  });
-
-  const sortedDates = Object.keys(flow).sort();
-  const cumulative = [];
-  let running = 0;
-  for (let date of sortedDates) {
-    running += flow[date];
-    cumulative.push(running);
-  }
-
-  const flowChart = new Chart(document.getElementById('flowChart'), {
+function renderOverviewCharts(transactions) {
+  // Monthly Trend Chart
+  const monthlyData = getMonthlyTrendData(transactions);
+  const trendChart = new Chart(document.getElementById('monthlyTrendChart'), {
     type: 'line',
     data: {
-      labels: sortedDates,
+      labels: monthlyData.labels,
+      datasets: [
+        {
+          label: 'Income',
+          data: monthlyData.income,
+          borderColor: '#27ae60',
+          backgroundColor: 'rgba(39, 174, 96, 0.1)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Expenses',
+          data: monthlyData.expenses,
+          borderColor: '#e74c3c',
+          backgroundColor: 'rgba(231, 76, 60, 0.1)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Net Cash Flow',
+          data: monthlyData.net,
+          borderColor: '#3498db',
+          backgroundColor: 'rgba(52, 152, 219, 0.1)',
+          fill: true,
+          tension: 0.4,
+          borderDash: [5, 5]
+        }
+      ]
+    },
+    options: getChartOptions('Monthly Financial Performance')
+  });
+  activeCharts.push(trendChart);
+
+  // Expense Breakdown Chart
+  const expenseData = getExpenseByCategory(transactions);
+  const expenseChart = new Chart(document.getElementById('expenseBreakdownChart'), {
+    type: 'doughnut',
+    data: {
+      labels: expenseData.labels,
       datasets: [{
-        label: 'Net Cash Flow',
-        data: cumulative,
-        borderColor: '#2ecc71',
-        backgroundColor: 'rgba(46,204,113,0.2)',
-        fill: true,
-        tension: 0.2
+        data: expenseData.values,
+        backgroundColor: expenseData.labels.map(() => generateColor()),
+        borderWidth: 2
       }]
     },
     options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom' } }
-    }
-  });
-  activeCharts.push(flowChart);
-
-  // === 3️⃣ Monthly Income vs Expense ===
-  const monthly = {};
-  transactions.forEach(tx => {
-    const d = new Date(tx.date);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    if (!monthly[key]) monthly[key] = { income: 0, expense: 0 };
-    monthly[key][tx.type] += tx.amount;
-  });
-
-  const months = Object.keys(monthly).sort();
-  const incomeData = months.map(m => monthly[m].income);
-  const expenseData = months.map(m => monthly[m].expense);
-
-  const monthBarChart = new Chart(document.getElementById('monthBarChart'), {
-    type: 'bar',
-    data: {
-      labels: months,
-      datasets: [
-        { label: 'Income', data: incomeData, backgroundColor: '#2ecc71' },
-        { label: 'Expense', data: expenseData, backgroundColor: '#e74c3c' }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: { display: true, text: 'Monthly Income vs Expense' },
-        legend: { position: 'bottom' }
-      },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-  activeCharts.push(monthBarChart);
-
-  // === 4️⃣ Monthly Category Breakdown (simplified) ===
-  const monthSelect = document.getElementById('monthSelect');
-  const monthCategoryCanvas = document.getElementById('monthCategoryChart');
-  let monthChart;
-
-  months.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.textContent = m;
-    monthSelect.appendChild(opt);
-  });
-
-  const defaultMonth = months.at(-1);
-  monthSelect.value = defaultMonth;
-  drawMonthlyCategoryChart(defaultMonth);
-
-  monthSelect.addEventListener('change', e => drawMonthlyCategoryChart(e.target.value));
-
-  function drawMonthlyCategoryChart(selectedMonth) {
-    if (monthChart) { try { monthChart.destroy(); } catch {} }
-
-    const txInMonth = transactions.filter(tx => tx.date?.startsWith(selectedMonth));
-    const sums = {};
-    txInMonth.forEach(tx => {
-      const mainCat = getMainCategory(tx.categoryId);
-      const name = mainCat?.name || 'Uncategorized';
-      if (!sums[name]) sums[name] = { income: 0, expense: 0 };
-      sums[name][tx.type] += tx.amount;
-    });
-
-    const labels = Object.keys(sums);
-    const incomeVals = labels.map(l => sums[l].income);
-    const expenseVals = labels.map(l => sums[l].expense);
-
-    monthChart = new Chart(monthCategoryCanvas, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          { label: 'Income', data: incomeVals, backgroundColor: '#27ae60' },
-          { label: 'Expense', data: expenseVals, backgroundColor: '#c0392b' }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: { display: true, text: `Category Breakdown – ${selectedMonth}` },
-          legend: { position: 'bottom' }
-        },
-        scales: { y: { beginAtZero: true } }
+      ...getChartOptions('Expense Distribution'),
+      onClick: (e, elements) => {
+        if (elements.length) {
+          const category = expenseData.labels[elements[0].index];
+          showDetailedAnalysis('expenses', category);
+        }
       }
-    });
-    activeCharts.push(monthChart);
+    }
+  });
+  activeCharts.push(expenseChart);
+
+  // Add more charts for income sources, savings progress, etc.
+}
+
+// ============================================================================
+// 🔍 DETAILED ANALYSIS
+// ============================================================================
+
+async function showDetailedAnalysis(type, category = null) {
+  const analysisSection = document.getElementById('analysisSection');
+  const analysisContent = document.getElementById('analysisContent');
+  const reportsGrid = document.getElementById('reportsGrid');
+
+  reportsGrid.style.display = 'none';
+  analysisSection.style.display = 'block';
+
+  switch (type) {
+    case 'expenses':
+      analysisContent.innerHTML = await renderExpenseAnalysis(category);
+      break;
+    case 'income':
+      analysisContent.innerHTML = await renderIncomeAnalysis();
+      break;
+  }
+
+  // Render analysis charts
+  setTimeout(() => {
+    renderAnalysisCharts(type, category);
+  }, 100);
+}
+
+async function renderExpenseAnalysis(category) {
+  const filteredTransactions = getFilteredTransactions();
+  const expenses = filteredTransactions.filter(t => t.type === 'expense');
+  
+  let analysisData;
+  if (category) {
+    // Drill down into specific category
+    analysisData = getCategoryDrilldown(expenses, category);
+  } else {
+    // Overall expense analysis
+    analysisData = getExpenseAnalysis(expenses);
+  }
+
+  return `
+    <div class="analysis-header">
+      <h4>${category ? `📊 ${category} Analysis` : '💸 Detailed Expense Analysis'}</h4>
+      <div class="analysis-stats">
+        <div class="stat">Total: ${formatCurrency(analysisData.total)}</div>
+        <div class="stat">Transactions: ${analysisData.count}</div>
+        <div class="stat">Average: ${formatCurrency(analysisData.average)}</div>
+      </div>
+    </div>
+
+    <div class="analysis-charts">
+      <div class="chart-container">
+        <canvas id="analysisTrendChart" height="200"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="analysisBreakdownChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="analysis-table">
+      <h5>📋 Transaction Details</h5>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${analysisData.recentTransactions.map(t => `
+              <tr>
+                <td>${new Date(t.date).toLocaleDateString()}</td>
+                <td>${t.description || 'No description'}</td>
+                <td>${getCategoryName(t.categoryId)}</td>
+                <td class="amount ${t.type}">${formatCurrency(t.amount)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================================
+// 📤 EXPORT FUNCTIONALITY
+// ============================================================================
+
+async function exportAllReports() {
+  try {
+    showToast('📤 Preparing comprehensive report export...', 'info');
+    
+    // Create a comprehensive PDF-like HTML report
+    const reportHTML = generateComprehensiveReport();
+    const blob = new Blob([reportHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `financial-report-${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('✅ Comprehensive report exported successfully!', 'success');
+    
+  } catch (error) {
+    console.error('Export failed:', error);
+    showToast('❌ Report export failed!', 'error');
   }
 }
 
-// 🎨 Random color generator
-function randomColor() {
-  const h = Math.floor(Math.random() * 360);
-  return `hsl(${h},70%,60%)`;
+function generateComprehensiveReport() {
+  const filteredTransactions = getFilteredTransactions();
+  const stats = calculateFinancialStats(filteredTransactions);
+  const dateRange = getCurrentDateRange();
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Financial Report - ${new Date().toLocaleDateString()}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 1rem; margin-bottom: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; }
+        .positive { color: #27ae60; }
+        .negative { color: #e74c3c; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #3498db; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Financial Report</h1>
+        <p>Date Range: ${dateRange}</p>
+        <p>Generated: ${new Date().toLocaleDateString()}</p>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value ${stats.netCashFlow >= 0 ? 'positive' : 'negative'}">${formatCurrency(stats.netCashFlow)}</div>
+            <div>Net Cash Flow</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${formatCurrency(stats.totalIncome)}</div>
+            <div>Total Income</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${formatCurrency(stats.totalExpenses)}</div>
+            <div>Total Expenses</div>
+        </div>
+    </div>
+    
+    <h3>Key Metrics</h3>
+    <ul>
+        <li>Savings Rate: ${stats.savingsRate.toFixed(1)}%</li>
+        <li>Average Monthly Income: ${formatCurrency(stats.avgMonthlyIncome)}</li>
+        <li>Average Monthly Expenses: ${formatCurrency(stats.avgMonthlyExpenses)}</li>
+        <li>Largest Expense: ${formatCurrency(stats.largestExpense.amount)} (${stats.largestExpense.category})</li>
+    </ul>
+    
+    <p><em>Note: Charts and detailed graphs are available in the web application.</em></p>
+</body>
+</html>`;
 }
 
-// 📥 Chart download helper
-window.downloadChart = function (canvasId, filename = 'chart') {
+// ============================================================================
+// 🛠️ UTILITY FUNCTIONS
+// ============================================================================
+
+function getFilteredTransactions() {
+  const dateRange = document.getElementById('dateRange').value;
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  
+  let filtered = [...allTransactions];
+  
+  if (dateRange === 'custom' && startDate && endDate) {
+    filtered = filtered.filter(t => t.date >= startDate && t.date <= endDate);
+  } else if (dateRange === 'month') {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    filtered = filtered.filter(t => t.date >= monthStart);
+  } else if (dateRange === 'year') {
+    const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+    filtered = filtered.filter(t => t.date >= yearStart);
+  } else if (dateRange === 'quarter') {
+    const now = new Date();
+    const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1).toISOString().split('T')[0];
+    filtered = filtered.filter(t => t.date >= quarterStart);
+  }
+  
+  return filtered;
+}
+
+function getCategoryName(categoryId) {
+  const category = allCategories.find(c => c.id === categoryId);
+  return category ? category.name : 'Uncategorized';
+}
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-AU', { 
+    style: 'currency', 
+    currency: 'AUD' 
+  }).format(amount || 0);
+}
+
+function showToast(message, type = 'info') {
+  // Toast implementation (reuse from settings)
+  console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+function showError(message) {
+  const reportsGrid = document.getElementById('reportsGrid');
+  reportsGrid.innerHTML = `
+    <div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Report Error</h3>
+      <p>${message}</p>
+      <button class="btn btn-primary" onclick="initReportsUI()">🔄 Retry</button>
+    </div>
+  `;
+}
+
+// Make functions available globally for HTML onclick handlers
+window.downloadChart = function(canvasId, filename) {
   const canvas = document.getElementById(canvasId);
-  if (!canvas) return alert('Chart not found');
+  if (!canvas) return;
   const link = document.createElement('a');
   link.href = canvas.toDataURL('image/png');
-  link.download = `${filename}.png`;
+  link.download = `${filename}_${new Date().toISOString().split('T')[0]}.png`;
   link.click();
 };
+
+window.showDetailedAnalysis = showDetailedAnalysis;
+
+// Initialize date inputs
+document.addEventListener('DOMContentLoaded', function() {
+  const now = new Date();
+  const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  
+  document.getElementById('startDate').value = oneYearAgo.toISOString().split('T')[0];
+  document.getElementById('endDate').value = now.toISOString().split('T')[0];
+});
