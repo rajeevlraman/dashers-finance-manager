@@ -165,36 +165,46 @@ async function verifyCacheAndRetry() {
             ];
             
             const missingFiles = [];
+// --------------------------
+// Cache Verification - FINAL WORKING VERSION
+// --------------------------
+async function verifyCacheAndRetry() {
+    if ('caches' in window) {
+        try {
+            const cache = await caches.open('budget-tracker-v35');
+            const keys = await cache.keys();
+            console.log(`📊 Cache contains ${keys.length} items`);
+            
+            // Check for critical files
+            const criticalFiles = [
+                '/dashers-finance-manager/index.html',
+                '/dashers-finance-manager/js/app.js',
+                '/dashers-finance-manager/js/db.js',
+                '/dashers-finance-manager/js/ui.js',
+                '/dashers-finance-manager/css/styles.css'
+            ];
+            
+            const missingFiles = [];
             for (const file of criticalFiles) {
                 const match = await cache.match(file);
                 if (!match) {
                     missingFiles.push(file);
-                    console.warn(`⚠️ Critical file missing from cache: ${file}`);
-                } else {
-                    console.log(`✅ Cached: ${file}`);
                 }
             }
             
-            if (missingFiles.length > 0 && navigator.onLine) {
-                console.log(`🔄 ${missingFiles.length} files missing, triggering cache update...`);
-                // Trigger service worker to update cache
-                if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({
-                        type: 'UPDATE_CACHE'
-                    });
-                }
-            } else if (missingFiles.length === 0) {
+            if (missingFiles.length === 0) {
                 console.log('✅ All critical files cached successfully!');
+                return true;
+            } else {
+                console.warn(`⚠️ ${missingFiles.length} files missing from cache`);
+                return false;
             }
-            
-            return missingFiles;
         } catch (err) {
             console.error('❌ Cache verification failed:', err);
-            return [];
+            return false;
         }
     }
-    console.log('❌ Cache API not supported');
-    return [];
+    return false;
 }
 
 // --------------------------
