@@ -1,8 +1,8 @@
 // ============================================================================
-// 💰 Budget Tracker – DEBUGGED Service Worker (FIXED CACHING)
+// 💰 Budget Tracker – iOS OPTIMIZED Service Worker
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v35'; // 🚨 Bumped version again
+const CACHE_NAME = 'budget-tracker-v36'; // 🚨 Bump version for iOS fix
 
 // 🔹 Files to cache for offline support
 const PRECACHE_URLS = [
@@ -51,85 +51,50 @@ const PRECACHE_URLS = [
 ];
 
 // ============================================================================
-// 🏗️ INSTALL – FIXED CACHING
+// 🏗️ INSTALL – iOS-optimized installation
 // ============================================================================
 self.addEventListener('install', event => {
-  console.log('📦 [SW] Installing service worker...');
+  console.log('📦 [SW] Installing service worker for iOS...');
   
+  // iOS FIX: Skip waiting immediately to ensure SW activates
+  self.skipWaiting();
+
   event.waitUntil(
     (async () => {
       try {
         const cache = await caches.open(CACHE_NAME);
         console.log('📦 [SW] Cache opened, starting to cache files...');
         
-        // Cache critical files first
-        const criticalFiles = [
-          '/dashers-finance-manager/index.html',
-          '/dashers-finance-manager/js/app.js',
-          '/dashers-finance-manager/js/db.js',
-          '/dashers-finance-manager/js/ui.js',
-          '/dashers-finance-manager/css/styles.css'
-        ];
-        
-        // Cache critical files with individual error handling
-        for (const url of criticalFiles) {
+        // Cache ALL files aggressively for iOS
+        const cachePromises = PRECACHE_URLS.map(async url => {
           try {
-            const response = await fetch(url);
-            if (response.ok) {
-              await cache.put(url, response);
-              console.log(`✅ [SW] Cached: ${url}`);
-            } else {
-              console.warn(`⚠️ [SW] Failed to cache ${url}: ${response.status}`);
-            }
+            // Use cache.add() which automatically fetches and caches
+            await cache.add(url);
+            console.log(`✅ [SW] Cached: ${url}`);
+            return { success: true, url };
           } catch (err) {
-            console.warn(`⚠️ [SW] Network error caching ${url}:`, err.message);
+            console.warn(`⚠️ [SW] Failed to cache ${url}:`, err.message);
+            return { success: false, url, error: err.message };
           }
-        }
+        });
+
+        const results = await Promise.allSettled(cachePromises);
+        const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
         
-        console.log('✅ [SW] Critical files cached, moving to background caching...');
-        
-        // Cache remaining files in background
-        event.waitUntil(
-          (async () => {
-            try {
-              for (const url of PRECACHE_URLS) {
-                // Skip if already cached
-                const alreadyCached = await cache.match(url);
-                if (alreadyCached) continue;
-                
-                try {
-                  const response = await fetch(url);
-                  if (response.ok) {
-                    await cache.put(url, response);
-                    console.log(`✅ [SW] Background cached: ${url}`);
-                  }
-                } catch (err) {
-                  // Silent fail for background caching
-                }
-              }
-              console.log('✅ [SW] Background caching completed');
-            } catch (err) {
-              console.error('❌ [SW] Background caching failed:', err);
-            }
-          })()
-        );
-        
-        // Force immediate activation
-        await self.skipWaiting();
-        console.log('✅ [SW] Installation completed successfully');
+        console.log(`✅ [SW] Installation completed: ${successful}/${PRECACHE_URLS.length} files cached`);
         
       } catch (err) {
-        console.error('❌ [SW] Installation failed completely:', err);
+        console.error('❌ [SW] Installation failed:', err);
       }
     })()
   );
 });
 
 // ============================================================================
-// ♻️ ACTIVATE – Cleanup
+// ♻️ ACTIVATE – iOS-optimized activation
 // ============================================================================
 self.addEventListener('activate', event => {
-  console.log('♻️ [SW] Activating service worker...');
+  console.log('♻️ [SW] Activating service worker for iOS...');
 
   event.waitUntil(
     (async () => {
@@ -145,9 +110,16 @@ self.addEventListener('activate', event => {
           })
         );
         
-        // Take control immediately
+        // iOS CRITICAL FIX: Claim clients immediately
         await self.clients.claim();
-        console.log('✅ [SW] Now controlling clients');
+        console.log('✅ [SW] Now controlling all clients (iOS fix applied)');
+        
+        // Send ready message to all clients
+        const clients = await self.clients.matchAll();
+        clients.forEach(client => {
+          client.postMessage({ type: 'SW_READY', version: CACHE_NAME });
+        });
+        
       } catch (err) {
         console.error('❌ [SW] Activation failed:', err);
       }
@@ -156,7 +128,7 @@ self.addEventListener('activate', event => {
 });
 
 // ============================================================================
-// 🌍 FETCH – Serve from cache
+// 🌍 FETCH – iOS-optimized fetch handling
 // ============================================================================
 self.addEventListener('fetch', event => {
   const request = event.request;
@@ -173,59 +145,96 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // iOS FIX: Special handling for home screen launches
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          // Always try network first for navigation
+          const networkResponse = await fetch(request);
+          if (networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+          }
+          throw new Error('Network failed');
+        } catch (error) {
+          // Fallback to cache for offline/home screen launch
+          const cache = await caches.open(CACHE_NAME);
+          const cachedResponse = await cache.match('/dashers-finance-manager/index.html');
+          if (cachedResponse) {
+            console.log('📱 [SW] iOS: Serving cached index.html for home screen launch');
+            return cachedResponse;
+          }
+          // Ultimate fallback
+          return new Response(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Budget Tracker</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script>
+                  // Auto-reload when coming back online
+                  window.addEventListener('online', () => location.reload());
+                </script>
+              </head>
+              <body>
+                <h1>Budget Tracker</h1>
+                <p>Loading... If this persists, check your internet connection.</p>
+                <button onclick="location.reload()">Retry</button>
+              </body>
+            </html>
+          `, {
+            headers: { 'Content-Type': 'text/html' }
+          });
+        }
+      })()
+    );
+    return;
+  }
+
+  // For all other resources: cache-first strategy
   event.respondWith(
     (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cachedResponse = await cache.match(request);
+      
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      
       try {
-        // Try cache first
-        const cache = await caches.open(CACHE_NAME);
-        const cachedResponse = await cache.match(request);
-        
-        if (cachedResponse) {
-          console.log(`📂 [SW] Serving from cache: ${new URL(request.url).pathname}`);
-          return cachedResponse;
-        }
-        
-        // Try network
-        console.log(`🌐 [SW] Fetching from network: ${new URL(request.url).pathname}`);
         const networkResponse = await fetch(request);
-        
-        // Cache successful responses
         if (networkResponse.ok) {
           cache.put(request, networkResponse.clone());
         }
-        
         return networkResponse;
       } catch (error) {
-        console.warn(`📴 [SW] Offline - cannot fetch: ${new URL(request.url).pathname}`);
-        
-        // For navigation requests, return cached index.html
-        if (request.mode === 'navigate') {
-          const cache = await caches.open(CACHE_NAME);
-          const fallback = await cache.match('/dashers-finance-manager/index.html');
-          if (fallback) return fallback;
-        }
-        
-        return new Response('Offline - Content not available', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain' }
-        });
+        return new Response('', { status: 404 });
       }
     })()
   );
 });
 
 // ============================================================================
-// 🔄 MESSAGES
+// 🔄 MESSAGES – Enhanced message handling for iOS
 // ============================================================================
 self.addEventListener('message', event => {
   console.log('📨 [SW] Received message:', event.data);
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('⚡ [SW] Skip waiting triggered');
     self.skipWaiting();
   }
   
   if (event.data && event.data.type === 'UPDATE_CACHE') {
     updateCache();
+  }
+  
+  // iOS: Respond to readiness checks
+  if (event.data && event.data.type === 'SW_READY_CHECK') {
+    event.ports[0].postMessage({ ready: true, version: CACHE_NAME });
   }
 });
 
@@ -237,10 +246,7 @@ async function updateCache() {
     
     for (const url of PRECACHE_URLS) {
       try {
-        const response = await fetch(url);
-        if (response.ok) {
-          await cache.put(url, response);
-        }
+        await cache.add(url);
       } catch (err) {
         // Silent fail for updates
       }
@@ -250,3 +256,10 @@ async function updateCache() {
     console.error('❌ [SW] Cache update failed:', err);
   }
 }
+
+// Periodically check and update cache
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'update-cache') {
+    event.waitUntil(updateCache());
+  }
+});

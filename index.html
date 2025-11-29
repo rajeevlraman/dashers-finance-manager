@@ -6,6 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Budget Tracker">
+  <meta name="apple-mobile-web-app-orientations" content="portrait">
 
   <!-- Preload critical resources -->
  
@@ -16,9 +17,9 @@
     
   <meta charset="UTF-8" />
   <meta name="theme-color" content="#3498db">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+ 
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Budget Tracker">
+ 
   
   <!-- Enhanced Viewport for iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
@@ -55,7 +56,21 @@
 
   <script type="module" src="./js/app.js"></script>
  
+<!-- Prevent zoom on input focus -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
+<!-- Safe area support -->
+<style>
+    /* Support for iPhone notch */
+    @supports (padding: max(0px)) {
+        .ios-standalone {
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
+</style>
 
   <!-- iOS PWA Detection -->
   <script>
