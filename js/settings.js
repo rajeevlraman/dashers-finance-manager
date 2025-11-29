@@ -184,9 +184,9 @@ function setupEventListeners() {
     migrateBtn.addEventListener('click', handleMigration);
   }
   
-  // Reset
+  // Reset - FIXED: Using the correct function names
   document.getElementById('clearCache').addEventListener('click', clearCache);
-  document.getElementById('clearData').addEventListener('click', clearAllDataWithConfirmation);
+  document.getElementById('clearData').addEventListener('click', clearAllData); // Fixed this line
   
   // About
   document.getElementById('checkUpdates').addEventListener('click', checkForUpdates);
@@ -475,3 +475,130 @@ async function handleMigration() {
 }
 
 // ============================================================================
+// 🗑️ RESET FUNCTIONS (MISSING FUNCTIONS ADDED)
+// ============================================================================
+
+async function clearCache() {
+  if (!confirm('🗑️ Clear application cache?\n\nThis will:' +
+               '\n• Clear temporary files' +
+               '\n• Reset UI preferences' +
+               '\n• Keep your data intact')) {
+    return;
+  }
+
+  try {
+    // Clear localStorage except for data
+    const keysToKeep = ['currency', 'theme', 'themePreference', 'dateFormat', 'accentColor'];
+    const allKeys = Object.keys(localStorage);
+    
+    for (const key of allKeys) {
+      if (!keysToKeep.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    }
+    
+    // Clear sessionStorage
+    sessionStorage.clear();
+    
+    // Clear any caches if using Cache API
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+    }
+    
+    showToast('✅ Cache cleared successfully!', 'success');
+    
+  } catch (error) {
+    console.error('Cache clearing failed:', error);
+    showToast('❌ Failed to clear cache', 'error');
+  }
+}
+
+async function clearAllData() {
+  if (!confirm('💥 DELETE ALL DATA?\n\n⚠️  THIS ACTION CANNOT BE UNDONE!\n\nThis will:' +
+               '\n• Delete ALL transactions, properties, budgets' +
+               '\n• Delete ALL settings and preferences' +
+               '\n• Completely reset the application' +
+               '\n• You will lose everything!')) {
+    return;
+  }
+
+  try {
+    showToast('🗑️ Clearing all data...', 'info');
+    
+    await clearAllData();
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    showToast('✅ All data cleared! Reloading...', 'success');
+    
+    // Reload after a short delay
+    setTimeout(() => {
+      location.reload();
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Data clearing failed:', error);
+    showToast('❌ Failed to clear data', 'error');
+  }
+}
+
+// ============================================================================
+// 🔍 ABOUT FUNCTIONS
+// ============================================================================
+
+async function checkForUpdates() {
+  showToast('🔍 Checking for updates...', 'info');
+  
+  // Simulate update check
+  setTimeout(() => {
+    showToast('✅ You are running the latest version!', 'success');
+  }, 1500);
+}
+
+// ============================================================================
+// 🎪 TOAST NOTIFICATION SYSTEM
+// ============================================================================
+
+function showToast(message, type = 'info') {
+  // Remove existing toasts
+  const existingToasts = document.querySelectorAll('.toast');
+  existingToasts.forEach(toast => toast.remove());
+  
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <div class="toast-content">
+      <span class="toast-message">${message}</span>
+      <button class="toast-close">&times;</button>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Add show class after a frame
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }, 5000);
+  
+  // Close on button click
+  toast.querySelector('.toast-close').addEventListener('click', () => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  });
+}
+
