@@ -113,6 +113,59 @@
     z-index: 10000;">
     ⚠️ DEVELOPMENT VERSION ⚠️
     </div>
+
+    <!-- iOS Install Button (only shows on iOS Safari) -->
+<div id="iosInstallButton" class="ios-install-button" style="display: none;">
+    <button onclick="showIOSInstallGuide()" class="install-btn">
+        📱 Install App
+    </button>
+</div>
+
+<style>
+.ios-install-button {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+}
+
+.install-btn {
+    background: linear-gradient(135deg, #007AFF, #5856D6);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.install-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+}
+
+/* Show only on iOS Safari when not installed */
+.ios-device:not(.ios-standalone) .ios-install-button {
+    display: block !important;
+}
+</style>
+
+<script>
+// Show install button on iOS Safari
+function setupIOSInstallButton() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = window.navigator.standalone;
+    
+    if (isIOS && !isStandalone) {
+        document.getElementById('iosInstallButton').style.display = 'block';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', setupIOSInstallButton);
+</script>
   </header>
 
 <div id="loginScreen" class="login-screen">
