@@ -1,5 +1,3 @@
-// bills.js - WITH THE FIXED calculateStats METHOD
-
 import { addItem, deleteItem, getAllItems, updateItem, STORE_NAMES, generateId } from './db.js';
 import { addItem as addTransaction } from './db.js';
 
@@ -33,12 +31,11 @@ export class BillsManager {
             <div class="bills-container">
                 <div class="bills-header">
                     <h2>📋 Bills Manager</h2>
-                    <button id="addBillBtn" class="btn btn-primary">+ Add Bill</button>
                 </div>
 
                 ${this.renderStatsCards(today)}
 
-                ${this.renderQuickActions(today)}
+                ${this.renderHorizontalQuickActions(today)}
 
                 <div class="bills-content">
                     ${this.bills.length === 0 ? this.renderEmptyState() : this.renderBillsTable(today)}
@@ -84,41 +81,36 @@ export class BillsManager {
         `;
     }
 
-    renderQuickActions(today) {
+    renderHorizontalQuickActions(today) {
         const stats = this.calculateStats(today);
         const canPayAll = stats.unpaid.count > 0 && this.bills.filter(b => !b.paid && b.accountId).length === stats.unpaid.count;
 
         return `
-            <div class="quick-actions">
-                <div class="section-card">
-                    <h3>⚡ Quick Actions</h3>
-                    <div class="quick-actions-grid">
-                        <button class="quick-action-btn" id="quickAddBill">
-                            <span class="action-icon">➕</span>
-                            <span class="action-text">Add Bill</span>
-                        </button>
-                        
-                        ${canPayAll ? `
-                            <button class="quick-action-btn" id="quickPayAll">
-                                <span class="action-icon">💳</span>
-                                <span class="action-text">Pay All Due</span>
-                                <span class="action-badge">${stats.unpaid.count}</span>
-                            </button>
-                        ` : ''}
-                        
-                        ${stats.overdue.count > 0 ? `
-                            <button class="quick-action-btn" id="quickViewOverdue">
-                                <span class="action-icon">🚨</span>
-                                <span class="action-text">View Overdue</span>
-                                <span class="action-badge">${stats.overdue.count}</span>
-                            </button>
-                        ` : ''}
-                        
-                        <button class="quick-action-btn" id="quickExport">
-                            <span class="action-icon">📤</span>
-                            <span class="action-text">Export</span>
-                        </button>
+            <div class="horizontal-quick-actions">
+                <div class="quick-action-item primary" id="quickAddBill">
+                    <span class="quick-action-icon">➕</span>
+                    <span class="quick-action-text">Add Bill</span>
+                </div>
+                
+                ${canPayAll ? `
+                    <div class="quick-action-item success" id="quickPayAll">
+                        <span class="quick-action-icon">💳</span>
+                        <span class="quick-action-text">Pay All</span>
+                        <span class="quick-action-badge">${stats.unpaid.count}</span>
                     </div>
+                ` : ''}
+                
+                ${stats.overdue.count > 0 ? `
+                    <div class="quick-action-item warning" id="quickViewOverdue">
+                        <span class="quick-action-icon">🚨</span>
+                        <span class="quick-action-text">Overdue</span>
+                        <span class="quick-action-badge">${stats.overdue.count}</span>
+                    </div>
+                ` : ''}
+                
+                <div class="quick-action-item secondary" id="quickExport">
+                    <span class="quick-action-icon">📤</span>
+                    <span class="quick-action-text">Export</span>
                 </div>
             </div>
         `;
@@ -277,15 +269,12 @@ export class BillsManager {
     }
 
     attachEventListeners() {
-        // Add bill buttons
-        document.getElementById('addBillBtn')?.addEventListener('click', () => this.openBillForm());
-        document.getElementById('quickAddBill')?.addEventListener('click', () => this.openBillForm());
-        document.getElementById('emptyAddBill')?.addEventListener('click', () => this.openBillForm());
-
         // Quick actions
+        document.getElementById('quickAddBill')?.addEventListener('click', () => this.openBillForm());
         document.getElementById('quickPayAll')?.addEventListener('click', () => this.payAllBills());
         document.getElementById('quickViewOverdue')?.addEventListener('click', () => this.filterOverdue());
         document.getElementById('quickExport')?.addEventListener('click', () => this.exportBills());
+        document.getElementById('emptyAddBill')?.addEventListener('click', () => this.openBillForm());
 
         // Sorting
         document.getElementById('sortBills')?.addEventListener('change', (e) => {
@@ -349,16 +338,14 @@ export class BillsManager {
         });
     }
 
-    // Core functionality methods
+    // Core functionality methods (same as before)
     async payBill(bill) {
         if (!confirm(`Mark "${bill.name}" as paid?`)) return;
 
-        // Mark bill as paid
         bill.paid = true;
         bill.paidDate = new Date().toISOString().slice(0, 10);
         await updateItem(STORE_NAMES.bills, bill);
 
-        // Create transaction record
         if (bill.accountId) {
             const transaction = {
                 type: 'expense',
@@ -372,7 +359,6 @@ export class BillsManager {
             await addTransaction(STORE_NAMES.transactions, transaction);
         }
 
-        // Handle recurring bills
         if (bill.recurring) {
             const nextDate = this.getNextDueDate(bill.dueDate, bill.recurring);
             const newBill = {
@@ -387,7 +373,7 @@ export class BillsManager {
             await addItem(STORE_NAMES.bills, newBill);
         }
 
-        await this.init(); // Refresh UI
+        await this.init();
     }
 
     async payAllBills() {
@@ -407,9 +393,8 @@ export class BillsManager {
 
     async deleteBill(bill) {
         if (!confirm(`Delete "${bill.name}"?`)) return;
-        
         await deleteItem(STORE_NAMES.bills, bill.id);
-        await this.init(); // Refresh UI
+        await this.init();
     }
 
     openBillForm(bill = null) {
@@ -418,7 +403,6 @@ export class BillsManager {
         const form = document.getElementById('billForm');
 
         if (bill) {
-            // Edit mode
             title.textContent = 'Edit Bill';
             document.getElementById('editBillId').value = bill.id;
             document.getElementById('billName').value = bill.name;
@@ -428,7 +412,6 @@ export class BillsManager {
             document.getElementById('billCategory').value = bill.categoryId || '';
             document.getElementById('billRecurring').value = bill.recurring || '';
         } else {
-            // Add mode
             title.textContent = 'Add New Bill';
             form.reset();
             document.getElementById('editBillId').value = '';
@@ -453,16 +436,14 @@ export class BillsManager {
         };
 
         if (billId) {
-            // Update existing bill
             billData.id = billId;
             await updateItem(STORE_NAMES.bills, billData);
         } else {
-            // Add new bill
             billData.id = generateId();
             await addItem(STORE_NAMES.bills, billData);
         }
 
-        await this.init(); // Refresh UI
+        await this.init();
     }
 
     filterOverdue() {
@@ -474,7 +455,6 @@ export class BillsManager {
             return;
         }
 
-        // Temporarily show only overdue bills
         this.renderFilteredBills(overdueBills, 'Overdue Bills');
     }
 
@@ -504,17 +484,14 @@ export class BillsManager {
         this.downloadCSV(csv, 'bills-export.csv');
     }
 
-    // Helper methods - FIXED calculateStats method
+    // Helper methods (same as before)
     calculateStats(today) {
         const overdue = this.bills.filter(b => !b.paid && b.dueDate < today);
-        
-        // FIXED: Properly calculate dueSoon with daysUntilDue
         const dueSoon = this.bills.filter(b => {
             if (b.paid) return false;
             const daysUntilDue = Math.floor((new Date(b.dueDate) - new Date(today)) / (1000 * 60 * 60 * 24));
             return daysUntilDue <= 7 && daysUntilDue >= 0;
         });
-        
         const upcoming = this.bills.filter(b => !b.paid && b.dueDate >= today);
         const unpaid = this.bills.filter(b => !b.paid);
 
@@ -552,45 +529,24 @@ export class BillsManager {
     }
 
     getBillStatus(bill, today) {
-        if (bill.paid) {
-            return { text: 'Paid', class: 'paid', icon: '✅' };
-        }
+        if (bill.paid) return { text: 'Paid', class: 'paid', icon: '✅' };
 
         const daysUntilDue = Math.floor((new Date(bill.dueDate) - new Date(today)) / (1000 * 60 * 60 * 24));
         
-        if (daysUntilDue < 0) {
-            return { 
-                text: `${Math.abs(daysUntilDue)}d overdue`, 
-                class: 'overdue', 
-                icon: '🚨' 
-            };
-        }
-        
-        if (daysUntilDue === 0) {
-            return { text: 'Due today', class: 'due-today', icon: '⚠️' };
-        }
-        
-        if (daysUntilDue <= 3) {
-            return { text: `Due in ${daysUntilDue}d`, class: 'due-soon', icon: '⏰' };
-        }
+        if (daysUntilDue < 0) return { text: `${Math.abs(daysUntilDue)}d overdue`, class: 'overdue', icon: '🚨' };
+        if (daysUntilDue === 0) return { text: 'Due today', class: 'due-today', icon: '⚠️' };
+        if (daysUntilDue <= 3) return { text: `Due in ${daysUntilDue}d`, class: 'due-soon', icon: '⏰' };
         
         return { text: 'Upcoming', class: 'upcoming', icon: '📅' };
     }
 
-    // Your existing helper methods
     getAccountIcon(type) {
-        const icons = {
-            bank: '🏦', credit: '💳', cash: '💵', savings: '💰',
-            investment: '📈', offset: '⚖️', loan: '🏠'
-        };
+        const icons = { bank: '🏦', credit: '💳', cash: '💵', savings: '💰', investment: '📈', offset: '⚖️', loan: '🏠' };
         return icons[type] || '📁';
     }
 
     formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
 
     formatDateDisplay(dateString) {
@@ -602,10 +558,7 @@ export class BillsManager {
         if (date.toDateString() === today.toDateString()) return 'Today';
         if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
         
-        return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric' 
-        });
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
     getNextDueDate(currentDateStr, freq) {
@@ -646,7 +599,6 @@ export class BillsManager {
             bill.recurring || 'One-time',
             this.accounts.find(a => a.id === bill.accountId)?.name || 'Not set'
         ]);
-        
         return [headers, ...rows].map(row => row.join(',')).join('\n');
     }
 
@@ -661,7 +613,6 @@ export class BillsManager {
     }
 }
 
-// Backwards compatibility - keep your existing initBillsUI function
 export async function initBillsUI() {
     const manager = new BillsManager();
     await manager.init();
