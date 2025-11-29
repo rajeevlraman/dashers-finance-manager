@@ -5022,3 +5022,352 @@ main#mainContent {
         font-size: 0.7rem;
     }
 }
+
+/*properties page*/
+
+/* Properties Portfolio Styles */
+.properties-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.properties-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.portfolio-summary {
+    margin-bottom: 25px;
+}
+
+.properties-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+}
+
+/* Property Cards */
+.property-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
+    transition: all 0.3s ease;
+}
+
+.property-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.property-card.primary {
+    border-left-color: #3498db;
+    background: linear-gradient(135deg, #e8f4fd 0%, #ffffff 100%);
+}
+
+.property-card.investment {
+    border-left-color: #27ae60;
+    background: linear-gradient(135deg, #e8f6ef 0%, #ffffff 100%);
+}
+
+.property-card.vacation {
+    border-left-color: #f39c12;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);
+}
+
+.property-card.commercial {
+    border-left-color: #9b59b6;
+    background: linear-gradient(135deg, #f4ecf7 0%, #ffffff 100%);
+}
+
+.property-header {
+    margin-bottom: 15px;
+}
+
+.property-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.property-type-badge.primary { background: #3498db; color: white; }
+.property-type-badge.investment { background: #27ae60; color: white; }
+.property-type-badge.vacation { background: #f39c12; color: white; }
+.property-type-badge.commercial { background: #9b59b6; color: white; }
+
+.property-name {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.property-address {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Property Values */
+.property-values {
+    margin: 15px 0;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.value-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.value-label {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.value-amount {
+    font-weight: 600;
+}
+
+/* Investment Content */
+.investment-content {
+    margin: 15px 0;
+}
+
+.rental-info {
+    margin-bottom: 15px;
+}
+
+.rent-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #e8f6ef;
+    border-radius: 6px;
+}
+
+.rent-label {
+    font-weight: 500;
+}
+
+.rent-value {
+    font-weight: bold;
+    color: #27ae60;
+}
+
+.tenant-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.tenant-status.occupied {
+    background: #d4edda;
+    color: #155724;
+}
+
+.tenant-status.vacant {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.investment-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.metric-item {
+    text-align: center;
+    padding: 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.metric-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.metric-value {
+    display: block;
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+
+.metric-value.positive { color: #27ae60; }
+.metric-value.negative { color: #e74c3c; }
+
+/* Primary Residence Content */
+.primary-content {
+    margin: 15px 0;
+}
+
+.owner-occupied-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #3498db;
+    color: white;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.mortgage-info {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: #e8f4fd;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.equity-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.equity-item {
+    text-align: center;
+    padding: 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.equity-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.equity-value, .equity-percent {
+    display: block;
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+
+/* Maintenance */
+.property-maintenance {
+    margin: 15px 0;
+    padding: 10px;
+    background: #fff3cd;
+    border-radius: 6px;
+    border-left: 3px solid #f39c12;
+}
+
+.maintenance-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.maintenance-label {
+    font-weight: 500;
+}
+
+.maintenance-amount {
+    font-weight: bold;
+    margin-left: auto;
+}
+
+/* Property Actions */
+.property-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 0;
+}
+
+.btn-action.tenants { background: #27ae60; color: white; }
+.btn-action.maintenance { background: #f39c12; color: white; }
+.btn-action.edit { background: #3498db; color: white; }
+.btn-action.delete { background: #e74c3c; color: white; }
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Stats Cards for Portfolio */
+.stat-card.primary { border-left-color: #3498db; }
+.stat-card.investment { border-left-color: #27ae60; }
+.stat-card.success { border-left-color: #27ae60; }
+.stat-card.warning { border-left-color: #f39c12; }
+
+.stat-breakdown {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+.stat-breakdown span {
+    display: block;
+    margin: 2px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .properties-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .properties-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .investment-metrics,
+    .equity-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .properties-controls {
+        flex-direction: column;
+    }
+    
+    .property-actions {
+        flex-direction: column;
+    }
+}
