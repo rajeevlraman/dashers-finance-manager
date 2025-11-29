@@ -43,9 +43,6 @@ export async function initReportsUI() {
           <button class="btn btn-primary" id="refreshReports">
             🔄 Refresh Reports
           </button>
-          <button class="btn btn-secondary" id="exportAllReports">
-            📤 Export All Reports
-          </button>
         </div>
       </div>
 
@@ -56,20 +53,40 @@ export async function initReportsUI() {
 
       <!-- Reports Grid -->
       <div class="reports-grid" id="reportsGrid">
-        <div class="loading-spinner">Generating reports...</div>
+        <div class="loading-spinner">Loading charts...</div>
       </div>
     </div>
   `;
 
-  // Initialize date inputs first
-  initializeDateInputs();
   await initializeReports();
-  setupReportsEventListeners();
 }
 
 // ============================================================================
 // 🏗️ INITIALIZATION
 // ============================================================================
+
+async function initializeReports() {
+  try {
+    console.log('📥 Loading data...');
+    [allTransactions, allCategories] = await Promise.all([
+      getAllItems(STORE_NAMES.transactions),
+      getAllItems(STORE_NAMES.categories)
+    ]);
+
+    console.log(`📊 Loaded ${allTransactions.length} transactions and ${allCategories.length} categories`);
+    
+    // Initialize date inputs after data is loaded
+    initializeDateInputs();
+    setupReportsEventListeners();
+    
+    await renderQuickStats();
+    await renderReportsGrid();
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize reports:', error);
+    showError('Failed to load reports data: ' + error.message);
+  }
+}
 
 function initializeDateInputs() {
   const now = new Date();
@@ -83,24 +100,6 @@ function initializeDateInputs() {
   }
   if (endDateInput) {
     endDateInput.value = now.toISOString().split('T')[0];
-  }
-}
-
-async function initializeReports() {
-  try {
-    [allTransactions, allCategories] = await Promise.all([
-      getAllItems(STORE_NAMES.transactions),
-      getAllItems(STORE_NAMES.categories)
-    ]);
-
-    console.log(`📊 Loaded ${allTransactions.length} transactions and ${allCategories.length} categories`);
-
-    await renderQuickStats();
-    await renderReportsGrid();
-    
-  } catch (error) {
-    console.error('❌ Failed to initialize reports:', error);
-    showError('Failed to load reports data');
   }
 }
 
@@ -125,9 +124,6 @@ function setupReportsEventListeners() {
   // Action buttons
   const refreshBtn = document.getElementById('refreshReports');
   if (refreshBtn) refreshBtn.addEventListener('click', refreshAllCharts);
-
-  const exportBtn = document.getElementById('exportAllReports');
-  if (exportBtn) exportBtn.addEventListener('click', exportAllReports);
 }
 
 // ============================================================================
@@ -141,7 +137,7 @@ async function refreshAllCharts() {
     await renderReportsGrid();
   } catch (error) {
     console.error('Error refreshing charts:', error);
-    showToast('❌ Failed to refresh reports', 'error');
+    showError('Failed to refresh reports: ' + error.message);
   }
 }
 
@@ -185,17 +181,6 @@ async function renderQuickStats() {
         </div>
       </div>
 
-      <div class="stat-card savings-rate">
-        <div class="stat-icon">🎯</div>
-        <div class="stat-content">
-          <div class="stat-value ${stats.savingsRate >= 20 ? 'positive' : stats.savingsRate >= 10 ? 'warning' : 'negative'}">
-            ${stats.savingsRate.toFixed(1)}%
-          </div>
-          <div class="stat-label">Savings Rate</div>
-          <div class="stat-subtext">${getSavingsRateRating(stats.savingsRate)}</div>
-        </div>
-      </div>
-
       <div class="stat-card transaction-count">
         <div class="stat-icon">📝</div>
         <div class="stat-content">
@@ -209,35 +194,29 @@ async function renderQuickStats() {
 }
 
 function calculateFinancialStats(transactions) {
+  console.log('Calculating stats for', transactions.length, 'transactions');
+  
   const income = transactions.filter(t => t.type === 'income');
   const expenses = transactions.filter(t => t.type === 'expense');
   
   const totalIncome = income.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   const totalExpenses = expenses.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   const netCashFlow = totalIncome - totalExpenses;
-  const savingsRate = totalIncome > 0 ? (netCashFlow / totalIncome) * 100 : 0;
+
+  console.log('Stats calculated:', { totalIncome, totalExpenses, netCashFlow });
 
   return {
     totalIncome,
     totalExpenses,
     netCashFlow,
-    savingsRate,
     transactionCount: transactions.length,
     incomeCount: income.length,
     expenseCount: expenses.length
   };
 }
 
-function getSavingsRateRating(rate) {
-  if (rate >= 20) return 'Excellent';
-  if (rate >= 15) return 'Good';
-  if (rate >= 10) return 'Average';
-  if (rate >= 5) return 'Low';
-  return 'Very Low';
-}
-
 // ============================================================================
-// 📈 REPORTS GRID - SIMPLIFIED VERSION
+// 📈 REPORTS GRID
 // ============================================================================
 
 async function renderReportsGrid() {
@@ -261,289 +240,256 @@ async function renderReportsGrid() {
     return;
   }
 
+  console.log('🎨 Preparing to render charts with', filteredTransactions.length, 'transactions');
+
   reportsGrid.innerHTML = `
     <div class="report-card full-width">
       <div class="report-header">
         <h3>📈 Monthly Income vs Expenses</h3>
-        <button class="btn btn-sm btn-secondary" onclick="downloadChart('monthlyChart', 'Monthly_Income_Expenses')">
-          📥 Download
-        </button>
       </div>
-      <div class="chart-container">
-        <canvas id="monthlyChart" height="300"></canvas>
+      <div class="chart-container" style="height: 300px;">
+        <canvas id="monthlyChart"></canvas>
       </div>
     </div>
 
     <div class="report-card">
       <div class="report-header">
         <h3>💰 Expense Categories</h3>
-        <button class="btn btn-sm btn-secondary" onclick="downloadChart('expenseChart', 'Expense_Categories')">
-          📥 Download
-        </button>
       </div>
-      <div class="chart-container">
-        <canvas id="expenseChart" height="250"></canvas>
+      <div class="chart-container" style="height: 250px;">
+        <canvas id="expenseChart"></canvas>
       </div>
     </div>
 
     <div class="report-card">
       <div class="report-header">
         <h3>💸 Income Sources</h3>
-        <button class="btn btn-sm btn-secondary" onclick="downloadChart('incomeChart', 'Income_Sources')">
-          📥 Download
-        </button>
       </div>
-      <div class="chart-container">
-        <canvas id="incomeChart" height="250"></canvas>
-      </div>
-    </div>
-
-    <div class="report-card full-width">
-      <div class="report-header">
-        <h3>📊 Cash Flow Over Time</h3>
-        <button class="btn btn-sm btn-secondary" onclick="downloadChart('cashflowChart', 'Cash_Flow_Timeline')">
-          📥 Download
-        </button>
-      </div>
-      <div class="chart-container">
-        <canvas id="cashflowChart" height="300"></canvas>
+      <div class="chart-container" style="height: 250px;">
+        <canvas id="incomeChart"></canvas>
       </div>
     </div>
   `;
 
-  // Render charts after a brief delay to ensure DOM is ready
+  // Render charts with a small delay to ensure DOM is ready
   setTimeout(() => {
     renderAllCharts(filteredTransactions);
-  }, 100);
+  }, 500);
 }
 
 // ============================================================================
-// 🎨 CHART RENDERING - FIXED VERSION
+// 🎨 CHART RENDERING - SIMPLIFIED AND DEBUGGED
 // ============================================================================
 
 function renderAllCharts(transactions) {
+  console.log('🔄 Starting chart rendering...');
+  
   // Clear existing charts
   activeCharts.forEach(chart => {
     try { 
       chart.destroy(); 
     } catch (e) {
-      console.log('Error destroying chart:', e);
+      console.log('Error destroying old chart:', e);
     }
   });
   activeCharts = [];
 
-  console.log('🎨 Rendering charts with', transactions.length, 'transactions');
+  // Render each chart individually with error handling
+  try {
+    renderMonthlyChart(transactions);
+  } catch (error) {
+    console.error('❌ Error rendering monthly chart:', error);
+  }
 
-  // 1. Monthly Income vs Expenses Chart
-  renderMonthlyChart(transactions);
-  
-  // 2. Expense Categories Chart
-  renderExpenseCategoriesChart(transactions);
-  
-  // 3. Income Sources Chart
-  renderIncomeSourcesChart(transactions);
-  
-  // 4. Cash Flow Chart
-  renderCashFlowChart(transactions);
+  try {
+    renderExpenseCategoriesChart(transactions);
+  } catch (error) {
+    console.error('❌ Error rendering expense chart:', error);
+  }
+
+  try {
+    renderIncomeSourcesChart(transactions);
+  } catch (error) {
+    console.error('❌ Error rendering income chart:', error);
+  }
+
+  console.log('✅ Chart rendering completed');
 }
 
 function renderMonthlyChart(transactions) {
   const monthlyData = getMonthlyData(transactions);
-  
   const ctx = document.getElementById('monthlyChart');
-  if (!ctx) return;
-
-  // Ensure we have valid data
-  if (monthlyData.labels.length === 0 || monthlyData.income.length === 0) {
-    console.warn('No valid data for monthly chart');
+  
+  if (!ctx) {
+    console.error('❌ Monthly chart canvas not found');
     return;
   }
 
-  try {
-    const chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: monthlyData.labels,
-        datasets: [
-          {
-            label: 'Income',
-            data: monthlyData.income,
-            backgroundColor: '#27ae60',
-            borderColor: '#27ae60',
-            borderWidth: 1
-          },
-          {
-            label: 'Expenses',
-            data: monthlyData.expenses,
-            backgroundColor: '#e74c3c',
-            borderColor: '#e74c3c',
-            borderWidth: 1
-          }
-        ]
+  console.log('📊 Monthly data:', monthlyData);
+
+  // Validate data
+  if (!monthlyData.labels || monthlyData.labels.length === 0) {
+    console.warn('⚠️ No monthly data available');
+    ctx.parentElement.innerHTML = '<p class="no-data">No monthly data available</p>';
+    return;
+  }
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: monthlyData.labels,
+      datasets: [
+        {
+          label: 'Income',
+          data: monthlyData.income,
+          backgroundColor: '#27ae60',
+          borderColor: '#27ae60',
+          borderWidth: 1
+        },
+        {
+          label: 'Expenses',
+          data: monthlyData.expenses,
+          backgroundColor: '#e74c3c',
+          borderColor: '#e74c3c',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Monthly Income vs Expenses'
+        }
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return formatCurrency(value);
+            }
+          },
           title: {
             display: true,
-            text: 'Monthly Income vs Expenses'
-          },
-          legend: {
-            position: 'bottom'
+            text: 'Amount (AUD)'
           }
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function(value) {
-                return formatCurrency(value);
-              }
-            }
+        x: {
+          title: {
+            display: true,
+            text: 'Month'
           }
         }
       }
-    });
-    activeCharts.push(chart);
-  } catch (error) {
-    console.error('Error rendering monthly chart:', error);
-  }
+    }
+  });
+  
+  activeCharts.push(chart);
+  console.log('✅ Monthly chart rendered successfully');
 }
 
 function renderExpenseCategoriesChart(transactions) {
   const expenseData = getExpenseCategoriesData(transactions);
-  
   const ctx = document.getElementById('expenseChart');
-  if (!ctx) return;
-
-  if (expenseData.labels.length === 0) {
-    console.warn('No expense data for categories chart');
+  
+  if (!ctx) {
+    console.error('❌ Expense chart canvas not found');
     return;
   }
 
-  try {
-    const chart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: expenseData.labels,
-        datasets: [{
-          data: expenseData.values,
-          backgroundColor: expenseData.labels.map(() => generateColor()),
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Expense Categories'
-          },
-          legend: {
-            position: 'bottom'
-          }
+  console.log('📊 Expense categories data:', expenseData);
+
+  if (!expenseData.labels || expenseData.labels.length === 0) {
+    console.warn('⚠️ No expense data available');
+    ctx.parentElement.innerHTML = '<p class="no-data">No expense data available</p>';
+    return;
+  }
+
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: expenseData.labels,
+      datasets: [{
+        data: expenseData.values,
+        backgroundColor: [
+          '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', 
+          '#f39c12', '#34495e', '#e67e22', '#16a085'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+        },
+        title: {
+          display: true,
+          text: 'Expense Categories'
         }
       }
-    });
-    activeCharts.push(chart);
-  } catch (error) {
-    console.error('Error rendering expense categories chart:', error);
-  }
+    }
+  });
+  
+  activeCharts.push(chart);
+  console.log('✅ Expense categories chart rendered successfully');
 }
 
 function renderIncomeSourcesChart(transactions) {
   const incomeData = getIncomeSourcesData(transactions);
-  
   const ctx = document.getElementById('incomeChart');
-  if (!ctx) return;
-
-  if (incomeData.labels.length === 0) {
-    console.warn('No income data for sources chart');
-    return;
-  }
-
-  try {
-    const chart = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: incomeData.labels,
-        datasets: [{
-          data: incomeData.values,
-          backgroundColor: incomeData.labels.map(() => generateColor()),
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Income Sources'
-          },
-          legend: {
-            position: 'bottom'
-          }
-        }
-      }
-    });
-    activeCharts.push(chart);
-  } catch (error) {
-    console.error('Error rendering income sources chart:', error);
-  }
-}
-
-function renderCashFlowChart(transactions) {
-  const cashflowData = getCashFlowData(transactions);
   
-  const ctx = document.getElementById('cashflowChart');
-  if (!ctx) return;
-
-  if (cashflowData.labels.length === 0) {
-    console.warn('No data for cash flow chart');
+  if (!ctx) {
+    console.error('❌ Income chart canvas not found');
     return;
   }
 
-  try {
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: cashflowData.labels,
-        datasets: [{
-          label: 'Net Cash Flow',
-          data: cashflowData.values,
-          borderColor: '#3498db',
-          backgroundColor: 'rgba(52, 152, 219, 0.1)',
-          fill: true,
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Cash Flow Over Time'
-          }
+  console.log('📊 Income sources data:', incomeData);
+
+  if (!incomeData.labels || incomeData.labels.length === 0) {
+    console.warn('⚠️ No income data available');
+    ctx.parentElement.innerHTML = '<p class="no-data">No income data available</p>';
+    return;
+  }
+
+  const chart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: incomeData.labels,
+      datasets: [{
+        data: incomeData.values,
+        backgroundColor: [
+          '#27ae60', '#3498db', '#9b59b6', '#1abc9c', 
+          '#f39c12', '#34495e', '#e67e22', '#16a085'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
         },
-        scales: {
-          y: {
-            ticks: {
-              callback: function(value) {
-                return formatCurrency(value);
-              }
-            }
-          }
+        title: {
+          display: true,
+          text: 'Income Sources'
         }
       }
-    });
-    activeCharts.push(chart);
-  } catch (error) {
-    console.error('Error rendering cash flow chart:', error);
-  }
+    }
+  });
+  
+  activeCharts.push(chart);
+  console.log('✅ Income sources chart rendered successfully');
 }
 
 // ============================================================================
@@ -551,65 +497,88 @@ function renderCashFlowChart(transactions) {
 // ============================================================================
 
 function getMonthlyData(transactions) {
+  console.log('Processing monthly data for', transactions.length, 'transactions');
+  
   const monthly = {};
   
   transactions.forEach(tx => {
-    if (!tx.date) return;
-    
-    const date = new Date(tx.date);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    
-    if (!monthly[monthKey]) {
-      monthly[monthKey] = { income: 0, expenses: 0 };
+    if (!tx.date) {
+      console.warn('Transaction missing date:', tx);
+      return;
     }
     
-    const amount = parseFloat(tx.amount) || 0;
-    if (tx.type === 'income') {
-      monthly[monthKey].income += amount;
-    } else if (tx.type === 'expense') {
-      monthly[monthKey].expenses += amount;
+    try {
+      const date = new Date(tx.date);
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date in transaction:', tx.date);
+        return;
+      }
+      
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const amount = parseFloat(tx.amount) || 0;
+      
+      if (!monthly[monthKey]) {
+        monthly[monthKey] = { income: 0, expenses: 0 };
+      }
+      
+      if (tx.type === 'income') {
+        monthly[monthKey].income += amount;
+      } else if (tx.type === 'expense') {
+        monthly[monthKey].expenses += amount;
+      }
+    } catch (error) {
+      console.error('Error processing transaction:', tx, error);
     }
   });
 
   const sortedMonths = Object.keys(monthly).sort();
   
-  return {
+  const result = {
     labels: sortedMonths.map(month => {
       const [year, monthNum] = month.split('-');
-      return `${monthNum}/${year.slice(2)}`;
+      return `${getMonthName(parseInt(monthNum))} ${year}`;
     }),
     income: sortedMonths.map(month => monthly[month].income),
     expenses: sortedMonths.map(month => monthly[month].expenses)
   };
+  
+  console.log('Monthly data result:', result);
+  return result;
 }
 
 function getExpenseCategoriesData(transactions) {
   const expenses = transactions.filter(t => t.type === 'expense');
+  console.log('Processing', expenses.length, 'expenses for categories');
+  
   const categories = {};
   
   expenses.forEach(expense => {
-    const categoryName = getCategoryName(expense.categoryId);
+    const categoryName = getCategoryName(expense.categoryId) || 'Uncategorized';
     const amount = parseFloat(expense.amount) || 0;
     categories[categoryName] = (categories[categoryName] || 0) + amount;
   });
   
-  // Sort by amount descending and take top 8
+  // Sort by amount descending and take top 6
   const sortedEntries = Object.entries(categories)
     .sort(([,a], [,b]) => b - a)
-    .slice(0, 8);
+    .slice(0, 6);
   
-  return {
+  const result = {
     labels: sortedEntries.map(([name]) => name),
     values: sortedEntries.map(([,amount]) => amount)
   };
+  
+  console.log('Expense categories result:', result);
+  return result;
 }
 
 function getIncomeSourcesData(transactions) {
   const income = transactions.filter(t => t.type === 'income');
+  console.log('Processing', income.length, 'income transactions for sources');
+  
   const sources = {};
   
   income.forEach(incomeTx => {
-    // Use category as source, or description if no category
     const source = getCategoryName(incomeTx.categoryId) || incomeTx.description || 'Other Income';
     const amount = parseFloat(incomeTx.amount) || 0;
     sources[source] = (sources[source] || 0) + amount;
@@ -620,48 +589,13 @@ function getIncomeSourcesData(transactions) {
     .sort(([,a], [,b]) => b - a)
     .slice(0, 6);
   
-  return {
+  const result = {
     labels: sortedEntries.map(([name]) => name),
     values: sortedEntries.map(([,amount]) => amount)
   };
-}
-
-function getCashFlowData(transactions) {
-  const daily = {};
   
-  // Sort transactions by date
-  const sortedTransactions = [...transactions].sort((a, b) => 
-    new Date(a.date) - new Date(b.date)
-  );
-  
-  // Calculate daily net cash flow
-  sortedTransactions.forEach(tx => {
-    if (!tx.date) return;
-    
-    const dateStr = tx.date; // Use YYYY-MM-DD format directly
-    const amount = parseFloat(tx.amount) || 0;
-    const netAmount = tx.type === 'income' ? amount : -amount;
-    
-    daily[dateStr] = (daily[dateStr] || 0) + netAmount;
-  });
-  
-  // Calculate cumulative cash flow
-  const sortedDates = Object.keys(daily).sort();
-  let cumulative = 0;
-  const cumulativeData = [];
-  
-  for (let date of sortedDates) {
-    cumulative += daily[date];
-    cumulativeData.push(cumulative);
-  }
-  
-  return {
-    labels: sortedDates.map(date => {
-      const d = new Date(date);
-      return `${d.getDate()}/${d.getMonth() + 1}`;
-    }),
-    values: cumulativeData
-  };
+  console.log('Income sources result:', result);
+  return result;
 }
 
 // ============================================================================
@@ -673,7 +607,14 @@ function getFilteredTransactions() {
   const startDate = document.getElementById('startDate')?.value;
   const endDate = document.getElementById('endDate')?.value;
   
-  let filtered = [...allTransactions];
+  let filtered = allTransactions.filter(tx => {
+    // Basic validation
+    if (!tx.date || !tx.type) return false;
+    if (isNaN(parseFloat(tx.amount))) return false;
+    return true;
+  });
+  
+  console.log('Filtering transactions. Date range:', dateRange, 'Start:', startDate, 'End:', endDate);
   
   if (dateRange === 'custom' && startDate && endDate) {
     filtered = filtered.filter(t => t.date >= startDate && t.date <= endDate);
@@ -690,7 +631,7 @@ function getFilteredTransactions() {
     filtered = filtered.filter(t => t.date >= quarterStart);
   }
   
-  console.log(`📅 Filtered to ${filtered.length} transactions for date range: ${dateRange}`);
+  console.log(`📅 Filtered to ${filtered.length} valid transactions`);
   return filtered;
 }
 
@@ -700,22 +641,21 @@ function getCategoryName(categoryId) {
   return category ? category.name : 'Uncategorized';
 }
 
+function getMonthName(monthNumber) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  return months[monthNumber - 1] || 'Unknown';
+}
+
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-AU', { 
     style: 'currency', 
-    currency: 'AUD' 
+    currency: 'AUD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount || 0);
-}
-
-function generateColor() {
-  const hues = [0, 30, 60, 120, 180, 210, 240, 270, 300, 330]; // Predefined hues for better distinction
-  const hue = hues[Math.floor(Math.random() * hues.length)];
-  return `hsl(${hue}, 70%, 60%)`;
-}
-
-function showToast(message, type = 'info') {
-  // Simple toast implementation
-  console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
 function showError(message) {
@@ -733,107 +673,7 @@ function showError(message) {
 }
 
 // ============================================================================
-// 📤 EXPORT FUNCTIONALITY
+// 🌐 GLOBAL FUNCTIONS
 // ============================================================================
-
-async function exportAllReports() {
-  try {
-    showToast('📤 Preparing comprehensive report export...', 'info');
-    
-    const reportHTML = generateComprehensiveReport();
-    const blob = new Blob([reportHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `financial-report-${new Date().toISOString().split('T')[0]}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast('✅ Comprehensive report exported successfully!', 'success');
-    
-  } catch (error) {
-    console.error('Export failed:', error);
-    showToast('❌ Report export failed!', 'error');
-  }
-}
-
-function generateComprehensiveReport() {
-  const filteredTransactions = getFilteredTransactions();
-  const stats = calculateFinancialStats(filteredTransactions);
-  
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Financial Report - ${new Date().toLocaleDateString()}</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; color: #333; }
-        .header { text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 1rem; margin-bottom: 2rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
-        .stat-card { background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center; }
-        .stat-value { font-size: 1.5rem; font-weight: bold; }
-        .positive { color: #27ae60; }
-        .negative { color: #e74c3c; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>📊 Financial Report</h1>
-        <p>Generated: ${new Date().toLocaleDateString()}</p>
-    </div>
-    
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value ${stats.netCashFlow >= 0 ? 'positive' : 'negative'}">${formatCurrency(stats.netCashFlow)}</div>
-            <div>Net Cash Flow</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${formatCurrency(stats.totalIncome)}</div>
-            <div>Total Income</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${formatCurrency(stats.totalExpenses)}</div>
-            <div>Total Expenses</div>
-        </div>
-    </div>
-    
-    <h3>Key Metrics</h3>
-    <ul>
-        <li>Savings Rate: ${stats.savingsRate.toFixed(1)}%</li>
-        <li>Total Transactions: ${stats.transactionCount}</li>
-        <li>Income Transactions: ${stats.incomeCount}</li>
-        <li>Expense Transactions: ${stats.expenseCount}</li>
-    </ul>
-    
-    <p><em>Note: Interactive charts are available in the web application.</em></p>
-</body>
-</html>`;
-}
-
-// ============================================================================
-// 🌐 GLOBAL FUNCTIONS FOR HTML ONCLICK
-// ============================================================================
-
-window.downloadChart = function(canvasId, filename) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) {
-    console.error('Canvas not found:', canvasId);
-    return;
-  }
-  
-  try {
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.png`;
-    link.click();
-    showToast('✅ Chart downloaded successfully!', 'success');
-  } catch (error) {
-    console.error('Error downloading chart:', error);
-    showToast('❌ Failed to download chart', 'error');
-  }
-};
 
 window.initReportsUI = initReportsUI;
