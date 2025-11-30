@@ -398,3 +398,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
+// Add this to your main app.js to debug service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistration().then(registration => {
+    if (registration) {
+      console.log('🔍 [APP-DEBUG] Service Worker registered:', registration);
+      console.log('🔍 [APP-DEBUG] Service Worker state:', registration.active?.state);
+      
+      // Request cache status from SW
+      if (registration.active) {
+        registration.active.postMessage({ type: 'GET_CACHE_STATUS' });
+      }
+    } else {
+      console.log('🔍 [APP-DEBUG] No Service Worker registration found');
+    }
+  });
+
+  // Listen for messages from Service Worker
+  navigator.serviceWorker.addEventListener('message', event => {
+    console.log('🔍 [APP-DEBUG] Message from SW:', event.data);
+  });
+}
