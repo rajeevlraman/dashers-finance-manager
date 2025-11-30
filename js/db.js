@@ -92,3 +92,36 @@ export async function deleteItem(store, id) {
 export async function clearStore(store) {
   return await db[store].clear();
 }
+
+// ============================================================================
+// CLEAR ALL STORES — Needed by settings.js
+// ============================================================================
+export async function clearAllData() {
+  const storeNames = Object.keys(STORE_NAMES);
+
+  for (const store of storeNames) {
+    try {
+      await db[store].clear();
+    } catch (err) {
+      console.warn("Could not clear store:", store, err);
+    }
+  }
+
+  console.log("✅ All data cleared");
+}
+// ============================================================================
+// CLEAR ALL STORES — Needed by settings.js
+// ============================================================================
+export async function clearAllData() {
+  const storeNames = Object.keys(STORE_NAMES);
+
+  for (const store of storeNames) {
+    try {
+      await db[store].clear();
+    } catch (err) {
+      console.warn("Could not clear store:", store, err);
+    }
+  }
+
+  console.log("✅ All data cleared");
+}
