@@ -173,6 +173,34 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.error('❌ Service Worker registration failed:', err));
 }
 
+// Enhanced iOS-specific caching
+function warmCacheForIOS() {
+  if (!isIOS) return;
+  
+  // Pre-warm cache by requesting critical resources
+  const criticalResources = [
+    './js/app.js',
+    './js/db.js', 
+    './js/ui.js',
+    './css/styles.css',
+    './index.html'
+  ];
+  
+  criticalResources.forEach(resource => {
+    fetch(resource).catch(() => {
+      // Silent fail - just warming cache
+    });
+  });
+}
+
+// Call this after service worker is ready
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then(() => {
+    warmCacheForIOS();
+  });
+}
+
+
 function showOfflineBanner() {
     if (document.getElementById('offlineBanner')) return;
     const banner = document.createElement('div');
