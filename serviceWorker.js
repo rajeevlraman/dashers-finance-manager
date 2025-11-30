@@ -1,422 +1,287 @@
-// ============================================================================
-// 💰 Budget Tracker – Enhanced Service Worker (iOS-Compatible Offline Version)
-// ----------------------------------------------------------------------------
-// Full offline support with enhanced iOS compatibility and error handling
-// ============================================================================
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="theme-color" content="#3498db">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Budget Tracker">
 
-const CACHE_NAME = 'budget-tracker-v35'; // 🚨 Incremented version
+  <!-- Enhanced Viewport for iOS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+  <title>Budget Tracker</title>
 
-// 🎯 CRITICAL FIX: Expanded cache list with all required files
-const PRECACHE_URLS = [
-  // Root and core files
-  './',
-  './index.html',
-  './manifest.json',
-  
-  // CSS
-  './css/styles.css',
+  <!-- IMPORTANT: base path matches GitHub Pages repo -->
+  <base href="/dashers-finance-manager/">
 
-  // Core Application JS - ALL essential files
-  './js/app.js',
-  './js/ui.js',
-  './js/db.js',
-  './js/db_dexie.js',
-  './js/debugConsole.js',
-  './js/recurringJob.js',
-  './js/exportimport.js',
-  './js/loanCalculations.js',
-  './js/reports.js',
-  './js/settings.js',
-  './js/emojipicker.js',
-  './js/layoutManager.js',
-  './js/dashboard_mobile.js',
-  './js/dashboard_mobile_v2.js',
-  './js/dashboard_desktop.js',
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="manifest" href="./manifest.json">
 
-  // Feature Modules
-  './js/budgets.js',
-  './js/transactions.js',
-  './js/accounts.js',
-  './js/categories.js',
-  './js/dashboard.js',
-  './js/bills.js',
-  './js/calendar.js',
-  './js/recurring.js',
-  './js/loans.js',
-  './js/properties.js',
-  './js/tenants.js',
-  './js/maintenance.js',
-  './js/expenses.js',
-  './js/costbase.js',
+  <!-- Icons -->
+  <link rel="icon" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-192.png">
 
-  // Vendor Libraries
-  './js/vendor/chart.umd.min.js',
-  './js/vendor/dexie.min.js',
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
 
-  // Icons and Assets
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
-  './assets/icons/maskable_icon.png',
-  './assets/icons/splash.png',
-  './assets/icons/icon-152.png',
-  './assets/icons/icon-167.png',
-  './assets/icons/icon-180.png'
-];
+  <!-- Charts -->
+  <script src="js/vendor/chart.umd.min.js"></script>
 
-// ============================================================================
-// 🏗️ INSTALL – Enhanced caching with better error handling
-// ============================================================================
-self.addEventListener('install', event => {
-  console.log('📦 [SW] Installing and caching essential files...');
+  <script type="module">
+    import { initAutoDashboard } from './js/dashboard_mobile.js';
+    initAutoDashboard();
+  </script>
 
-  // 🚨 CRITICAL FIX: Use waitUntil to ensure installation completes
-  event.waitUntil(
-    (async () => {
-      try {
-        const cache = await caches.open(CACHE_NAME);
-        console.log(`✅ Cache opened: ${CACHE_NAME}`);
-        
-        // Enhanced caching with individual error handling
-        const cachePromises = PRECACHE_URLS.map(async url => {
-          try {
-            // Use 'no-cache' to ensure we get the latest version
-            const response = await fetch(url, {
-              cache: 'no-cache',
-              headers: { 'Pragma': 'no-cache' }
-            });
-            
-            if (response.ok) {
-              await cache.put(url, response);
-              console.log(`✅ Successfully cached: ${url}`);
-              return { url, status: 'success' };
-            } else {
-              console.warn(`⚠️ Failed to cache ${url}: HTTP ${response.status}`);
-              return { url, status: 'failed', reason: `HTTP ${response.status}` };
-            }
-          } catch (error) {
-            console.warn(`⚠️ Could not cache ${url}:`, error.message);
-            return { url, status: 'failed', reason: error.message };
-          }
-        });
+  <script type="module" src="./js/app.js"></script>
 
-        const results = await Promise.allSettled(cachePromises);
-        
-        const successful = results.filter(r => 
-          r.status === 'fulfilled' && r.value.status === 'success'
-        ).length;
-        
-        const failed = results.length - successful;
-        
-        console.log(`📊 Cache Summary: ${successful} successful, ${failed} failed`);
-        
-        if (failed > 0) {
-          console.warn(`🚨 ${failed} files failed to cache - offline functionality may be limited`);
-        }
+  <!-- iOS PWA Detection -->
+  <script>
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      document.documentElement.classList.add('ios-device');
+      console.log('📱 iOS Device Detected - Applying PWA fixes');
+    }
+  </script>
+</head>
+<body>
+  <div id="splashScreen">
+    <div class="splash-inner">
+      <img src="assets/icons/icon-192.png" alt="Logo">
+      <h1>Budget Tracker Dev Version</h1>
+      <div class="spinner"></div>
+    </div>
+  </div>
 
-        // 🚨 CRITICAL FIX: Force immediate activation (iOS compatibility)
-        await self.skipWaiting();
-        console.log('✅ [SW] Installation completed - skipping waiting');
-        
-      } catch (error) {
-        console.error('❌ [SW] Installation failed:', error);
-        // Even if installation fails, we don't want to break the app
-      }
-    })()
-  );
-});
+  <header>
+    <h1>Budget Tracker Dev Version</h1>
+    <div class="header-status">
+      <span id="connectionStatus" title="Online">🟢</span>
+    </div>
+    <div class="header-actions">
+      <button id="btnExport">Backup Data</button>
+      <button id="btnImport">Restore Data</button>
+    </div>
+    <div id="branchIndicator" style="display:none; 
+    background-color: #f39c12; 
+    color: white; 
+    text-align: center; 
+    padding: 5px; 
+    font-weight: bold; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    z-index: 10000;">
+    ⚠️ DEVELOPMENT VERSION ⚠️
+    </div>
+  </header>
 
-// ============================================================================
-// ♻️ ACTIVATE – Enhanced cleanup and client control
-// ============================================================================
-self.addEventListener('activate', event => {
-  console.log('♻️ [SW] Activating service worker and cleaning old caches...');
+  <div id="loginScreen" class="login-screen">
+    <div class="login-container">
+      <h1>💰 Budget Tracker</h1>
+      <p class="subtitle">Sign in to continue</p>
 
-  event.waitUntil(
-    (async () => {
-      try {
-        // Clean up old caches
-        const cacheKeys = await caches.keys();
-        const deletePromises = cacheKeys.map(key => {
-          if (key !== CACHE_NAME) {
-            console.log(`🗑️ Deleting old cache: ${key}`);
-            return caches.delete(key);
-          }
-        });
-        
-        await Promise.all(deletePromises);
-        console.log('✅ Old caches cleaned up');
-        
-        // 🚨 CRITICAL FIX: Take immediate control of all clients
-        await self.clients.claim();
-        console.log('✅ [SW] Now controlling all clients');
-        
-        // Notify all clients about activation
-        const clients = await self.clients.matchAll();
-        clients.forEach(client => {
-          client.postMessage({ 
-            type: 'SW_ACTIVATED',
-            version: CACHE_NAME,
-            timestamp: new Date().toISOString()
-          });
-        });
-        
-      } catch (error) {
-        console.error('❌ [SW] Activation failed:', error);
-      }
-    })()
-  );
-});
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit" class="btn-login">Login</button>
+      </form>
 
-// ============================================================================
-// 🌍 FETCH – Enhanced caching strategy for maximum offline support
-// ============================================================================
-self.addEventListener('fetch', event => {
-  const request = event.request;
-  const url = new URL(request.url);
+      <p class="note">No account? <a href="#" id="registerLink">Create one</a></p>
+    </div>
+  </div>
 
-  // 🚫 Skip non-GET requests and cross-origin requests
-  if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) {
-    return;
-  }
+  <nav>
+    <ul>
+      <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
+      <li><a href="#transactions" data-view="transactions"><span class="icon">💸</span><span class="label">Transactions</span></a></li>
+      <li><a href="#budgets" data-view="budgets"><span class="icon">🎯</span><span class="label">Budgets</span></a></li>
+      <li><a href="#accounts" data-view="accounts"><span class="icon">💳</span><span class="label">Accounts</span></a></li>
+      <li><a href="#categories" data-view="categories"><span class="icon">🗂️</span><span class="label">Categories</span></a></li>
+      <li><a href="#reports" data-view="reports"><span class="icon">📊</span><span class="label">Reports</span></a></li>
+      <li><a href="#bills" data-view="bills"><span class="icon">🧾</span><span class="label">Bills</span></a></li>
+      <li><a href="#settings" data-view="settings"><span class="icon">⚙️</span><span class="label">Settings</span></a></li>
+      <li><a href="#calendar" data-view="calendar"><span class="icon">📅</span><span class="label">Calendar</span></a></li>
+      <li><a href="#recurring" data-view="recurring"><span class="icon">🔁</span><span class="label">Recurring</span></a></li>
+      <li><a href="#loans" data-view="loans"><span class="icon">🏦</span><span class="label">Loans</span></a></li>
+      <li><a href="#properties" data-view="properties"><span class="icon">🏠</span><span class="label">Properties</span></a></li>
+      <li><a href="#tenants" data-view="tenants"><span class="icon">👤</span><span class="label">Tenants</span></a></li>
+      <li><a href="#maintenance" data-view="maintenance"><span class="icon">🧰</span><span class="label">Maintenance</span></a></li>
+      <li><a href="#expenses" data-view="expenses"><span class="icon">💸</span><span class="label">Expenses</span></a></li>
+      <li><a href="#property-dashboard" data-view="property-dashboard"><span class="icon">📊</span><span class="label"> Prop-Dashboard</span></a></li>
+      <li><a href="#mobile-dashboard" data-view="mobile-dashboard"><span class="icon">📱</span><span class="label">Prop Mobile</span></a></li>
+      <li><a href="#mobiledash" data-view="mobiledash"><span class="icon">📱</span><span class="label">MobileDash</span></a></li>
+      <li><a href="#tax" data-view="tax"><span class="icon">📘</span><span class="label">ATO Reports</span></a></li>
+      <li><a href="#costbase" data-view="costbase"><span class="icon">🧱</span><span class="label">Cost Base</span></a></li>
+      <li><a href="#mobiledashv3" data-view="mobiledashv3"><span class="icon">📱</span><span class="label">Fintech Dash</span></a></li>
+    </ul>
+  </nav>
 
-  // 🚫 Block source map requests
-  if (request.url.endsWith('.map')) {
-    event.respondWith(new Response('', { status: 204 }));
-    return;
-  }
+  <main id="mainContent"></main>
 
-  // 🎯 STRATEGY: Cache-first with network fallback for optimal offline support
-  event.respondWith(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-      
-      try {
-        // First, try to get from cache
-        const cachedResponse = await cache.match(request);
-        
-        if (cachedResponse) {
-          console.log(`📂 Serving from cache: ${request.url}`);
-          
-          // 🚨 CRITICAL FIX: Update cache in background if online
-          if (navigator.onLine) {
-            event.waitUntil(
-              (async () => {
-                try {
-                  const networkResponse = await fetch(request);
-                  if (networkResponse.ok) {
-                    await cache.put(request, networkResponse);
-                    console.log(`🔄 Updated cache in background: ${request.url}`);
-                  }
-                } catch (error) {
-                  // Silent fail - we have cached version
-                }
-              })()
-            );
-          }
-          
-          return cachedResponse;
-        }
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a href="#dashboard" data-view="dashboard" class="nav-item active">
+      <span class="icon">🏠</span>
+      <span class="label">Home</span>
+    </a>
+    <a href="#transactions" data-view="transactions" class="nav-item">
+      <span class="icon">💸</span>
+      <span class="label">Finance</span>
+    </a>
+    <a href="#reports" data-view="reports" class="nav-item">
+      <span class="icon">📊</span>
+      <span class="label">Reports</span>
+    </a>
+    <a href="#properties" data-view="properties" class="nav-item">
+      <span class="icon">🏘️</span>
+      <span class="label">Properties</span>
+    </a>
+    <a href="#settings" data-view="settings" class="nav-item">
+      <span class="icon">⚙️</span>
+      <span class="label">Settings</span>
+    </a>
+  </nav>
 
-        // 🚨 CRITICAL FIX: If not in cache and online, fetch and cache
-        if (navigator.onLine) {
-          const networkResponse = await fetch(request);
-          
-          if (networkResponse.ok) {
-            // Clone response before caching (Response can only be read once)
-            await cache.put(request, networkResponse.clone());
-            console.log(`✅ Fetched and cached: ${request.url}`);
-            return networkResponse;
-          } else {
-            throw new Error(`HTTP ${networkResponse.status}`);
-          }
-        } else {
-          // 🚨 OFFLINE: Resource not in cache and we're offline
-          throw new Error('Offline and not cached');
-        }
-        
-      } catch (error) {
-        console.warn(`📴 Offline/error for: ${request.url}`, error.message);
-        
-        // 🎯 Enhanced offline fallbacks based on file type
-        const destination = request.destination || 'document';
-        
-        switch (destination) {
-          case 'document':
-          case '': // Some requests don't have destination
-            // Try to return the main page for navigation requests
-            const fallbackHtml = await cache.match('./index.html');
-            if (fallbackHtml) {
-              return fallbackHtml;
-            }
-            break;
-            
-          case 'script':
-            return new Response(
-              `console.log("📴 Script offline: ${request.url}");`,
-              { headers: { 'Content-Type': 'application/javascript' } }
-            );
-            
-          case 'style':
-            return new Response(
-              `/* 📴 Styles offline: ${request.url} */`,
-              { headers: { 'Content-Type': 'text/css' } }
-            );
-            
-          case 'image':
-            // Return a transparent pixel for missing images
-            return new Response(
-              'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB2aWV3Qm94PSIwIDAgMSAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==',
-              { headers: { 'Content-Type': 'image/svg+xml' } }
-            );
-        }
-        
-        // Generic offline response
-        return new Response(
-          `📴 Offline - "${request.url}" not available`,
-          { 
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: { 
-              'Content-Type': 'text/plain',
-              'Cache-Control': 'no-cache'
-            }
-          }
-        );
-      }
-    })()
-  );
-});
+  <!-- PWA Installation Banner -->
+  <div id="installBanner" class="install-banner hidden">
+    <div class="install-banner-content">
+      <span class="install-icon">📱</span>
+      <div class="install-text">
+        <strong>Install Budget Tracker</strong>
+        <p>Get quick access and offline support — install to your device.</p>
+      </div>
+      <div class="install-actions">
+        <button id="installBtn" class="button">Install</button>
+        <button id="installDismiss" class="button red">Dismiss</button>
+      </div>
+    </div>
+  </div>
+  <button id="btnMigrateToDexie" class="btn-warning">⚙️ Migrate to Dexie Database</button>
 
-// ============================================================================
-// 📨 MESSAGE HANDLING – Enhanced communication with main app
-// ============================================================================
-self.addEventListener('message', event => {
-  console.log('📨 [SW] Received message:', event.data);
-  
-  const { type, data } = event.data || {};
-  
-  switch (type) {
-    case 'SKIP_WAITING':
-      console.log('⚡ [SW] Skip waiting triggered');
-      self.skipWaiting();
-      break;
-      
-    case 'UPDATE_CACHE':
-      console.log('🔄 [SW] Manual cache update requested');
-      updateSpecificCache(data?.urls);
-      break;
-      
-    case 'GET_CACHE_STATUS':
-      event.ports[0]?.postMessage({
-        type: 'CACHE_STATUS',
-        cacheName: CACHE_NAME,
-        cachedUrls: PRECACHE_URLS
+  <div style="position: fixed; top: 10px; right: 10px; z-index: 10000; display: none;" id="debugPWA">
+    <button onclick="checkPWAStatus()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;">Check PWA</button>
+  </div>
+
+  <script>
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+
+    console.log('📱 Device Detection:', {
+      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+      isSafari, 
+      isAndroid,
+      userAgent: navigator.userAgent
+    });
+
+    // ✅ Register service worker (path relative to <base>)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
+        .then((reg) => {
+          console.log('✅ SW registered:', reg.scope);
+          // Optional iOS guide…
+        })
+        .catch((err) => console.error('❌ SW registration failed:', err));
+    }
+
+    // Android install prompt (only for Android)
+    if (isAndroid) {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('✅ Android: PWA installable');
+        e.preventDefault();
+        window.deferredPrompt = e;
+        setTimeout(() => {
+          const banner = document.getElementById('installBanner');
+          if (banner) banner.classList.remove('hidden');
+        }, 2000);
       });
-      break;
-      
-    case 'CLEAR_CACHE':
-      clearOldCaches();
-      break;
-  }
-});
+    }
 
-// ============================================================================
-// 🛠️ UTILITY FUNCTIONS
-// ============================================================================
+    // iOS Install Guide helpers (unchanged) …
+    function showIOSInstallGuide() {
+      const guide = document.getElementById('iosInstallGuide');
+      if (guide && !localStorage.getItem('iosGuideDismissed')) {
+        console.log('📱 Showing iOS install guide');
+        guide.classList.add('show');
+      }
+    }
+    function hideIOSInstallGuide() {
+      const guide = document.getElementById('iosInstallGuide');
+      if (guide) {
+        guide.classList.remove('show');
+        localStorage.setItem('iosGuideDismissed', 'true');
+        console.log('📱 iOS install guide dismissed');
+      }
+    }
 
-/**
- * Update specific URLs in cache
- */
-async function updateSpecificCache(urls = PRECACHE_URLS) {
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    const updatePromises = urls.map(async url => {
-      try {
-        const response = await fetch(url, { cache: 'no-cache' });
-        if (response.ok) {
-          await cache.put(url, response);
-          console.log(`🔄 Updated: ${url}`);
-          return { url, status: 'updated' };
+    document.addEventListener('DOMContentLoaded', function() {
+      const closeBtn = document.getElementById('closeIosGuide');
+      if (closeBtn) closeBtn.addEventListener('click', hideIOSInstallGuide);
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        let guideShown = false;
+        const showGuideOnInteraction = function() {
+          if (!guideShown) {
+            setTimeout(showIOSInstallGuide, 1000);
+            guideShown = true;
+          }
+        };
+        document.addEventListener('touchstart', showGuideOnInteraction, { once: true, passive: true });
+        document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
+      }
+
+      const installBtn = document.getElementById('installBtn');
+      if (installBtn && isAndroid) {
+        installBtn.addEventListener('click', async () => {
+          if (!window.deferredPrompt) return;
+          window.deferredPrompt.prompt();
+          await window.deferredPrompt.userChoice;
+          window.deferredPrompt = null;
+          document.getElementById('installBanner').classList.add('hidden');
+        });
+      }
+
+      const installDismiss = document.getElementById('installDismiss');
+      if (installDismiss) {
+        installDismiss.addEventListener('click', () => {
+          const banner = document.getElementById('installBanner');
+          if (banner) banner.classList.add('hidden');
+        });
+      }
+    });
+
+    if (isAndroid) {
+      setTimeout(() => {
+        if (!window.deferredPrompt) {
+          console.log('❌ Android: beforeinstallprompt never fired');
         }
-      } catch (error) {
-        console.warn(`⚠️ Could not update ${url}:`, error.message);
-        return { url, status: 'failed', error: error.message };
-      }
-    });
-    
-    const results = await Promise.allSettled(updatePromises);
-    console.log('✅ Cache update completed', results);
-    
-  } catch (error) {
-    console.error('❌ Cache update failed:', error);
-  }
-}
+      }, 5000);
+    }
+  </script>
 
-/**
- * Clear all old caches except current
- */
-async function clearOldCaches() {
-  try {
-    const cacheKeys = await caches.keys();
-    const deletePromises = cacheKeys.map(key => {
-      if (key !== CACHE_NAME) {
-        console.log(`🗑️ Deleting cache: ${key}`);
-        return caches.delete(key);
-      }
-    });
-    
-    await Promise.all(deletePromises);
-    console.log('✅ All old caches cleared');
-    
-  } catch (error) {
-    console.error('❌ Error clearing caches:', error);
-  }
-}
+  <!-- iOS Installation Guide -->
+  <div id="iosInstallGuide" class="ios-install-guide">
+    <div class="ios-install-content">
+      <h3>📱 Install Budget Tracker on iOS</h3>
+      <ol class="ios-install-steps">
+        <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
+        <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+        <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
+      </ol>
+      <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
+    </div>
+  </div>
 
-/**
- * Notify all clients about updates
- */
-async function notifyClients(message) {
-  try {
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SW_MESSAGE',
-        timestamp: new Date().toISOString(),
-        ...message
-      });
-    });
-  } catch (error) {
-    console.error('❌ Failed to notify clients:', error);
-  }
-}
-
-// ============================================================================
-// 📡 LIFECYCLE EVENT LISTENERS
-// ============================================================================
-
-self.addEventListener('controllerchange', () => {
-  console.log('🔁 [SW] Controller changed - new service worker activated');
-  notifyClients({
-    type: 'CONTROLLER_CHANGED',
-    message: 'New service worker is now active'
-  });
-});
-
-self.addEventListener('waiting', (event) => {
-  console.log('🕓 [SW] Update waiting - notify clients to reload');
-  notifyClients({
-    type: 'UPDATE_AVAILABLE',
-    message: 'A new version is available. Please reload.',
-    version: CACHE_NAME
-  });
-});
-
-// Periodic cache validation (every 24 hours)
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'cache-validation') {
-    event.waitUntil(updateSpecificCache());
-  }
-});
-
-console.log('✅ Service Worker loaded successfully');
+  <script type="module" src="./js/ui.js"></script>
+</body>
+</html>
