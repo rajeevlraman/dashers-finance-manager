@@ -298,42 +298,47 @@ function setupIOSHomeScreenLaunch() {
 // --------------------------
 // Enhanced Service Worker Registration for iOS
 // --------------------------
+// --------------------------
+// Simplified Service Worker Registration
+// --------------------------
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         try {
-            // iOS FIX: Use a more aggressive registration approach
+            console.log('🔧 Registering Service Worker...');
+            
             const reg = await navigator.serviceWorker.register('serviceWorker.js', { 
-                scope: './',
-                updateViaCache: 'none' // Important for iOS
+                scope: '/dashers-finance-manager/',
+                updateViaCache: 'none'
             });
             
             console.log('✅ Service Worker registered:', reg.scope);
             
-            // iOS FIX: Wait for controller change more aggressively
-            if (!navigator.serviceWorker.controller) {
-                console.log('⏳ Waiting for Service Worker to control the page...');
-                
-                return new Promise((resolve) => {
-                    navigator.serviceWorker.ready.then(() => {
-                        console.log('✅ Service Worker ready');
-                        resolve(reg);
-                    });
-                    
-                    // Fallback timeout
-                    setTimeout(() => {
-                        console.log('⚠️ Service Worker ready timeout, continuing anyway');
-                        resolve(reg);
-                    }, 3000);
-                });
+            // Wait for controller to be set
+            if (navigator.serviceWorker.controller) {
+                console.log('✅ Service Worker is CONTROLLING the page');
+                return reg;
             }
             
-            return reg;
+            // If no controller, wait a bit and check again
+            return new Promise((resolve) => {
+                const checkController = () => {
+                    if (navigator.serviceWorker.controller) {
+                        console.log('✅ Service Worker now CONTROLLING the page');
+                        resolve(reg);
+                    } else {
+                        console.log('⏳ Waiting for Service Worker control...');
+                        setTimeout(checkController, 500);
+                    }
+                };
+                setTimeout(checkController, 100);
+            });
             
         } catch (err) {
             console.error('❌ Service Worker registration failed:', err);
             return null;
         }
     }
+    console.log('❌ Service Worker not supported');
     return null;
 }
 
@@ -507,30 +512,34 @@ async function initializeAppCore() {
 // --------------------------
 // Enhanced App Initialization with iOS Support
 // --------------------------
+// --------------------------
+// Enhanced App Initialization
+// --------------------------
 async function initializeAppWithIOSSupport() {
-    console.log('🚀 Starting app initialization with iOS support...');
+    console.log('🚀 Starting app initialization...');
     
-    // Show splash screen immediately for iOS
+    // Show splash screen
     const splash = document.getElementById('splashScreen');
     if (splash) {
         splash.classList.remove('hidden');
     }
     
-    // Setup iOS home screen launch fixes
-    setupIOSHomeScreenLaunch();
+    // Register service worker FIRST
+    const swRegistered = await registerServiceWorker();
     
-    // Register service worker FIRST (critical for iOS)
-    await registerServiceWorker();
+    if (!swRegistered) {
+        console.warn('⚠️ Proceeding without Service Worker control');
+    }
     
-    // Setup service worker message handling
-    setupServiceWorkerMessages();
-    
-    // Then initialize the rest of the app
+    // Initialize the rest of the app
     await initializeAppCore();
     
-    // Hide splash screen after everything is ready
+    // Hide splash screen
     if (splash) {
-        setTimeout(() => splash.classList.add('hidden'), 1000);
+        setTimeout(() => {
+            splash.classList.add('hidden');
+            console.log('✅ App fully loaded and ready');
+        }, 1000);
     }
 }
 
@@ -629,6 +638,35 @@ window.forceCacheRefresh = async function() {
     // Reload to trigger fresh installation
     setTimeout(() => window.location.reload(), 1000);
 };
+
+// --------------------------
+// Force Service Worker Takeover
+// --------------------------
+async function forceServiceWorkerTakeover() {
+    console.log('🔄 Force refreshing Service Worker...');
+    
+    // Unregister all service workers
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (let registration of registrations) {
+        await registration.unregister();
+        console.log('🗑️ Unregistered old Service Worker');
+    }
+    
+    // Clear all caches
+    if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+        console.log('🗑️ Cleared all caches');
+    }
+    
+    // Reload to register fresh Service Worker
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+// Make it globally available for debugging
+window.forceSWRefresh = forceServiceWorkerTakeover;
 
 // --------------------------
 // Service Worker Debugging
