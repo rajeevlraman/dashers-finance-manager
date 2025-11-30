@@ -512,34 +512,30 @@ async function initializeAppCore() {
 // --------------------------
 // Enhanced App Initialization with iOS Support
 // --------------------------
-// --------------------------
-// Enhanced App Initialization
-// --------------------------
 async function initializeAppWithIOSSupport() {
-    console.log('🚀 Starting app initialization...');
+    console.log('🚀 Starting app initialization with iOS support...');
     
-    // Show splash screen
+    // Show splash screen immediately for iOS
     const splash = document.getElementById('splashScreen');
     if (splash) {
         splash.classList.remove('hidden');
     }
     
-    // Register service worker FIRST
-    const swRegistered = await registerServiceWorker();
+    // Setup iOS home screen launch fixes
+    setupIOSHomeScreenLaunch();
     
-    if (!swRegistered) {
-        console.warn('⚠️ Proceeding without Service Worker control');
-    }
+    // Register service worker FIRST (critical for iOS)
+    await registerServiceWorker();
     
-    // Initialize the rest of the app
+    // Setup service worker message handling
+    setupServiceWorkerMessages();
+    
+    // Then initialize the rest of the app
     await initializeAppCore();
     
-    // Hide splash screen
+    // Hide splash screen after everything is ready
     if (splash) {
-        setTimeout(() => {
-            splash.classList.add('hidden');
-            console.log('✅ App fully loaded and ready');
-        }, 1000);
+        setTimeout(() => splash.classList.add('hidden'), 1000);
     }
 }
 
