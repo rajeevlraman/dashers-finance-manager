@@ -1,13 +1,19 @@
 // ============================================================================
-// 💾 db_dexie.js — Dexie.js Database Manager (Simplified Version)
+// 💾 db_dexie.js — Dexie.js Database Manager for Budget Tracker
+// ----------------------------------------------------------------------------
+// Uses global Dexie from script tag - no imports needed
 // ============================================================================
 
-// 🚨 SIMPLIFIED: Use global Dexie from script tag
-const Dexie = window.Dexie;
+// 🚨 CRITICAL FIX: Remove the import statement and use global Dexie
+// Dexie is already loaded via script tag in index.html
 
+// Check if Dexie is available
 if (typeof Dexie === 'undefined') {
-    throw new Error('Dexie not loaded. Make sure dexie.min.js is included before this file.');
+    console.error('❌ Dexie is not loaded. Make sure dexie.min.js is included via script tag before this file.');
+    throw new Error('Dexie.js not loaded');
 }
+
+console.log('✅ Dexie version:', Dexie.version);
 
 export const STORE_NAMES = {
   accounts: 'accounts',
@@ -47,7 +53,7 @@ db.version(1).stores({
   costbase: 'id,propertyId,date,type'
 });
 
-console.log('✅ Dexie DB initialized');
+console.log('✅ Dexie DB initialized with stores:', Object.keys(db._dbSchema));
 
 // Utility function to generate IDs
 export function generateId() {
@@ -158,4 +164,16 @@ export async function getDatabaseSize() {
 export async function isDatabaseEmpty() {
   const size = await getDatabaseSize();
   return size === 0;
+}
+
+// Test database connection
+export async function testDatabase() {
+  try {
+    await db.open();
+    console.log('✅ Database opened successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Database opening failed:', error);
+    return false;
+  }
 }
