@@ -68,6 +68,8 @@ const PRECACHE_URLS = [
 console.log('🔍 [SW-DEBUG] PRECACHE_URLS to cache:', PRECACHE_URLS);
 console.log(`🔍 [SW-DEBUG] Total URLs to cache: ${PRECACHE_URLS.length}`);
 
+
+
 // ============================================================================
 // 🏗️ INSTALL – Enhanced caching with comprehensive debugging
 // ============================================================================
@@ -234,6 +236,12 @@ self.addEventListener('fetch', event => {
   // 🚫 Skip non-GET requests and cross-origin requests
   if (request.method !== 'GET') {
     console.log(`🔍 [SW-FETCH] Skipping non-GET request: ${request.method}`);
+    return;
+  }
+
+    // 🚫 Block source map requests to avoid 404 errors
+  if (request.url.endsWith('.map')) {
+    event.respondWith(new Response('', { status: 204 }));
     return;
   }
 
