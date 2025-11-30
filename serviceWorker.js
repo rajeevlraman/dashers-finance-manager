@@ -59,10 +59,7 @@ self.addEventListener('install', event => {
   // iOS FIX: Skip waiting immediately to ensure SW activates
   self.skipWaiting();
   // 🚫 Block source map requests to avoid 404 errors
-  if (request.url.endsWith('.map')) {
-    event.respondWith(new Response('', { status: 204 }));
-    return;
-  }
+
   event.waitUntil(
     (async () => {
       try {
