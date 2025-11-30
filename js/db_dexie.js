@@ -5,16 +5,10 @@
 // Maintains all store names, same CRUD API, and supports upgrades.
 // ============================================================================
 
+//import Dexie from 'dexie';
+//import Dexie from 'https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.mjs';
+import Dexie from './vendor/dexie.min.js';
 
-//import Dexie from './vendor/dexie.min.js';
-
-// Check if Dexie is available
-if (typeof Dexie === 'undefined') {
-    console.error('❌ Dexie is not loaded. Make sure dexie.min.js is included via script tag before this file.');
-    throw new Error('Dexie.js not loaded');
-}
-
-console.log('✅ Dexie version:', Dexie.version);
 
 export const STORE_NAMES = {
   accounts: 'accounts',

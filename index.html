@@ -2,24 +2,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Add these to your existing head section -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Budget Tracker">
-  <meta name="apple-mobile-web-app-orientations" content="portrait">
-
-  <!-- Preload critical resources -->
- 
-
-  <!-- iOS-specific startup images -->
-  <link rel="apple-touch-startup-image" href="./assets/icons/splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="./assets/icons/splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
-    
   <meta charset="UTF-8" />
   <meta name="theme-color" content="#3498db">
- 
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
- 
+  <meta name="apple-mobile-web-app-title" content="Budget Tracker">
   
   <!-- Enhanced Viewport for iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
@@ -36,9 +23,9 @@
   <!-- iOS Specific Icons & Splash Screens -->
   <link rel="icon" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-152.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-167.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-192.png">
   
   <!-- iOS Splash Screens (simplified) -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -48,8 +35,6 @@
   
   <!-- Charts -->
   <script src="js/vendor/chart.umd.min.js"></script>
-      <!-- 🚨 CRITICAL: Load Dexie FIRST as a regular script -->
-  <script src="./js/vendor/dexie.min.js"></script>
   
   <script type="module">
   import { initAutoDashboard } from './js/dashboard_mobile.js';
@@ -58,21 +43,7 @@
 
   <script type="module" src="./js/app.js"></script>
  
-<!-- Prevent zoom on input focus -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
-<!-- Safe area support -->
-<style>
-    /* Support for iPhone notch */
-    @supports (padding: max(0px)) {
-        .ios-standalone {
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-    }
-</style>
 
   <!-- iOS PWA Detection -->
   <script>
@@ -115,59 +86,6 @@
     z-index: 10000;">
     ⚠️ DEVELOPMENT VERSION ⚠️
     </div>
-
-    <!-- iOS Install Button (only shows on iOS Safari) -->
-<div id="iosInstallButton" class="ios-install-button" style="display: none;">
-    <button onclick="showIOSInstallGuide()" class="install-btn">
-        📱 Install App
-    </button>
-</div>
-
-<style>
-.ios-install-button {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-}
-
-.install-btn {
-    background: linear-gradient(135deg, #007AFF, #5856D6);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-    transition: all 0.3s ease;
-}
-
-.install-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
-}
-
-/* Show only on iOS Safari when not installed */
-.ios-device:not(.ios-standalone) .ios-install-button {
-    display: block !important;
-}
-</style>
-
-<script>
-// Show install button on iOS Safari
-function setupIOSInstallButton() {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isStandalone = window.navigator.standalone;
-    
-    if (isIOS && !isStandalone) {
-        document.getElementById('iosInstallButton').style.display = 'block';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', setupIOSInstallButton);
-</script>
   </header>
 
 <div id="loginScreen" class="login-screen">
@@ -406,7 +324,6 @@ document.addEventListener('DOMContentLoaded', setupIOSInstallButton);
   </div>
 </div>
 <script type="module" src="./js/ui.js"></script>
-<script src="./js/vendor/dexie.min.js"></script>
 
 </body>
 </html>
