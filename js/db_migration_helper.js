@@ -6,7 +6,7 @@
 // ============================================================================
 
 //import Dexie from 'dexie';
-import Dexie from './vendor/dexie.min.js';
+//import Dexie from './vendor/dexie.min.js';
 
 import { STORE_NAMES } from './db.js'; // same mapping as your old db.js
 
