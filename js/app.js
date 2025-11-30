@@ -10,7 +10,6 @@ import { initUI } from './ui.js';
 import { processRecurringTransactions, processDueBills } from './recurringJob.js';
 import { applyLayoutChanges, LayoutModes } from './layoutManager.js';
 
-import { initDashboardDesktopUI } from './dashboard_desktop.js';
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
@@ -327,6 +326,7 @@ async function initializeAppCore() {
     console.log('🚀 Starting core app initialization...');
     
     // Layout detection
+/*
     applyLayoutChanges(mode => {
         console.log(`📱 Layout changed → ${mode}`);
         if (mode === LayoutModes.MOBILE) {
@@ -339,7 +339,7 @@ async function initializeAppCore() {
             initDashboardDesktopUI();
         }
     });
-    
+*/    
     // Initialize UI
     initUI();
     
