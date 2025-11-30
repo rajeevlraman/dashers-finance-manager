@@ -39,6 +39,7 @@ const PRECACHE_URLS = [
   './js/transactions.js',
   './js/accounts.js',
   './js/categories.js',
+  './js/defaultCategories.js',
   './js/dashboard.js',
   './js/bills.js',
   './js/calendar.js',
