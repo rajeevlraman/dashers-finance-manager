@@ -48,6 +48,8 @@
   
   <!-- Charts -->
   <script src="js/vendor/chart.umd.min.js"></script>
+      <!-- 🚨 CRITICAL: Load Dexie FIRST as a regular script -->
+  <script src="./js/vendor/dexie.min.js"></script>
   
   <script type="module">
   import { initAutoDashboard } from './js/dashboard_mobile.js';
@@ -404,6 +406,7 @@ document.addEventListener('DOMContentLoaded', setupIOSInstallButton);
   </div>
 </div>
 <script type="module" src="./js/ui.js"></script>
+<script src="./js/vendor/dexie.min.js"></script>
 
 </body>
 </html>
