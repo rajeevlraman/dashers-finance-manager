@@ -43,7 +43,7 @@ const PRECACHE_URLS = [
 
   // Vendor libraries
   '/dashers-finance-manager/js/vendor/chart.umd.min.js',
-  '/dashers-finance-manager/vendor/dexie.min.js',
+  //'/dashers-finance-manager/vendor/dexie.min.js',
 
   // Icons
   '/dashers-finance-manager/assets/icons/icon-192.png',
