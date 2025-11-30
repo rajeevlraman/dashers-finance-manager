@@ -1,39 +1,72 @@
 // ============================================================================
-// 💰 Budget Tracker – iOS-Optimized Service Worker
+// 💰 Budget Tracker – Enhanced Service Worker (Fixed Cache Management)
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v36'; // 🚨 Increment version
+const CACHE_NAME = 'budget-tracker-v35'; // 🚨 Keep this consistent
 const DYNAMIC_CACHE = 'budget-tracker-dynamic';
 
-// 🎯 CRITICAL iOS FIX: Reduced cache list to essential files only
+// 🎯 CRITICAL FIX: Remove files that don't exist to avoid 404 errors
 const PRECACHE_URLS = [
-  // Core files only - iOS has limits
+  // Root and core files
   './',
   './index.html',
   './manifest.json',
+  
+  // CSS
   './css/styles.css',
 
-  // Essential JS files only
+  // Core Application JS - ONLY files that actually exist
   './js/app.js',
   './js/ui.js',
   './js/db.js',
-  './js/dashboard.js',
+  './js/db_dexie.js',
+  './js/debugConsole.js',
+  './js/recurringJob.js',
+  // './js/exportimport.js', // 🚨 REMOVED - file doesn't exist
+  './js/loanCalculations.js',
+  './js/reports.js',
+  './js/settings.js',
+  // './js/emojipicker.js', // 🚨 REMOVED - file doesn't exist
+  './js/layoutManager.js',
+  './js/dashboard_mobile.js',
+  './js/dashboard_mobile_v2.js',
+  './js/dashboard_desktop.js',
+
+  // Feature Modules
+  './js/budgets.js',
   './js/transactions.js',
   './js/accounts.js',
-  './js/budgets.js',
+  './js/categories.js',
+  './js/dashboard.js',
+  './js/bills.js',
+  './js/calendar.js',
+  './js/recurring.js',
+  './js/loans.js',
+  './js/properties.js',
+  './js/tenants.js',
+  './js/maintenance.js',
+  './js/expenses.js',
+  // './js/costbase.js', // 🚨 REMOVED - file doesn't exist
+
+  // Vendor Libraries
   './js/vendor/chart.umd.min.js',
   './js/vendor/dexie.min.js',
 
-  // Essential icons only
+  // Icons and Assets
   './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png'
+  './assets/icons/icon-512.png',
+  // './assets/icons/maskable_icon.png', // 🚨 REMOVED - file doesn't exist
+  './assets/icons/splash.png',
+  './assets/icons/icon-152.png',
+  './assets/icons/icon-167.png',
+  './assets/icons/icon-180.png'
 ];
 
 // ============================================================================
-// 🏗️ INSTALL – iOS-Optimized (Sequential, not parallel)
+// 🏗️ INSTALL – Enhanced with cache existence checking
 // ============================================================================
 self.addEventListener('install', event => {
-  console.log('📦 [SW] Installing essential files for iOS...');
+  console.log('📦 [SW] Installing and caching essential files...');
 
   event.waitUntil(
     (async () => {
@@ -41,90 +74,84 @@ self.addEventListener('install', event => {
         const cache = await caches.open(CACHE_NAME);
         console.log(`✅ Cache opened: ${CACHE_NAME}`);
         
-        // 🚨 CRITICAL iOS FIX: Cache files SEQUENTIALLY, not in parallel
-        let successful = 0;
-        let failed = 0;
+        // Enhanced caching with file existence checking
+        const cacheResults = [];
         
         for (const url of PRECACHE_URLS) {
           try {
-            // 🚨 iOS FIX: Add timeout and simpler fetch
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-            
             const response = await fetch(url, {
-              signal: controller.signal,
-              cache: 'no-cache'
+              cache: 'no-cache',
+              headers: { 'Pragma': 'no-cache' }
             });
-            
-            clearTimeout(timeoutId);
             
             if (response.ok) {
               await cache.put(url, response);
-              console.log(`✅ Cached: ${getFileName(url)}`);
-              successful++;
+              console.log(`✅ Successfully cached: ${url}`);
+              cacheResults.push({ url, status: 'success' });
             } else {
               console.warn(`⚠️ Failed to cache ${url}: HTTP ${response.status}`);
-              failed++;
+              cacheResults.push({ url, status: 'failed', reason: `HTTP ${response.status}` });
             }
           } catch (error) {
-            console.warn(`⚠️ Could not cache ${url}:`, error.name);
-            failed++;
-            
-            // 🚨 iOS FIX: Continue even if some files fail
-            continue;
+            console.warn(`⚠️ Could not cache ${url}:`, error.message);
+            cacheResults.push({ url, status: 'failed', reason: error.message });
           }
         }
 
-        console.log(`📊 iOS Cache Summary: ${successful} successful, ${failed} failed`);
+        const successful = cacheResults.filter(r => r.status === 'success').length;
+        const failed = cacheResults.filter(r => r.status === 'failed').length;
         
-        // 🚨 CRITICAL iOS FIX: Skip waiting immediately
-        self.skipWaiting().catch(err => {
-          console.log('⚠️ Skip waiting failed, continuing anyway:', err);
-        });
+        console.log(`📊 Cache Summary: ${successful} successful, ${failed} failed`);
         
-        console.log('✅ [SW] iOS installation completed');
+        if (failed > 0) {
+          console.log('🚨 Failed files:', cacheResults.filter(r => r.status === 'failed').map(r => r.url));
+        }
+
+        // 🚨 CRITICAL FIX: Force immediate activation
+        await self.skipWaiting();
+        console.log('✅ [SW] Installation completed - skipping waiting');
         
       } catch (error) {
         console.error('❌ [SW] Installation failed:', error);
-        // 🚨 iOS FIX: Even if installation fails, try to activate
-        self.skipWaiting().catch(() => {});
       }
     })()
   );
 });
 
 // ============================================================================
-// ♻️ ACTIVATE – iOS-Optimized Cleanup
+// ♻️ ACTIVATE – Enhanced cleanup
 // ============================================================================
 self.addEventListener('activate', event => {
-  console.log('♻️ [SW] Activating service worker for iOS...');
+  console.log('♻️ [SW] Activating service worker and cleaning old caches...');
 
   event.waitUntil(
     (async () => {
       try {
-        // 🚨 iOS FIX: Cleanup old caches with timeout protection
+        // Clean up ALL old caches except current
         const cacheKeys = await caches.keys();
-        const cleanupPromises = cacheKeys.map(async key => {
+        const deletePromises = cacheKeys.map(key => {
           if (key !== CACHE_NAME && key !== DYNAMIC_CACHE) {
-            try {
-              await caches.delete(key);
-              console.log(`🗑️ Deleted old cache: ${key}`);
-            } catch (err) {
-              console.warn(`⚠️ Could not delete cache ${key}:`, err);
-            }
+            console.log(`🗑️ Deleting old cache: ${key}`);
+            return caches.delete(key);
           }
         });
         
-        await Promise.allSettled(cleanupPromises);
-        console.log('✅ Cache cleanup completed');
+        await Promise.all(deletePromises);
+        console.log('✅ Old caches cleaned up');
         
-        // 🚨 CRITICAL iOS FIX: Claim clients with timeout
-        try {
-          await self.clients.claim();
-          console.log('✅ [SW] Now controlling all clients');
-        } catch (claimError) {
-          console.warn('⚠️ clients.claim() failed:', claimError);
-        }
+        // 🚨 CRITICAL FIX: Take immediate control
+        await self.clients.claim();
+        console.log('✅ [SW] Now controlling all clients');
+        
+        // Notify all clients
+        const clients = await self.clients.matchAll();
+        clients.forEach(client => {
+          client.postMessage({ 
+            type: 'SW_ACTIVATED',
+            version: CACHE_NAME,
+            timestamp: new Date().toISOString()
+          });
+        });
         
       } catch (error) {
         console.error('❌ [SW] Activation failed:', error);
@@ -134,7 +161,7 @@ self.addEventListener('activate', event => {
 });
 
 // ============================================================================
-// 🌍 FETCH – iOS-Optimized Strategy
+// 🌍 FETCH – Enhanced strategy with proper cache checking
 // ============================================================================
 self.addEventListener('fetch', event => {
   const request = event.request;
@@ -145,171 +172,179 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Skip source maps and analytics
-  if (request.url.endsWith('.map') || request.url.includes('google-analytics')) {
+  // Skip source maps
+  if (request.url.endsWith('.map')) {
     return;
   }
 
-  // 🚨 iOS FIX: Use simpler, more reliable fetch strategy
   event.respondWith(
     (async () => {
-      // For navigation requests, always try cache first for speed
-      if (request.mode === 'navigate') {
-        try {
-          const cache = await caches.open(CACHE_NAME);
-          const cachedResponse = await cache.match('./index.html');
-          if (cachedResponse) {
-            console.log('📱 Serving index.html from cache');
-            return cachedResponse;
-          }
-        } catch (error) {
-          console.warn('⚠️ Cache match failed for navigation:', error);
-        }
-      }
-
+      const cache = await caches.open(CACHE_NAME);
+      
       try {
-        // Try network first for better data freshness
-        const networkResponse = await fetch(request);
+        // Try cache first
+        const cachedResponse = await cache.match(request);
         
-        // If successful, cache it
-        if (networkResponse.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(request, networkResponse.clone()).catch(err => {
-            console.warn('⚠️ Cache put failed:', err);
-          });
-        }
-        
-        return networkResponse;
-        
-      } catch (networkError) {
-        console.log(`📴 Network failed, trying cache: ${getFileName(request.url)}`);
-        
-        // Network failed, try cache
-        try {
-          const cache = await caches.open(CACHE_NAME);
-          const cachedResponse = await cache.match(request);
+        if (cachedResponse) {
+          console.log(`📂 Serving from cache: ${getFileName(request.url)}`);
           
-          if (cachedResponse) {
-            console.log(`📱 Serving from cache: ${getFileName(request.url)}`);
-            return cachedResponse;
+          // Update cache in background if online
+          if (navigator.onLine) {
+            event.waitUntil(
+              (async () => {
+                try {
+                  const networkResponse = await fetch(request);
+                  if (networkResponse.ok) {
+                    await cache.put(request, networkResponse);
+                    console.log(`🔄 Updated cache: ${getFileName(request.url)}`);
+                  }
+                } catch (error) {
+                  // Silent fail
+                }
+              })()
+            );
           }
           
-          // Nothing in cache - return offline page for HTML, error for others
-          if (request.mode === 'navigate') {
-            return caches.match('./index.html')
-              .then(response => response || createOfflineResponse());
+          return cachedResponse;
+        }
+
+        // Not in cache - try network
+        if (navigator.onLine) {
+          const networkResponse = await fetch(request);
+          
+          if (networkResponse.ok) {
+            // Cache the response for future use
+            await cache.put(request, networkResponse.clone());
+            console.log(`✅ Fetched and cached: ${getFileName(request.url)}`);
+            return networkResponse;
           } else {
-            throw new Error('Offline and not cached');
+            throw new Error(`HTTP ${networkResponse.status}`);
           }
-          
-        } catch (cacheError) {
-          console.warn('⚠️ Cache match also failed:', cacheError);
-          return createOfflineResponse();
+        } else {
+          // Offline and not in cache
+          throw new Error('Offline and not cached');
         }
+        
+      } catch (error) {
+        console.warn(`📴 Offline/error: ${getFileName(request.url)} - ${error.message}`);
+        
+        // Provide better fallbacks
+        return createFallbackResponse(request, error.message);
       }
     })()
   );
 });
 
 // ============================================================================
-// 🛠️ iOS-OPTIMIZED UTILITY FUNCTIONS
+// 🛠️ UTILITY FUNCTIONS
 // ============================================================================
 
 /**
  * Get filename from URL for cleaner logging
  */
 function getFileName(url) {
-  const parts = url.split('/');
-  return parts[parts.length - 1] || url;
+  return url.split('/').pop() || url;
 }
 
 /**
- * Create offline response - iOS compatible
+ * Create appropriate fallback responses
  */
-function createOfflineResponse() {
-  return new Response(
-    `<!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Budget Tracker - Offline</title>
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; text-align: center; }
-        .icon { font-size: 48px; margin: 20px 0; }
-        h1 { color: #333; }
-        p { color: #666; }
-      </style>
-    </head>
-    <body>
-      <div class="icon">📴</div>
-      <h1>You're Offline</h1>
-      <p>Budget Tracker needs an internet connection for this content.</p>
-      <p>Basic functionality may be available when you're back online.</p>
-    </body>
-    </html>`,
-    { 
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'text/html' }
-    }
-  );
-}
-
-/**
- * iOS-Optimized cache update - Sequential with timeouts
- */
-async function updateCacheForIOS(urls = PRECACHE_URLS) {
-  console.log('🔄 Starting iOS-optimized cache update...');
+function createFallbackResponse(request, error) {
+  const url = request.url;
+  const destination = request.destination || 'document';
   
+  // For HTML navigation, try to return the main page
+  if (destination === 'document' || url.endsWith('.html')) {
+    return caches.match('./index.html')
+      .then(response => response || new Response(
+        `<!DOCTYPE html>
+        <html>
+        <head><title>Offline</title></head>
+        <body>
+          <h1>📴 You're Offline</h1>
+          <p>Budget Tracker is not available offline.</p>
+          <p>Error: ${error}</p>
+        </body>
+        </html>`,
+        { headers: { 'Content-Type': 'text/html' } }
+      ));
+  }
+  
+  // For other file types, return appropriate empty responses
+  switch (destination) {
+    case 'script':
+      return new Response(
+        `console.log("📴 Script offline: ${url}");`,
+        { headers: { 'Content-Type': 'application/javascript' } }
+      );
+      
+    case 'style':
+      return new Response(
+        `/* 📴 CSS offline: ${url} */`,
+        { headers: { 'Content-Type': 'text/css' } }
+      );
+      
+    case 'image':
+      return new Response(
+        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB2aWV3Qm94PSIwIDAgMSAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==',
+        { headers: { 'Content-Type': 'image/svg+xml' } }
+      );
+      
+    default:
+      return new Response(
+        `📴 Offline - "${getFileName(url)}" not available\nError: ${error}`,
+        { 
+          status: 503,
+          headers: { 'Content-Type': 'text/plain' }
+        }
+      );
+  }
+}
+
+/**
+ * Update cache - enhanced version
+ */
+async function updateSpecificCache(urls = PRECACHE_URLS) {
   try {
     const cache = await caches.open(CACHE_NAME);
-    let updated = 0;
-    let failed = 0;
+    console.log(`🔄 Updating ${urls.length} files in cache...`);
     
-    // 🚨 iOS FIX: Update files SEQUENTIALLY with timeouts
-    for (const url of urls) {
+    const updatePromises = urls.map(async url => {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
-        
-        const response = await fetch(url, {
-          signal: controller.signal,
-          cache: 'no-cache'
+        const response = await fetch(url, { 
+          cache: 'no-cache',
+          headers: { 'Cache-Control': 'no-cache' }
         });
-        
-        clearTimeout(timeoutId);
         
         if (response.ok) {
           await cache.put(url, response);
           console.log(`✅ Updated: ${getFileName(url)}`);
-          updated++;
+          return { url, status: 'updated' };
         } else {
           console.warn(`⚠️ Failed to update ${url}: HTTP ${response.status}`);
-          failed++;
+          return { url, status: 'failed', reason: `HTTP ${response.status}` };
         }
-        
-        // 🚨 iOS FIX: Small delay between requests
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
       } catch (error) {
-        console.warn(`⚠️ Could not update ${url}:`, error.name);
-        failed++;
-        continue; // Continue with next file
+        console.warn(`⚠️ Could not update ${url}:`, error.message);
+        return { url, status: 'failed', reason: error.message };
       }
-    }
+    });
     
-    console.log(`✅ iOS cache update: ${updated} updated, ${failed} failed`);
-    return { updated, failed };
+    const results = await Promise.allSettled(updatePromises);
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.status === 'updated').length;
+    
+    console.log(`✅ Cache update completed: ${successful}/${urls.length} files updated`);
+    
+    return results;
     
   } catch (error) {
-    console.error('❌ iOS cache update failed:', error);
+    console.error('❌ Cache update failed:', error);
     throw error;
   }
 }
 
 // ============================================================================
-// 📨 MESSAGE HANDLING – iOS-Optimized
+// 📨 MESSAGE HANDLING
 // ============================================================================
 self.addEventListener('message', event => {
   const { type, data } = event.data || {};
@@ -317,50 +352,23 @@ self.addEventListener('message', event => {
   switch (type) {
     case 'SKIP_WAITING':
       console.log('⚡ Skip waiting triggered');
-      self.skipWaiting().catch(err => {
-        console.warn('⚠️ Skip waiting failed:', err);
-      });
+      self.skipWaiting();
       break;
       
     case 'UPDATE_CACHE':
-      console.log('🔄 Cache update requested for iOS');
-      // 🚨 iOS FIX: Don't use event.waitUntil for cache updates
-      updateCacheForIOS(data?.urls).catch(err => {
-        console.error('❌ Cache update failed:', err);
-      });
+      console.log('🔄 Manual cache update requested');
+      event.waitUntil(updateSpecificCache(data?.urls));
       break;
       
-    case 'GET_CACHE_STATUS':
-      // Simple response without complex operations
+    case 'GET_CACHE_INFO':
       event.ports?.[0]?.postMessage({
-        type: 'CACHE_STATUS',
+        type: 'CACHE_INFO',
         cacheName: CACHE_NAME,
-        fileCount: PRECACHE_URLS.length
+        precachedUrls: PRECACHE_URLS,
+        timestamp: new Date().toISOString()
       });
       break;
   }
 });
 
-// ============================================================================
-// 📡 LIFECYCLE EVENT LISTENERS
-// ============================================================================
-
-self.addEventListener('controllerchange', () => {
-  console.log('🔁 Controller changed - new SW active');
-});
-
-self.addEventListener('waiting', () => {
-  console.log('🕓 Update waiting - notify clients');
-  self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'UPDATE_AVAILABLE',
-        message: 'New version ready'
-      });
-    });
-  }).catch(err => {
-    console.warn('⚠️ Could not notify clients:', err);
-  });
-});
-
-console.log('✅ iOS-Optimized Service Worker loaded');
+console.log('✅ Service Worker loaded successfully');
