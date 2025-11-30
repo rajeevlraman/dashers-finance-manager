@@ -4,6 +4,7 @@ import { getAllItems, STORE_NAMES } from './db.js';
 let catChart = null;
 let trendChart = null;
 let summaryChart = null;
+let autoRefreshInterval = null;
 
 export async function initDashboardUI() {
   console.log("✅ initDashboardUI() executing...");
@@ -77,93 +78,158 @@ export async function initDashboardUI() {
           <h2>📊 Dashboard</h2>
           <div class="page-actions">
             <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <button id="exportDashboard" class="btn btn-outline">📊 Export Data</button>
+            <button id="liveRefresh" class="btn btn-outline" title="Live Refresh">🔄 Live Data</button>
           </div>
         </div>
 
-        <!-- Financial Health Summary -->
-        <div class="section-card">
-          <h3>💰 Financial Health</h3>
-          <div class="compact-summary-cards">
-            <div class="compact-card ${currentMonthBalance >= 0 ? 'green' : 'red'}">
-              <div class="compact-icon">💵</div>
-              <div class="compact-content">
-                <div class="compact-value">$${safe(currentMonthBalance)}</div>
-                <div class="compact-label">This Month</div>
-                <div class="compact-subtext">Income: $${safe(currentMonthIncome)}</div>
-                <div class="compact-subtext">Expenses: $${safe(currentMonthExpenses)}</div>
-              </div>
-            </div>
-            
-            <div class="compact-card ${totalNetWorth >= 0 ? 'blue' : 'orange'}">
-              <div class="compact-icon">🏦</div>
-              <div class="compact-content">
-                <div class="compact-value">$${safe(totalNetWorth)}</div>
-                <div class="compact-label">Net Worth</div>
-                <div class="compact-subtext">Cash: $${safe(totalCashBalance)}</div>
-                <div class="compact-subtext">Properties: $${safe(netPropertyWorth)}</div>
-              </div>
-            </div>
-            
-            <div class="compact-card ${budgetPerformance.overBudgetCount === 0 ? 'teal' : 'yellow'}">
-              <div class="compact-icon">🎯</div>
-              <div class="compact-content">
-                <div class="compact-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</div>
-                <div class="compact-label">On Track</div>
-                <div class="compact-subtext">${budgetPerformance.overBudgetCount} over budget</div>
-                <div class="compact-subtext">${budgetPerformance.totalBudgets} total budgets</div>
-              </div>
-            </div>
+        <!-- Filter Controls -->
+        <div class="filter-bar">
+          <select id="propertyFilter">
+            <option value="all">All Properties</option>
+            ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+          </select>
+          
+          <select id="categoryFilter">
+            <option value="all">All Categories</option>
+            ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+          
+          <input type="date" id="dateFrom" placeholder="From Date">
+          <input type="date" id="dateTo" placeholder="To Date">
+          
+          <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+          <button id="resetFilters" class="btn btn-secondary">Reset</button>
+        </div>
 
-            <div class="compact-card purple">
-              <div class="compact-icon">📈</div>
-              <div class="compact-content">
-                <div class="compact-value">$${safe(totalRent)}</div>
-                <div class="compact-label">Monthly Rent</div>
-                <div class="compact-subtext">From ${tenants.length} tenants</div>
-                <div class="compact-subtext">${properties.length} properties</div>
+        <!-- Financial Health Summary -->
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>💰 Financial Health</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="compact-summary-cards">
+              <div class="compact-card ${currentMonthBalance >= 0 ? 'green' : 'red'}">
+                <div class="compact-icon">💵</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(currentMonthBalance)}</div>
+                  <div class="compact-label">This Month</div>
+                  <div class="compact-subtext">Income: $${safe(currentMonthIncome)}</div>
+                  <div class="compact-subtext">Expenses: $${safe(currentMonthExpenses)}</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${totalNetWorth >= 0 ? 'blue' : 'orange'}">
+                <div class="compact-icon">🏦</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(totalNetWorth)}</div>
+                  <div class="compact-label">Net Worth</div>
+                  <div class="compact-subtext">Cash: $${safe(totalCashBalance)}</div>
+                  <div class="compact-subtext">Properties: $${safe(netPropertyWorth)}</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${budgetPerformance.overBudgetCount === 0 ? 'teal' : 'yellow'}">
+                <div class="compact-icon">🎯</div>
+                <div class="compact-content">
+                  <div class="compact-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</div>
+                  <div class="compact-label">On Track</div>
+                  <div class="compact-subtext">${budgetPerformance.overBudgetCount} over budget</div>
+                  <div class="compact-subtext">${budgetPerformance.totalBudgets} total budgets</div>
+                </div>
+              </div>
+
+              <div class="compact-card purple">
+                <div class="compact-icon">📈</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(totalRent)}</div>
+                  <div class="compact-label">Monthly Rent</div>
+                  <div class="compact-subtext">From ${tenants.length} tenants</div>
+                  <div class="compact-subtext">${properties.length} properties</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Property Portfolio -->
-        <div class="section-card">
-          <h3>🏠 Property Portfolio</h3>
-          <div class="compact-summary-cards">
-            <div class="compact-card teal">
-              <div class="compact-icon">🏘️</div>
-              <div class="compact-content">
-                <div class="compact-value">${properties.length}</div>
-                <div class="compact-label">Properties</div>
-                <div class="compact-subtext">Value: $${safe(totalValue)}</div>
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🏠 Property Portfolio</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="compact-summary-cards">
+              <div class="compact-card teal">
+                <div class="compact-icon">🏘️</div>
+                <div class="compact-content">
+                  <div class="compact-value">${properties.length}</div>
+                  <div class="compact-label">Properties</div>
+                  <div class="compact-subtext">Value: $${safe(totalValue)}</div>
+                </div>
+              </div>
+              
+              <div class="compact-card gold">
+                <div class="compact-icon">👥</div>
+                <div class="compact-content">
+                  <div class="compact-value">${tenants.length}</div>
+                  <div class="compact-label">Tenants</div>
+                  <div class="compact-subtext">Rent: $${safe(totalRent)}/mo</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${avgROI > 5 ? 'green' : 'orange'}">
+                <div class="compact-icon">📊</div>
+                <div class="compact-content">
+                  <div class="compact-value">${avgROI}%</div>
+                  <div class="compact-label">Avg ROI</div>
+                  <div class="compact-subtext">Property Returns</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${netPropertyWorth >= 0 ? 'blue' : 'red'}">
+                <div class="compact-icon">💎</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(netPropertyWorth)}</div>
+                  <div class="compact-label">Equity</div>
+                  <div class="compact-subtext">Loans: $${safe(totalLoan)}</div>
+                </div>
               </div>
             </div>
-            
-            <div class="compact-card gold">
-              <div class="compact-icon">👥</div>
-              <div class="compact-content">
-                <div class="compact-value">${tenants.length}</div>
-                <div class="compact-label">Tenants</div>
-                <div class="compact-subtext">Rent: $${safe(totalRent)}/mo</div>
-              </div>
-            </div>
-            
-            <div class="compact-card ${avgROI > 5 ? 'green' : 'orange'}">
-              <div class="compact-icon">📊</div>
-              <div class="compact-content">
-                <div class="compact-value">${avgROI}%</div>
-                <div class="compact-label">Avg ROI</div>
-                <div class="compact-subtext">Property Returns</div>
-              </div>
-            </div>
-            
-            <div class="compact-card ${netPropertyWorth >= 0 ? 'blue' : 'red'}">
-              <div class="compact-icon">💎</div>
-              <div class="compact-content">
-                <div class="compact-value">$${safe(netPropertyWorth)}</div>
-                <div class="compact-label">Equity</div>
-                <div class="compact-subtext">Loans: $${safe(totalLoan)}</div>
-              </div>
+          </div>
+        </div>
+
+        <!-- Budget Performance Section -->
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🎯 Budget Performance</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="budgets-grid">
+              ${budgets.map(budget => {
+                const spent = transactions
+                  .filter(t => t.categoryId === budget.categoryId && t.date?.startsWith(currentMonth))
+                  .reduce((sum, t) => sum + t.amount, 0);
+                const percentage = (spent / budget.amount) * 100;
+                
+                return `
+                  <div class="budget-progress">
+                    <div class="progress-header">
+                      <span>${budget.name}</span>
+                      <span>$${safe(spent)} / $${safe(budget.amount)}</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
+                    </div>
+                    <div class="progress-status ${spent > budget.amount ? 'over-budget' : 'on-track'}">
+                      ${spent > budget.amount ? '❌ Over Budget' : '✅ On Track'}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+              ${budgets.length === 0 ? '<p class="no-data">No budgets configured</p>' : ''}
             </div>
           </div>
         </div>
@@ -259,13 +325,24 @@ export async function initDashboardUI() {
           </div>
         </div>
       </div>
+
+      <!-- Floating Action Button -->
+      <div class="fab-container">
+        <div class="fab-actions">
+          <button onclick="quickAction('expense')">💸 Add Expense</button>
+          <button onclick="quickAction('income')">💰 Add Income</button>
+          <button onclick="quickAction('property')">🏠 Add Property</button>
+          <button onclick="quickAction('bill')">🧾 Pay Bill</button>
+        </div>
+        <button class="fab-main">+</button>
+      </div>
     `;
 
     setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
     if (typeof Chart === 'undefined') throw new Error('Chart.js not loaded');
 
-    // === IMPROVED CHARTS ===
+    // === IMPROVED CHARTS WITH INTERACTIVITY ===
     
     // Destroy existing charts before creating new ones
     if (summaryChart) {
@@ -290,14 +367,30 @@ export async function initDashboardUI() {
         },
         options: {
           responsive: true,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toFixed(2)}` } }
+            tooltip: { 
+              callbacks: { 
+                label: (ctx) => `$${ctx.raw.toFixed(2)}` 
+              } 
+            }
           },
           scales: {
             y: {
               beginAtZero: true,
               ticks: { callback: (value) => '$' + value }
+            }
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const labels = ['Income', 'Expenses', 'Balance', 'Rent Income'];
+              const values = [currentMonthIncome, currentMonthExpenses, currentMonthBalance, totalRent];
+              showDrillDownModal(labels[index], values[index]);
             }
           }
         }
@@ -344,9 +437,30 @@ export async function initDashboardUI() {
           },
           options: {
             responsive: true,
+            interaction: {
+              intersect: false,
+              mode: 'index'
+            },
             plugins: {
               legend: { position: 'right' },
-              tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${ctx.raw.toFixed(2)}` } }
+              tooltip: { 
+                callbacks: { 
+                  label: (ctx) => `${ctx.label}: $${ctx.raw.toFixed(2)}`,
+                  afterLabel: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                    return `(${percentage}% of total)`;
+                  }
+                } 
+              }
+            },
+            onClick: (event, elements) => {
+              if (elements.length > 0) {
+                const index = elements[0].index;
+                const label = catLabels[index];
+                const value = catData[index];
+                showDrillDownModal(label, value);
+              }
             }
           }
         });
@@ -413,13 +527,33 @@ export async function initDashboardUI() {
           },
           options: {
             responsive: true,
+            interaction: {
+              intersect: false,
+              mode: 'index'
+            },
             plugins: {
-              legend: { position: 'bottom' }
+              legend: { position: 'bottom' },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+                  }
+                }
+              }
             },
             scales: {
               y: {
                 beginAtZero: true,
                 ticks: { callback: (value) => '$' + value }
+              }
+            },
+            onClick: (event, elements) => {
+              if (elements.length > 0) {
+                const index = elements[0].index;
+                const label = months[index];
+                const income = incomeData[index];
+                const expense = expenseData[index];
+                showDrillDownModal(`Month: ${formatMonthLabel(label)}`, { income, expense });
               }
             }
           }
@@ -430,7 +564,85 @@ export async function initDashboardUI() {
       }
     }
 
-    // === Event Listeners ===
+    // === NEW EVENT LISTENERS FOR TWEAKS ===
+    
+    // Export Dashboard Data
+    const exportBtn = document.getElementById('exportDashboard');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', function() {
+        const dashboardData = {
+          summary: {
+            currentMonthIncome,
+            currentMonthExpenses,
+            currentMonthBalance,
+            totalNetWorth,
+            totalCashBalance,
+            totalCreditBalance
+          },
+          charts: {
+            categories: getChartData(catChart),
+            trend: getChartData(trendChart),
+            summary: getChartData(summaryChart)
+          },
+          portfolio: {
+            properties: properties.length,
+            tenants: tenants.length,
+            totalValue,
+            totalLoan,
+            netPropertyWorth,
+            avgROI
+          },
+          timestamp: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(dashboardData, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dashboard-export-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // Live Refresh Toggle
+    const liveRefreshBtn = document.getElementById('liveRefresh');
+    if (liveRefreshBtn) {
+      liveRefreshBtn.addEventListener('click', function() {
+        this.classList.toggle('active');
+        if (this.classList.contains('active')) {
+          autoRefreshInterval = setInterval(initDashboardUI, 30000); // 30 seconds
+          this.innerHTML = '⏸️ Pause Auto-Refresh';
+        } else {
+          clearInterval(autoRefreshInterval);
+          this.innerHTML = '🔄 Live Data';
+        }
+      });
+    }
+
+    // Filter Controls
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+    
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener('click', resetFilters);
+    }
+
+    // FAB Toggle
+    const fabMain = document.querySelector('.fab-main');
+    if (fabMain) {
+      fabMain.addEventListener('click', function() {
+        const fabActions = document.querySelector('.fab-actions');
+        fabActions.classList.toggle('show');
+        this.textContent = fabActions.classList.contains('show') ? '×' : '+';
+      });
+    }
+
+    // Existing Event Listeners
     const monthSelect = document.getElementById('monthSelect');
     if (monthSelect) {
       monthSelect.addEventListener('change', (e) => {
@@ -467,7 +679,98 @@ export async function initDashboardUI() {
   }
 }
 
-// === NEW HELPER FUNCTIONS ===
+// === NEW FUNCTIONS FOR TWEAKS ===
+
+// Expandable Sections
+function toggleSection(header) {
+  const content = header.nextElementSibling;
+  const icon = header.querySelector('.toggle-icon');
+  content.style.display = content.style.display === 'none' ? 'block' : 'none';
+  icon.textContent = content.style.display === 'none' ? '▼' : '▲';
+}
+
+// Quick Actions FAB
+function quickAction(action) {
+  const actions = {
+    expense: () => window.showAddTransactionModal('expense'),
+    income: () => window.showAddTransactionModal('income'),
+    property: () => window.showAddPropertyModal(),
+    bill: () => window.showAddBillModal()
+  };
+  
+  if (actions[action]) {
+    actions[action]();
+    // Close FAB
+    const fabActions = document.querySelector('.fab-actions');
+    const fabMain = document.querySelector('.fab-main');
+    if (fabActions) fabActions.classList.remove('show');
+    if (fabMain) fabMain.textContent = '+';
+  }
+}
+
+// Filter Functions
+function applyFilters() {
+  const propertyFilter = document.getElementById('propertyFilter').value;
+  const categoryFilter = document.getElementById('categoryFilter').value;
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+  
+  // Store filter state and reload dashboard
+  localStorage.setItem('dashboardFilters', JSON.stringify({
+    propertyFilter,
+    categoryFilter,
+    dateFrom,
+    dateTo
+  }));
+  
+  initDashboardUI();
+}
+
+function resetFilters() {
+  document.getElementById('propertyFilter').value = 'all';
+  document.getElementById('categoryFilter').value = 'all';
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  
+  localStorage.removeItem('dashboardFilters');
+  initDashboardUI();
+}
+
+// Drill Down Modal
+function showDrillDownModal(label, data) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Details: ${label}</h3>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+      </div>
+      <div class="modal-body">
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// Chart Data Export Helper
+function getChartData(chart) {
+  if (!chart) return null;
+  return {
+    labels: chart.data.labels,
+    datasets: chart.data.datasets.map(dataset => ({
+      label: dataset.label,
+      data: dataset.data
+    }))
+  };
+}
+
+// === EXISTING HELPER FUNCTIONS ===
+
 function calculateBudgetPerformance(budgets, transactions, currentMonth) {
   if (!budgets || !budgets.length) return { onTrackCount: 0, overBudgetCount: 0, totalBudgets: 0 };
   
@@ -553,7 +856,6 @@ function generateColorPalette(count) {
   return Array.from({ length: count }, (_, i) => baseColors[i % baseColors.length]);
 }
 
-// === EXISTING HELPER FUNCTIONS ===
 function calcAvgROI(properties, tenants) {
   if (!properties || !properties.length) return 0;
   const rois = properties.map(p => {
@@ -566,4 +868,12 @@ function calcAvgROI(properties, tenants) {
 
 function safe(num) {
   return isNaN(num) || num == null ? '0.00' : parseFloat(num).toFixed(2);
+}
+
+// Cleanup function to stop auto-refresh when leaving dashboard
+export function cleanupDashboard() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
 }
