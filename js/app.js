@@ -635,34 +635,7 @@ window.forceCacheRefresh = async function() {
     setTimeout(() => window.location.reload(), 1000);
 };
 
-// --------------------------
-// Force Service Worker Takeover
-// --------------------------
-async function forceServiceWorkerTakeover() {
-    console.log('🔄 Force refreshing Service Worker...');
-    
-    // Unregister all service workers
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    for (let registration of registrations) {
-        await registration.unregister();
-        console.log('🗑️ Unregistered old Service Worker');
-    }
-    
-    // Clear all caches
-    if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(key => caches.delete(key)));
-        console.log('🗑️ Cleared all caches');
-    }
-    
-    // Reload to register fresh Service Worker
-    setTimeout(() => {
-        window.location.reload();
-    }, 1000);
-}
 
-// Make it globally available for debugging
-window.forceSWRefresh = forceServiceWorkerTakeover;
 
 // --------------------------
 // Service Worker Debugging
