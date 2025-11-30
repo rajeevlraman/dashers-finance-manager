@@ -2,7 +2,7 @@
 // 💰 Budget Tracker – iOS OPTIMIZED Service Worker
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v37'; // 🚨 Bump version for iOS fix
+const CACHE_NAME = 'budget-tracker-v41'; // 🚨 Bump version for iOS fix
 
 // 🔹 Files to cache for offline support
 const PRECACHE_URLS = [
