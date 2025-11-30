@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Budget Tracker">
-  
+
   <!-- Enhanced Viewport for iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
@@ -16,38 +16,39 @@
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
   <title>Budget Tracker</title>
+
+  <!-- IMPORTANT: base path matches GitHub Pages repo -->
   <base href="/dashers-finance-manager/">
+
   <link rel="stylesheet" href="./css/styles.css" />
   <link rel="manifest" href="./manifest.json">
-  
-  <!-- iOS Specific Icons & Splash Screens -->
+
+  <!-- Icons -->
   <link rel="icon" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-192.png">
-  
-  <!-- iOS Splash Screens (simplified) -->
+
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <!-- Prevent telephone number detection -->
   <meta name="format-detection" content="telephone=no">
-  
-  <!-- Charts -->
+
+  <!-- Charts (local) -->
   <script src="js/vendor/chart.umd.min.js"></script>
-  
+
+  <!-- ✅ Dexie: load local UMD to create global window.Dexie -->
+  <script src="js/vendor/dexie.min.js"></script>
+
+  <!-- Your ESM entry that can import Dexie via the shim -->
   <script type="module">
-  import { initAutoDashboard } from './js/dashboard_mobile.js';
-  initAutoDashboard();
+    import { initAutoDashboard } from './js/dashboard_mobile.js';
+    initAutoDashboard();
   </script>
 
   <script type="module" src="./js/app.js"></script>
- 
-
 
   <!-- iOS PWA Detection -->
   <script>
-    // Detect iOS and apply specific fixes
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     if (isIOS) {
       document.documentElement.classList.add('ios-device');
@@ -88,21 +89,18 @@
     </div>
   </header>
 
-<div id="loginScreen" class="login-screen">
-  <div class="login-container">
-    <h1>💰 Budget Tracker</h1>
-    <p class="subtitle">Sign in to continue</p>
-
-    <form id="loginForm">
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit" class="btn-login">Login</button>
-    </form>
-
-    <p class="note">No account? <a href="#" id="registerLink">Create one</a></p>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-container">
+      <h1>💰 Budget Tracker</h1>
+      <p class="subtitle">Sign in to continue</p>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit" class="btn-login">Login</button>
+      </form>
+      <p class="note">No account? <a href="#" id="registerLink">Create one</a></p>
+    </div>
   </div>
-</div>
-
 
   <nav>
     <ul>
@@ -127,39 +125,34 @@
       <li><a href="#tax" data-view="tax"><span class="icon">📘</span><span class="label">ATO Reports</span></a></li>
       <li><a href="#costbase" data-view="costbase"><span class="icon">🧱</span><span class="label">Cost Base</span></a></li>
       <li><a href="#mobiledashv3" data-view="mobiledashv3"><span class="icon">📱</span><span class="label">Fintech Dash</span></a></li>
-
-
     </ul>
   </nav>
 
-  <main id="mainContent">
-    <!-- Dynamic content loads here -->
-  </main>
+  <main id="mainContent"></main>
 
-<!-- Enhanced Bottom Navigation -->
-<nav class="bottom-nav" id="bottomNav">
-  <a href="#dashboard" data-view="dashboard" class="nav-item active">
-    <span class="icon">🏠</span>
-    <span class="label">Home</span>
-  </a>
-  <a href="#transactions" data-view="transactions" class="nav-item">
-    <span class="icon">💸</span>
-    <span class="label">Finance</span>
-  </a>
-  <a href="#reports" data-view="reports" class="nav-item">
-    <span class="icon">📊</span>
-    <span class="label">Reports</span>
-  </a>
-  <a href="#properties" data-view="properties" class="nav-item">
-    <span class="icon">🏘️</span>
-    <span class="label">Properties</span>
-  </a>
-  <a href="#settings" data-view="settings" class="nav-item">
-    <span class="icon">⚙️</span>
-    <span class="label">Settings</span>
-  </a>
-</nav>
-
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a href="#dashboard" data-view="dashboard" class="nav-item active">
+      <span class="icon">🏠</span>
+      <span class="label">Home</span>
+    </a>
+    <a href="#transactions" data-view="transactions" class="nav-item">
+      <span class="icon">💸</span>
+      <span class="label">Finance</span>
+    </a>
+    <a href="#reports" data-view="reports" class="nav-item">
+      <span class="icon">📊</span>
+      <span class="label">Reports</span>
+    </a>
+    <a href="#properties" data-view="properties" class="nav-item">
+      <span class="icon">🏘️</span>
+      <span class="label">Properties</span>
+    </a>
+    <a href="#settings" data-view="settings" class="nav-item">
+      <span class="icon">⚙️</span>
+      <span class="label">Settings</span>
+    </a>
+  </nav>
 
   <!-- PWA Installation Banner -->
   <div id="installBanner" class="install-banner hidden">
@@ -177,153 +170,118 @@
   </div>
   <button id="btnMigrateToDexie" class="btn-warning">⚙️ Migrate to Dexie Database</button>
 
-  <!-- PWA Debug Button (remove in production) -->
   <div style="position: fixed; top: 10px; right: 10px; z-index: 10000; display: none;" id="debugPWA">
     <button onclick="checkPWAStatus()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;">Check PWA</button>
   </div>
 
-<script>
-  // Comprehensive Device Detection - SINGLE DECLARATION
-  //const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isAndroid = /Android/.test(navigator.userAgent);
-  
-  console.log('📱 Device Detection:', {
-    isIOS: isIOS,
-    isSafari: isSafari, 
-    isAndroid: isAndroid,
-    userAgent: navigator.userAgent
-  });
+  <script>
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
 
-  // Add iOS class to HTML element for CSS targeting
-  if (isIOS) {
-    document.documentElement.classList.add('ios-device');
-  }
-
-  // Register service worker for all devices
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
-      .then(reg => {
-        console.log('✅ SW registered:', reg.scope);
-        
-        // Show iOS install guide after delay on iOS devices
-        if (isIOS) {
-          setTimeout(() => {
-            showIOSInstallGuide();
-          }, 3000);
-        }
-      })
-      .catch(err => {
-        console.error('❌ SW registration failed:', err);
-      });
-  }
-
-  // Android install prompt (only for Android)
-  if (isAndroid) {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('✅ Android: PWA installable');
-      e.preventDefault();
-      window.deferredPrompt = e;
-      
-      setTimeout(() => {
-        const banner = document.getElementById('installBanner');
-        if (banner) banner.classList.remove('hidden');
-      }, 2000);
+    console.log('📱 Device Detection:', {
+      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+      isSafari, 
+      isAndroid,
+      userAgent: navigator.userAgent
     });
-  }
 
-  // iOS Install Guide Functions
-  function showIOSInstallGuide() {
-    const guide = document.getElementById('iosInstallGuide');
-    if (guide && !localStorage.getItem('iosGuideDismissed')) {
-      console.log('📱 Showing iOS install guide');
-      guide.classList.add('show');
+    // ✅ Register service worker (path relative to <base>)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
+        .then((reg) => {
+          console.log('✅ SW registered:', reg.scope);
+        })
+        .catch((err) => console.error('❌ SW registration failed:', err));
     }
-  }
 
-  function hideIOSInstallGuide() {
-    const guide = document.getElementById('iosInstallGuide');
-    if (guide) {
-      guide.classList.remove('show');
-      localStorage.setItem('iosGuideDismissed', 'true');
-      console.log('📱 iOS install guide dismissed');
-    }
-  }
-
-  // Set up event listeners when DOM is loaded
-  document.addEventListener('DOMContentLoaded', function() {
-    // Close iOS guide button
-    const closeBtn = document.getElementById('closeIosGuide');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', hideIOSInstallGuide);
-    }
-    
-    // iOS-specific: Show install guide on user interaction
-    if (isIOS) {
-      // Show guide when user interacts with the page
-      let guideShown = false;
-      const showGuideOnInteraction = function() {
-        if (!guideShown) {
-          setTimeout(showIOSInstallGuide, 1000);
-          guideShown = true;
-        }
-      };
-      
-      document.addEventListener('touchstart', showGuideOnInteraction, { once: true, passive: true });
-      document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
-    }
-    
-    // Android install button handler
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn && isAndroid) {
-      installBtn.addEventListener('click', async () => {
-        if (!window.deferredPrompt) {
-          console.warn("⚠️ Install prompt not available");
-          return;
-        }
-        window.deferredPrompt.prompt();
-        const choiceResult = await window.deferredPrompt.userChoice;
-        console.log('👍 User install choice:', choiceResult.outcome);
-        window.deferredPrompt = null;
-        document.getElementById('installBanner').classList.add('hidden');
+    // Android install prompt (only for Android)
+    if (isAndroid) {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('✅ Android: PWA installable');
+        e.preventDefault();
+        window.deferredPrompt = e;
+        setTimeout(() => {
+          const banner = document.getElementById('installBanner');
+          if (banner) banner.classList.remove('hidden');
+        }, 2000);
       });
     }
-    
-    // Install dismiss button (both iOS and Android)
-    const installDismiss = document.getElementById('installDismiss');
-    if (installDismiss) {
-      installDismiss.addEventListener('click', () => {
-        const banner = document.getElementById('installBanner');
-        if (banner) banner.classList.add('hidden');
-      });
-    }
-  });
 
-  // Log if Android install prompt doesn't appear
-  if (isAndroid) {
-    setTimeout(() => {
-      if (!window.deferredPrompt) {
-        console.log('❌ Android: beforeinstallprompt never fired');
+    function showIOSInstallGuide() {
+      const guide = document.getElementById('iosInstallGuide');
+      if (guide && !localStorage.getItem('iosGuideDismissed')) {
+        console.log('📱 Showing iOS install guide');
+        guide.classList.add('show');
       }
-    }, 5000);
-  }
-</script>
+    }
+    function hideIOSInstallGuide() {
+      const guide = document.getElementById('iosInstallGuide');
+      if (guide) {
+        guide.classList.remove('show');
+        localStorage.setItem('iosGuideDismissed', 'true');
+        console.log('📱 iOS install guide dismissed');
+      }
+    }
 
+    document.addEventListener('DOMContentLoaded', function() {
+      const closeBtn = document.getElementById('closeIosGuide');
+      if (closeBtn) closeBtn.addEventListener('click', hideIOSInstallGuide);
 
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        let guideShown = false;
+        const showGuideOnInteraction = function() {
+          if (!guideShown) {
+            setTimeout(showIOSInstallGuide, 1000);
+            guideShown = true;
+          }
+        };
+        document.addEventListener('touchstart', showGuideOnInteraction, { once: true, passive: true });
+        document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
+      }
+
+      const installBtn = document.getElementById('installBtn');
+      if (installBtn && isAndroid) {
+        installBtn.addEventListener('click', async () => {
+          if (!window.deferredPrompt) return;
+          window.deferredPrompt.prompt();
+          await window.deferredPrompt.userChoice;
+          window.deferredPrompt = null;
+          document.getElementById('installBanner').classList.add('hidden');
+        });
+      }
+
+      const installDismiss = document.getElementById('installDismiss');
+      if (installDismiss) {
+        installDismiss.addEventListener('click', () => {
+          const banner = document.getElementById('installBanner');
+          if (banner) banner.classList.add('hidden');
+        });
+      }
+    });
+
+    if (isAndroid) {
+      setTimeout(() => {
+        if (!window.deferredPrompt) {
+          console.log('❌ Android: beforeinstallprompt never fired');
+        }
+      }, 5000);
+    }
+  </script>
 
   <!-- iOS Installation Guide -->
-<div id="iosInstallGuide" class="ios-install-guide">
-  <div class="ios-install-content">
-    <h3>📱 Install Budget Tracker on iOS</h3>
-    <ol class="ios-install-steps">
-      <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
-      <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-      <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
-    </ol>
-    <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
+  <div id="iosInstallGuide" class="ios-install-guide">
+    <div class="ios-install-content">
+      <h3>📱 Install Budget Tracker on iOS</h3>
+      <ol class="ios-install-steps">
+        <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
+        <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+        <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
+      </ol>
+      <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
+    </div>
   </div>
-</div>
-<script type="module" src="./js/ui.js"></script>
 
+  <script type="module" src="./js/ui.js"></script>
 </body>
 </html>
