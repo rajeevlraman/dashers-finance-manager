@@ -108,10 +108,14 @@ function checkBranchIndicator() {
 // --------------------------
 // Cache Verification and Management
 // --------------------------
+// --------------------------
+// Cache Verification and Management - FIXED VERSION
+// --------------------------
 async function verifyCacheAndRetry() {
     if ('caches' in window) {
         try {
-            const cache = await caches.open('budget-tracker-v34');
+            // 🚨 CRITICAL FIX: Use the same cache name as service worker
+            const cache = await caches.open('budget-tracker-v35');
             const keys = await cache.keys();
             console.log(`📊 Cache contains ${keys.length} items`);
             
@@ -566,6 +570,82 @@ document.addEventListener('DOMContentLoaded', async () => {
     monitorServiceWorker();
     setTimeout(enhancedOfflineTest, 3000);
 });
+
+// --------------------------
+// Enhanced Cache Debugging
+// --------------------------
+async function debugCache() {
+    if (!('caches' in window)) {
+        console.log('❌ Cache API not supported');
+        return;
+    }
+    
+    try {
+        // List all caches
+        const cacheNames = await caches.keys();
+        console.log('📂 Available caches:', cacheNames);
+        
+        // Check each cache
+        for (const cacheName of cacheNames) {
+            const cache = await caches.open(cacheName);
+            const requests = await cache.keys();
+            console.log(`📊 ${cacheName}: ${requests.length} items`);
+            
+            // Show first few items
+            requests.slice(0, 5).forEach(request => {
+                console.log(`   📄 ${request.url}`);
+            });
+        }
+        
+        // Check if service worker is controlling
+        if (navigator.serviceWorker.controller) {
+            console.log('✅ Service Worker is controlling the page');
+        } else {
+            console.warn('⚠️ No Service Worker controlling the page');
+        }
+        
+    } catch (error) {
+        console.error('❌ Cache debug failed:', error);
+    }
+}
+
+// Call this in your initialization
+document.addEventListener('DOMContentLoaded', async () => {
+    // ... your existing code ...
+    
+    // Debug cache after a delay
+    setTimeout(debugCache, 2000);
+});
+
+// Test offline functionality
+async function testOfflineNow() {
+    console.log('🧪 Testing offline capability NOW...');
+    
+    // Check current cache status
+    await debugCache();
+    
+    // Test critical files
+    const criticalFiles = ['./index.html', './js/app.js', './css/styles.css'];
+    
+    for (const file of criticalFiles) {
+        try {
+            const response = await fetch(file);
+            console.log(`📄 ${file}: ${response.ok ? '✅ Available' : '❌ Failed'}`);
+        } catch (error) {
+            console.log(`📄 ${file}: ❌ Error - ${error.message}`);
+        }
+    }
+    
+    // Test service worker cache
+    if ('caches' in window) {
+        const cache = await caches.open('budget-tracker-v35');
+        const keys = await cache.keys();
+        console.log(`📦 Service Worker cache has ${keys.length} items`);
+    }
+}
+
+// You can call this from console: testOfflineNow()
+window.testOfflineNow = testOfflineNow;
 
 // --------------------------
 // Export functions for potential reuse
