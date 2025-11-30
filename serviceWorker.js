@@ -28,7 +28,7 @@ const PRECACHE_URLS = [
   './js/loanCalculations.js',
   './js/reports.js',
   './js/settings.js',
-  './js/emojipicker.js',
+  './js/emojiPicker.js',
   './js/layoutManager.js',
   './js/dashboard_mobile.js',
   './js/dashboard_mobile_v2.js',
