@@ -135,6 +135,44 @@ function showUpdateToast(worker) {
     });
 }
 
+// Add this function to your app.js
+async function verifyCacheAndRetry() {
+  if (!navigator.onLine) {
+    console.log('📴 Offline - verifying cache...');
+    
+    try {
+      const cache = await caches.open('budget-tracker-v33');
+      const keys = await cache.keys();
+      console.log(`✅ Cache contains ${keys.length} items`);
+      
+      // Check for critical files
+      const criticalFiles = ['./index.html', './js/app.js', './js/db.js'];
+      for (const file of criticalFiles) {
+        const match = await cache.match(file);
+        if (!match) {
+          console.warn(`⚠️ Critical file missing from cache: ${file}`);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Cache verification failed:', err);
+    }
+  }
+}
+
+// Call this after service worker registration in your DOMContentLoaded event
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
+    .then(reg => {
+      console.log('✅ Service Worker registered:', reg.scope);
+      
+      // Verify cache after registration
+      setTimeout(verifyCacheAndRetry, 1000);
+      
+      // ... rest of your existing code
+    })
+    .catch(err => console.error('❌ Service Worker registration failed:', err));
+}
+
 function showOfflineBanner() {
     if (document.getElementById('offlineBanner')) return;
     const banner = document.createElement('div');
