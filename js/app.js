@@ -298,47 +298,42 @@ function setupIOSHomeScreenLaunch() {
 // --------------------------
 // Enhanced Service Worker Registration for iOS
 // --------------------------
-// --------------------------
-// Simplified Service Worker Registration
-// --------------------------
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         try {
-            console.log('🔧 Registering Service Worker...');
-            
+            // iOS FIX: Use a more aggressive registration approach
             const reg = await navigator.serviceWorker.register('serviceWorker.js', { 
-                scope: '/dashers-finance-manager/',
-                updateViaCache: 'none'
+                scope: './',
+                updateViaCache: 'none' // Important for iOS
             });
             
             console.log('✅ Service Worker registered:', reg.scope);
             
-            // Wait for controller to be set
-            if (navigator.serviceWorker.controller) {
-                console.log('✅ Service Worker is CONTROLLING the page');
-                return reg;
+            // iOS FIX: Wait for controller change more aggressively
+            if (!navigator.serviceWorker.controller) {
+                console.log('⏳ Waiting for Service Worker to control the page...');
+                
+                return new Promise((resolve) => {
+                    navigator.serviceWorker.ready.then(() => {
+                        console.log('✅ Service Worker ready');
+                        resolve(reg);
+                    });
+                    
+                    // Fallback timeout
+                    setTimeout(() => {
+                        console.log('⚠️ Service Worker ready timeout, continuing anyway');
+                        resolve(reg);
+                    }, 3000);
+                });
             }
             
-            // If no controller, wait a bit and check again
-            return new Promise((resolve) => {
-                const checkController = () => {
-                    if (navigator.serviceWorker.controller) {
-                        console.log('✅ Service Worker now CONTROLLING the page');
-                        resolve(reg);
-                    } else {
-                        console.log('⏳ Waiting for Service Worker control...');
-                        setTimeout(checkController, 500);
-                    }
-                };
-                setTimeout(checkController, 100);
-            });
+            return reg;
             
         } catch (err) {
             console.error('❌ Service Worker registration failed:', err);
             return null;
         }
     }
-    console.log('❌ Service Worker not supported');
     return null;
 }
 
@@ -634,8 +629,6 @@ window.forceCacheRefresh = async function() {
     // Reload to trigger fresh installation
     setTimeout(() => window.location.reload(), 1000);
 };
-
-
 
 // --------------------------
 // Service Worker Debugging
