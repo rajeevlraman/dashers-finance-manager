@@ -1,5 +1,5 @@
 // ============================================================================
-// app.js - Main Application Entry Point with iOS Home Screen Support
+// app.js - Main Application Entry Point
 // ============================================================================
 
 // ✅ Enable debug console for testing; comment out for production
@@ -16,20 +16,6 @@ import { initDashboardDesktopUI } from './dashboard_desktop.js';
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
     console.warn('⚠️ PWA install prompt might not work when not served over HTTPS');
 }
-
-// --------------------------
-// Device Detection
-// --------------------------
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-const isAndroid = /Android/.test(navigator.userAgent);
-
-console.log('📱 Device Detection:', {
-    isIOS: isIOS,
-    isSafari: isSafari, 
-    isAndroid: isAndroid,
-    userAgent: navigator.userAgent
-});
 
 // --------------------------
 // Persistent Storage Request
@@ -83,6 +69,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     showInstallBanner();
 });
 
+
 // --------------------------
 // Development Branch Indicator Logic
 // --------------------------
@@ -90,6 +77,7 @@ function checkBranchIndicator() {
     const indicator = document.getElementById('branchIndicator');
     
     // Checks for localhost or explicit 'dev' in the URL path.
+    // NOTE: If using the 'is_development_branch.txt' method, replace this with the fetch logic.
     const isDevEnvironment = location.host.includes('localhost') || 
                              location.href.includes('/dev/'); 
     
@@ -97,6 +85,10 @@ function checkBranchIndicator() {
         indicator.style.display = 'block';
     } else {
         // Fallback for GitHub Pages hosting on the 'dev' branch
+        // This is a simple heuristic: if the app is on GitHub Pages,
+        // and we have a way to confirm the branch (e.g., marker file)
+        // the indicator should show. 
+        // For now, using the basic URL check from the original logic:
         if (location.href.includes('dashers-finance-manager') && location.href.includes('dev')) {
              if (indicator) {
                 indicator.style.display = 'block';
@@ -105,241 +97,12 @@ function checkBranchIndicator() {
     }
 }
 
-// --------------------------
-// Cache Verification and Management
-// --------------------------
-async function verifyCacheAndRetry() {
-    if ('caches' in window) {
-        try {
-            const cache = await caches.open('budget-tracker-v36'); // 🚨 Match SW version
-            const keys = await cache.keys();
-            console.log(`📊 Cache contains ${keys.length} items`);
-            
-            // Log what's actually in cache
-            if (keys.length > 0) {
-                console.log('📋 Cached files:');
-                keys.forEach(request => {
-                    console.log(`   ✅ ${new URL(request.url).pathname}`);
-                });
-            }
-            
-            // Check for critical files with correct paths
-            const criticalFiles = [
-                '/dashers-finance-manager/index.html',
-                '/dashers-finance-manager/js/app.js',
-                '/dashers-finance-manager/js/db.js',
-                '/dashers-finance-manager/js/ui.js',
-                '/dashers-finance-manager/css/styles.css',
-                '/dashers-finance-manager/js/dashboard.js',
-                '/dashers-finance-manager/js/transactions.js',
-                '/dashers-finance-manager/js/accounts.js'
-            ];
-            
-            const missingFiles = [];
-            for (const file of criticalFiles) {
-                const match = await cache.match(file);
-                if (!match) {
-                    missingFiles.push(file);
-                    console.warn(`⚠️ Critical file missing from cache: ${file}`);
-                } else {
-                    console.log(`✅ Cached: ${file}`);
-                }
-            }
-            
-            if (missingFiles.length > 0 && navigator.onLine) {
-                console.log(`🔄 ${missingFiles.length} files missing, triggering cache update...`);
-                // Trigger service worker to update cache
-                if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({
-                        type: 'UPDATE_CACHE'
-                    });
-                }
-            } else if (missingFiles.length === 0) {
-                console.log('✅ All critical files cached successfully!');
-            }
-            
-            return missingFiles;
-        } catch (err) {
-            console.error('❌ Cache verification failed:', err);
-            return [];
-        }
-    }
-    console.log('❌ Cache API not supported');
-    return [];
-}
-
-// --------------------------
-// iOS-specific Cache Warming
-// --------------------------
-function warmCacheForIOS() {
-    if (!isIOS) return;
-    
-    console.log('🔥 Warming cache for iOS...');
-    
-    // Pre-warm cache by requesting critical resources
-    const criticalResources = [
-        '/dashers-finance-manager/js/app.js',
-        '/dashers-finance-manager/js/db.js', 
-        '/dashers-finance-manager/js/ui.js',
-        '/dashers-finance-manager/css/styles.css',
-        '/dashers-finance-manager/index.html',
-        '/dashers-finance-manager/js/dashboard.js',
-        '/dashers-finance-manager/js/transactions.js'
-    ];
-    
-    criticalResources.forEach(resource => {
-        fetch(resource).catch(() => {
-            // Silent fail - just warming cache
-        });
-    });
-}
-
-// --------------------------
-// Test Offline Functionality
-// --------------------------
-async function testOfflineCapability() {
-    console.log('🧪 Testing offline capability...');
-    
-    if (!navigator.onLine) {
-        console.log('📴 Currently offline - verifying cached resources');
-        const missingFiles = await verifyCacheAndRetry();
-        
-        if (missingFiles.length === 0) {
-            console.log('✅ All critical files available offline');
-        } else {
-            console.warn(`⚠️ ${missingFiles.length} files missing for offline use`);
-        }
-    } else {
-        console.log('✅ Online - caching should be active');
-        
-        // Verify cache even when online
-        const missingFiles = await verifyCacheAndRetry();
-        if (missingFiles.length === 0) {
-            console.log('✅ All critical files cached successfully');
-        }
-    }
-}
-
-// --------------------------
-// Force Cache Update on App Start
-// --------------------------
-function forceCacheUpdate() {
-    if (navigator.onLine && navigator.serviceWorker && navigator.serviceWorker.controller) {
-        console.log('🔄 Forcing cache update...');
-        navigator.serviceWorker.controller.postMessage({
-            type: 'UPDATE_CACHE'
-        });
-    }
-}
-
-// --------------------------
-// iOS Home Screen Launch Fix
-// --------------------------
-function setupIOSHomeScreenLaunch() {
-    if (!isIOS) return;
-    
-    console.log('📱 Setting up iOS home screen launch handler...');
-    
-    // Check if we're in standalone mode (launched from home screen)
-    const isStandalone = window.navigator.standalone === true;
-    
-    if (isStandalone) {
-        console.log('📱 iOS: Launched from home screen');
-        document.body.classList.add('ios-standalone');
-        
-        // Add iOS-specific styles for home screen app
-        const style = document.createElement('style');
-        style.textContent = `
-            .ios-standalone {
-                padding-top: env(safe-area-inset-top);
-                padding-bottom: env(safe-area-inset-bottom);
-                padding-left: env(safe-area-inset-left);
-                padding-right: env(safe-area-inset-right);
-            }
-            .ios-standalone header {
-                padding-top: env(safe-area-inset-top);
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // Service Worker readiness check for iOS
-    let swReadyCheckAttempts = 0;
-    const maxSwReadyAttempts = 10;
-    
-    function checkSWReady() {
-        if (navigator.serviceWorker.controller) {
-            console.log('✅ iOS: Service Worker is controlling the page');
-            return true;
-        }
-        
-        if (swReadyCheckAttempts < maxSwReadyAttempts) {
-            swReadyCheckAttempts++;
-            console.log(`⏳ iOS: Waiting for SW (attempt ${swReadyCheckAttempts}/${maxSwReadyAttempts})`);
-            setTimeout(checkSWReady, 500);
-            return false;
-        }
-        
-        console.warn('⚠️ iOS: Service Worker not controlling after max attempts');
-        
-        // Last resort: try to reload if online
-        if (navigator.onLine && isStandalone) {
-            console.log('🔄 iOS: Attempting reload to activate Service Worker');
-            setTimeout(() => window.location.reload(), 2000);
-        }
-        
-        return false;
-    }
-    
-    // Start checking for Service Worker readiness
-    setTimeout(checkSWReady, 1000);
-}
-
-// --------------------------
-// Enhanced Service Worker Registration for iOS
-// --------------------------
-async function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            // iOS FIX: Use a more aggressive registration approach
-            const reg = await navigator.serviceWorker.register('serviceWorker.js', { 
-                scope: './',
-                updateViaCache: 'none' // Important for iOS
-            });
-            
-            console.log('✅ Service Worker registered:', reg.scope);
-            
-            // iOS FIX: Wait for controller change more aggressively
-            if (!navigator.serviceWorker.controller) {
-                console.log('⏳ Waiting for Service Worker to control the page...');
-                
-                return new Promise((resolve) => {
-                    navigator.serviceWorker.ready.then(() => {
-                        console.log('✅ Service Worker ready');
-                        resolve(reg);
-                    });
-                    
-                    // Fallback timeout
-                    setTimeout(() => {
-                        console.log('⚠️ Service Worker ready timeout, continuing anyway');
-                        resolve(reg);
-                    }, 3000);
-                });
-            }
-            
-            return reg;
-            
-        } catch (err) {
-            console.error('❌ Service Worker registration failed:', err);
-            return null;
-        }
-    }
-    return null;
-}
 
 // --------------------------
 // Auxiliary UI Helpers (Toast, Offline Banner, Connection Icon)
 // --------------------------
+// (Functions showUpdateToast, showOfflineBanner, updateConnectionIcon moved here for brevity)
+
 function showUpdateToast(worker) {
     if (document.getElementById('updateToast')) return;
     const toast = document.createElement('div');
@@ -376,7 +139,7 @@ function showOfflineBanner() {
     if (document.getElementById('offlineBanner')) return;
     const banner = document.createElement('div');
     banner.id = 'offlineBanner';
-    banner.textContent = '📴 You\'re offline — viewing cached data';
+    banner.textContent = '📴 You’re offline — viewing cached data';
     banner.style.cssText = `
         position: fixed;
         bottom: 0;
@@ -415,37 +178,25 @@ function updateConnectionIcon() {
     }
 }
 
-// --------------------------
-// Service Worker Message Handler
-// --------------------------
-function setupServiceWorkerMessages() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
-                console.log('🔄 Service worker update available:', event.data.version);
-                // You could show a custom update notification here
-            }
-            
-            if (event.data && event.data.type === 'SW_READY') {
-                console.log('✅ Service Worker reports ready:', event.data.version);
-            }
-        });
-    }
-}
+window.addEventListener('online', updateConnectionIcon);
+window.addEventListener('offline', updateConnectionIcon);
+updateConnectionIcon();
 
+
+// ============================================================================
 // --------------------------
-// Core App Initialization
+// Main Initialization Block (Single DOMContentLoaded Event)
 // --------------------------
-async function initializeAppCore() {
-    console.log('🚀 Starting core app initialization...');
+document.addEventListener('DOMContentLoaded', async () => {
     
-    // Your existing initialization code here:
+    // --- 0. Development Branch Check ---
     checkBranchIndicator();
-    
-    // Login handling
+
+    // --- 1. Login/Authentication Logic ---
     const loginScreen = document.getElementById('loginScreen');
     const loginForm = document.getElementById('loginForm');
-    
+
+    // If user already logged in, skip login
     if (localStorage.getItem('loggedIn') === 'true') {
         loginScreen && loginScreen.classList.add('hidden');
     }
@@ -471,10 +222,54 @@ async function initializeAppCore() {
         localStorage.removeItem('loggedIn');
         loginScreen && loginScreen.classList.remove('hidden');
     };
-    
-    // Layout detection
+
+    // --- 2. Splash screen fade‐out ---
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+        setTimeout(() => splash.classList.add('hidden'), 1200);
+    }
+
+//layout detection
+document.addEventListener('DOMContentLoaded', async () => {
+
+    // --- 0. Development Branch Check ---
+    checkBranchIndicator();
+
+    // --- 1. Login/Authentication Logic ---
+    const loginScreen = document.getElementById('loginScreen');
+    const loginForm = document.getElementById('loginForm');
+    if (localStorage.getItem('loggedIn') === 'true') {
+        loginScreen && loginScreen.classList.add('hidden');
+    }
+
+    loginForm && loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (email && password) {
+            localStorage.setItem('loggedIn', 'true');
+            loginScreen && loginScreen.classList.add('hidden');
+            console.log('✅ Logged in successfully');
+        } else {
+            alert('Please enter valid credentials');
+        }
+    });
+
+    // Optional: fake logout
+    window.logout = () => {
+        localStorage.removeItem('loggedIn');
+        loginScreen && loginScreen.classList.remove('hidden');
+    };
+
+    // --- 2. Splash screen fade‐out ---
+    const splash = document.getElementById('splashScreen');
+    if (splash) setTimeout(() => splash.classList.add('hidden'), 1200);
+
+    // --- 🧭 2.5 Apply responsive layout detection ---
     applyLayoutChanges(mode => {
         console.log(`📱 Layout changed → ${mode}`);
+
         if (mode === LayoutModes.MOBILE) {
             document.body.classList.add('is-mobile');
             document.body.classList.remove('is-desktop');
@@ -485,94 +280,39 @@ async function initializeAppCore() {
             initDashboardDesktopUI();
         }
     });
-    
-    // Initialize UI
+
+    // --- 3. Initialize global UI (nav, menus, etc.) ---
     initUI();
-    
-    // Run automation
+
+    // --- 4. Run daily automation ---
     await processRecurringTransactions();
     await processDueBills();
-    
-    // Request persistent storage
+
+    // --- 5. Request persistent storage ---
     await requestPersistentStorage();
-    
-    // Cache verification
-    setTimeout(async () => {
-        await verifyCacheAndRetry();
-    }, 2000);
-    
-    console.log('✅ Core app initialization completed');
-}
 
-// --------------------------
-// Enhanced App Initialization with iOS Support
-// --------------------------
-async function initializeAppWithIOSSupport() {
-    console.log('🚀 Starting app initialization with iOS support...');
-    
-    // Show splash screen immediately for iOS
-    const splash = document.getElementById('splashScreen');
-    if (splash) {
-        splash.classList.remove('hidden');
+    // --- 6. Register Service Worker ---
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
+            .then(reg => {
+                console.log('✅ Service Worker registered:', reg.scope);
+                if (reg.waiting) showUpdateToast(reg.waiting);
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showUpdateToast(newWorker);
+                        }
+                    });
+                });
+            })
+            .catch(err => console.error('❌ Service Worker registration failed:', err));
     }
-    
-    // Setup iOS home screen launch fixes
-    setupIOSHomeScreenLaunch();
-    
-    // Register service worker FIRST (critical for iOS)
-    await registerServiceWorker();
-    
-    // Setup service worker message handling
-    setupServiceWorkerMessages();
-    
-    // Then initialize the rest of the app
-    await initializeAppCore();
-    
-    // Hide splash screen after everything is ready
-    if (splash) {
-        setTimeout(() => splash.classList.add('hidden'), 1000);
-    }
-}
 
-// --------------------------
-// Error Handling
-// --------------------------
-window.addEventListener('error', function(e) {
-    console.error('🚨 Global error caught:', e.error);
-});
+    // --- 7. If offline at startup, show offline banner ---
+    if (!navigator.onLine) showOfflineBanner();
 
-window.addEventListener('unhandledrejection', function(e) {
-    console.error('🚨 Unhandled promise rejection:', e.reason);
-});
-
-// ============================================================================
-// --------------------------
-// Main Initialization Block
-// --------------------------
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📄 DOM Content Loaded - Starting app...');
-    
-    // Use the new iOS-optimized initialization
-    await initializeAppWithIOSSupport();
-
-    // --- Setup connection event listeners ---
-    window.addEventListener('online', () => {
-        updateConnectionIcon();
-        console.log('✅ Back online');
-        // Force cache update when coming back online
-        setTimeout(forceCacheUpdate, 1000);
-    });
-    
-    window.addEventListener('offline', () => {
-        updateConnectionIcon();
-        showOfflineBanner();
-        console.log('📴 Gone offline');
-    });
-    
-    // Initial connection status
-    updateConnectionIcon();
-
-    // --- Setup Install / Dismiss button handlers ---
+    // --- 8. Setup Install / Dismiss button handlers ---
     const installBtn = document.getElementById('installBtn');
     if (installBtn) {
         installBtn.addEventListener('click', async () => {
@@ -596,72 +336,65 @@ document.addEventListener('DOMContentLoaded', async () => {
             hideInstallBanner();
         });
     }
-
-    // --- Run offline capability test after everything loads ---
-    setTimeout(() => {
-        testOfflineCapability();
-    }, 5000);
-
-    // --- Force cache update after a delay ---
-    setTimeout(forceCacheUpdate, 8000);
-
-    console.log('🎉 Budget Tracker fully initialized with iOS support!');
 });
 
-// --------------------------
-// Manual Cache Refresh (for debugging)
-// --------------------------
-window.forceCacheRefresh = async function() {
-    console.log('🔄 Manual cache refresh triggered');
-    if ('caches' in window) {
-        try {
-            await caches.delete('budget-tracker-v36');
-            console.log('✅ Old cache deleted');
-        } catch (err) {
-            console.error('❌ Cache deletion failed:', err);
-        }
-    }
-    
-    if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'UPDATE_CACHE' });
-    }
-    
-    // Reload to trigger fresh installation
-    setTimeout(() => window.location.reload(), 1000);
-};
 
-// --------------------------
-// Service Worker Debugging
-// --------------------------
-async function debugServiceWorker() {
+    // --- 3. Initialize UI (navigation, view management) ---
+    initUI();
+
+    // --- 4. Run daily automation: recurring transactions + due bills ---
+    await processRecurringTransactions();
+    await processDueBills();
+
+    // --- 5. Request persistent storage ---
+    await requestPersistentStorage();
+
+    // --- 6. Register Service Worker for PWA ---
     if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.getRegistration();
-            if (registration) {
-                console.log('🔍 SW Debug Info:', {
-                    controller: !!navigator.serviceWorker.controller,
-                    state: registration.active?.state,
-                    scope: registration.scope,
-                    version: 'v36'
+        navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
+            .then(reg => {
+                console.log('✅ Service Worker registered:', reg.scope);
+                if (reg.waiting) {
+                    showUpdateToast(reg.waiting);
+                }
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showUpdateToast(newWorker);
+                        }
+                    });
                 });
-            } else {
-                console.warn('❌ No service worker registration found');
-            }
-        } catch (err) {
-            console.error('❌ SW debug failed:', err);
-        }
+            })
+            .catch(err => console.error('❌ Service Worker registration failed:', err));
     }
-}
 
-// Call this in your DOMContentLoaded after service worker registration
-setTimeout(debugServiceWorker, 2000);
+    // --- 7. If offline at startup, show offline banner ---
+    if (!navigator.onLine) {
+        showOfflineBanner();
+    }
 
-// --------------------------
-// Export functions for potential reuse
-// --------------------------
-export {
-    verifyCacheAndRetry,
-    testOfflineCapability,
-    forceCacheUpdate,
-    warmCacheForIOS
-};
+    // --- 8. Setup Install / Dismiss button handlers ---
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                console.warn('⚠️ Install prompt event not available');
+                hideInstallBanner();
+                return;
+            }
+            deferredPrompt.prompt();
+            const choice = await deferredPrompt.userChoice;
+            console.log('👍 User choice for install:', choice.outcome);
+            deferredPrompt = null;
+            hideInstallBanner();
+        });
+    }
+    const installDismissBtn = document.getElementById('installDismiss');
+    if (installDismissBtn) {
+        installDismissBtn.addEventListener('click', () => {
+            console.log('🚫 User dismissed install banner');
+            hideInstallBanner();
+        });
+    }
+});
