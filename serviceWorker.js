@@ -22,6 +22,7 @@ const PRECACHE_URLS = [
   './js/ui.js',
   './js/db.js',
   './js/db_dexie.js',
+  './js/db_migration_helper.js',
   './js/debugConsole.js',
   './js/recurringJob.js',
   './js/exportimport.js',

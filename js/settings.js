@@ -1,6 +1,7 @@
 import { clearAllData as dbClearAllData, getAllItems, STORE_NAMES, addItem, updateItem } from './db.js';
 import { migrateIndexedDBToDexie } from './db_migration_helper.js';
 
+
 export async function initSettingsUI() {
   const mainContent = document.getElementById('mainContent');
   if (!mainContent) {
