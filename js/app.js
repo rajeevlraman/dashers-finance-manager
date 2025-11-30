@@ -9,7 +9,7 @@ setupDebugConsole();
 import { initUI } from './ui.js';
 import { processRecurringTransactions, processDueBills } from './recurringJob.js';
 import { applyLayoutChanges, LayoutModes } from './layoutManager.js';
-import { initDashboardMobileV2UI } from './dashboard_mobile_v2.js';
+
 import { initDashboardDesktopUI } from './dashboard_desktop.js';
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)

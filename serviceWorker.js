@@ -31,9 +31,7 @@ const PRECACHE_URLS = [
   './js/settings.js',
   './js/emojiPicker.js',
   './js/layoutManager.js',
-  './js/dashboard_mobile.js',
-  './js/dashboard_mobile_v2.js',
-  './js/dashboard_desktop.js',
+
 
   // Feature Modules
   './js/budgets.js',
