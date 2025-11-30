@@ -69,26 +69,18 @@ window.addEventListener('beforeinstallprompt', (e) => {
     showInstallBanner();
 });
 
-
 // --------------------------
 // Development Branch Indicator Logic
 // --------------------------
 function checkBranchIndicator() {
     const indicator = document.getElementById('branchIndicator');
     
-    // Checks for localhost or explicit 'dev' in the URL path.
-    // NOTE: If using the 'is_development_branch.txt' method, replace this with the fetch logic.
     const isDevEnvironment = location.host.includes('localhost') || 
                              location.href.includes('/dev/'); 
     
     if (indicator && isDevEnvironment) {
         indicator.style.display = 'block';
     } else {
-        // Fallback for GitHub Pages hosting on the 'dev' branch
-        // This is a simple heuristic: if the app is on GitHub Pages,
-        // and we have a way to confirm the branch (e.g., marker file)
-        // the indicator should show. 
-        // For now, using the basic URL check from the original logic:
         if (location.href.includes('dashers-finance-manager') && location.href.includes('dev')) {
              if (indicator) {
                 indicator.style.display = 'block';
@@ -97,24 +89,174 @@ function checkBranchIndicator() {
     }
 }
 
+// --------------------------
+// Enhanced Professional Login Functionality
+// --------------------------
+function setupProfessionalLogin() {
+    const loginScreen = document.getElementById('loginScreen');
+    const loginForm = document.getElementById('loginForm');
+    const loginButton = document.getElementById('loginButton');
+    const loginError = document.getElementById('loginError');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    // Check for saved credentials
+    const savedEmail = localStorage.getItem('savedEmail');
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+    
+    if (savedEmail && rememberMe) {
+        emailInput.value = savedEmail;
+        document.getElementById('rememberMe').checked = true;
+    }
+
+    // Auto-hide login if already logged in
+    if (localStorage.getItem('loggedIn') === 'true') {
+        loginScreen.classList.add('hidden');
+        return;
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        const rememberMe = document.getElementById('rememberMe').checked;
+
+        // Show loading state
+        loginButton.classList.add('loading');
+        loginButton.disabled = true;
+        loginError.style.display = 'none';
+
+        // Simulate authentication delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Enhanced validation
+        if (validateCredentials(email, password)) {
+            // Save credentials if remember me is checked
+            if (rememberMe) {
+                localStorage.setItem('savedEmail', email);
+                localStorage.setItem('rememberMe', 'true');
+            } else {
+                localStorage.removeItem('savedEmail');
+                localStorage.removeItem('rememberMe');
+            }
+
+            // Set logged in state
+            localStorage.setItem('loggedIn', 'true');
+            localStorage.setItem('userEmail', email);
+            
+            // Hide login screen with smooth transition
+            loginScreen.style.opacity = '0';
+            setTimeout(() => {
+                loginScreen.classList.add('hidden');
+                loginScreen.style.opacity = '1';
+            }, 300);
+
+            console.log('✅ User authenticated successfully');
+        } else {
+            // Show error
+            loginError.style.display = 'block';
+            emailInput.classList.add('error');
+            passwordInput.classList.add('error');
+        }
+
+        // Reset button state
+        loginButton.classList.remove('loading');
+        loginButton.disabled = false;
+    });
+
+    // Real-time validation
+    emailInput.addEventListener('input', () => {
+        emailInput.classList.remove('error');
+        loginError.style.display = 'none';
+    });
+
+    passwordInput.addEventListener('input', () => {
+        passwordInput.classList.remove('error');
+        loginError.style.display = 'none';
+    });
+
+    // Forgot password handler
+    document.getElementById('forgotPassword')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showForgotPasswordModal();
+    });
+
+    // Register link handler
+    document.getElementById('registerLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showRegistrationModal();
+    });
+}
+
+function validateCredentials(email, password) {
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return false;
+    }
+
+    // Password strength (at least 6 characters)
+    if (password.length < 6) {
+        return false;
+    }
+
+    // For demo purposes - replace with real authentication
+    const demoAccounts = [
+        { email: 'admin@budgettracker.com', password: 'demo123' },
+        { email: 'user@example.com', password: 'password123' }
+    ];
+
+    return demoAccounts.some(acc => acc.email === email && acc.password === password);
+}
+
+function showForgotPasswordModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3>Reset Password</h3>
+            <p>Enter your email to receive a password reset link.</p>
+            <input type="email" placeholder="Your email" class="form-input">
+            <div class="modal-actions">
+                <button class="btn btn-primary">Send Reset Link</button>
+                <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showRegistrationModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3>Create Account</h3>
+            <p>Registration feature coming soon.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
 
 // --------------------------
 // Auxiliary UI Helpers (Toast, Offline Banner, Connection Icon)
 // --------------------------
-// (Functions showUpdateToast, showOfflineBanner, updateConnectionIcon moved here for brevity)
-
 function showUpdateToast(worker) {
     if (document.getElementById('updateToast')) return;
     const toast = document.createElement('div');
     toast.id = 'updateToast';
     toast.innerHTML = `
-      <div class="toast-content">
-        <span>🚀 A new version of <strong>Budget Tracker</strong> is available!</span>
-        <div class="toast-buttons">
-          <button id="btnReload" class="button">Update</button>
-          <button id="btnDismiss" class="button red">Dismiss</button>
+        <div class="toast-content">
+            <span>🚀 A new version of <strong>Budget Tracker</strong> is available!</span>
+            <div class="toast-buttons">
+                <button id="btnReload" class="button">Update</button>
+                <button id="btnDismiss" class="button red">Dismiss</button>
+            </div>
         </div>
-      </div>
     `;
     document.body.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('show'));
@@ -139,7 +281,7 @@ function showOfflineBanner() {
     if (document.getElementById('offlineBanner')) return;
     const banner = document.createElement('div');
     banner.id = 'offlineBanner';
-    banner.textContent = '📴 You’re offline — viewing cached data';
+    banner.textContent = '📴 You\'re offline — viewing cached data';
     banner.style.cssText = `
         position: fixed;
         bottom: 0;
@@ -178,98 +320,15 @@ function updateConnectionIcon() {
     }
 }
 
-window.addEventListener('online', updateConnectionIcon);
-window.addEventListener('offline', updateConnectionIcon);
-updateConnectionIcon();
-
-
-// ============================================================================
 // --------------------------
-// Main Initialization Block (Single DOMContentLoaded Event)
+// Enhanced App Initialization
 // --------------------------
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializeAppCore() {
+    console.log('🚀 Starting core app initialization...');
     
-    // --- 0. Development Branch Check ---
-    checkBranchIndicator();
-
-    // --- 1. Login/Authentication Logic ---
-    const loginScreen = document.getElementById('loginScreen');
-    const loginForm = document.getElementById('loginForm');
-
-    // If user already logged in, skip login
-    if (localStorage.getItem('loggedIn') === 'true') {
-        loginScreen && loginScreen.classList.add('hidden');
-    }
-
-    // Handle login
-    loginForm && loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        // Simple validation (you can replace this later)
-        if (email && password) {
-            localStorage.setItem('loggedIn', 'true');
-            loginScreen && loginScreen.classList.add('hidden');
-            console.log('✅ Logged in successfully');
-        } else {
-            alert('Please enter valid credentials');
-        }
-    });
-
-    // Optional: fake logout (you can trigger this elsewhere)
-    window.logout = () => {
-        localStorage.removeItem('loggedIn');
-        loginScreen && loginScreen.classList.remove('hidden');
-    };
-
-    // --- 2. Splash screen fade‐out ---
-    const splash = document.getElementById('splashScreen');
-    if (splash) {
-        setTimeout(() => splash.classList.add('hidden'), 1200);
-    }
-
-//layout detection
-document.addEventListener('DOMContentLoaded', async () => {
-
-    // --- 0. Development Branch Check ---
-    checkBranchIndicator();
-
-    // --- 1. Login/Authentication Logic ---
-    const loginScreen = document.getElementById('loginScreen');
-    const loginForm = document.getElementById('loginForm');
-    if (localStorage.getItem('loggedIn') === 'true') {
-        loginScreen && loginScreen.classList.add('hidden');
-    }
-
-    loginForm && loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        if (email && password) {
-            localStorage.setItem('loggedIn', 'true');
-            loginScreen && loginScreen.classList.add('hidden');
-            console.log('✅ Logged in successfully');
-        } else {
-            alert('Please enter valid credentials');
-        }
-    });
-
-    // Optional: fake logout
-    window.logout = () => {
-        localStorage.removeItem('loggedIn');
-        loginScreen && loginScreen.classList.remove('hidden');
-    };
-
-    // --- 2. Splash screen fade‐out ---
-    const splash = document.getElementById('splashScreen');
-    if (splash) setTimeout(() => splash.classList.add('hidden'), 1200);
-
-    // --- 🧭 2.5 Apply responsive layout detection ---
+    // Layout detection
     applyLayoutChanges(mode => {
         console.log(`📱 Layout changed → ${mode}`);
-
         if (mode === LayoutModes.MOBILE) {
             document.body.classList.add('is-mobile');
             document.body.classList.remove('is-desktop');
@@ -280,76 +339,43 @@ document.addEventListener('DOMContentLoaded', async () => {
             initDashboardDesktopUI();
         }
     });
-
-    // --- 3. Initialize global UI (nav, menus, etc.) ---
+    
+    // Initialize UI
     initUI();
-
-    // --- 4. Run daily automation ---
+    
+    // Run automation
     await processRecurringTransactions();
     await processDueBills();
-
-    // --- 5. Request persistent storage ---
+    
+    // Request persistent storage
     await requestPersistentStorage();
+    
+    console.log('✅ Core app initialization completed');
+}
 
-    // --- 6. Register Service Worker ---
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
-            .then(reg => {
-                console.log('✅ Service Worker registered:', reg.scope);
-                if (reg.waiting) showUpdateToast(reg.waiting);
-                reg.addEventListener('updatefound', () => {
-                    const newWorker = reg.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            showUpdateToast(newWorker);
-                        }
-                    });
-                });
-            })
-            .catch(err => console.error('❌ Service Worker registration failed:', err));
+// ============================================================================
+// --------------------------
+// Main Initialization Block (Single DOMContentLoaded Event)
+// --------------------------
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('📄 DOM Content Loaded - Starting app...');
+    
+    // --- 0. Development Branch Check ---
+    checkBranchIndicator();
+
+    // --- 1. Enhanced Professional Login ---
+    setupProfessionalLogin();
+
+    // --- 2. Splash screen fade‐out ---
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+        setTimeout(() => splash.classList.add('hidden'), 1200);
     }
 
-    // --- 7. If offline at startup, show offline banner ---
-    if (!navigator.onLine) showOfflineBanner();
+    // --- 3. Initialize core application ---
+    await initializeAppCore();
 
-    // --- 8. Setup Install / Dismiss button handlers ---
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) {
-        installBtn.addEventListener('click', async () => {
-            if (!deferredPrompt) {
-                console.warn('⚠️ Install prompt not available');
-                hideInstallBanner();
-                return;
-            }
-            deferredPrompt.prompt();
-            const choice = await deferredPrompt.userChoice;
-            console.log('👍 User choice for install:', choice.outcome);
-            deferredPrompt = null;
-            hideInstallBanner();
-        });
-    }
-
-    const installDismissBtn = document.getElementById('installDismiss');
-    if (installDismissBtn) {
-        installDismissBtn.addEventListener('click', () => {
-            console.log('🚫 User dismissed install banner');
-            hideInstallBanner();
-        });
-    }
-});
-
-
-    // --- 3. Initialize UI (navigation, view management) ---
-    initUI();
-
-    // --- 4. Run daily automation: recurring transactions + due bills ---
-    await processRecurringTransactions();
-    await processDueBills();
-
-    // --- 5. Request persistent storage ---
-    await requestPersistentStorage();
-
-    // --- 6. Register Service Worker for PWA ---
+    // --- 4. Register Service Worker for PWA ---
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('serviceWorker.js', { scope: './' })
             .then(reg => {
@@ -369,12 +395,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             .catch(err => console.error('❌ Service Worker registration failed:', err));
     }
 
-    // --- 7. If offline at startup, show offline banner ---
+    // --- 5. Setup connection monitoring ---
+    window.addEventListener('online', updateConnectionIcon);
+    window.addEventListener('offline', () => {
+        updateConnectionIcon();
+        showOfflineBanner();
+    });
+    updateConnectionIcon();
+
+    // --- 6. If offline at startup, show offline banner ---
     if (!navigator.onLine) {
         showOfflineBanner();
     }
 
-    // --- 8. Setup Install / Dismiss button handlers ---
+    // --- 7. Setup Install / Dismiss button handlers ---
     const installBtn = document.getElementById('installBtn');
     if (installBtn) {
         installBtn.addEventListener('click', async () => {
@@ -390,6 +424,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             hideInstallBanner();
         });
     }
+    
     const installDismissBtn = document.getElementById('installDismiss');
     if (installDismissBtn) {
         installDismissBtn.addEventListener('click', () => {
@@ -397,26 +432,43 @@ document.addEventListener('DOMContentLoaded', async () => {
             hideInstallBanner();
         });
     }
+
+    console.log('🎉 Budget Tracker fully initialized!');
 });
 
-// Add this to your main app.js to debug service worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistration().then(registration => {
-    if (registration) {
-      console.log('🔍 [APP-DEBUG] Service Worker registered:', registration);
-      console.log('🔍 [APP-DEBUG] Service Worker state:', registration.active?.state);
-      
-      // Request cache status from SW
-      if (registration.active) {
-        registration.active.postMessage({ type: 'GET_CACHE_STATUS' });
-      }
-    } else {
-      console.log('🔍 [APP-DEBUG] No Service Worker registration found');
+// --------------------------
+// Optional: Fake logout function
+// --------------------------
+window.logout = () => {
+    localStorage.removeItem('loggedIn');
+    localStorage.removeItem('userEmail');
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) {
+        loginScreen.classList.remove('hidden');
     }
-  });
+    console.log('🚪 User logged out');
+};
 
-  // Listen for messages from Service Worker
-  navigator.serviceWorker.addEventListener('message', event => {
-    console.log('🔍 [APP-DEBUG] Message from SW:', event.data);
-  });
+// --------------------------
+// Service Worker Debugging
+// --------------------------
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(registration => {
+        if (registration) {
+            console.log('🔍 [APP-DEBUG] Service Worker registered:', registration);
+            console.log('🔍 [APP-DEBUG] Service Worker state:', registration.active?.state);
+            
+            // Request cache status from SW
+            if (registration.active) {
+                registration.active.postMessage({ type: 'GET_CACHE_STATUS' });
+            }
+        } else {
+            console.log('🔍 [APP-DEBUG] No Service Worker registration found');
+        }
+    });
+
+    // Listen for messages from Service Worker
+    navigator.serviceWorker.addEventListener('message', event => {
+        console.log('🔍 [APP-DEBUG] Message from SW:', event.data);
+    });
 }

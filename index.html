@@ -89,18 +89,60 @@
     </div>
   </header>
 
-  <div id="loginScreen" class="login-screen">
-    <div class="login-container">
-      <h1>💰 Budget Tracker</h1>
-      <p class="subtitle">Sign in to continue</p>
-      <form id="loginForm">
-        <input type="email" id="email" placeholder="Email" required />
-        <input type="password" id="password" placeholder="Password" required />
-        <button type="submit" class="btn-login">Login</button>
-      </form>
-      <p class="note">No account? <a href="#" id="registerLink">Create one</a></p>
+<div id="loginScreen" class="login-screen">
+  <div class="login-container">
+    <!-- Logo and Title -->
+    <div class="login-header">
+      <div class="logo">
+        <img src="assets/icons/icon-192.png" alt="Budget Tracker" width="48" height="48">
+      </div>
+      <h1>Budget Tracker</h1>
+      <p class="subtitle">Secure Financial Management</p>
+    </div>
+
+    <!-- Error Message -->
+    <div id="loginError" class="error-message">
+      Invalid email or password. Please try again.
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+      </div>
+
+      <!-- Additional Options -->
+      <div class="login-options">
+        <label class="remember-me">
+          <input type="checkbox" id="rememberMe">
+          Remember me
+        </label>
+        <a href="#" class="forgot-password" id="forgotPassword">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn-login" id="loginButton">
+        Sign In
+      </button>
+    </form>
+
+    <!-- Registration Prompt -->
+    <p class="note">
+      Don't have an account? 
+      <a href="#" id="registerLink">Create account</a>
+    </p>
+
+    <!-- Security Notice -->
+    <div class="security-notice">
+      <small>🔒 Your data is encrypted and secure</small>
     </div>
   </div>
+</div>
 
   <nav>
     <ul>
