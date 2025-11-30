@@ -1,14 +1,13 @@
 // ============================================================================
-// 💾 db_dexie.js — Dexie.js Database Manager for Budget Tracker
-// ----------------------------------------------------------------------------
-// Drop-in replacement for original IndexedDB code
-// Maintains all store names, same CRUD API, and supports upgrades.
+// 💾 db_dexie.js — Dexie.js Database Manager (Simplified Version)
 // ============================================================================
 
-//import Dexie from 'dexie';
-//import Dexie from 'https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.mjs';
-import Dexie from './js/vendor/dexie.min.js';
+// 🚨 SIMPLIFIED: Use global Dexie from script tag
+const Dexie = window.Dexie;
 
+if (typeof Dexie === 'undefined') {
+    throw new Error('Dexie not loaded. Make sure dexie.min.js is included before this file.');
+}
 
 export const STORE_NAMES = {
   accounts: 'accounts',
@@ -29,6 +28,8 @@ export const STORE_NAMES = {
 
 // Create Dexie instance
 export const db = new Dexie('budgetTrackerDB_v2');
+
+// Database schema
 db.version(1).stores({
   accounts: 'id,name,type',
   categories: 'id,name,type',
@@ -48,22 +49,35 @@ db.version(1).stores({
 
 console.log('✅ Dexie DB initialized');
 
-// Utility
+// Utility function to generate IDs
 export function generateId() {
   return crypto.randomUUID();
 }
 
-// CRUD
+// CRUD Operations
 export async function addItem(storeName, item) {
+  if (!db[storeName]) {
+    throw new Error(`Store ${storeName} does not exist`);
+  }
+  
   item.id = item.id || generateId();
   const now = new Date().toISOString();
   item.createdAt = item.createdAt || now;
   item.updatedAt = now;
+  
   await db[storeName].put(item);
   return item;
 }
 
+export async function getItem(storeName, id) {
+  return await db[storeName].get(id);
+}
+
 export async function updateItem(storeName, item) {
+  if (!item.id) {
+    throw new Error('Item must have an id to update');
+  }
+  
   item.updatedAt = new Date().toISOString();
   await db[storeName].put(item);
   return item;
@@ -78,22 +92,70 @@ export async function getAllItems(storeName) {
   return await db[storeName].toArray();
 }
 
+export async function getItemsByIndex(storeName, index, value) {
+  return await db[storeName].where(index).equals(value).toArray();
+}
+
+// Bulk operations
+export async function bulkAddItems(storeName, items) {
+  items.forEach(item => {
+    item.id = item.id || generateId();
+    const now = new Date().toISOString();
+    item.createdAt = item.createdAt || now;
+    item.updatedAt = now;
+  });
+  
+  await db[storeName].bulkPut(items);
+  return items;
+}
+
+// Data management
 export async function clearAllData() {
-  for (const name of Object.values(STORE_NAMES)) await db[name].clear();
+  const storeNames = Object.values(STORE_NAMES);
+  for (const name of storeNames) {
+    if (db[name]) {
+      await db[name].clear();
+    }
+  }
   console.log('🧹 All stores cleared');
 }
 
 export async function exportAllData() {
   const result = {};
   for (const name of Object.values(STORE_NAMES)) {
-    result[name] = await db[name].toArray();
+    if (db[name]) {
+      result[name] = await db[name].toArray();
+    }
   }
   return result;
 }
 
 export async function importAllData(data) {
   for (const [name, items] of Object.entries(data)) {
-    if (db[name]) await db[name].bulkPut(items);
+    if (db[name] && Array.isArray(items)) {
+      await db[name].bulkPut(items);
+      console.log(`📥 Imported ${items.length} items to ${name}`);
+    }
   }
-  console.log('📥 Data import complete');
+  console.log('✅ Data import complete');
+}
+
+// Database utilities
+export async function getDatabaseSize() {
+  const stores = Object.values(STORE_NAMES);
+  let totalCount = 0;
+  
+  for (const storeName of stores) {
+    if (db[storeName]) {
+      const count = await db[storeName].count();
+      totalCount += count;
+    }
+  }
+  
+  return totalCount;
+}
+
+export async function isDatabaseEmpty() {
+  const size = await getDatabaseSize();
+  return size === 0;
 }

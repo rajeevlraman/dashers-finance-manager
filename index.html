@@ -157,6 +157,13 @@
         })();
     </script>
 
+    <script>
+    // Debug script loading
+    console.log('📦 Script loading debug:');
+    console.log('Dexie available:', typeof Dexie !== 'undefined');
+    console.log('Dexie version:', typeof Dexie !== 'undefined' ? Dexie.version : 'Not loaded');
+    </script>
+
     <script type="module">
         import { initAutoDashboard } from './js/dashboard_mobile.js';
         // Wait for DOM to be ready
