@@ -14,12 +14,12 @@ import { initPropertiesUI } from './properties.js';
 import { initTenantsUI } from './tenants.js';
 import { initMaintenanceUI } from './maintenance.js';
 import { initExpensesUI } from './expenses.js';
-import { initPropertyDashboardUI } from './dashboardProperties.js';
-import { initDashboardMobileUI } from './dashboard_mobile.js';
-import { initDashboardMobileV2UI } from './dashboard_mobile_v2.js';
+//import { initPropertyDashboardUI } from './dashboardProperties.js';
+//import { initDashboardMobileUI } from './dashboard_mobile.js';
+//import { initDashboardMobileV2UI } from './dashboard_mobile_v2.js';
 import { initTaxComplianceUI } from './tax_compliance.js';
 import { initCostBaseTrackerUI } from './cost_base_tracker.js';
-import { initDashboardMobileV3UI } from './dashboard_mobile_v3_ui.js';
+//import { initDashboardMobileV3UI } from './dashboard_mobile_v3_ui.js';
 
 // ============================================================================
 // 📱 BOTTOM NAVIGATION ENHANCEMENTS
@@ -238,24 +238,13 @@ export async function loadView(view) {
       case 'expenses':
         await initExpensesUI();
         break;
-      case 'property-dashboard':
-        await initPropertyDashboardUI();
-        break;
-      case 'mobile-dashboard':
-        await initDashboardMobileUI();
-        break;
-      case 'mobiledash':
-        await initDashboardMobileV2UI();
-        break;
       case 'tax':
         await initTaxComplianceUI();
         break;
       case 'costbase':
         await initCostBaseTrackerUI();
         break;
-      case 'mobiledashv3':
-        await initDashboardMobileV3UI();
-        break;
+
       default:
         main.innerHTML = `
           <div class="page-container">
