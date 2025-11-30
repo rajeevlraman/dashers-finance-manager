@@ -6,6 +6,52 @@ let trendChart = null;
 let summaryChart = null;
 let autoRefreshInterval = null;
 
+// Global functions for HTML interactions
+window.toggleSection = function(header) {
+  const content = header.nextElementSibling;
+  const icon = header.querySelector('.toggle-icon');
+  content.style.display = content.style.display === 'none' ? 'block' : 'none';
+  icon.textContent = content.style.display === 'none' ? '▼' : '▲';
+};
+
+window.quickAction = function(action) {
+  const actions = {
+    expense: () => window.showAddTransactionModal?.('expense'),
+    income: () => window.showAddTransactionModal?.('income'),
+    property: () => window.showAddPropertyModal?.(),
+    bill: () => window.showAddBillModal?.()
+  };
+  
+  if (actions[action]) {
+    actions[action]();
+    // Close FAB
+    const fabActions = document.querySelector('.fab-actions');
+    const fabMain = document.querySelector('.fab-main');
+    if (fabActions) fabActions.classList.remove('show');
+    if (fabMain) fabMain.textContent = '+';
+  }
+};
+
+window.showDrillDownModal = function(label, data) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Details: ${label}</h3>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+      </div>
+      <div class="modal-body">
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
 export async function initDashboardUI() {
   console.log("✅ initDashboardUI() executing...");
   const mainContent = document.getElementById('mainContent');
@@ -390,7 +436,7 @@ export async function initDashboardUI() {
               const index = elements[0].index;
               const labels = ['Income', 'Expenses', 'Balance', 'Rent Income'];
               const values = [currentMonthIncome, currentMonthExpenses, currentMonthBalance, totalRent];
-              showDrillDownModal(labels[index], values[index]);
+              window.showDrillDownModal(labels[index], values[index]);
             }
           }
         }
@@ -459,7 +505,7 @@ export async function initDashboardUI() {
                 const index = elements[0].index;
                 const label = catLabels[index];
                 const value = catData[index];
-                showDrillDownModal(label, value);
+                window.showDrillDownModal(label, value);
               }
             }
           }
@@ -553,7 +599,7 @@ export async function initDashboardUI() {
                 const label = months[index];
                 const income = incomeData[index];
                 const expense = expenseData[index];
-                showDrillDownModal(`Month: ${formatMonthLabel(label)}`, { income, expense });
+                window.showDrillDownModal(`Month: ${formatMonthLabel(label)}`, { income, expense });
               }
             }
           }
@@ -679,35 +725,6 @@ export async function initDashboardUI() {
   }
 }
 
-// === NEW FUNCTIONS FOR TWEAKS ===
-
-// Expandable Sections
-function toggleSection(header) {
-  const content = header.nextElementSibling;
-  const icon = header.querySelector('.toggle-icon');
-  content.style.display = content.style.display === 'none' ? 'block' : 'none';
-  icon.textContent = content.style.display === 'none' ? '▼' : '▲';
-}
-
-// Quick Actions FAB
-function quickAction(action) {
-  const actions = {
-    expense: () => window.showAddTransactionModal('expense'),
-    income: () => window.showAddTransactionModal('income'),
-    property: () => window.showAddPropertyModal(),
-    bill: () => window.showAddBillModal()
-  };
-  
-  if (actions[action]) {
-    actions[action]();
-    // Close FAB
-    const fabActions = document.querySelector('.fab-actions');
-    const fabMain = document.querySelector('.fab-main');
-    if (fabActions) fabActions.classList.remove('show');
-    if (fabMain) fabMain.textContent = '+';
-  }
-}
-
 // Filter Functions
 function applyFilters() {
   const propertyFilter = document.getElementById('propertyFilter').value;
@@ -734,27 +751,6 @@ function resetFilters() {
   
   localStorage.removeItem('dashboardFilters');
   initDashboardUI();
-}
-
-// Drill Down Modal
-function showDrillDownModal(label, data) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Details: ${label}</h3>
-        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
-      </div>
-      <div class="modal-body">
-        <pre>${JSON.stringify(data, null, 2)}</pre>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">Close</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
 }
 
 // Chart Data Export Helper
