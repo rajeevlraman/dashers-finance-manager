@@ -4,7 +4,7 @@ import { migrateIndexedDBToDexie } from './db_migration_helper.js';
 
 import { APP_VERSION } from './version.js';
 document.getElementById("appVersion").textContent = APP_VERSION;
-import { APP_VERSION } from "./version.js";
+
 
 const versionEl = document.getElementById("appVersion");
 if (versionEl) {
