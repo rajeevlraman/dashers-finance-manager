@@ -19,6 +19,11 @@ export async function initSettingsUI() {
         <h2>⚙️ Settings</h2>
         <p class="settings-subtitle">Manage your application preferences and data</p>
       </div>
+      
+    <div class="section-card">
+      <h3>App Information</h3>
+      <p>Version: <span id="appVersion">...</span></p>
+    </div>
 
       <div class="settings-grid">
         <!-- Preferences Section -->
