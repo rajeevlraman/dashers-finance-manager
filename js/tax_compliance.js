@@ -17,6 +17,215 @@ const TAX_RATES = {
   gst: 0.10
 };
 
+// Global modal creation functions
+function createCGTModal() {
+  return `
+    <div class="modal" id="modalCGT">
+      <div class="modal-content">
+        <h2>📈 Capital Gains Tax Calculator</h2>
+        <form id="formCGT">
+          <div class="form-group">
+            <label class="form-label">Purchase Price (AUD)</label>
+            <input type="number" class="form-input" name="purchase" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Sale Price (AUD)</label>
+            <input type="number" class="form-input" name="sell" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Capital Improvements (AUD)</label>
+            <input type="number" class="form-input" name="improve" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Selling Costs (AUD)</label>
+            <input type="number" class="form-input" name="costs" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Years Owned</label>
+            <input type="number" class="form-input" name="years" step="0.1" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Your Marginal Tax Rate (%)</label>
+            <input type="number" class="form-input" name="taxRate" value="32.5" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Calculate CGT</button>
+        </form>
+        
+        <div id="cgtResult" class="calculator-result" style="display: none;"></div>
+        
+        <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" 
+                onclick="document.getElementById('modalCGT').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function createNegGearingModal() {
+  return `
+    <div class="modal" id="modalNeg">
+      <div class="modal-content">
+        <h2>📉 Negative Gearing Calculator</h2>
+        <form id="formNeg">
+          <div class="form-group">
+            <label class="form-label">Rental Loss Amount (AUD)</label>
+            <input type="number" class="form-input" name="loss" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Your Marginal Tax Rate (%)</label>
+            <input type="number" class="form-input" name="taxRate" value="32.5" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Other Income (AUD)</label>
+            <input type="number" class="form-input" name="otherIncome" value="0">
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Calculate Benefits</button>
+        </form>
+        
+        <div id="negResult" class="calculator-result" style="display: none;"></div>
+        
+        <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" 
+                onclick="document.getElementById('modalNeg').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function createDepreciationModal() {
+  return `
+    <div class="modal" id="modalDepreciation">
+      <div class="modal-content">
+        <h2>🏠 Depreciation Calculator</h2>
+        <form id="formDepreciation">
+          <div class="form-group">
+            <label class="form-label">Building Cost (AUD)</label>
+            <input type="number" class="form-input" name="buildingCost" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Plant & Equipment Value (AUD)</label>
+            <input type="number" class="form-input" name="plantValue" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Construction Date</label>
+            <input type="date" class="form-input" name="constructionDate" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">First Rental Date</label>
+            <input type="date" class="form-input" name="rentalDate" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Calculate Depreciation</button>
+        </form>
+        
+        <div id="depreciationResult" class="calculator-result" style="display: none;"></div>
+        
+        <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" 
+                onclick="document.getElementById('modalDepreciation').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function createGSTModal() {
+  return `
+    <div class="modal" id="modalGST">
+      <div class="modal-content">
+        <h2>💰 GST Calculator</h2>
+        <form id="formGST">
+          <div class="form-group">
+            <label class="form-label">Amount (AUD)</label>
+            <input type="number" class="form-input" name="amount" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Calculation Type</label>
+            <select class="form-input" name="calculationType">
+              <option value="add">Add GST to Amount</option>
+              <option value="extract">Extract GST from Amount</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Calculate GST</button>
+        </form>
+        
+        <div id="gstResult" class="calculator-result" style="display: none;"></div>
+        
+        <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" 
+                onclick="document.getElementById('modalGST').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function createDeductionWizard() {
+  return `
+    <div class="modal" id="modalDeductionWizard">
+      <div class="modal-content">
+        <h2>💡 Deduction Maximization Wizard</h2>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <p>Let's optimize your tax deductions for rental properties:</p>
+        </div>
+        
+        <form id="formDeductionWizard">
+          <div class="form-group">
+            <label class="form-label">Property Type</label>
+            <select class="form-input" name="propertyType">
+              <option value="house">House</option>
+              <option value="apartment">Apartment</option>
+              <option value="townhouse">Townhouse</option>
+              <option value="commercial">Commercial</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Construction Year</label>
+            <input type="number" class="form-input" name="constructionYear" min="1900" max="2024">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Recent Renovations (AUD)</label>
+            <input type="number" class="form-input" name="renovations" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Furniture & Appliances (AUD)</label>
+            <input type="number" class="form-input" name="furniture" value="0">
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Optimize Deductions</button>
+        </form>
+        
+        <div id="deductionWizardResult" class="calculator-result" style="display: none;"></div>
+        
+        <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" 
+                onclick="document.getElementById('modalDeductionWizard').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 export async function initTaxComplianceUI() {
   console.log('📘 ATO Reports Page initializing...');
 
@@ -26,7 +235,7 @@ export async function initTaxComplianceUI() {
       .tax-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
       
       .tax-header { 
-        background: linear(135deg, #1e3a8a 0%, #3730a3 100%); 
+        background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); 
         color: white; 
         padding: 2rem; 
         border-radius: 12px; 
@@ -497,136 +706,66 @@ function renderRentalSummary(transactions, properties, tenants) {
   `;
 }
 
-// ============================================================================
-// 🧮 TAX CALCULATORS (Enhanced)
-// ============================================================================
-
-function createCGTModal() {
-  return `
-    <div class="modal" id="modalCGT">
-      <div class="modal-content">
-        <h2>📈 Capital Gains Tax Calculator</h2>
-        <form id="formCGT">
-          <div class="form-group">
-            <label class="form-label">Purchase Price (AUD)</label>
-            <input type="number" class="form-input" name="purchase" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Sale Price (AUD)</label>
-            <input type="number" class="form-input" name="sell" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Capital Improvements (AUD)</label>
-            <input type="number" class="form-input" name="improve" value="0">
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Selling Costs (AUD)</label>
-            <input type="number" class="form-input" name="costs" value="0">
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Years Owned</label>
-            <input type="number" class="form-input" name="years" step="0.1" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Your Marginal Tax Rate (%)</label>
-            <input type="number" class="form-input" name="taxRate" value="32.5" required>
-          </div>
-          
-          <button type="submit" class="btn btn-primary">Calculate CGT</button>
-        </form>
-        
-        <div id="cgtResult" class="calculator-result" style="display: none;"></div>
-        
-        <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" 
-                onclick="document.getElementById('modalCGT').classList.remove('active')">
-          Close
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-function createDepreciationModal() {
-  return `
-    <div class="modal" id="modalDepreciation">
-      <div class="modal-content">
-        <h2>🏠 Depreciation Calculator</h2>
-        <form id="formDepreciation">
-          <div class="form-group">
-            <label class="form-label">Building Cost (AUD)</label>
-            <input type="number" class="form-input" name="buildingCost" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Plant & Equipment Value (AUD)</label>
-            <input type="number" class="form-input" name="plantValue" value="0">
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Construction Date</label>
-            <input type="date" class="form-input" name="constructionDate" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">First Rental Date</label>
-            <input type="date" class="form-input" name="rentalDate" required>
-          </div>
-          
-          <button type="submit" class="btn btn-primary">Calculate Depreciation</button>
-        </form>
-        
-        <div id="depreciationResult" class="calculator-result" style="display: none;"></div>
-        
-        <button class="btn btn-outline" style="margin-top: 1rem; width: 100%;" 
-                onclick="document.getElementById('modalDepreciation').classList.remove('active')">
-          Close
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-// ============================================================================
-// 📊 REPORT GENERATION
-// ============================================================================
-
-function generateRentalSchedule() {
-  const report = {
-    title: "Rental Income Schedule",
-    period: "FY 2024-2025",
-    generated: new Date().toLocaleDateString('en-AU'),
-    summary: {
-      totalRentalIncome: 45200,
-      totalDeductions: 28750,
-      netRentalIncome: 16450
-    },
-    months: [
-      { month: "July 2024", income: 3800, expenses: 2450 },
-      { month: "August 2024", income: 3800, expenses: 2100 }
-    ]
-  };
+function renderDeductionTips(transactions, maintenance) {
+  const tips = [
+    "📝 Keep all receipts for 5 years",
+    "🏠 Claim depreciation on capital works",
+    "🔧 Maintenance costs are fully deductible",
+    "📊 Travel to rental properties may be deductible",
+    "💼 Professional fees (accountants, lawyers) are deductible"
+  ];
   
-  document.getElementById('reportOutput').innerHTML = `
-    <div class="card" style="margin-top: 1rem;">
-      <h3>📄 Rental Schedule Report</h3>
-      <pre style="background: #f8fafc; padding: 1rem; border-radius: 8px; overflow-x: auto;">
-${JSON.stringify(report, null, 2)}
-      </pre>
-      <button class="btn btn-success" onclick="downloadReport('rental-schedule', report)">
-        📥 Download PDF
-      </button>
-    </div>
+  document.getElementById('deductionTips').innerHTML = `
+    <ul style="margin: 0; padding-left: 1.25rem;">
+      ${tips.map(tip => `<li style="margin-bottom: 0.5rem; color: #64748b;">${tip}</li>`).join('')}
+    </ul>
   `;
 }
 
-// ============================================================================
-// 🛡️ COMPLIANCE FEATURES
-// ============================================================================
+function renderFinancialRecords(transactions, loans, maintenance) {
+  const incomeDiv = document.getElementById('incomeExpenseRecords');
+  const loanDiv = document.getElementById('loanRecords');
+  const maintDiv = document.getElementById('maintenanceRecords');
+
+  const incomeTx = transactions.filter(t => t.type === 'income').slice(-5);
+  const expenseTx = transactions.filter(t => t.type === 'expense').slice(-5);
+
+  incomeDiv.innerHTML = `
+    <h4 style="margin-bottom: 0.75rem; color: #374151;">Recent Income</h4>
+    ${incomeTx.length > 0 ? incomeTx.map(t => `
+      <div class="record-item">
+        <span>${t.description || 'Income'}</span>
+        <span style="color: #059669; font-weight: 600;">${fmt(t.amount)}</span>
+      </div>
+    `).join('') : '<p style="color: #64748b; font-style: italic;">No recent income</p>'}
+    
+    <h4 style="margin: 1.5rem 0 0.75rem 0; color: #374151;">Recent Expenses</h4>
+    ${expenseTx.length > 0 ? expenseTx.map(t => `
+      <div class="record-item">
+        <span>${t.description || 'Expense'}</span>
+        <span style="color: #dc2626; font-weight: 600;">${fmt(t.amount)}</span>
+      </div>
+    `).join('') : '<p style="color: #64748b; font-style: italic;">No recent expenses</p>'}
+  `;
+
+  loanDiv.innerHTML = loans.length > 0 ? `
+    ${loans.slice(-5).map(loan => `
+      <div class="record-item">
+        <span>${loan.name || 'Loan'}</span>
+        <span style="font-weight: 600;">${fmt(loan.currentBalance)}</span>
+      </div>
+    `).join('')}
+  ` : '<p style="color: #64748b; font-style: italic;">No loan data</p>';
+
+  maintDiv.innerHTML = maintenance.length > 0 ? `
+    ${maintenance.slice(-5).map(maint => `
+      <div class="record-item">
+        <span>${maint.title || 'Maintenance'}</span>
+        <span style="color: #d97706; font-weight: 600;">${fmt(maint.cost)}</span>
+      </div>
+    `).join('')}
+  ` : '<p style="color: #64748b; font-style: italic;">No maintenance data</p>';
+}
 
 function renderComplianceChecklist() {
   const checklist = [
@@ -673,55 +812,7 @@ function calculateTaxMetrics(transactions, loans, maintenance) {
 }
 
 // ============================================================================
-// 🎛️ UI CONTROLS & UTILITIES
-// ============================================================================
-
-function switchTab(tabName) {
-  // Hide all tabs
-  document.querySelectorAll('.tab-content').forEach(tab => {
-    tab.classList.remove('active');
-  });
-  
-  // Deactivate all buttons
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  
-  // Activate selected tab
-  document.getElementById(`${tabName}-tab`).classList.add('active');
-  event.target.classList.add('active');
-}
-
-function showCGTModal() {
-  document.getElementById('modalCGT').classList.add('active');
-}
-
-function showDepreciationModal() {
-  document.getElementById('modalDepreciation').classList.add('active');
-}
-
-function setupEventListeners() {
-  // CGT Calculator
-  document.getElementById('formCGT').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const result = calculateCGT(formData);
-    document.getElementById('cgtResult').style.display = 'block';
-    document.getElementById('cgtResult').innerHTML = result;
-  });
-  
-  // Close modals when clicking outside
-  document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', function(e) {
-      if (e.target === this) {
-        this.classList.remove('active');
-      }
-    });
-  });
-}
-
-// ============================================================================
-// 🧮 CALCULATION FUNCTIONS
+// 🧮 CALCULATOR FUNCTIONS
 // ============================================================================
 
 function calculateCGT(formData) {
@@ -734,7 +825,7 @@ function calculateCGT(formData) {
   
   const costBase = purchase + improve + costs;
   const capitalGain = sell - costBase;
-  const discount = years >= 12 ? 0.5 : 0; // 50% discount for >12 months
+  const discount = years >= 1 ? 0.5 : 0; // 50% discount for >12 months
   const taxableGain = capitalGain * (1 - discount);
   const taxPayable = taxableGain * taxRate;
   
@@ -770,6 +861,196 @@ function calculateCGT(formData) {
   `;
 }
 
+function calculateNegativeGearing(formData) {
+  const loss = parseFloat(formData.get('loss'));
+  const taxRate = parseFloat(formData.get('taxRate')) / 100;
+  const otherIncome = parseFloat(formData.get('otherIncome')) || 0;
+  
+  const taxRefund = loss * taxRate;
+  const netCost = loss - taxRefund;
+  const effectiveTaxRate = (taxRefund / loss) * 100;
+  
+  return `
+    <h4>Negative Gearing Benefits</h4>
+    <div style="display: grid; gap: 0.5rem;">
+      <div style="display: flex; justify-content: space-between;">
+        <span>Rental Loss:</span>
+        <strong style="color: #dc2626;">${fmt(loss)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Tax Refund Benefit:</span>
+        <strong style="color: #059669;">${fmt(taxRefund)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; border-top: 1px solid #cbd5e1; padding-top: 0.5rem;">
+        <span>Net Cost After Tax:</span>
+        <strong>${fmt(netCost)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Effective Tax Benefit:</span>
+        <strong>${effectiveTaxRate.toFixed(1)}%</strong>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================================
+// 📊 REPORT GENERATION
+// ============================================================================
+
+function generateRentalSchedule() {
+  const report = {
+    title: "Rental Income Schedule",
+    period: "FY 2024-2025",
+    generated: new Date().toLocaleDateString('en-AU'),
+    summary: {
+      totalRentalIncome: 45200,
+      totalDeductions: 28750,
+      netRentalIncome: 16450
+    },
+    months: [
+      { month: "July 2024", income: 3800, expenses: 2450 },
+      { month: "August 2024", income: 3800, expenses: 2100 }
+    ]
+  };
+  
+  document.getElementById('reportOutput').innerHTML = `
+    <div class="card" style="margin-top: 1rem;">
+      <h3>📄 Rental Schedule Report</h3>
+      <pre style="background: #f8fafc; padding: 1rem; border-radius: 8px; overflow-x: auto;">
+${JSON.stringify(report, null, 2)}
+      </pre>
+      <button class="btn btn-success" onclick="downloadReport('rental-schedule', report)">
+        📥 Download PDF
+      </button>
+    </div>
+  `;
+}
+
+function generateDeductionReport() {
+  const report = {
+    title: "Tax Deduction Report",
+    period: "FY 2024-2025",
+    generated: new Date().toLocaleDateString('en-AU'),
+    deductions: {
+      interest: 18500,
+      maintenance: 4500,
+      councilRates: 3200,
+      insurance: 1500,
+      propertyManagement: 2050
+    },
+    totalDeductions: 29750
+  };
+  
+  document.getElementById('reportOutput').innerHTML = `
+    <div class="card" style="margin-top: 1rem;">
+      <h3>💰 Deduction Report</h3>
+      <pre style="background: #f8fafc; padding: 1rem; border-radius: 8px; overflow-x: auto;">
+${JSON.stringify(report, null, 2)}
+      </pre>
+      <button class="btn btn-success" onclick="downloadReport('deduction-report', report)">
+        📥 Download PDF
+      </button>
+    </div>
+  `;
+}
+
+function generateCGTReport() {
+  document.getElementById('reportOutput').innerHTML = `
+    <div class="card" style="margin-top: 1rem;">
+      <h3>📈 CGT Report</h3>
+      <p style="color: #64748b;">Use the CGT calculator first to generate a report.</p>
+      <button class="btn btn-primary" onclick="showCGTModal()">
+        Open CGT Calculator
+      </button>
+    </div>
+  `;
+}
+
+function exportAllReports() {
+  const reports = {
+    rentalSchedule: generateRentalSchedule(),
+    deductionReport: generateDeductionReport(),
+    exported: new Date().toISOString()
+  };
+  
+  downloadReport('ato-reports-bundle', reports);
+}
+
+// ============================================================================
+// 🎛️ UI CONTROLS & UTILITIES
+// ============================================================================
+
+function switchTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Deactivate all buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Activate selected tab
+  document.getElementById(`${tabName}-tab`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function showCGTModal() {
+  document.getElementById('modalCGT').classList.add('active');
+}
+
+function showNegGearingModal() {
+  document.getElementById('modalNeg').classList.add('active');
+}
+
+function showDepreciationModal() {
+  document.getElementById('modalDepreciation').classList.add('active');
+}
+
+function showGSTModal() {
+  document.getElementById('modalGST').classList.add('active');
+}
+
+function showDeductionWizard() {
+  document.getElementById('modalDeductionWizard').classList.add('active');
+}
+
+function setupEventListeners() {
+  // CGT Calculator
+  const cgtForm = document.getElementById('formCGT');
+  if (cgtForm) {
+    cgtForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const result = calculateCGT(formData);
+      document.getElementById('cgtResult').style.display = 'block';
+      document.getElementById('cgtResult').innerHTML = result;
+    });
+  }
+  
+  // Negative Gearing Calculator
+  const negForm = document.getElementById('formNeg');
+  if (negForm) {
+    negForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const result = calculateNegativeGearing(formData);
+      document.getElementById('negResult').style.display = 'block';
+      document.getElementById('negResult').innerHTML = result;
+    });
+  }
+  
+  // Close modals when clicking outside
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('active');
+      }
+    });
+  });
+}
+
 // ============================================================================
 // 💰 UTILITY FUNCTIONS
 // ============================================================================
@@ -783,12 +1064,7 @@ function fmt(amount, currency = 'AUD') {
   }).format(amount || 0);
 }
 
-// Make functions globally available
-window.switchTab = switchTab;
-window.showCGTModal = showCGTModal;
-window.showDepreciationModal = showDepreciationModal;
-window.generateRentalSchedule = generateRentalSchedule;
-window.downloadReport = function(filename, data) {
+function downloadReport(filename, data) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -796,4 +1072,20 @@ window.downloadReport = function(filename, data) {
   a.download = `${filename}-${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
-};
+}
+
+// ============================================================================
+// 🌐 GLOBAL FUNCTION EXPORTS
+// ============================================================================
+
+window.switchTab = switchTab;
+window.showCGTModal = showCGTModal;
+window.showNegGearingModal = showNegGearingModal;
+window.showDepreciationModal = showDepreciationModal;
+window.showGSTModal = showGSTModal;
+window.showDeductionWizard = showDeductionWizard;
+window.generateRentalSchedule = generateRentalSchedule;
+window.generateDeductionReport = generateDeductionReport;
+window.generateCGTReport = generateCGTReport;
+window.exportAllReports = exportAllReports;
+window.downloadReport = downloadReport;
