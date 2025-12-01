@@ -6,10 +6,7 @@ import { APP_VERSION } from './version.js';
 document.getElementById("appVersion").textContent = APP_VERSION;
 
 
-const versionEl = document.getElementById("appVersion");
-if (versionEl) {
-  versionEl.textContent = APP_VERSION;
-}
+
 
 
 export async function initSettingsUI() {
