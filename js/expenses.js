@@ -1,9 +1,10 @@
 // ============================================================================
-// 💸 expenses.js — Enhanced Unified Expense Manager
+// 💸 expenses.js — Enhanced Unified Expense Manager with Transaction Integration
 // ============================================================================
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES } from './db.js';
 import { generateId } from './db.js';
+import { syncAllPropertyExpenses } from './transactions.js';
 
 // Enhanced expense categories with ATO classifications
 const EXPENSE_CATEGORIES = {
@@ -31,14 +32,21 @@ export async function initExpensesUI() {
   main.innerHTML = `
     <div class="page-header">
       <div class="header-content">
-        <h1>💸 Expense Management</h1>
-        <p>Track, analyze, and optimize your property expenses</p>
+        <h1>💸 Property Expense Management</h1>
+        <p>Track, analyze, and optimize your property expenses (Auto-synced from Transactions)</p>
       </div>
       <div class="header-actions">
+        <button id="btnSyncExpenses" class="btn btn-outline">🔄 Sync from Transactions</button>
         <button id="btnQuickExpense" class="btn btn-outline">⚡ Quick Add</button>
         <button id="btnNewExpense" class="btn btn-primary">➕ Add Expense</button>
         <button id="btnExportExpenses" class="btn btn-secondary">📤 Export</button>
       </div>
+    </div>
+
+    <!-- Sync Status Banner -->
+    <div id="syncStatusBanner" class="sync-banner" style="display: none;">
+      <span id="syncStatusText"></span>
+      <button id="btnDismissSync" class="btn btn-text">✕</button>
     </div>
 
     <!-- Enhanced Filters -->
@@ -73,6 +81,14 @@ export async function initExpensesUI() {
         <input type="date" id="filterDateFrom" class="form-input">
         <label>To</label>
         <input type="date" id="filterDateTo" class="form-input">
+      </div>
+      <div class="filter-group">
+        <label>Source</label>
+        <select id="filterSource" class="form-select">
+          <option value="">All Sources</option>
+          <option value="transaction">📊 From Transactions</option>
+          <option value="expense">💸 Direct Entry</option>
+        </select>
       </div>
       <div class="filter-group">
         <label>Status</label>
@@ -123,6 +139,25 @@ export async function initExpensesUI() {
       </div>
     </div>
 
+    <!-- Source Distribution -->
+    <div class="dashboard-grid">
+      <div class="summary-card">
+        <div class="summary-icon">📊</div>
+        <div class="summary-content">
+          <div class="summary-value" id="fromTransactions">0</div>
+          <div class="summary-label">From Transactions</div>
+        </div>
+      </div>
+      
+      <div class="summary-card">
+        <div class="summary-icon">💸</div>
+        <div class="summary-content">
+          <div class="summary-value" id="directEntries">0</div>
+          <div class="summary-label">Direct Entries</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Charts Section -->
     <div class="charts-container">
       <div class="chart-card">
@@ -139,19 +174,25 @@ export async function initExpensesUI() {
       
       <div class="chart-card">
         <div class="chart-header">
-          <h3>📅 Monthly Trend</h3>
-          <button id="btnToggleTrend" class="btn btn-outline">📈 Show Details</button>
+          <h3>📊 Expenses by Source</h3>
+          <button id="btnToggleSource" class="btn btn-outline">Show Details</button>
         </div>
-        <canvas id="trendChart" height="300"></canvas>
+        <canvas id="sourceChart" height="300"></canvas>
       </div>
     </div>
 
     <!-- Enhanced Expenses List -->
     <div class="section-card">
       <div class="section-header">
-        <h3>🧾 Expense Records</h3>
+        <h3>🧾 Property Expense Records</h3>
         <div class="section-actions">
           <span class="record-count" id="expenseCount">0 expenses</span>
+          <div class="source-filter">
+            <span class="filter-label">Show:</span>
+            <button class="filter-btn active" data-source="">All</button>
+            <button class="filter-btn" data-source="transaction">📊 Transactions</button>
+            <button class="filter-btn" data-source="expense">💸 Direct</button>
+          </div>
           <button id="btnBulkActions" class="btn btn-outline">🔄 Bulk Actions</button>
         </div>
       </div>
@@ -160,14 +201,24 @@ export async function initExpensesUI() {
       </div>
     </div>
 
-    <!-- Recurring Expenses Section -->
-    <div class="section-card">
-      <div class="section-header">
-        <h3>🔄 Recurring Expenses</h3>
-        <button id="btnAddRecurring" class="btn btn-outline">➕ Add Recurring</button>
+    <!-- Sync Info Card -->
+    <div class="section-card info-card">
+      <div class="info-header">
+        <h3>🔄 How It Works</h3>
       </div>
-      <div id="recurringExpenses" class="recurring-list">
-        <!-- Recurring expenses will be populated here -->
+      <div class="info-content">
+        <p><strong>Auto-Sync Feature:</strong></p>
+        <ul>
+          <li>✅ When you mark a transaction as a "Property Expense", it automatically appears here</li>
+          <li>✅ Click "Sync from Transactions" to import existing property expenses</li>
+          <li>✅ Expenses from transactions are read-only (edit them in Transactions page)</li>
+          <li>✅ Direct entries here don't create transactions automatically</li>
+        </ul>
+        <div class="info-actions">
+          <button class="btn btn-primary" onclick="window.loadView('transactions')">
+            ➕ Add Property Expense via Transactions
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -186,8 +237,11 @@ function setupEventListeners() {
   document.getElementById('btnExportExpenses').addEventListener('click', exportExpenses);
   document.getElementById('btnApplyFilters').addEventListener('click', refreshExpensesDashboard);
   document.getElementById('btnResetFilters').addEventListener('click', resetFilters);
-  document.getElementById('btnAddRecurring').addEventListener('click', () => openRecurringExpenseForm());
   document.getElementById('btnBulkActions').addEventListener('click', showBulkActions);
+  document.getElementById('btnSyncExpenses').addEventListener('click', syncFromTransactions);
+  document.getElementById('btnDismissSync').addEventListener('click', () => {
+    document.getElementById('syncStatusBanner').style.display = 'none';
+  });
   
   document.getElementById('filterPeriod').addEventListener('change', function() {
     document.getElementById('customDateRange').style.display = 
@@ -195,14 +249,23 @@ function setupEventListeners() {
   });
   
   document.getElementById('chartType').addEventListener('change', refreshExpensesDashboard);
-  document.getElementById('btnToggleTrend').addEventListener('click', toggleTrendDetails);
+  
+  // Source filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('filterSource').value = this.dataset.source;
+      refreshExpensesDashboard();
+    });
+  });
 }
 
 // ============================================================================
 // 🧩 Enhanced Filter Population
 // ============================================================================
 async function populateFilters() {
-  const properties = await getAllItems(STORE_NAMES.properties);
+  const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
   const propertySelect = document.getElementById('filterProperty');
   propertySelect.innerHTML =
     `<option value="">All Properties</option>` +
@@ -218,33 +281,33 @@ async function populateFilters() {
 // 🔁 Enhanced Dashboard Refresh
 // ============================================================================
 async function refreshExpensesDashboard() {
-  const [expenses, properties, budgets] = await Promise.all([
-    getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []),
-    getAllItems(STORE_NAMES.properties).catch(() => []),
-    getAllItems(STORE_NAMES.budgets).catch(() => [])
-  ]);
+  const allExpenses = await getAllPropertyExpenses();
+  const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
+  const budgets = await getAllItems(STORE_NAMES.budgets).catch(() => []);
 
-  const filteredExpenses = applyFilters(expenses);
-  renderEnhancedSummary(filteredExpenses, expenses, budgets);
+  const filteredExpenses = applyFilters(allExpenses);
+  renderEnhancedSummary(filteredExpenses, allExpenses, budgets);
   renderEnhancedCharts(filteredExpenses, properties);
   renderEnhancedExpenseList(filteredExpenses, properties);
-  renderRecurringExpenses(expenses, properties);
+  renderSourceDistribution(allExpenses);
 }
 
 // ============================================================================
-//= 🔍 Apply Enhanced Filters
+// 🔍 Apply Enhanced Filters
 // ============================================================================
 function applyFilters(expenses) {
   const filterProperty = document.getElementById('filterProperty').value;
   const filterCategory = document.getElementById('filterCategory').value;
   const filterPeriod = document.getElementById('filterPeriod').value;
   const filterStatus = document.getElementById('filterStatus').value;
+  const filterSource = document.getElementById('filterSource').value;
   
   let filtered = [...expenses];
   
   if (filterProperty) filtered = filtered.filter(e => e.propertyId === filterProperty);
   if (filterCategory) filtered = filtered.filter(e => e.category === filterCategory);
   if (filterStatus) filtered = filtered.filter(e => e.status === filterStatus);
+  if (filterSource) filtered = filtered.filter(e => e.source === filterSource);
   
   // Date filtering
   const now = new Date();
@@ -284,6 +347,65 @@ function applyFilters(expenses) {
 }
 
 // ============================================================================
+// 🏠 Get All Property Expenses (Combined from both sources)
+// ============================================================================
+async function getAllPropertyExpenses() {
+  try {
+    // Get expenses from expenses table
+    const directExpenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
+    
+    // Get property-related transactions
+    const transactions = await getAllItems(STORE_NAMES.transactions).catch(() => []);
+    const propertyTransactions = transactions.filter(t => 
+      t.type === 'expense' && t.propertyId && t.isPropertyExpense
+    );
+    
+    // Convert property transactions to expense format
+    const transactionExpenses = propertyTransactions.map(t => ({
+      id: t.id,
+      transactionId: t.id,
+      propertyId: t.propertyId,
+      category: t.expenseCategory || 'Other',
+      description: t.description || 'Property Expense',
+      amount: Math.abs(t.amount),
+      date: t.date,
+      status: t.expenseStatus || 'Paid',
+      receiptUrl: t.receiptUrl || '',
+      notes: t.notes || '',
+      taxDeductible: true,
+      recurring: false,
+      frequency: 'monthly',
+      nextDue: t.date,
+      source: 'transaction', // Flag to identify source
+      isReadOnly: true, // Can't edit these directly
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt
+    }));
+    
+    // Add source to direct expenses
+    const directWithSource = directExpenses.map(e => ({
+      ...e,
+      source: 'expense',
+      isReadOnly: false
+    }));
+    
+    // Combine and deduplicate (favor expenses table over transactions)
+    const allExpenses = [...directWithSource];
+    
+    transactionExpenses.forEach(te => {
+      if (!allExpenses.find(e => e.transactionId === te.transactionId)) {
+        allExpenses.push(te);
+      }
+    });
+    
+    return allExpenses;
+  } catch (error) {
+    console.error('❌ Error getting property expenses:', error);
+    return [];
+  }
+}
+
+// ============================================================================
 // 💰 Enhanced Summary Dashboard
 // ============================================================================
 function renderEnhancedSummary(filteredExpenses, allExpenses, budgets) {
@@ -315,11 +437,57 @@ function renderEnhancedSummary(filteredExpenses, allExpenses, budgets) {
 }
 
 // ============================================================================
+// 📊 Source Distribution
+// ============================================================================
+function renderSourceDistribution(expenses) {
+  const fromTransactions = expenses.filter(e => e.source === 'transaction').length;
+  const directEntries = expenses.filter(e => e.source === 'expense').length;
+  
+  document.getElementById('fromTransactions').textContent = fromTransactions;
+  document.getElementById('directEntries').textContent = directEntries;
+  
+  // Update source chart
+  const ctx = document.getElementById('sourceChart').getContext('2d');
+  
+  if (window.sourceChartInstance) window.sourceChartInstance.destroy();
+  
+  window.sourceChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['From Transactions', 'Direct Entries'],
+      datasets: [{
+        data: [fromTransactions, directEntries],
+        backgroundColor: ['#3B82F6', '#10B981'],
+        borderColor: ['#2563EB', '#059669'],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { 
+          position: 'bottom',
+          labels: { usePointStyle: true }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+              return `${context.label}: ${context.raw} expenses (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================================
 // 📊 Enhanced Charts
 // ============================================================================
 function renderEnhancedCharts(expenses, properties) {
   renderCategoryChart(expenses);
-  renderTrendChart(expenses);
 }
 
 function renderCategoryChart(expenses) {
@@ -359,64 +527,26 @@ function renderCategoryChart(expenses) {
           callbacks: {
             label: (context) => {
               const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((context.raw / total) * 100).toFixed(1);
+              const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
               return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
             }
           }
         }
-      }
-    }
-  });
-}
-
-function renderTrendChart(expenses) {
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  
-  // Group by month
-  const monthly = {};
-  expenses.forEach(e => {
-    if (!e.date) return;
-    const month = e.date.substring(0, 7); // YYYY-MM
-    monthly[month] = (monthly[month] || 0) + (e.amount || 0);
-  });
-
-  const months = Object.keys(monthly).sort();
-  const amounts = months.map(month => monthly[month]);
-
-  if (window.trendChartInstance) window.trendChartInstance.destroy();
-  
-  window.trendChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: months.map(m => formatMonthLabel(m)),
-      datasets: [{
-        label: 'Monthly Expenses',
-        data: amounts,
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
       },
-      scales: {
+      scales: chartType === 'bar' ? {
         y: {
           beginAtZero: true,
           ticks: {
             callback: (value) => formatCurrency(value)
           }
         }
-      }
+      } : undefined
     }
   });
 }
 
 // ============================================================================
-// 🧾 Enhanced Expense List
+// 🧾 Enhanced Expense List with Source Indicators
 // ============================================================================
 function renderEnhancedExpenseList(expenses, properties) {
   const list = document.getElementById('expensesList');
@@ -428,9 +558,16 @@ function renderEnhancedExpenseList(expenses, properties) {
     list.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">💸</div>
-        <h3>No expenses found</h3>
-        <p>Try adjusting your filters or add a new expense</p>
-        <button class="btn btn-primary" onclick="openExpenseForm()">Add Your First Expense</button>
+        <h3>No property expenses found</h3>
+        <p>Try adjusting your filters or add property expenses via Transactions page</p>
+        <div class="empty-actions">
+          <button class="btn btn-primary" onclick="window.loadView('transactions')">
+            ➕ Add via Transactions
+          </button>
+          <button class="btn btn-outline" onclick="syncFromTransactions()">
+            🔄 Sync Existing
+          </button>
+        </div>
       </div>
     `;
     return;
@@ -441,14 +578,13 @@ function renderEnhancedExpenseList(expenses, properties) {
       <table class="data-table">
         <thead>
           <tr>
-            <th><input type="checkbox" id="selectAllExpenses"></th>
             <th>Description</th>
             <th>Property</th>
             <th>Category</th>
             <th>Amount</th>
             <th>Date</th>
             <th>Status</th>
-            <th>Tax Deductible</th>
+            <th>Source</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -456,11 +592,10 @@ function renderEnhancedExpenseList(expenses, properties) {
           ${expenses.map(expense => {
             const property = properties.find(p => p.id === expense.propertyId);
             const categoryInfo = EXPENSE_CATEGORIES[expense.category];
-            const isDeductible = categoryInfo?.deductible;
+            const isFromTransaction = expense.source === 'transaction';
             
             return `
               <tr class="expense-row ${expense.status === 'Unpaid' ? 'unpaid' : ''}">
-                <td><input type="checkbox" class="expense-checkbox" value="${expense.id}"></td>
                 <td>
                   <div class="expense-description">
                     <strong>${expense.description || 'Unnamed Expense'}</strong>
@@ -481,21 +616,30 @@ function renderEnhancedExpenseList(expenses, properties) {
                   </span>
                 </td>
                 <td>
-                  <span class="deductible-badge ${isDeductible ? 'deductible-yes' : 'deductible-no'}">
-                    ${isDeductible ? '✓ Yes' : '✗ No'}
+                  <span class="source-badge ${isFromTransaction ? 'source-transaction' : 'source-direct'}">
+                    ${isFromTransaction ? '📊 Transaction' : '💸 Direct'}
                   </span>
                 </td>
                 <td>
                   <div class="action-buttons">
-                    <button class="btn-icon" onclick="openExpenseForm('${expense.id}')" title="Edit">
-                      ✏️
-                    </button>
-                    <button class="btn-icon" onclick="duplicateExpense('${expense.id}')" title="Duplicate">
-                      📋
-                    </button>
-                    <button class="btn-icon btn-danger" onclick="confirmDeleteExpense('${expense.id}')" title="Delete">
-                      🗑️
-                    </button>
+                    ${isFromTransaction ? `
+                      <button class="btn-icon" onclick="viewTransaction('${expense.transactionId}')" title="View Transaction">
+                        👁️
+                      </button>
+                      <button class="btn-icon" disabled title="Edit in Transactions page">
+                        ✏️
+                      </button>
+                    ` : `
+                      <button class="btn-icon" onclick="openExpenseForm('${expense.id}')" title="Edit">
+                        ✏️
+                      </button>
+                      <button class="btn-icon" onclick="duplicateExpense('${expense.id}')" title="Duplicate">
+                        📋
+                      </button>
+                      <button class="btn-icon btn-danger" onclick="confirmDeleteExpense('${expense.id}')" title="Delete">
+                        🗑️
+                      </button>
+                    `}
                   </div>
                 </td>
               </tr>
@@ -505,70 +649,70 @@ function renderEnhancedExpenseList(expenses, properties) {
       </table>
     </div>
   `;
-
-  // Select all functionality
-  document.getElementById('selectAllExpenses').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.expense-checkbox');
-    checkboxes.forEach(checkbox => checkbox.checked = this.checked);
-  });
 }
 
 // ============================================================================
-// 🔄 Recurring Expenses
+// 🔄 Sync from Transactions
 // ============================================================================
-function renderRecurringExpenses(expenses, properties) {
-  const recurringContainer = document.getElementById('recurringExpenses');
-  const recurring = expenses.filter(e => e.recurring);
-  
-  if (!recurring.length) {
-    recurringContainer.innerHTML = `
-      <div class="empty-state small">
-        <p>No recurring expenses set up</p>
-        <button class="btn btn-outline" onclick="openRecurringExpenseForm()">Add Recurring Expense</button>
-      </div>
-    `;
-    return;
+async function syncFromTransactions() {
+  try {
+    const btn = document.getElementById('btnSyncExpenses');
+    const originalText = btn.textContent;
+    btn.textContent = '🔄 Syncing...';
+    btn.disabled = true;
+    
+    const result = await syncAllPropertyExpenses();
+    
+    // Show sync status banner
+    const banner = document.getElementById('syncStatusBanner');
+    const bannerText = document.getElementById('syncStatusText');
+    
+    banner.style.display = 'flex';
+    banner.style.backgroundColor = result.synced > 0 ? '#10B981' : '#3B82F6';
+    bannerText.textContent = result.message;
+    
+    // Refresh the dashboard
+    await refreshExpensesDashboard();
+    
+    btn.textContent = originalText;
+    btn.disabled = false;
+    
+    // Auto-hide banner after 5 seconds
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 5000);
+    
+  } catch (error) {
+    console.error('❌ Error syncing from transactions:', error);
+    alert('Error syncing from transactions: ' + error.message);
+    
+    const btn = document.getElementById('btnSyncExpenses');
+    btn.textContent = '🔄 Sync from Transactions';
+    btn.disabled = false;
   }
-
-  recurringContainer.innerHTML = `
-    <div class="recurring-grid">
-      ${recurring.map(expense => {
-        const property = properties.find(p => p.id === expense.propertyId);
-        const nextDate = calculateNextRecurringDate(expense);
-        
-        return `
-          <div class="recurring-card">
-            <div class="recurring-header">
-              <h4>${expense.description}</h4>
-              <span class="recurring-amount">${formatCurrency(expense.amount)}</span>
-            </div>
-            <div class="recurring-details">
-              <div><strong>Frequency:</strong> ${expense.frequency || 'Monthly'}</div>
-              <div><strong>Next Due:</strong> ${nextDate.toLocaleDateString('en-AU')}</div>
-              <div><strong>Property:</strong> ${property ? property.name : 'General'}</div>
-            </div>
-            <div class="recurring-actions">
-              <button class="btn btn-outline" onclick="skipRecurringExpense('${expense.id}')">
-                Skip
-              </button>
-              <button class="btn btn-primary" onclick="processRecurringExpense('${expense.id}')">
-                Mark Paid
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
 }
 
 // ============================================================================
-// ➕ Enhanced Expense Form
+// 👁️ View Transaction
+// ============================================================================
+function viewTransaction(transactionId) {
+  // Navigate to transactions page and highlight the transaction
+  window.loadView('transactions');
+  
+  // Store the transaction ID to scroll to it
+  setTimeout(() => {
+    localStorage.setItem('highlightTransactionId', transactionId);
+    // The transactions page should check for this and scroll to it
+  }, 500);
+}
+
+// ============================================================================
+// ➕ Enhanced Expense Form (Direct Entry)
 // ============================================================================
 async function openExpenseForm(id = null) {
   const main = document.getElementById('mainContent');
-  const properties = await getAllItems(STORE_NAMES.properties);
-  const existingExpenses = await getAllItems(STORE_NAMES.expenses).catch(() => []);
+  const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
+  const existingExpenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
   const expense = id ? existingExpenses.find(e => e.id === id) : {
     id: null,
     propertyId: '',
@@ -583,11 +727,20 @@ async function openExpenseForm(id = null) {
     notes: ''
   };
 
+  // Don't allow editing of transaction-based expenses
+  if (expense.source === 'transaction') {
+    alert('This expense came from a transaction. Please edit it in the Transactions page.');
+    return;
+  }
+
   main.innerHTML = `
     <div class="form-container">
       <div class="form-header">
-        <h2>${id ? 'Edit Expense' : 'Add Expense'}</h2>
-        <button class="btn btn-outline" onclick="initExpensesUI()">← Back to Expenses</button>
+        <h2>${id ? 'Edit Expense' : 'Add Direct Expense'}</h2>
+        <div class="form-subheader">
+          <span class="form-note">💡 Note: Direct expenses don't create transactions automatically</span>
+          <button class="btn btn-outline" onclick="initExpensesUI()">← Back to Expenses</button>
+        </div>
       </div>
       
       <form id="expenseForm" class="styled-form">
@@ -648,33 +801,6 @@ async function openExpenseForm(id = null) {
           <h3>Additional Details</h3>
           
           <div class="form-group">
-            <label class="form-label">
-              <input type="checkbox" name="recurring" ${expense.recurring ? 'checked' : ''} 
-                     onchange="toggleRecurringFields(this.checked)">
-              This is a recurring expense
-            </label>
-          </div>
-          
-          <div id="recurringFields" style="display: ${expense.recurring ? 'block' : 'none'};">
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Frequency</label>
-                <select name="frequency" class="form-select">
-                  <option value="weekly" ${expense.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
-                  <option value="monthly" ${expense.frequency === 'monthly' ? 'selected' : ''}>Monthly</option>
-                  <option value="quarterly" ${expense.frequency === 'quarterly' ? 'selected' : ''}>Quarterly</option>
-                  <option value="yearly" ${expense.frequency === 'yearly' ? 'selected' : ''}>Yearly</option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label">Next Due Date</label>
-                <input type="date" name="nextDue" value="${expense.nextDue || ''}" class="form-input">
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-group">
             <label class="form-label">Receipt URL (optional)</label>
             <input type="url" name="receiptUrl" value="${expense.receiptUrl || ''}" 
                    class="form-input" placeholder="https://...">
@@ -705,20 +831,23 @@ async function openExpenseForm(id = null) {
   `;
 
   // Add category hint
-  document.querySelector('[name="category"]').addEventListener('change', function() {
-    const category = EXPENSE_CATEGORIES[this.value];
-    const hint = document.getElementById('categoryHint');
-    if (category) {
-      hint.innerHTML = `
-        <span style="color: ${category.color}">
-          ${category.type} expense • 
-          ${category.deductible ? 'Tax deductible ✓' : 'Not tax deductible ✗'}
-        </span>
-      `;
-    }
-  });
-  // Trigger change event to show initial hint
-  document.querySelector('[name="category"]').dispatchEvent(new Event('change'));
+  const categorySelect = document.querySelector('[name="category"]');
+  if (categorySelect) {
+    categorySelect.addEventListener('change', function() {
+      const category = EXPENSE_CATEGORIES[this.value];
+      const hint = document.getElementById('categoryHint');
+      if (category) {
+        hint.innerHTML = `
+          <span style="color: ${category.color}">
+            ${category.type} expense • 
+            ${category.deductible ? 'Tax deductible ✓' : 'Not tax deductible ✗'}
+          </span>
+        `;
+      }
+    });
+    // Trigger change event to show initial hint
+    categorySelect.dispatchEvent(new Event('change'));
+  }
 
   document.getElementById('expenseForm').addEventListener('submit', async e => {
     e.preventDefault();
@@ -727,7 +856,7 @@ async function openExpenseForm(id = null) {
 }
 
 // ============================================================================
-// 💾 Save Expense Function
+// 💾 Save Expense Function (Direct Entry Only)
 // ============================================================================
 async function saveExpense(originalExpense, formData) {
   const newExpense = {
@@ -737,21 +866,23 @@ async function saveExpense(originalExpense, formData) {
     description: formData.get('description').trim(),
     amount: parseFloat(formData.get('amount')),
     date: formData.get('date'),
-    recurring: formData.get('recurring') === 'on',
-    frequency: formData.get('frequency'),
-    nextDue: formData.get('nextDue'),
     status: formData.get('status'),
     receiptUrl: formData.get('receiptUrl'),
     notes: formData.get('notes'),
+    taxDeductible: EXPENSE_CATEGORIES[formData.get('category')]?.deductible || true,
+    recurring: false,
+    frequency: 'monthly',
+    nextDue: formData.get('date'),
+    source: 'expense', // Always mark as direct entry
     createdAt: originalExpense.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
 
   try {
     if (originalExpense.id) {
-      await updateItem(STORE_NAMES.expenses, newExpense);
+      await updateItem(STORE_NAMES.expenses || 'expenses', newExpense);
     } else {
-      await addItem(STORE_NAMES.expenses, newExpense);
+      await addItem(STORE_NAMES.expenses || 'expenses', newExpense);
     }
     initExpensesUI();
   } catch (err) {
@@ -769,7 +900,7 @@ async function openQuickExpenseForm() {
   main.innerHTML = `
     <div class="quick-form-container">
       <div class="quick-form-header">
-        <h2>⚡ Quick Expense</h2>
+        <h2>⚡ Quick Expense (Direct Entry)</h2>
         <button class="btn btn-outline" onclick="initExpensesUI()">← Back</button>
       </div>
       
@@ -787,7 +918,7 @@ async function openQuickExpenseForm() {
             ).join('')}
           </select>
           
-          <button type="submit" class="btn btn-primary btn-lg">💾 Save Expense</button>
+          <button type="submit" class="btn btn-primary btn-lg">💾 Save Direct Expense</button>
         </div>
       </form>
     </div>
@@ -803,12 +934,14 @@ async function openQuickExpenseForm() {
       category: formData.get('category'),
       date: new Date().toISOString().split('T')[0],
       status: 'Paid',
+      taxDeductible: EXPENSE_CATEGORIES[formData.get('category')]?.deductible || true,
+      source: 'expense',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     try {
-      await addItem(STORE_NAMES.expenses, expense);
+      await addItem(STORE_NAMES.expenses || 'expenses', expense);
       initExpensesUI();
     } catch (err) {
       console.error('❌ Error saving quick expense:', err);
@@ -824,7 +957,7 @@ async function confirmDeleteExpense(id) {
   if (!confirm('Are you sure you want to delete this expense? This action cannot be undone.')) return;
   
   try {
-    await deleteItem(STORE_NAMES.expenses, id);
+    await deleteItem(STORE_NAMES.expenses || 'expenses', id);
     await refreshExpensesDashboard();
     showNotification('Expense deleted successfully', 'success');
   } catch (err) {
@@ -837,8 +970,8 @@ async function confirmDeleteExpense(id) {
 // 📤 Export Functionality
 // ============================================================================
 async function exportExpenses() {
-  const expenses = await getAllItems(STORE_NAMES.expenses).catch(() => []);
-  const properties = await getAllItems(STORE_NAMES.properties).catch(() => []);
+  const expenses = await getAllPropertyExpenses();
+  const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
   
   const exportData = expenses.map(expense => {
     const property = properties.find(p => p.id === expense.propertyId);
@@ -849,14 +982,15 @@ async function exportExpenses() {
       'Amount': expense.amount,
       'Date': expense.date,
       'Status': expense.status,
+      'Source': expense.source === 'transaction' ? 'Transaction' : 'Direct Entry',
       'Tax Deductible': EXPENSE_CATEGORIES[expense.category]?.deductible ? 'Yes' : 'No',
-      'Recurring': expense.recurring ? 'Yes' : 'No',
+      'Receipt URL': expense.receiptUrl || '',
       'Notes': expense.notes || ''
     };
   });
 
   const csv = convertToCSV(exportData);
-  downloadCSV(csv, `expenses-export-${new Date().toISOString().split('T')[0]}.csv`);
+  downloadCSV(csv, `property-expenses-${new Date().toISOString().split('T')[0]}.csv`);
 }
 
 // ============================================================================
@@ -868,12 +1002,6 @@ function formatCurrency(amount) {
     currency: 'AUD',
     minimumFractionDigits: 2
   }).format(amount || 0);
-}
-
-function formatMonthLabel(monthString) {
-  const [year, month] = monthString.split('-');
-  const date = new Date(year, month - 1);
-  return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
 }
 
 function calculateMonthlyAverage(expenses) {
@@ -912,26 +1040,12 @@ function calculateExpenseTrend(expenses) {
   return Math.round(((currentMonthExpenses - prevMonthExpenses) / prevMonthExpenses) * 100);
 }
 
-function calculateNextRecurringDate(expense) {
-  const lastDate = new Date(expense.date);
-  const nextDate = new Date(lastDate);
-  
-  switch(expense.frequency) {
-    case 'weekly': nextDate.setDate(nextDate.getDate() + 7); break;
-    case 'monthly': nextDate.setMonth(nextDate.getMonth() + 1); break;
-    case 'quarterly': nextDate.setMonth(nextDate.getMonth() + 3); break;
-    case 'yearly': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
-    default: nextDate.setMonth(nextDate.getMonth() + 1);
-  }
-  
-  return nextDate;
-}
-
 function convertToCSV(data) {
-  const headers = Object.keys(data[0] || {});
+  if (!data.length) return '';
+  const headers = Object.keys(data[0]);
   const csv = [
     headers.join(','),
-    ...data.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
   ];
   return csv.join('\n');
 }
@@ -947,7 +1061,6 @@ function downloadCSV(csv, filename) {
 }
 
 function showNotification(message, type = 'info') {
-  // Simple notification implementation
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
   notification.textContent = message;
@@ -974,18 +1087,12 @@ function resetFilters() {
   document.getElementById('filterCategory').value = '';
   document.getElementById('filterPeriod').value = 'year';
   document.getElementById('filterStatus').value = '';
+  document.getElementById('filterSource').value = '';
   document.getElementById('customDateRange').style.display = 'none';
+  document.querySelectorAll('.filter-btn').forEach((btn, index) => {
+    btn.classList.toggle('active', index === 0);
+  });
   refreshExpensesDashboard();
-}
-
-function toggleRecurringFields(show) {
-  document.getElementById('recurringFields').style.display = show ? 'block' : 'none';
-}
-
-function toggleTrendDetails() {
-  const btn = document.getElementById('btnToggleTrend');
-  const trendChart = document.getElementById('trendChart');
-  // Implementation for showing/hiding trend details
 }
 
 // ============================================================================
@@ -994,30 +1101,20 @@ function toggleTrendDetails() {
 window.openExpenseForm = openExpenseForm;
 window.openQuickExpenseForm = openQuickExpenseForm;
 window.confirmDeleteExpense = confirmDeleteExpense;
-window.toggleRecurringFields = toggleRecurringFields;
+window.syncFromTransactions = syncFromTransactions;
+window.viewTransaction = viewTransaction;
 window.duplicateExpense = async function(id) {
-  const expenses = await getAllItems(STORE_NAMES.expenses).catch(() => []);
+  const expenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
   const original = expenses.find(e => e.id === id);
   if (original) {
     const duplicate = { ...original, id: generateId() };
     duplicate.description = `${duplicate.description} (Copy)`;
     duplicate.createdAt = new Date().toISOString();
     duplicate.updatedAt = new Date().toISOString();
-    await addItem(STORE_NAMES.expenses, duplicate);
+    await addItem(STORE_NAMES.expenses || 'expenses', duplicate);
     refreshExpensesDashboard();
     showNotification('Expense duplicated successfully', 'success');
   }
-};
-
-window.openRecurringExpenseForm = function() {
-  // Open form with recurring preset
-  const expense = {
-    id: null,
-    recurring: true,
-    frequency: 'monthly',
-    status: 'Unpaid'
-  };
-  openExpenseForm(null, expense);
 };
 
 window.showBulkActions = function() {
@@ -1036,18 +1133,18 @@ window.showBulkActions = function() {
     selected.forEach(checkbox => markExpenseStatus(checkbox.value, 'Unpaid'));
   } else if (action === '3') {
     if (confirm(`Delete ${selected.length} expenses?`)) {
-      selected.forEach(checkbox => deleteItem(STORE_NAMES.expenses, checkbox.value));
+      selected.forEach(checkbox => deleteItem(STORE_NAMES.expenses || 'expenses', checkbox.value));
       refreshExpensesDashboard();
     }
   }
 };
 
 async function markExpenseStatus(id, status) {
-  const expenses = await getAllItems(STORE_NAMES.expenses);
+  const expenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
   const expense = expenses.find(e => e.id === id);
-  if (expense) {
+  if (expense && expense.source === 'expense') { // Only direct entries
     expense.status = status;
     expense.updatedAt = new Date().toISOString();
-    await updateItem(STORE_NAMES.expenses, expense);
+    await updateItem(STORE_NAMES.expenses || 'expenses', expense);
   }
 }
