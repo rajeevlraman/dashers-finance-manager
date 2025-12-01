@@ -232,7 +232,7 @@ async function refreshExpensesDashboard() {
 }
 
 // ============================================================================
-= 🔍 Apply Enhanced Filters
+//= 🔍 Apply Enhanced Filters
 // ============================================================================
 function applyFilters(expenses) {
   const filterProperty = document.getElementById('filterProperty').value;
