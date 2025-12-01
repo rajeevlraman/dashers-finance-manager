@@ -4,7 +4,11 @@
 // Full offline support with enhanced iOS compatibility and error handling
 // ============================================================================
 
-const CACHE_NAME = 'budget-tracker-v35-debug'; // 🚨 Added -debug suffix
+//const CACHE_NAME = 'budget-tracker-v35-debug'; // 🚨 Added -debug suffix commented to use import cache version form version.js
+
+const CACHE_VERSION = "v1.0.0";   // Increment this for each release
+const CACHE_NAME = `dfm-cache-${CACHE_VERSION}`;
+
 const DEBUG = true; // 🚨 Enable detailed debugging
 
 // 🎯 CRITICAL FIX: Expanded cache list with all required files
