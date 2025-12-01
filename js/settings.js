@@ -4,6 +4,12 @@ import { migrateIndexedDBToDexie } from './db_migration_helper.js';
 
 import { APP_VERSION } from './version.js';
 document.getElementById("appVersion").textContent = APP_VERSION;
+import { APP_VERSION } from "./version.js";
+
+const versionEl = document.getElementById("appVersion");
+if (versionEl) {
+  versionEl.textContent = APP_VERSION;
+}
 
 
 export async function initSettingsUI() {
@@ -19,11 +25,10 @@ export async function initSettingsUI() {
         <h2>⚙️ Settings</h2>
         <p class="settings-subtitle">Manage your application preferences and data</p>
       </div>
-      
-    <div class="section-card">
-      <h3>App Information</h3>
-      <p>Version: <span id="appVersion">...</span></p>
-    </div>
+        <div class="section-card">
+          <h3>App Information</h3>
+          <p>Version: <span id="appVersion">...</span></p>
+        </div>
 
       <div class="settings-grid">
         <!-- Preferences Section -->
