@@ -2,19 +2,22 @@ import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId }
 import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
 import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 
-// Property expense categories list
-const PROPERTY_EXPENSE_CATEGORIES_LIST = Object.keys(PROPERTY_EXPENSE_CATEGORIES);
 
-// Helper function for property type labels - defined BEFORE initTransactionsUI
-function getPropertyTypeLabel(type) {
-  const labels = {
-    'primary': 'Primary Residence',
-    'investment': 'Investment',
-    'vacation': 'Vacation',
-    'commercial': 'Commercial'
-  };
-  return labels[type] || type;
-}
+// Import expense categories from expenses.js or define here
+const EXPENSE_CATEGORIES = {
+  'Maintenance': { type: 'immediate', deductible: true, color: '#3B82F6' },
+  'Repairs': { type: 'immediate', deductible: true, color: '#EF4444' },
+  'Utilities': { type: 'ongoing', deductible: true, color: '#10B981' },
+  'Insurance': { type: 'ongoing', deductible: true, color: '#F59E0B' },
+  'Council Rates': { type: 'ongoing', deductible: true, color: '#8B5CF6' },
+  'Property Management': { type: 'ongoing', deductible: true, color: '#EC4899' },
+  'Loan Interest': { type: 'ongoing', deductible: true, color: '#06B6D4' },
+  'Body Corporate': { type: 'ongoing', deductible: true, color: '#84CC16' },
+  'Capital Improvements': { type: 'capital', deductible: false, color: '#F97316' },
+  'Travel': { type: 'immediate', deductible: true, color: '#6366F1' },
+  'Legal Fees': { type: 'immediate', deductible: true, color: '#8B5CF6' },
+  'Other': { type: 'other', deductible: true, color: '#6B7280' }
+};
 
 export async function initTransactionsUI() {
   const mainContent = document.getElementById('mainContent');
@@ -47,9 +50,6 @@ export async function initTransactionsUI() {
           <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
           <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
           <button class="btn btn-secondary" id="btnExportTx">📤 Export</button>
-          <button class="btn btn-success" id="btnSyncProperties" title="Sync all property expenses">
-            🔄 Sync Property Expenses
-          </button>
         </div>
       </div>
 
@@ -98,10 +98,6 @@ export async function initTransactionsUI() {
         <button class="quick-action-btn" data-amount="2000" data-category="Salary">
           <span class="quick-icon">💵</span>
           <span class="quick-label">Salary $2000</span>
-        </button>
-        <button class="quick-action-btn" data-amount="-500" data-category="Property" onclick="showPropertyExpenseForm()">
-          <span class="quick-icon">🏠</span>
-          <span class="quick-label">Property $500</span>
         </button>
       </div>
 
@@ -167,118 +163,59 @@ export async function initTransactionsUI() {
             </div>
 
             <!-- Property Expense Section -->
-            <div id="propertyExpenseSection" style="margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 2px solid #0ea5e9; display: none;">
-              <h4 style="margin-top: 0; margin-bottom: 1rem; color: #0369a1; display: flex; align-items: center; gap: 0.5rem;">
-                <span>🏠 Property Expense Details</span>
-                <span style="font-size: 0.875rem; background: #0ea5e9; color: white; padding: 2px 8px; border-radius: 12px;">ATO Deductible</span>
-              </h4>
+            <div id="propertyExpenseSection" style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 2px dashed #e2e8f0; display: none;">
+              <h4 style="margin-top: 0; margin-bottom: 1rem; color: #1e40af;">🏠 Property Expense Details</h4>
               
               <div class="form-group">
-                <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                  <input type="checkbox" id="isPropertyExpense" name="isPropertyExpense" style="transform: scale(1.2);">
-                  <span style="font-weight: 600; color: #1e40af;">📍 Mark as Property Expense</span>
-                  <span style="font-size: 0.875rem; color: #64748b;">(Will sync to Expenses & Tax pages)</span>
+                <label class="form-label">
+                  <input type="checkbox" id="isPropertyExpense" name="isPropertyExpense">
+                  📍 This is a property-related expense (will appear in Expenses page)
                 </label>
               </div>
               
-              <div id="propertyExpenseFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e0;">
+              <div id="propertyExpenseFields" style="display: none; margin-top: 1rem;">
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">
-                      <span style="display: flex; align-items: center; gap: 0.25rem;">
-                        🏘️ Property
-                        <span class="form-required">*</span>
-                      </span>
-                    </label>
-                    <select name="propertyId" class="form-select" required>
+                    <label class="form-label">Property</label>
+                    <select name="propertyId" class="form-select">
                       <option value="">-- Select Property --</option>
-                      ${properties.map(p => `
-                        <option value="${p.id}" data-type="${p.propertyType || 'primary'}">
-                          ${p.name} (${getPropertyTypeLabel(p.propertyType)})
-                        </option>
-                      `).join('')}
+                      ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
                     </select>
                   </div>
                   
                   <div class="form-group">
-                    <label class="form-label">
-                      <span style="display: flex; align-items: center; gap: 0.25rem;">
-                        📊 ATO Expense Category
-                        <span class="form-required">*</span>
-                      </span>
-                      <small class="form-hint">Select the ATO category for tax deduction</small>
-                    </label>
-                    <select name="expenseCategory" class="form-select" onchange="updatePropertyExpenseCategory(this)" required>
-                      <option value="">-- Select ATO Category --</option>
-                      ${PROPERTY_EXPENSE_CATEGORIES_LIST.map(cat => {
-                        const config = PROPERTY_EXPENSE_CATEGORIES[cat];
-                        return `
-                          <option value="${cat}" 
-                                  data-deductible="${config.deductible}"
-                                  data-type="${config.type}"
-                                  data-default-category="${config.defaultCategoryId || ''}"
-                                  style="${config.deductible ? 'color: #059669;' : 'color: #dc2626;'}">
-                            ${config.deductible ? '✓' : '✗'} ${cat} (${config.type})
-                          </option>
-                        `;
-                      }).join('')}
+                    <label class="form-label">Expense Category</label>
+                    <select name="expenseCategory" class="form-select">
+                      ${Object.keys(EXPENSE_CATEGORIES).map(cat => 
+                        `<option value="${cat}">${cat}</option>`
+                      ).join('')}
                     </select>
-                    <div id="categoryTaxInfo" style="margin-top: 0.5rem; font-size: 0.875rem; padding: 0.5rem; border-radius: 6px; display: none;"></div>
                   </div>
                 </div>
                 
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">📝 Expense Status</label>
+                    <label class="form-label">Expense Status</label>
                     <select name="expenseStatus" class="form-select">
-                      <option value="Paid">✅ Paid</option>
-                      <option value="Unpaid">⏳ Unpaid</option>
-                      <option value="Reimbursed">💸 Reimbursed</option>
-                      <option value="Claimed">📋 Tax Claimed</option>
+                      <option value="Paid">Paid</option>
+                      <option value="Unpaid">Unpaid</option>
+                      <option value="Reimbursed">Reimbursed</option>
                     </select>
                   </div>
                   
                   <div class="form-group">
-                    <label class="form-label">
-                      <span style="display: flex; align-items: center; gap: 0.25rem;">
-                        🧾 Receipt/Invoice
-                        <span style="font-size: 0.75rem; color: #64748b;">(optional)</span>
-                      </span>
-                    </label>
-                    <div style="display: flex; gap: 0.5rem;">
-                      <input type="url" name="receiptUrl" class="form-input" placeholder="https://... or file path">
-                      <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openFilePicker()">
-                        📁 Browse
-                      </button>
-                    </div>
+                    <label class="form-label">Receipt URL (optional)</label>
+                    <input type="url" name="receiptUrl" class="form-input" placeholder="https://...">
                   </div>
                 </div>
                 
                 <div class="form-group">
-                  <label class="form-label">
-                    <span style="display: flex; align-items: center; gap: 0.25rem;">
-                      📝 Notes
-                      <span style="font-size: 0.75rem; color: #64748b;">(for tax records)</span>
-                    </span>
-                  </label>
-                  <textarea name="expenseNotes" class="form-input" rows="2" placeholder="Details for tax deduction claim..."></textarea>
+                  <label class="form-label">Notes</label>
+                  <textarea name="expenseNotes" class="form-input" rows="2" placeholder="Additional notes about this property expense"></textarea>
                 </div>
                 
-                <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-                  <div style="display: flex; align-items: center; gap: 0.5rem; color: #065f46;">
-                    <span>✅</span>
-                    <div>
-                      <strong>ATO Tax Deductible Expense</strong>
-                      <div style="font-size: 0.875rem; color: #047857;">
-                        This expense will automatically appear in:
-                        <ul style="margin: 0.25rem 0 0 1rem; padding: 0;">
-                          <li>Property Expenses page</li>
-                          <li>Tax Compliance reports</li>
-                          <li>Annual tax deduction summary</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
+                <div class="form-hint" style="color: #059669; font-size: 0.875rem; margin-top: 0.5rem;">
+                  ✓ This expense will automatically appear in your Property Expenses page
                 </div>
               </div>
             </div>
@@ -396,90 +333,6 @@ export async function initTransactionsUI() {
         <div id="txList"></div>
       </div>
     </div>
-
-    <style>
-      .transaction-card.property-linked {
-        border-left: 4px solid #3B82F6;
-        background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%);
-      }
-      
-      .property-badge {
-        background: #3B82F6;
-        color: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        margin-left: 8px;
-        vertical-align: middle;
-      }
-      
-      .expense-category-badge {
-        background: #10B981;
-        color: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        margin-right: 8px;
-      }
-      
-      .property-indicator {
-        font-size: 0.875rem;
-        margin-left: 4px;
-        opacity: 0.7;
-      }
-      
-      .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        padding: 1rem;
-        max-width: 350px;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        animation: slideIn 0.3s ease;
-      }
-      
-      .notification.success {
-        border-left: 4px solid #10B981;
-      }
-      
-      .notification.error {
-        border-left: 4px solid #EF4444;
-      }
-      
-      .notification-content {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      
-      .notification-close {
-        background: none;
-        border: none;
-        cursor: pointer;
-        opacity: 0.5;
-        margin-left: 1rem;
-      }
-      
-      @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-      
-      .fade-out {
-        animation: fadeOut 0.3s ease forwards;
-      }
-      
-      @keyframes fadeOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(100%); }
-      }
-    </style>
   `;
 
   setTimeout(() => mainContent.classList.remove('page-transition'), 400);
@@ -491,7 +344,6 @@ export async function initTransactionsUI() {
   // === DOM Elements ===
   const btnAddTx = document.getElementById('btnAddTx');
   const btnFilterTx = document.getElementById('btnFilterTx');
-  const btnSyncProperties = document.getElementById('btnSyncProperties');
   const addTxForm = document.getElementById('addTxForm');
   const filterTxForm = document.getElementById('filterTxForm');
   const closeAddForm = document.getElementById('closeAddForm');
@@ -565,12 +417,6 @@ export async function initTransactionsUI() {
     }
   });
 
-  btnSyncProperties.addEventListener('click', async () => {
-    const result = await syncAllPropertyExpenses();
-    showNotification(result.message, 'success');
-    initTransactionsUI();
-  });
-
   closeAddForm.addEventListener('click', hideAllForms);
   closeFilterForm.addEventListener('click', hideAllForms);
 
@@ -590,14 +436,6 @@ export async function initTransactionsUI() {
       const propertyFields = document.getElementById('propertyExpenseFields');
       const propertySection = document.getElementById('propertyExpenseSection');
       propertyFields.style.display = this.checked ? 'block' : 'none';
-      
-      if (this.checked) {
-        propertySection.style.borderColor = '#10B981';
-        propertySection.style.background = 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)';
-      } else {
-        propertySection.style.borderColor = '#0ea5e9';
-        propertySection.style.background = 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)';
-      }
     });
   }
 
@@ -639,9 +477,6 @@ export async function initTransactionsUI() {
     currentFilters = {};
     renderTransactions(transactions, categories, accounts, properties, currentFilters);
   });
-
-  // Initialize global functions
-  initializeGlobalFunctions();
 
   function setupCategoryLinking() {
     const mainSelect = document.getElementById('mainCategory');
@@ -706,23 +541,17 @@ export async function initTransactionsUI() {
           await addItem(STORE_NAMES.transactions, txData);
         }
 
-        // 🔄 AUTO-SYNC TO EXPENSES
-        await syncTransactionToExpenses(txData);
+        // If this is a property expense, also save to expenses table
+        if (txData.isPropertyExpense && txData.propertyId) {
+          await syncToExpenses(txData);
+        }
 
         hideAllForms();
         form.reset();
         form.dataset.id = '';
-        
-        // Show success notification
-        const syncMessage = txData.isPropertyExpense ? 
-          'Transaction saved and synced to Property Expenses!' : 
-          'Transaction saved successfully!';
-        showNotification(syncMessage, 'success');
-        
-        // Refresh UI
         initTransactionsUI();
       } catch (error) {
-        showNotification('Error saving transaction: ' + error.message, 'error');
+        alert('Error saving transaction: ' + error.message);
       }
     });
 
@@ -733,117 +562,6 @@ export async function initTransactionsUI() {
       renderTransactions(transactions, categories, accounts, properties, currentFilters);
       hideAllForms();
     });
-  }
-
-  function initializeGlobalFunctions() {
-    window.getPropertyTypeLabel = function(type) {
-      const labels = {
-        'primary': 'Primary Residence',
-        'investment': 'Investment',
-        'vacation': 'Vacation',
-        'commercial': 'Commercial'
-      };
-      return labels[type] || type;
-    };
-
-    window.updatePropertyExpenseCategory = function(select) {
-      const selectedOption = select.options[select.selectedIndex];
-      const defaultCategoryId = selectedOption.getAttribute('data-default-category');
-      
-      if (defaultCategoryId) {
-        const mainSelect = document.getElementById('mainCategory');
-        const subSelect = document.getElementById('subCategory');
-        
-        // Find if this is a main or subcategory
-        const isMainCategory = DEFAULT_CATEGORIES.find(c => c.id === defaultCategoryId && !c.parentId);
-        const isSubCategory = DEFAULT_CATEGORIES.find(c => c.id === defaultCategoryId && c.parentId);
-        
-        if (isMainCategory) {
-          mainSelect.value = defaultCategoryId;
-          mainSelect.dispatchEvent(new Event('change'));
-          subSelect.value = '';
-        } else if (isSubCategory) {
-          const parentCategory = DEFAULT_CATEGORIES.find(c => c.id === isSubCategory.parentId);
-          if (parentCategory) {
-            mainSelect.value = parentCategory.id;
-            mainSelect.dispatchEvent(new Event('change'));
-            
-            // Wait for subcategories to populate
-            setTimeout(() => {
-              subSelect.value = defaultCategoryId;
-            }, 100);
-          }
-        }
-      }
-      
-      // Update tax info display
-      updateCategoryTaxInfo(select);
-    };
-
-    window.updateCategoryTaxInfo = function(select) {
-      const infoDiv = document.getElementById('categoryTaxInfo');
-      const selectedOption = select.options[select.selectedIndex];
-      const deductible = selectedOption.getAttribute('data-deductible') === 'true';
-      const type = selectedOption.getAttribute('data-type');
-      
-      if (select.value) {
-        infoDiv.style.display = 'block';
-        infoDiv.style.background = deductible ? '#d1fae5' : '#fef3c7';
-        infoDiv.style.color = deductible ? '#065f46' : '#92400e';
-        infoDiv.style.border = deductible ? '1px solid #10b981' : '1px solid #f59e0b';
-        
-        infoDiv.innerHTML = `
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <strong>${deductible ? '✓ TAX DEDUCTIBLE' : '⚠️ NOT TAX DEDUCTIBLE'}</strong>
-            <span style="font-size: 0.75rem; background: ${deductible ? '#10b981' : '#f59e0b'}; color: white; padding: 2px 6px; border-radius: 10px;">
-              ${type.toUpperCase()}
-            </span>
-          </div>
-          ${deductible ? 
-            '<div style="font-size: 0.875rem; margin-top: 0.25rem;">Claimable on your tax return</div>' :
-            '<div style="font-size: 0.875rem; margin-top: 0.25rem;">Capital expense - not immediately deductible</div>'
-          }
-        `;
-      } else {
-        infoDiv.style.display = 'none';
-      }
-    };
-
-    window.showPropertyExpenseForm = function() {
-      showAddForm();
-      const txForm = document.getElementById('txForm');
-      txForm.type.value = 'expense';
-      document.getElementById('isPropertyExpense').checked = true;
-      document.getElementById('propertyExpenseFields').style.display = 'block';
-      
-      // Update the property expense section styling
-      const propertySection = document.getElementById('propertyExpenseSection');
-      propertySection.style.borderColor = '#10B981';
-      propertySection.style.background = 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)';
-    };
-
-    window.openFilePicker = function() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,.pdf,.doc,.docx';
-      input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          const receiptUrl = URL.createObjectURL(file);
-          document.querySelector('[name="receiptUrl"]').value = receiptUrl;
-          showNotification('File attached successfully!', 'success');
-        }
-      };
-      input.click();
-    };
-
-    // Initialize category tax info listener
-    const expenseCategorySelect = document.querySelector('[name="expenseCategory"]');
-    if (expenseCategorySelect) {
-      expenseCategorySelect.addEventListener('change', function() {
-        window.updateCategoryTaxInfo(this);
-      });
-    }
   }
 
   function renderTransactions(transactions, categories, accounts, properties, filters = {}) {
@@ -912,7 +630,7 @@ export async function initTransactionsUI() {
       </div>
     `).join('');
 
-    attachTransactionEventListeners(properties, categories, accounts, transactions);
+    attachTransactionEventListeners(properties);
   }
 
   function groupTransactionsByDate(transactions) {
@@ -936,41 +654,26 @@ export async function initTransactionsUI() {
     
     // Get subcategory name (if this is a subcategory)
     const subCategory = category?.parentId ? category : null;
-    
-    // Check if it's linked to maintenance
-    const isMaintenanceLinked = tx.maintenanceId ? '🔗' : '';
 
     return `
-      <div class="transaction-card ${isIncome ? 'income' : 'expense'} ${tx.isPropertyExpense ? 'property-linked' : ''}" data-id="${tx.id}">
+      <div class="transaction-card ${isIncome ? 'income' : 'expense'}" data-id="${tx.id}">
         <div class="transaction-main">
-          <div class="transaction-icon">
-            ${tx.isPropertyExpense ? '🏠' : (mainCategory?.icon || (isIncome ? '💰' : '💸'))}
-            ${isMaintenanceLinked}
-          </div>
+          <div class="transaction-icon">${mainCategory?.icon || (isIncome ? '💰' : '💸')}</div>
           <div class="transaction-details">
-            <div class="transaction-title">
-              ${mainCategory?.name || 'Unknown Category'}
-              ${tx.isPropertyExpense ? '<span class="property-badge">🏠 Property</span>' : ''}
-            </div>
+            <div class="transaction-title">${mainCategory?.name || 'Unknown Category'}</div>
             <div class="transaction-meta">
               ${subCategory ? `<span class="transaction-subcategory">${subCategory.name}</span>` : ''}
-              ${tx.propertyId ? `<span class="property-name">${property?.name || 'Property'}</span>` : ''}
               <span class="transaction-account">${account?.name || 'Unknown Account'}</span>
-              ${tx.expenseCategory ? `<span class="expense-category-badge">${tx.expenseCategory}</span>` : ''}
+              ${tx.isPropertyExpense ? `<span class="property-tag">🏠 ${property?.name || 'Property'}</span>` : ''}
             </div>
             ${tx.description ? `<div class="transaction-description">${tx.description}</div>` : ''}
           </div>
           <div class="transaction-amount ${isIncome ? 'positive' : 'negative'}">
             ${isIncome ? '+' : '-'}$${Math.abs(tx.amount).toFixed(2)}
-            ${tx.isPropertyExpense ? '<span class="property-indicator" title="Synced to Property Expenses">🏠</span>' : ''}
+            ${tx.isPropertyExpense ? '<span class="property-expense-indicator">🏠</span>' : ''}
           </div>
         </div>
         <div class="transaction-actions">
-          ${tx.isPropertyExpense ? `
-            <button class="action-btn view-property" data-property-id="${tx.propertyId}" title="View Property">
-              🏠
-            </button>
-          ` : ''}
           <button class="action-btn edit-btn" data-id="${tx.id}" title="Edit">✏️</button>
           <button class="action-btn delete-btn" data-id="${tx.id}" title="Delete">🗑️</button>
         </div>
@@ -978,7 +681,7 @@ export async function initTransactionsUI() {
     `;
   }
 
-  function attachTransactionEventListeners(properties, categories, accounts, transactions) {
+  function attachTransactionEventListeners(properties) {
     // Edit transaction
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -1010,11 +713,6 @@ export async function initTransactionsUI() {
           if (txToEdit.expenseStatus) txForm.expenseStatus.value = txToEdit.expenseStatus;
           if (txToEdit.receiptUrl) txForm.receiptUrl.value = txToEdit.receiptUrl;
           if (txToEdit.notes) txForm.expenseNotes.value = txToEdit.notes;
-          
-          // Update the property expense section styling
-          const propertySection = document.getElementById('propertyExpenseSection');
-          propertySection.style.borderColor = '#10B981';
-          propertySection.style.background = 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)';
         }
 
         // Set main category and trigger subcategory update
@@ -1037,34 +735,9 @@ export async function initTransactionsUI() {
     // Delete transaction
     document.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to delete this transaction? This will also remove any linked property expense records.')) {
-          // First, check if it's a property expense and delete the linked expense
-          const txId = btn.dataset.id;
-          const txToDelete = transactions.find(tx => tx.id === txId);
-          
-          if (txToDelete?.isPropertyExpense) {
-            try {
-              await deleteLinkedExpense(txId);
-            } catch (error) {
-              console.error('Error deleting linked expense:', error);
-            }
-          }
-          
+        if (confirm('Are you sure you want to delete this transaction?')) {
           await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
-          showNotification('Transaction deleted successfully!', 'success');
           initTransactionsUI();
-        }
-      });
-    });
-
-    // View property button
-    document.querySelectorAll('.view-property').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const propertyId = btn.dataset.propertyId;
-        if (propertyId) {
-          // This would navigate to the property page
-          // For now, just show a message
-          showNotification(`Viewing property: ${properties.find(p => p.id === propertyId)?.name || 'Property'}`, 'info');
         }
       });
     });
@@ -1088,176 +761,48 @@ export async function initTransactionsUI() {
 }
 
 // ============================================================================
-// 🔄 Enhanced Sync Function with Category Mapping
+// 🏠 Sync to Expenses Function
 // ============================================================================
-async function syncTransactionToExpenses(transaction) {
+async function syncToExpenses(transaction) {
   try {
+    // Get existing expenses
     const expenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
-    const categories = await getAllItems(STORE_NAMES.categories);
     
-    // Find the corresponding category
-    const category = categories.find(c => c.id === transaction.categoryId);
-    const categoryName = category?.name || 'Other';
+    // Check if expense already exists for this transaction
+    const existingExpense = expenses.find(e => e.transactionId === transaction.id);
     
-    // Check if expense already exists
-    let existingExpense = expenses.find(e => e.transactionId === transaction.id);
+    const expenseData = {
+      id: existingExpense ? existingExpense.id : generateId(),
+      transactionId: transaction.id, // Link back to transaction
+      propertyId: transaction.propertyId,
+      category: transaction.expenseCategory || 'Other',
+      description: transaction.description || 'Property Expense',
+      amount: Math.abs(transaction.amount),
+      date: transaction.date,
+      status: transaction.expenseStatus || 'Paid',
+      receiptUrl: transaction.receiptUrl || '',
+      notes: transaction.notes || '',
+      taxDeductible: true,
+      recurring: false,
+      frequency: 'monthly',
+      nextDue: transaction.date,
+      createdAt: existingExpense ? existingExpense.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
     
-    // If transaction is no longer a property expense but expense exists, delete it
-    if (!transaction.isPropertyExpense && existingExpense) {
-      await deleteItem(STORE_NAMES.expenses || 'expenses', existingExpense.id);
-      console.log('🗑️ Deleted expense as transaction is no longer property-related');
-      return null;
+    if (existingExpense) {
+      await updateItem(STORE_NAMES.expenses || 'expenses', expenseData);
+      console.log('✅ Updated existing expense:', expenseData.id);
+    } else {
+      await addItem(STORE_NAMES.expenses || 'expenses', expenseData);
+      console.log('✅ Created new expense from transaction:', expenseData.id);
     }
     
-    // Only create/update if it's a property expense
-    if (transaction.isPropertyExpense && transaction.propertyId) {
-      // Map to property expense category
-      const propertyExpenseCategory = transaction.expenseCategory || 'Other';
-      const categoryConfig = PROPERTY_EXPENSE_CATEGORIES[propertyExpenseCategory] || PROPERTY_EXPENSE_CATEGORIES.Other;
-      
-      const expenseData = {
-        id: existingExpense ? existingExpense.id : generateId(),
-        transactionId: transaction.id,
-        propertyId: transaction.propertyId,
-        category: propertyExpenseCategory,
-        categoryConfig: categoryConfig,
-        description: transaction.description || `${propertyExpenseCategory} - ${categoryName}`,
-        amount: Math.abs(transaction.amount),
-        date: transaction.date,
-        status: transaction.expenseStatus || 'Paid',
-        receiptUrl: transaction.receiptUrl || '',
-        notes: transaction.notes || '',
-        taxDeductible: categoryConfig.deductible,
-        type: categoryConfig.type,
-        recurring: false,
-        frequency: 'monthly',
-        nextDue: transaction.date,
-        createdAt: existingExpense ? existingExpense.createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      if (existingExpense) {
-        await updateItem(STORE_NAMES.expenses || 'expenses', expenseData);
-        console.log('✅ Updated existing expense:', expenseData.id);
-      } else {
-        await addItem(STORE_NAMES.expenses || 'expenses', expenseData);
-        console.log('✅ Created new expense from transaction:', expenseData.id);
-      }
-      
-      // Also sync to tax compliance data
-      await syncToTaxCompliance(expenseData);
-      
-      return expenseData;
-    }
-    
-    return null;
+    return expenseData;
   } catch (error) {
     console.error('❌ Error syncing to expenses:', error);
     throw error;
   }
-}
-
-// ============================================================================
-// 📊 Tax Compliance Integration Function
-// ============================================================================
-async function syncToTaxCompliance(expenseData) {
-  try {
-    const taxRecords = await getAllItems('tax_records').catch(() => []);
-    const existingRecord = taxRecords.find(r => r.expenseId === expenseData.id);
-    
-    const taxRecord = {
-      id: existingRecord?.id || generateId(),
-      expenseId: expenseData.id,
-      transactionId: expenseData.transactionId,
-      propertyId: expenseData.propertyId,
-      category: expenseData.category,
-      amount: expenseData.amount,
-      date: expenseData.date,
-      taxDeductible: expenseData.taxDeductible,
-      type: expenseData.type,
-      financialYear: getFinancialYear(expenseData.date),
-      createdAt: existingRecord?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    if (existingRecord) {
-      await updateItem('tax_records', taxRecord);
-    } else {
-      await addItem('tax_records', taxRecord);
-    }
-    
-    console.log('📊 Tax compliance record updated:', taxRecord.id);
-    return taxRecord;
-  } catch (error) {
-    console.error('❌ Error syncing to tax compliance:', error);
-    return null;
-  }
-}
-
-function getFinancialYear(dateString) {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  
-  // Australian financial year: July 1 to June 30
-  return month >= 7 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-}
-
-// ============================================================================
-// 🗑️ Delete Linked Expense Function
-// ============================================================================
-async function deleteLinkedExpense(transactionId) {
-  try {
-    const expenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
-    const linkedExpense = expenses.find(e => e.transactionId === transactionId);
-    
-    if (linkedExpense) {
-      await deleteItem(STORE_NAMES.expenses || 'expenses', linkedExpense.id);
-      console.log('🗑️ Deleted linked expense:', linkedExpense.id);
-      
-      // Also delete tax record if exists
-      const taxRecords = await getAllItems('tax_records').catch(() => []);
-      const linkedTaxRecord = taxRecords.find(r => r.transactionId === transactionId);
-      if (linkedTaxRecord) {
-        await deleteItem('tax_records', linkedTaxRecord.id);
-        console.log('🗑️ Deleted linked tax record:', linkedTaxRecord.id);
-      }
-    }
-  } catch (error) {
-    console.error('❌ Error deleting linked expense:', error);
-    throw error;
-  }
-}
-
-// ============================================================================
-// 📢 Notification System
-// ============================================================================
-function showNotification(message, type = 'info') {
-  // Remove any existing notifications
-  document.querySelectorAll('.notification').forEach(n => n.remove());
-  
-  const notification = document.createElement('div');
-  notification.className = `notification ${type}`;
-  notification.innerHTML = `
-    <div class="notification-content">
-      ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'} 
-      ${message}
-    </div>
-    <button class="notification-close">✕</button>
-  `;
-  
-  document.body.appendChild(notification);
-  
-  // Auto-remove after 5 seconds
-  setTimeout(() => {
-    notification.classList.add('fade-out');
-    setTimeout(() => notification.remove(), 300);
-  }, 5000);
-  
-  // Close button
-  notification.querySelector('.notification-close').addEventListener('click', () => {
-    notification.remove();
-  });
 }
 
 // ============================================================================
@@ -1286,16 +831,7 @@ export async function syncAllPropertyExpenses() {
     let syncedCount = 0;
     for (const transaction of unsyncedTransactions) {
       try {
-        // Update transaction to mark as property expense
-        const updatedTx = {
-          ...transaction,
-          isPropertyExpense: true,
-          expenseCategory: transaction.expenseCategory || 'Other',
-          expenseStatus: 'Paid'
-        };
-        
-        await updateItem(STORE_NAMES.transactions, updatedTx);
-        await syncTransactionToExpenses(updatedTx);
+        await syncToExpenses(transaction);
         syncedCount++;
       } catch (error) {
         console.error(`Failed to sync transaction ${transaction.id}:`, error);
@@ -1315,4 +851,3 @@ export async function syncAllPropertyExpenses() {
 
 // Make sync function globally available
 window.syncAllPropertyExpenses = syncAllPropertyExpenses;
-window.showNotification = showNotification;
