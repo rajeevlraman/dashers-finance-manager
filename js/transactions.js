@@ -167,54 +167,54 @@ export async function initTransactionsUI() {
             </div>
 
             <!-- Property Expense Section -->
-            // In the property expense section of transactions.js HTML template:
-            <div id="propertyExpenseFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e0;">
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">
-                    <span style="display: flex; align-items: center; gap: 0.25rem;">
-                      🏘️ Property
-                      <span class="form-required">*</span>
-                    </span>
-                  </label>
-                  <!-- REMOVE required attribute and handle validation in JavaScript -->
-                  <select name="propertyId" class="form-select">
-                    <option value="">-- Select Property --</option>
-                    ${properties.map(p => `
-                      <option value="${p.id}" data-type="${p.propertyType || 'primary'}">
-                        ${p.name} (${getPropertyTypeLabel(p.propertyType)})
-                      </option>
-                    `).join('')}
-                  </select>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">
-                    <span style="display: flex; align-items: center; gap: 0.25rem;">
-                      📊 ATO Expense Category
-                      <span class="form-required">*</span>
-                    </span>
-                    <small class="form-hint">Select the ATO category for tax deduction</small>
-                  </label>
-                  <!-- REMOVE required attribute here too -->
-                  <select name="expenseCategory" class="form-select" onchange="updatePropertyExpenseCategory(this)">
-                    <option value="">-- Select ATO Category --</option>
-                    ${PROPERTY_EXPENSE_CATEGORIES_LIST.map(cat => {
-                      const config = PROPERTY_EXPENSE_CATEGORIES[cat];
-                      return `
-                        <option value="${cat}" 
-                                data-deductible="${config.deductible}"
-                                data-type="${config.type}"
-                                data-default-category="${config.defaultCategoryId || ''}"
-                                style="${config.deductible ? 'color: #059669;' : 'color: #dc2626;'}">
-                          ${config.deductible ? '✓' : '✗'} ${cat} (${config.type})
-                        </option>
-                      `;
-                    }).join('')}
-                  </select>
-                  <div id="categoryTaxInfo" style="margin-top: 0.5rem; font-size: 0.875rem; padding: 0.5rem; border-radius: 6px; display: none;"></div>
-                </div>
+          // In the property expense section of transactions.js HTML template:
+          <div id="propertyExpenseFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e0;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">
+                  <span style="display: flex; align-items: center; gap: 0.25rem;">
+                    🏘️ Property
+                    <span class="form-required">*</span>
+                  </span>
+                </label>
+                <!-- REMOVE required attribute and handle validation in JavaScript -->
+                <select name="propertyId" class="form-select">
+                  <option value="">-- Select Property --</option>
+                  ${properties.map(p => `
+                    <option value="${p.id}" data-type="${p.propertyType || 'primary'}">
+                      ${p.name} (${getPropertyTypeLabel(p.propertyType)})
+                    </option>
+                  `).join('')}
+                </select>
               </div>
+              
+              <div class="form-group">
+                <label class="form-label">
+                  <span style="display: flex; align-items: center; gap: 0.25rem;">
+                    📊 ATO Expense Category
+                    <span class="form-required">*</span>
+                  </span>
+                  <small class="form-hint">Select the ATO category for tax deduction</small>
+                </label>
+                <!-- REMOVE required attribute here too -->
+                <select name="expenseCategory" class="form-select" onchange="updatePropertyExpenseCategory(this)">
+                  <option value="">-- Select ATO Category --</option>
+                  ${PROPERTY_EXPENSE_CATEGORIES_LIST.map(cat => {
+                    const config = PROPERTY_EXPENSE_CATEGORIES[cat];
+                    return `
+                      <option value="${cat}" 
+                              data-deductible="${config.deductible}"
+                              data-type="${config.type}"
+                              data-default-category="${config.defaultCategoryId || ''}"
+                              style="${config.deductible ? 'color: #059669;' : 'color: #dc2626;'}">
+                        ${config.deductible ? '✓' : '✗'} ${cat} (${config.type})
+                      </option>
+                    `;
+                  }).join('')}
+                </select>
+                <div id="categoryTaxInfo" style="margin-top: 0.5rem; font-size: 0.875rem; padding: 0.5rem; border-radius: 6px; display: none;"></div>
+              </div>
+            </div>
                 
                 <div class="form-row">
                   <div class="form-group">
@@ -657,63 +657,87 @@ export async function initTransactionsUI() {
     const txForm = document.getElementById('txForm');
     const filterForm = document.getElementById('filterForm');
 
-    txForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const form = e.target;
-      const mainSelect = document.getElementById('mainCategory');
-      const subSelect = document.getElementById('subCategory');
-      const chosenCategoryId = subSelect.value || mainSelect.value;
+// In setupFormHandlers function, replace the txForm submit handler:
+txForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  const mainSelect = document.getElementById('mainCategory');
+  const subSelect = document.getElementById('subCategory');
+  const chosenCategoryId = subSelect.value || mainSelect.value;
+  const isPropertyExpense = form.isPropertyExpense ? form.isPropertyExpense.checked : false;
 
-      if (!chosenCategoryId) {
-        alert('Please select a category.');
-        return;
-      }
+  if (!chosenCategoryId) {
+    alert('Please select a category.');
+    return;
+  }
 
-      const txData = {
-        id: form.dataset.id || generateId(),
-        type: form.type.value,
-        amount: parseFloat(form.amount.value) * (form.type.value === 'expense' ? -1 : 1),
-        date: form.date.value,
-        categoryId: chosenCategoryId,
-        accountId: form.accountId.value,
-        description: form.description.value.trim(),
-        // Property expense fields
-        propertyId: form.propertyId ? form.propertyId.value : null,
-        isPropertyExpense: form.isPropertyExpense ? form.isPropertyExpense.checked : false,
-        expenseCategory: form.expenseCategory ? form.expenseCategory.value : null,
-        expenseStatus: form.expenseStatus ? form.expenseStatus.value : 'Paid',
-        receiptUrl: form.receiptUrl ? form.receiptUrl.value : '',
-        notes: form.expenseNotes ? form.expenseNotes.value : '',
-        createdAt: form.dataset.id ? undefined : new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+  // 🔧 FIX: Validate property expense fields only when checked
+  if (isPropertyExpense) {
+    const propertyId = form.propertyId ? form.propertyId.value : '';
+    const expenseCategory = form.expenseCategory ? form.expenseCategory.value : '';
+    
+    if (!propertyId) {
+      alert('Please select a property for this expense.');
+      // Show the property expense section
+      document.getElementById('propertyExpenseFields').style.display = 'block';
+      document.getElementById('isPropertyExpense').checked = true;
+      return;
+    }
+    
+    if (!expenseCategory) {
+      alert('Please select an expense category.');
+      // Show the property expense section
+      document.getElementById('propertyExpenseFields').style.display = 'block';
+      document.getElementById('isPropertyExpense').checked = true;
+      return;
+    }
+  }
 
-      try {
-        if (form.dataset.id) {
-          await updateItem(STORE_NAMES.transactions, txData);
-        } else {
-          await addItem(STORE_NAMES.transactions, txData);
-        }
+  const txData = {
+    id: form.dataset.id || generateId(),
+    type: form.type.value,
+    amount: parseFloat(form.amount.value) * (form.type.value === 'expense' ? -1 : 1),
+    date: form.date.value,
+    categoryId: chosenCategoryId,
+    accountId: form.accountId.value,
+    description: form.description.value.trim(),
+    // Property expense fields - only include if checkbox is checked
+    propertyId: isPropertyExpense && form.propertyId ? form.propertyId.value : null,
+    isPropertyExpense: isPropertyExpense,
+    expenseCategory: isPropertyExpense && form.expenseCategory ? form.expenseCategory.value : null,
+    expenseStatus: isPropertyExpense && form.expenseStatus ? form.expenseStatus.value : 'Paid',
+    receiptUrl: isPropertyExpense && form.receiptUrl ? form.receiptUrl.value : '',
+    notes: isPropertyExpense && form.expenseNotes ? form.expenseNotes.value : '',
+    createdAt: form.dataset.id ? undefined : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
 
-        // 🔄 AUTO-SYNC TO EXPENSES
-        await syncTransactionToExpenses(txData);
+  try {
+    if (form.dataset.id) {
+      await updateItem(STORE_NAMES.transactions, txData);
+    } else {
+      await addItem(STORE_NAMES.transactions, txData);
+    }
 
-        hideAllForms();
-        form.reset();
-        form.dataset.id = '';
-        
-        // Show success notification
-        const syncMessage = txData.isPropertyExpense ? 
-          'Transaction saved and synced to Property Expenses!' : 
-          'Transaction saved successfully!';
-        showNotification(syncMessage, 'success');
-        
-        // Refresh UI
-        initTransactionsUI();
-      } catch (error) {
-        showNotification('Error saving transaction: ' + error.message, 'error');
-      }
-    });
+    // 🔄 AUTO-SYNC TO EXPENSES
+    await syncTransactionToExpenses(txData);
+
+    hideAllForms();
+    form.reset();
+    form.dataset.id = '';
+    
+    // Show success notification
+    const syncMessage = txData.isPropertyExpense ? 
+      'Transaction saved and synced to Property Expenses!' : 
+      'Transaction saved successfully!';
+    showNotification(syncMessage, 'success');
+    
+    // Refresh UI
+    initTransactionsUI();
+  } catch (error) {
+    showNotification('Error saving transaction: ' + error.message, 'error');
+  }
+});
 
     filterForm.addEventListener('submit', e => {
       e.preventDefault();
