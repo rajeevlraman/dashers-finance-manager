@@ -262,7 +262,21 @@ function applyFilters() {
   setTimeout(() => initDashboardUI(), 300);
 }
 
-
+function resetFilters() {
+  document.getElementById('propertyFilter').value = 'all';
+  document.getElementById('categoryFilter').value = 'all';
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  
+  localStorage.removeItem('dashboardFilters');
+  
+  // Show loading indicator
+  const mainContent = document.getElementById('mainContent');
+  mainContent.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Resetting filters...</p></div>';
+  
+  // Reload without filters
+  setTimeout(() => initDashboardUI(), 300);
+}
 
 // ============================================================================
 // 📊 UPDATED CHART FUNCTIONS TO USE FILTERED DATA
@@ -453,7 +467,7 @@ function renderTrendChart(filteredTransactions) {
   initDashboardUI();
 }
 */
-function resetFilters() {
+/*function resetFilters() {
   document.getElementById('propertyFilter').value = 'all';
   document.getElementById('categoryFilter').value = 'all';
   document.getElementById('dateFrom').value = '';
@@ -462,7 +476,7 @@ function resetFilters() {
   localStorage.removeItem('dashboardFilters');
   initDashboardUI();
 }
-
+*/
 // Chart Data Export Helper
 function getChartData(chart) {
   if (!chart) return null;
