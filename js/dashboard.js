@@ -739,7 +739,8 @@ function applyFilters() {
     dateFrom,
     dateTo
   }));
-  
+    // Force reload with filters
+  location.reload();
   initDashboardUI();
 }
 
