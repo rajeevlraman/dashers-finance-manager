@@ -181,23 +181,27 @@ export async function initTransactionsUI() {
                 </label>
               </div>
               
-              <div id="propertyExpenseFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e0;">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">
-                      <span style="display: flex; align-items: center; gap: 0.25rem;">
-                        🏘️ Property
-                        <span class="form-required">*</span>
-                      </span>
-                    </label>
-                    <select name="propertyId" class="form-select" required>
-                      <option value="">-- Select Property --</option>
-                      ${properties.map(p => `
-                        <option value="${p.id}" data-type="${p.propertyType || 'primary'}">
-                          ${p.name} (${getPropertyTypeLabel(p.propertyType)})
-                        </option>
-                      `).join('')}
-                    </select>
+                <div id="propertyExpenseFields" style="display: none; margin-top: 1rem;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Property</label>
+                      <!-- REMOVE required attribute -->
+                      <select name="propertyId" class="form-select">
+                        <option value="">-- Select Property --</option>
+                        ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                      </select>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label class="form-label">Expense Category</label>
+                      <!-- REMOVE required attribute -->
+                      <select name="expenseCategory" class="form-select">
+                        <option value="">-- Select Category --</option>
+                        ${Object.keys(PROPERTY_EXPENSE_CATEGORIES).map(cat => 
+                          `<option value="${cat}">${cat}</option>`
+                        ).join('')}
+                      </select>
+                    </div>
                   </div>
                   
                   <div class="form-group">
