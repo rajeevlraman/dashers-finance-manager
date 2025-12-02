@@ -219,7 +219,20 @@ export const DEFAULT_CATEGORIES = [
 { id: 'debt_home_loan', name: 'Home Loan', type: 'debt', icon: '🏠', parentId: 'debt_main' },
 { id: 'debt_car_loan', name: 'Car Loan', type: 'debt', icon: '🚗', parentId: 'debt_main' },
 { id: 'debt_personal', name: 'Personal Loan', type: 'debt', icon: '💵', parentId: 'debt_main' },
-{ id: 'debt_credit_card', name: 'Credit Card', type: 'debt', icon: '💳', parentId: 'debt_main' }
+{ id: 'debt_credit_card', name: 'Credit Card', type: 'debt', icon: '💳', parentId: 'debt_main' },
+
+// Add to defaultCategories.js in the appropriate sections
+
+// Property-specific categories (add to housing or create new main category)
+{ id: 'exp_property_maintenance', name: 'Property Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_housing' },
+{ id: 'exp_property_management', name: 'Property Management Fees', type: 'expense', icon: '🏢', parentId: 'exp_housing' },
+{ id: 'exp_property_insurance', name: 'Property Insurance', type: 'expense', icon: '🛡️', parentId: 'exp_insurance' },
+{ id: 'exp_land_tax', name: 'Land Tax', type: 'expense', icon: '🏛️', parentId: 'exp_housing' },
+{ id: 'exp_water_rates', name: 'Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_utilities' },
+{ id: 'exp_body_corporate', name: 'Body Corporate', type: 'expense', icon: '🏘️', parentId: 'exp_housing' },
+
+// Create a new main category for Property Expenses if desired
+{ id: 'exp_property', name: 'Property Expenses', type: 'expense', icon: '🏠', parentId: null }
 
 
 ];
