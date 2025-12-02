@@ -595,6 +595,12 @@ export async function initTransactionsUI() {
     const typeSelect = document.querySelector('[name="type"]');
     const propertySection = document.getElementById('propertyExpenseSection');
     
+        // ⚠️ FIX: Add null checks before accessing properties
+    if (!typeSelect || !propertySection) {
+      console.warn('Form elements not ready yet');
+      return;
+    }
+
     if (typeSelect.value === 'expense') {
       propertySection.style.display = 'block';
     } else {
