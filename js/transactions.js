@@ -167,54 +167,65 @@ export async function initTransactionsUI() {
             </div>
 
             <!-- Property Expense Section -->
-        // In the property expense section of transactions.js HTML template:
-        <div id="propertyExpenseFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e0;">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">
-                <span style="display: flex; align-items: center; gap: 0.25rem;">
-                  🏘️ Property
-                  <span class="form-required">*</span>
-                </span>
-              </label>
-              <!-- REMOVE required attribute and handle validation in JavaScript -->
-              <select name="propertyId" class="form-select">
-                <option value="">-- Select Property --</option>
-                ${properties.map(p => `
-                  <option value="${p.id}" data-type="${p.propertyType || 'primary'}">
-                    ${p.name} (${getPropertyTypeLabel(p.propertyType)})
-                  </option>
-                `).join('')}
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">
-                <span style="display: flex; align-items: center; gap: 0.25rem;">
-                  📊 ATO Expense Category
-                  <span class="form-required">*</span>
-                </span>
-                <small class="form-hint">Select the ATO category for tax deduction</small>
-              </label>
-              <!-- REMOVE required attribute here too -->
-              <select name="expenseCategory" class="form-select" onchange="updatePropertyExpenseCategory(this)">
-                <option value="">-- Select ATO Category --</option>
-                ${PROPERTY_EXPENSE_CATEGORIES_LIST.map(cat => {
-                  const config = PROPERTY_EXPENSE_CATEGORIES[cat];
-                  return `
-                    <option value="${cat}" 
-                            data-deductible="${config.deductible}"
-                            data-type="${config.type}"
-                            data-default-category="${config.defaultCategoryId || ''}"
-                            style="${config.deductible ? 'color: #059669;' : 'color: #dc2626;'}">
-                      ${config.deductible ? '✓' : '✗'} ${cat} (${config.type})
-                    </option>
-                  `;
-                }).join('')}
-              </select>
-              <div id="categoryTaxInfo" style="margin-top: 0.5rem; font-size: 0.875rem; padding: 0.5rem; border-radius: 6px; display: none;"></div>
-            </div>
-          </div>
+            <div id="propertyExpenseSection" style="margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 2px solid #0ea5e9; display: none;">
+              <h4 style="margin-top: 0; margin-bottom: 1rem; color: #0369a1; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🏠 Property Expense Details</span>
+                <span style="font-size: 0.875rem; background: #0ea5e9; color: white; padding: 2px 8px; border-radius: 12px;">ATO Deductible</span>
+              </h4>
+              
+              <div class="form-group">
+                <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="isPropertyExpense" name="isPropertyExpense" style="transform: scale(1.2);">
+                  <span style="font-weight: 600; color: #1e40af;">📍 Mark as Property Expense</span>
+                  <span style="font-size: 0.875rem; color: #64748b;">(Will sync to Expenses & Tax pages)</span>
+                </label>
+              </div>
+              
+              <div id="propertyExpenseFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e0;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">
+                      <span style="display: flex; align-items: center; gap: 0.25rem;">
+                        🏘️ Property
+                        <span class="form-required">*</span>
+                      </span>
+                    </label>
+                    <select name="propertyId" class="form-select" required>
+                      <option value="">-- Select Property --</option>
+                      ${properties.map(p => `
+                        <option value="${p.id}" data-type="${p.propertyType || 'primary'}">
+                          ${p.name} (${getPropertyTypeLabel(p.propertyType)})
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label">
+                      <span style="display: flex; align-items: center; gap: 0.25rem;">
+                        📊 ATO Expense Category
+                        <span class="form-required">*</span>
+                      </span>
+                      <small class="form-hint">Select the ATO category for tax deduction</small>
+                    </label>
+                    <select name="expenseCategory" class="form-select" onchange="updatePropertyExpenseCategory(this)" required>
+                      <option value="">-- Select ATO Category --</option>
+                      ${PROPERTY_EXPENSE_CATEGORIES_LIST.map(cat => {
+                        const config = PROPERTY_EXPENSE_CATEGORIES[cat];
+                        return `
+                          <option value="${cat}" 
+                                  data-deductible="${config.deductible}"
+                                  data-type="${config.type}"
+                                  data-default-category="${config.defaultCategoryId || ''}"
+                                  style="${config.deductible ? 'color: #059669;' : 'color: #dc2626;'}">
+                            ${config.deductible ? '✓' : '✗'} ${cat} (${config.type})
+                          </option>
+                        `;
+                      }).join('')}
+                    </select>
+                    <div id="categoryTaxInfo" style="margin-top: 0.5rem; font-size: 0.875rem; padding: 0.5rem; border-radius: 6px; display: none;"></div>
+                  </div>
+                </div>
                 
                 <div class="form-row">
                   <div class="form-group">
