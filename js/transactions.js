@@ -5,6 +5,17 @@ import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 // Property expense categories list
 const PROPERTY_EXPENSE_CATEGORIES_LIST = Object.keys(PROPERTY_EXPENSE_CATEGORIES);
 
+// Helper function for property type labels - defined BEFORE initTransactionsUI
+function getPropertyTypeLabel(type) {
+  const labels = {
+    'primary': 'Primary Residence',
+    'investment': 'Investment',
+    'vacation': 'Vacation',
+    'commercial': 'Commercial'
+  };
+  return labels[type] || type;
+}
+
 export async function initTransactionsUI() {
   const mainContent = document.getElementById('mainContent');
   mainContent.classList.add('page-transition');
