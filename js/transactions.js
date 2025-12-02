@@ -181,27 +181,23 @@ export async function initTransactionsUI() {
                 </label>
               </div>
               
-                <div id="propertyExpenseFields" style="display: none; margin-top: 1rem;">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label class="form-label">Property</label>
-                      <!-- REMOVE required attribute -->
-                      <select name="propertyId" class="form-select">
-                        <option value="">-- Select Property --</option>
-                        ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                      </select>
-                    </div>
-                    
-                    <div class="form-group">
-                      <label class="form-label">Expense Category</label>
-                      <!-- REMOVE required attribute -->
-                      <select name="expenseCategory" class="form-select">
-                        <option value="">-- Select Category --</option>
-                        ${Object.keys(PROPERTY_EXPENSE_CATEGORIES).map(cat => 
-                          `<option value="${cat}">${cat}</option>`
-                        ).join('')}
-                      </select>
-                    </div>
+              <div id="propertyExpenseFields" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #cbd5e0;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">
+                      <span style="display: flex; align-items: center; gap: 0.25rem;">
+                        🏘️ Property
+                        <span class="form-required">*</span>
+                      </span>
+                    </label>
+                    <select name="propertyId" class="form-select" required>
+                      <option value="">-- Select Property --</option>
+                      ${properties.map(p => `
+                        <option value="${p.id}" data-type="${p.propertyType || 'primary'}">
+                          ${p.name} (${getPropertyTypeLabel(p.propertyType)})
+                        </option>
+                      `).join('')}
+                    </select>
                   </div>
                   
                   <div class="form-group">
@@ -668,79 +664,76 @@ export async function initTransactionsUI() {
     updateSubcategories(filterMain, filterSub);
   }
 
-function setupFormHandlers(properties) {
-  const txForm = document.getElementById('txForm');
-  const filterForm = document.getElementById('filterForm');
+  function setupFormHandlers(properties) {
+    const txForm = document.getElementById('txForm');
+    const filterForm = document.getElementById('filterForm');
 
-  txForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const form = e.target;
-    const mainSelect = document.getElementById('mainCategory');
-    const subSelect = document.getElementById('subCategory');
-    const chosenCategoryId = subSelect.value || mainSelect.value;
+    txForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.target;
+      const mainSelect = document.getElementById('mainCategory');
+      const subSelect = document.getElementById('subCategory');
+      const chosenCategoryId = subSelect.value || mainSelect.value;
 
-    if (!chosenCategoryId) {
-      alert('Please select a category.');
-      return;
-    }
-
-    const txData = {
-      id: form.dataset.id || generateId(),
-      type: form.type.value,
-      amount: parseFloat(form.amount.value) * (form.type.value === 'expense' ? -1 : 1),
-      date: form.date.value,
-      categoryId: chosenCategoryId,
-      accountId: form.accountId.value,
-      description: form.description.value.trim(),
-      // 🔄 CRITICAL FIX: Only include property fields if checkbox is checked
-      isPropertyExpense: form.isPropertyExpense ? form.isPropertyExpense.checked : false,
-      // Only set property fields if isPropertyExpense is true
-      propertyId: form.isPropertyExpense && form.isPropertyExpense.checked && form.propertyId ? form.propertyId.value : null,
-      expenseCategory: form.isPropertyExpense && form.isPropertyExpense.checked && form.expenseCategory ? form.expenseCategory.value : null,
-      expenseStatus: form.isPropertyExpense && form.isPropertyExpense.checked && form.expenseStatus ? form.expenseStatus.value : 'Paid',
-      receiptUrl: form.isPropertyExpense && form.isPropertyExpense.checked && form.receiptUrl ? form.receiptUrl.value : '',
-      notes: form.isPropertyExpense && form.isPropertyExpense.checked && form.expenseNotes ? form.expenseNotes.value : '',
-      createdAt: form.dataset.id ? undefined : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    try {
-      if (form.dataset.id) {
-        await updateItem(STORE_NAMES.transactions, txData);
-      } else {
-        await addItem(STORE_NAMES.transactions, txData);
+      if (!chosenCategoryId) {
+        alert('Please select a category.');
+        return;
       }
 
-      // 🔄 AUTO-SYNC TO EXPENSES - only if it's a property expense
-      if (txData.isPropertyExpense && txData.propertyId) {
+      const txData = {
+        id: form.dataset.id || generateId(),
+        type: form.type.value,
+        amount: parseFloat(form.amount.value) * (form.type.value === 'expense' ? -1 : 1),
+        date: form.date.value,
+        categoryId: chosenCategoryId,
+        accountId: form.accountId.value,
+        description: form.description.value.trim(),
+        // Property expense fields
+        propertyId: form.propertyId ? form.propertyId.value : null,
+        isPropertyExpense: form.isPropertyExpense ? form.isPropertyExpense.checked : false,
+        expenseCategory: form.expenseCategory ? form.expenseCategory.value : null,
+        expenseStatus: form.expenseStatus ? form.expenseStatus.value : 'Paid',
+        receiptUrl: form.receiptUrl ? form.receiptUrl.value : '',
+        notes: form.expenseNotes ? form.expenseNotes.value : '',
+        createdAt: form.dataset.id ? undefined : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        if (form.dataset.id) {
+          await updateItem(STORE_NAMES.transactions, txData);
+        } else {
+          await addItem(STORE_NAMES.transactions, txData);
+        }
+
+        // 🔄 AUTO-SYNC TO EXPENSES
         await syncTransactionToExpenses(txData);
+
+        hideAllForms();
+        form.reset();
+        form.dataset.id = '';
+        
+        // Show success notification
+        const syncMessage = txData.isPropertyExpense ? 
+          'Transaction saved and synced to Property Expenses!' : 
+          'Transaction saved successfully!';
+        showNotification(syncMessage, 'success');
+        
+        // Refresh UI
+        initTransactionsUI();
+      } catch (error) {
+        showNotification('Error saving transaction: ' + error.message, 'error');
       }
+    });
 
+    filterForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      currentFilters = Object.fromEntries(data.entries());
+      renderTransactions(transactions, categories, accounts, properties, currentFilters);
       hideAllForms();
-      form.reset();
-      form.dataset.id = '';
-      
-      // Show success notification
-      const syncMessage = txData.isPropertyExpense ? 
-        'Transaction saved and synced to Property Expenses!' : 
-        'Transaction saved successfully!';
-      showNotification(syncMessage, 'success');
-      
-      // Refresh UI
-      initTransactionsUI();
-    } catch (error) {
-      showNotification('Error saving transaction: ' + error.message, 'error');
-    }
-  });
-
-  filterForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const data = new FormData(e.target);
-    currentFilters = Object.fromEntries(data.entries());
-    renderTransactions(transactions, categories, accounts, properties, currentFilters);
-    hideAllForms();
-  });
-}
+    });
+  }
 
   function initializeGlobalFunctions() {
     window.getPropertyTypeLabel = function(type) {
