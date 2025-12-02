@@ -72,6 +72,11 @@ export async function initDashboardUI() {
       getAllItems(STORE_NAMES.budgets).catch(() => [])
     ]);
 
+      let savedFilters = {};
+  try {
+    savedFilters = JSON.parse(localStorage.getItem('dashboardFilters')) || {};
+  } catch (e) {}
+  
     // === Current period calculations ===
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthIncome = transactions
@@ -726,13 +731,19 @@ export async function initDashboardUI() {
 }
 
 // Filter Functions
+// Replace the applyFilters function:
 function applyFilters() {
   const propertyFilter = document.getElementById('propertyFilter').value;
   const categoryFilter = document.getElementById('categoryFilter').value;
   const dateFrom = document.getElementById('dateFrom').value;
   const dateTo = document.getElementById('dateTo').value;
   
-  // Store filter state and reload dashboard
+  // Validate date range
+  if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
+    alert('"From" date cannot be after "To" date');
+    return;
+  }
+  
   localStorage.setItem('dashboardFilters', JSON.stringify({
     propertyFilter,
     categoryFilter,
@@ -740,17 +751,14 @@ function applyFilters() {
     dateTo
   }));
   
-  initDashboardUI();
+  // Force reload with filters
+  location.reload();
 }
 
+// Replace the resetFilters function:
 function resetFilters() {
-  document.getElementById('propertyFilter').value = 'all';
-  document.getElementById('categoryFilter').value = 'all';
-  document.getElementById('dateFrom').value = '';
-  document.getElementById('dateTo').value = '';
-  
   localStorage.removeItem('dashboardFilters');
-  initDashboardUI();
+  location.reload();
 }
 
 // Chart Data Export Helper
