@@ -1,193 +1,602 @@
 // ============================================================================
-// 🧱 cost_base_tracker.js — Property Cost Base Tracker (ATO Compliance Module)
-// ----------------------------------------------------------------------------
-// Tracks purchase, improvement, and selling costs for CGT and ATO compliance
-// Integrated with IndexedDB and property data
-// Text-only (no receipts yet)
+// 🧱 cost_base_tracker.js — ENHANCED VERSION
 // ============================================================================
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 import { html } from './utils/html.js';
-import { initPropertiesUI } from './properties.js';
 
-// ============================================================================
-// 🎯 Initialize Cost Base Tracker
-// ============================================================================
+export class CostBaseTracker {
+    constructor() {
+        this.records = [];
+        this.properties = [];
+        this.selectedProperty = null;
+        this.editingRecord = null;
+    }
+
+    async init(propertyId = null) {
+        await this.loadData();
+        this.selectedProperty = propertyId;
+        this.renderUI();
+        this.attachEventListeners();
+    }
+
+    async loadData() {
+        [this.records, this.properties] = await Promise.all([
+            getAllItems(STORE_NAMES.costbase || 'costbase'),
+            getAllItems(STORE_NAMES.properties)
+        ]);
+    }
+
+    renderUI() {
+        const mainContent = document.getElementById('mainContent');
+        
+        mainContent.innerHTML = `
+            <div class="costbase-container">
+                <div class="costbase-header">
+                    <h2>📘 Cost Base Tracker <small>ATO Compliance</small></h2>
+                    ${this.selectedProperty ? `
+                        <button class="btn btn-secondary" id="btnBackToProperties">
+                            ⬅️ Back to Properties
+                        </button>
+                    ` : ''}
+                </div>
+
+                ${this.renderStatsSummary()}
+
+                <div class="costbase-controls">
+                    <div class="property-selector">
+                        <label>Property</label>
+                        <select id="filterProperty" class="form-select">
+                            <option value="">All Properties</option>
+                            ${this.properties.map(p => `
+                                <option value="${p.id}" ${p.id === this.selectedProperty ? 'selected' : ''}>
+                                    ${p.name}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="costbase-actions">
+                        <button class="btn btn-primary" id="btnAddRecord">➕ Add Record</button>
+                        <button class="btn btn-secondary" id="btnExportReport">📊 Export Report</button>
+                    </div>
+                </div>
+
+                ${this.renderTaxSummary()}
+
+                <div class="costbase-content">
+                    <div class="records-section">
+                        <h3>📋 Cost Records</h3>
+                        <div id="costBaseList" class="records-list">
+                            Loading records...
+                        </div>
+                    </div>
+
+                    <div class="sidebar">
+                        <h3>ℹ️ ATO Guidelines</h3>
+                        <div class="guidelines">
+                            <div class="guideline-item">
+                                <h4>✅ Capital Costs</h4>
+                                <p>Add to cost base: purchase price, legal fees, stamp duty, 
+                                improvements, borrowing costs.</p>
+                            </div>
+                            <div class="guideline-item">
+                                <h4>❌ Non-Capital</h4>
+                                <p>Not added to cost base: repairs, maintenance, insurance, 
+                                rates, interest on loans.</p>
+                            </div>
+                            <div class="guideline-item">
+                                <h4>📅 CGT Discount</h4>
+                                <p>Hold property for 12+ months to qualify for 50% CGT discount.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="calculation-example">
+                            <h4>🧮 Cost Base Calculation</h4>
+                            <div class="calculation">
+                                <div>Purchase Price: <span>$500,000</span></div>
+                                <div>+ Capital Improvements: <span>$50,000</span></div>
+                                <div>+ Selling Costs: <span>$25,000</span></div>
+                                <div class="total">= Cost Base: <span>$575,000</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            ${this.renderModal()}
+        `;
+
+        this.refreshRecordsList();
+    }
+
+    renderStatsSummary() {
+        const filteredRecords = this.getFilteredRecords();
+        
+        const totalCapital = filteredRecords
+            .filter(r => r.classification === 'Capital')
+            .reduce((sum, r) => sum + (r.amount || 0), 0);
+        
+        const totalExpense = filteredRecords
+            .filter(r => r.classification === 'Expense')
+            .reduce((sum, r) => sum + (r.amount || 0), 0);
+        
+        const purchaseCosts = filteredRecords
+            .filter(r => r.type === 'Purchase')
+            .reduce((sum, r) => sum + (r.amount || 0), 0);
+        
+        const improvementCosts = filteredRecords
+            .filter(r => r.type === 'Improvement')
+            .reduce((sum, r) => sum + (r.amount || 0), 0);
+
+        return `
+            <div class="stats-summary">
+                <div class="stat-card primary">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${this.formatCurrency(totalCapital)}</div>
+                        <div class="stat-label">Capital Costs</div>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon">💸</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${this.formatCurrency(totalExpense)}</div>
+                        <div class="stat-label">Deductible Expenses</div>
+                    </div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-icon">🏠</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${this.formatCurrency(purchaseCosts)}</div>
+                        <div class="stat-label">Purchase Costs</div>
+                    </div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-icon">🔨</div>
+                    <div class="stat-content">
+                        <div class="stat-value">${this.formatCurrency(improvementCosts)}</div>
+                        <div class="stat-label">Improvements</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderTaxSummary() {
+        const filteredRecords = this.getFilteredRecords();
+        const property = this.properties.find(p => p.id === this.selectedProperty);
+        
+        if (!property || !property.purchasePrice) return '';
+
+        const capitalCosts = filteredRecords
+            .filter(r => r.classification === 'Capital')
+            .reduce((sum, r) => sum + (r.amount || 0), 0);
+        
+        const totalCostBase = property.purchasePrice + capitalCosts;
+        const estimatedGain = property.currentValue 
+            ? property.currentValue - totalCostBase 
+            : 0;
+        const cgtDiscount = estimatedGain * 0.5; // Assuming held >12 months
+
+        return `
+            <div class="tax-summary">
+                <h3>📊 Tax Summary</h3>
+                <div class="tax-calculation">
+                    <div class="tax-row">
+                        <span>Purchase Price</span>
+                        <span>${this.formatCurrency(property.purchasePrice)}</span>
+                    </div>
+                    <div class="tax-row">
+                        <span>+ Capital Costs</span>
+                        <span>${this.formatCurrency(capitalCosts)}</span>
+                    </div>
+                    <div class="tax-row total">
+                        <span>Cost Base</span>
+                        <span>${this.formatCurrency(totalCostBase)}</span>
+                    </div>
+                    <div class="tax-row">
+                        <span>Current Value</span>
+                        <span>${this.formatCurrency(property.currentValue || 0)}</span>
+                    </div>
+                    <div class="tax-row gain">
+                        <span>Estimated Capital Gain</span>
+                        <span>${this.formatCurrency(estimatedGain)}</span>
+                    </div>
+                    <div class="tax-row discount">
+                        <span>CGT Discount (50%)</span>
+                        <span>${this.formatCurrency(cgtDiscount)}</span>
+                    </div>
+                    <div class="tax-row taxable">
+                        <span>Taxable Gain</span>
+                        <span>${this.formatCurrency(estimatedGain - cgtDiscount)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderModal() {
+        return `
+            <div class="modal-overlay" id="costBaseModal" style="display: none;">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3 id="modalTitle">${this.editingRecord ? '✏️ Edit' : '➕ Add'} Cost Record</h3>
+                        <button class="btn-close" id="closeModal">✕</button>
+                    </div>
+                    
+                    <form id="costBaseForm" class="modal-form">
+                        <input type="hidden" id="recordId" value="${this.editingRecord?.id || ''}">
+                        
+                        <div class="form-group">
+                            <label>Property</label>
+                            <select name="propertyId" class="form-select" ${this.selectedProperty ? 'disabled' : ''}>
+                                <option value="">Select Property</option>
+                                ${this.properties.map(p => `
+                                    <option value="${p.id}" 
+                                        ${(this.editingRecord?.propertyId === p.id || this.selectedProperty === p.id) ? 'selected' : ''}>
+                                        ${p.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" name="date" class="form-input" 
+                                       value="${this.editingRecord?.date || new Date().toISOString().slice(0, 10)}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Amount (AUD)</label>
+                                <input type="number" name="amount" step="0.01" class="form-input" 
+                                       value="${this.editingRecord?.amount || ''}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select name="type" class="form-select">
+                                    <option value="Purchase" ${this.editingRecord?.type === 'Purchase' ? 'selected' : ''}>
+                                        Purchase Cost
+                                    </option>
+                                    <option value="Improvement" ${this.editingRecord?.type === 'Improvement' ? 'selected' : ''}>
+                                        Improvement
+                                    </option>
+                                    <option value="Selling" ${this.editingRecord?.type === 'Selling' ? 'selected' : ''}>
+                                        Selling Cost
+                                    </option>
+                                    <option value="Legal">Legal Fees</option>
+                                    <option value="StampDuty">Stamp Duty</option>
+                                    <option value="Borrowing">Borrowing Costs</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Classification</label>
+                                <select name="classification" class="form-select">
+                                    <option value="Capital" ${this.editingRecord?.classification === 'Capital' ? 'selected' : ''}>
+                                        Capital (adds to cost base)
+                                    </option>
+                                    <option value="Expense" ${this.editingRecord?.classification === 'Expense' ? 'selected' : ''}>
+                                        Expense (deductible)
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" name="description" class="form-input" 
+                                   value="${this.editingRecord?.description || ''}" 
+                                   placeholder="e.g., Stamp duty, Renovation, Legal fees" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>ATO Category</label>
+                            <select name="atoCategory" class="form-select">
+                                <option value="">-- Select ATO Category --</option>
+                                <option value="Stamp Duty" ${this.editingRecord?.atoCategory === 'Stamp Duty' ? 'selected' : ''}>
+                                    Stamp Duty
+                                </option>
+                                <option value="Legal Fees" ${this.editingRecord?.atoCategory === 'Legal Fees' ? 'selected' : ''}>
+                                    Legal & Conveyancing
+                                </option>
+                                <option value="Renovation" ${this.editingRecord?.atoCategory === 'Renovation' ? 'selected' : ''}>
+                                    Capital Improvements
+                                </option>
+                                <option value="Borrowing Costs" ${this.editingRecord?.atoCategory === 'Borrowing Costs' ? 'selected' : ''}>
+                                    Borrowing Costs
+                                </option>
+                                <option value="Agent Commission" ${this.editingRecord?.atoCategory === 'Agent Commission' ? 'selected' : ''}>
+                                    Agent Commission
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea name="notes" rows="3" class="form-input" 
+                                      placeholder="Additional details, reference numbers...">${this.editingRecord?.notes || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                ${this.editingRecord ? '💾 Update Record' : '💾 Save Record'}
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                            ${this.editingRecord ? `
+                                <button type="button" class="btn btn-danger" id="deleteBtn">🗑️ Delete</button>
+                            ` : ''}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+    }
+
+    attachEventListeners() {
+        // Property filter
+        document.getElementById('filterProperty')?.addEventListener('change', (e) => {
+            this.selectedProperty = e.target.value || null;
+            this.refreshRecordsList();
+        });
+
+        // Add record button
+        document.getElementById('btnAddRecord')?.addEventListener('click', () => {
+            this.editingRecord = null;
+            this.openModal();
+        });
+
+        // Export report
+        document.getElementById('btnExportReport')?.addEventListener('click', () => {
+            this.exportReport();
+        });
+
+        // Back to properties
+        document.getElementById('btnBackToProperties')?.addEventListener('click', () => {
+            // You'll need to import and call initPropertiesUI
+        });
+
+        // Modal handlers will be attached when modal opens
+    }
+
+    async refreshRecordsList() {
+        const filteredRecords = this.getFilteredRecords();
+        const list = document.getElementById('costBaseList');
+
+        if (filteredRecords.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <h4>No Cost Records</h4>
+                    <p>Start tracking your property's cost base for ATO compliance.</p>
+                    <button class="btn btn-primary" id="btnAddFirstRecord">➕ Add First Record</button>
+                </div>
+            `;
+            document.getElementById('btnAddFirstRecord')?.addEventListener('click', () => {
+                this.editingRecord = null;
+                this.openModal();
+            });
+            return;
+        }
+
+        list.innerHTML = filteredRecords.map(record => this.renderRecordItem(record)).join('');
+        
+        // Attach edit/delete handlers
+        list.querySelectorAll('.record-action').forEach(btn => {
+            const action = btn.dataset.action;
+            const recordId = btn.dataset.id;
+            const record = filteredRecords.find(r => r.id === recordId);
+            
+            btn.addEventListener('click', () => {
+                if (action === 'edit') {
+                    this.editingRecord = record;
+                    this.openModal();
+                } else if (action === 'delete') {
+                    this.deleteRecord(record);
+                }
+            });
+        });
+    }
+
+    renderRecordItem(record) {
+        const property = this.properties.find(p => p.id === record.propertyId);
+        const typeIcons = {
+            'Purchase': '🏠',
+            'Improvement': '🔨', 
+            'Selling': '💰',
+            'Legal': '⚖️',
+            'StampDuty': '📄',
+            'Borrowing': '🏦',
+            'Other': '📝'
+        };
+
+        return `
+            <div class="record-item ${record.classification.toLowerCase()}">
+                <div class="record-main">
+                    <div class="record-icon">${typeIcons[record.type] || '📝'}</div>
+                    <div class="record-details">
+                        <div class="record-header">
+                            <h4 class="record-title">${record.description}</h4>
+                            <span class="record-amount ${record.classification.toLowerCase()}">
+                                ${record.classification === 'Capital' ? '+' : '-'}${this.formatCurrency(record.amount)}
+                            </span>
+                        </div>
+                        <div class="record-meta">
+                            <span class="record-type">${typeIcons[record.type] || '📝'} ${record.type}</span>
+                            <span class="record-classification ${record.classification.toLowerCase()}">
+                                ${record.classification}
+                            </span>
+                            ${property ? `<span class="record-property">🏠 ${property.name}</span>` : ''}
+                            <span class="record-date">📅 ${new Date(record.date).toLocaleDateString('en-AU')}</span>
+                        </div>
+                        ${record.notes ? `<p class="record-notes">${record.notes}</p>` : ''}
+                        ${record.atoCategory ? `<span class="record-ato">ATO: ${record.atoCategory}</span>` : ''}
+                    </div>
+                </div>
+                <div class="record-actions">
+                    <button class="record-action" data-action="edit" data-id="${record.id}" title="Edit">
+                        ✏️
+                    </button>
+                    <button class="record-action" data-action="delete" data-id="${record.id}" title="Delete">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    openModal() {
+        const modal = document.getElementById('costBaseModal');
+        modal.style.display = 'flex';
+        
+        // Re-render modal with editing data
+        const modalContainer = modal.querySelector('.modal');
+        modalContainer.innerHTML = this.renderModal().match(/<div class="modal">([\s\S]*?)<\/div>/)[0];
+        
+        this.attachModalHandlers();
+    }
+
+    attachModalHandlers() {
+        const modal = document.getElementById('costBaseModal');
+        const form = document.getElementById('costBaseForm');
+        const closeBtn = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+
+        // Close modal
+        [closeBtn, cancelBtn].forEach(btn => {
+            btn?.addEventListener('click', () => {
+                modal.style.display = 'none';
+                this.editingRecord = null;
+            });
+        });
+
+        // Delete record
+        deleteBtn?.addEventListener('click', async () => {
+            if (confirm('Delete this cost record?')) {
+                await deleteItem(STORE_NAMES.costbase || 'costbase', this.editingRecord.id);
+                modal.style.display = 'none';
+                this.editingRecord = null;
+                await this.loadData();
+                this.refreshRecordsList();
+            }
+        });
+
+        // Form submission
+        form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            const recordData = {
+                id: document.getElementById('recordId').value || generateId(),
+                propertyId: formData.get('propertyId'),
+                date: formData.get('date'),
+                description: formData.get('description'),
+                type: formData.get('type'),
+                amount: parseFloat(formData.get('amount')),
+                classification: formData.get('classification'),
+                atoCategory: formData.get('atoCategory'),
+                notes: formData.get('notes'),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (this.editingRecord) {
+                // Update existing
+                recordData.createdAt = this.editingRecord.createdAt;
+                await updateItem(STORE_NAMES.costbase || 'costbase', recordData);
+            } else {
+                // Add new
+                recordData.createdAt = new Date().toISOString();
+                await addItem(STORE_NAMES.costbase || 'costbase', recordData);
+            }
+
+            modal.style.display = 'none';
+            this.editingRecord = null;
+            await this.loadData();
+            this.refreshRecordsList();
+        });
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                this.editingRecord = null;
+            }
+        });
+    }
+
+    async deleteRecord(record) {
+        if (!confirm(`Delete "${record.description}"?`)) return;
+        
+        await deleteItem(STORE_NAMES.costbase || 'costbase', record.id);
+        await this.loadData();
+        this.refreshRecordsList();
+    }
+
+    exportReport() {
+        const filteredRecords = this.getFilteredRecords();
+        const property = this.selectedProperty 
+            ? this.properties.find(p => p.id === this.selectedProperty)
+            : null;
+        
+        // Create CSV content
+        let csv = 'ATO Cost Base Report\n\n';
+        
+        if (property) {
+            csv += `Property: ${property.name}\n`;
+            csv += `Address: ${property.address || 'N/A'}\n`;
+            csv += `Date: ${new Date().toLocaleDateString('en-AU')}\n\n`;
+        }
+        
+        csv += 'Date,Description,Type,Classification,ATO Category,Amount,Notes\n';
+        
+        filteredRecords.forEach(record => {
+            csv += `"${record.date}","${record.description}","${record.type}",`;
+            csv += `"${record.classification}","${record.atoCategory || ''}",`;
+            csv += `"${record.amount}","${record.notes || ''}"\n`;
+        });
+        
+        // Summary
+        csv += '\n\nSUMMARY\n';
+        csv += 'Capital Costs,Expenses,Purchase Costs,Improvements\n';
+        
+        const capital = filteredRecords.filter(r => r.classification === 'Capital').reduce((sum, r) => sum + r.amount, 0);
+        const expenses = filteredRecords.filter(r => r.classification === 'Expense').reduce((sum, r) => sum + r.amount, 0);
+        const purchase = filteredRecords.filter(r => r.type === 'Purchase').reduce((sum, r) => sum + r.amount, 0);
+        const improvements = filteredRecords.filter(r => r.type === 'Improvement').reduce((sum, r) => sum + r.amount, 0);
+        
+        csv += `${capital},${expenses},${purchase},${improvements}\n`;
+        
+        // Download CSV
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cost-base-report-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    getFilteredRecords() {
+        return this.selectedProperty
+            ? this.records.filter(r => r.propertyId === this.selectedProperty)
+            : this.records;
+    }
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-AU', {
+            style: 'currency',
+            currency: 'AUD'
+        }).format(amount || 0);
+    }
+}
+
+// Backwards compatibility
 export async function initCostBaseTrackerUI(propertyId = null) {
-  console.log('🧱 Cost Base Tracker initialized');
-
-  const main = document.getElementById('mainContent');
-  main.innerHTML = `
-    <style>
-      body { background:#f9fafb;font-family:'Inter',sans-serif;color:#222;margin:0; }
-      .costbase-container { padding:16px;display:flex;flex-direction:column;gap:18px; }
-      .header { display:flex;justify-content:space-between;align-items:center; }
-      .header h2 { margin:0;font-size:1.4rem;font-weight:600; }
-      .form-select, .form-input, textarea {
-        width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:0.95rem;
-      }
-      .btn { border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:0.9rem; }
-      .btn-primary { background:#2563eb;color:#fff; }
-      .btn-secondary { background:#e5e7eb;color:#111; }
-      .record-list { background:#fff;border-radius:12px;box-shadow:0 2px 5px rgba(0,0,0,0.08);padding:12px; }
-      .record-item { display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee; }
-      .record-item:last-child{border-bottom:none;}
-      .fab-container { position:fixed;bottom:20px;right:20px;z-index:50; }
-      .fab-main { width:56px;height:56px;border-radius:50%;background:#2563eb;color:#fff;
-        display:flex;align-items:center;justify-content:center;font-size:1.8rem;border:none;
-        box-shadow:0 4px 10px rgba(0,0,0,0.2);cursor:pointer;
-      }
-      .modal { position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100; }
-      .modal.active { display:flex; }
-      .modal-content { background:#fff;border-radius:12px;padding:18px;width:90%;max-width:400px; }
-      .modal-content h3 { margin-top:0;font-size:1.2rem; }
-      .form-group { margin-bottom:10px; }
-    </style>
-
-    <div class="costbase-container">
-      <div class="header">
-        <h2>📘 Cost Base Tracker</h2>
-        ${propertyId ? `<button id="btnBackToProperties" class="btn btn-secondary">⬅️ Back</button>` : ''}
-      </div>
-
-      <div class="form-group">
-        <label>Property</label>
-        <select id="filterProperty" class="form-select"></select>
-      </div>
-
-      <div id="costBaseList" class="record-list">Loading records...</div>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal" id="costBaseModal">
-      <div class="modal-content">
-        <h3 id="modalTitle">Add Cost Item</h3>
-        <form id="costBaseForm">
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" name="date" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <input type="text" name="description" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Type</label>
-            <select name="type" class="form-select">
-              <option value="Purchase">Purchase</option>
-              <option value="Improvement">Improvement</option>
-              <option value="Selling">Selling</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Amount (AUD)</label>
-            <input type="number" name="amount" step="0.01" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Classification</label>
-            <select name="classification" class="form-select">
-              <option value="Capital">Capital (add to cost base)</option>
-              <option value="Expense">Expense (deductible)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Notes</label>
-            <textarea name="notes" rows="2"></textarea>
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;">
-            <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
-            <button type="submit" class="btn btn-primary">💾 Save</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div class="fab-container"><button class="fab-main">＋</button></div>
-  `;
-
-  if (propertyId) document.getElementById('btnBackToProperties').onclick = () => initPropertiesUI();
-
-  // Setup property filter
-  const properties = await getAllItems(STORE_NAMES.properties);
-  const propertySelect = document.getElementById('filterProperty');
-  propertySelect.innerHTML = `<option value="">All Properties</option>` + properties.map(p => `
-    <option value="${p.id}" ${p.id === propertyId ? 'selected' : ''}>${p.name}</option>`).join('');
-
-  propertySelect.addEventListener('change', e => refreshCostBaseList(e.target.value));
-
-  // FAB and Modal handlers
-  const modal = document.getElementById('costBaseModal');
-  const form = document.getElementById('costBaseForm');
-  const fab = document.querySelector('.fab-main');
-
-  fab.onclick = () => openModal();
-  document.getElementById('cancelModal').onclick = () => closeModal();
-
-  form.onsubmit = async e => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    const record = {
-      id: generateId(),
-      propertyId: propertySelect.value || '',
-      date: f.get('date'),
-      description: f.get('description'),
-      type: f.get('type'),
-      amount: parseFloat(f.get('amount')) || 0,
-      classification: f.get('classification'),
-      notes: f.get('notes'),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    await addItem(STORE_NAMES.costbase || 'costbase', record);
-    closeModal();
-    await refreshCostBaseList(propertySelect.value);
-  };
-
-  // Load list
-  await refreshCostBaseList(propertySelect.value);
-}
-
-// ============================================================================
-// 🔁 Refresh List
-// ============================================================================
-async function refreshCostBaseList(propertyId = null) {
-  const all = await getAllItems(STORE_NAMES.costbase || 'costbase');
-  const filtered = propertyId ? all.filter(r => r.propertyId === propertyId) : all;
-  const list = document.getElementById('costBaseList');
-
-  if (!filtered.length) {
-    list.innerHTML = `<p style="opacity:0.6;text-align:center;">No cost base records yet.</p>`;
-    return;
-  }
-
-  list.innerHTML = filtered.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(r => `
-    <div class="record-item">
-      <div>
-        <strong>${r.description}</strong><br>
-        <small>${r.type} • ${r.classification}</small>
-      </div>
-      <div>
-        <span>${formatCurrency(r.amount)}</span><br>
-        <small>${new Date(r.date).toLocaleDateString('en-AU')}</small>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ============================================================================
-// 🧩 Modal Helpers
-// ============================================================================
-function openModal() {
-  document.getElementById('costBaseModal').classList.add('active');
-  document.getElementById('costBaseForm').reset();
-}
-function closeModal() {
-  document.getElementById('costBaseModal').classList.remove('active');
-}
-
-// ============================================================================
-// 💰 Utility
-// ============================================================================
-function formatCurrency(amount, currency = 'AUD') {
-  return new Intl.NumberFormat('en-AU', { style: 'currency', currency }).format(amount || 0);
+    const tracker = new CostBaseTracker();
+    await tracker.init(propertyId);
 }
