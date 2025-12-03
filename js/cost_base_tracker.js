@@ -20,13 +20,29 @@ export class CostBaseTracker {
         this.attachEventListeners();
     }
 
-    async loadData() {
-        [this.records, this.properties] = await Promise.all([
+  async loadData() {
+    try {
+        const [records, properties] = await Promise.all([
             getAllItems(STORE_NAMES.costbase || 'costbase'),
             getAllItems(STORE_NAMES.properties)
         ]);
+        
+        // Ensure we always have arrays
+        this.records = Array.isArray(records) ? records : [];
+        this.properties = Array.isArray(properties) ? properties : [];
+        
+        console.log('Loaded data:', {
+            recordsCount: this.records.length,
+            propertiesCount: this.properties.length
+        });
+        
+    } catch (error) {
+        console.error('Error loading cost base data:', error);
+        // Set defaults to prevent errors
+        this.records = [];
+        this.properties = [];
     }
-
+}
     renderUI() {
         const mainContent = document.getElementById('mainContent');
         
@@ -363,46 +379,56 @@ export class CostBaseTracker {
         // Modal handlers will be attached when modal opens
     }
 
-    async refreshRecordsList() {
-        const filteredRecords = this.getFilteredRecords();
-        const list = document.getElementById('costBaseList');
+async refreshRecordsList() {
+    const filteredRecords = this.getFilteredRecords();
+    const list = document.getElementById('costBaseList');
 
-        if (filteredRecords.length === 0) {
-            list.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">📊</div>
-                    <h4>No Cost Records</h4>
-                    <p>Start tracking your property's cost base for ATO compliance.</p>
-                    <button class="btn btn-primary" id="btnAddFirstRecord">➕ Add First Record</button>
-                </div>
-            `;
-            document.getElementById('btnAddFirstRecord')?.addEventListener('click', () => {
-                this.editingRecord = null;
-                this.openModal();
-            });
-            return;
-        }
-
-        list.innerHTML = filteredRecords.map(record => this.renderRecordItem(record)).join('');
-        
-        // Attach edit/delete handlers
-        list.querySelectorAll('.record-action').forEach(btn => {
-            const action = btn.dataset.action;
-            const recordId = btn.dataset.id;
-            const record = filteredRecords.find(r => r.id === recordId);
-            
-            btn.addEventListener('click', () => {
-                if (action === 'edit') {
-                    this.editingRecord = record;
-                    this.openModal();
-                } else if (action === 'delete') {
-                    this.deleteRecord(record);
-                }
-            });
+    if (!list) return; // Safety check
+    
+    if (!filteredRecords || filteredRecords.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <h4>No Cost Records</h4>
+                <p>Start tracking your property's cost base for ATO compliance.</p>
+                <button class="btn btn-primary" id="btnAddFirstRecord">➕ Add First Record</button>
+            </div>
+        `;
+        document.getElementById('btnAddFirstRecord')?.addEventListener('click', () => {
+            this.editingRecord = null;
+            this.openModal();
         });
+        return;
     }
 
+    // Use safe rendering with null check
+    list.innerHTML = filteredRecords
+        .filter(record => record && record.id) // Filter out invalid records
+        .map(record => this.renderRecordItem(record))
+        .join('');
+    
+    // Attach edit/delete handlers
+    list.querySelectorAll('.record-action').forEach(btn => {
+        const action = btn.dataset.action;
+        const recordId = btn.dataset.id;
+        const record = filteredRecords.find(r => r && r.id === recordId);
+        
+        if (!record) return; // Skip if record not found
+        
+        btn.addEventListener('click', () => {
+            if (action === 'edit') {
+                this.editingRecord = record;
+                this.openModal();
+            } else if (action === 'delete') {
+                this.deleteRecord(record);
+            }
+        });
+    });
+}
+
     renderRecordItem(record) {
+          // Add null checks for record and its properties
+        if (!record) return '';
         const property = this.properties.find(p => p.id === record.propertyId);
         const typeIcons = {
             'Purchase': '🏠',
@@ -413,6 +439,13 @@ export class CostBaseTracker {
             'Borrowing': '🏦',
             'Other': '📝'
         };
+
+        // Safely get classification with default
+        const classification = record.classification || 'Other';
+        const type = record.type || 'Other';
+        const description = record.description || 'No description';
+        const amount = parseFloat(record.amount) || 0;
+        const date = record.date ? new Date(record.date) : new Date();
 
         return `
             <div class="record-item ${record.classification.toLowerCase()}">
@@ -581,18 +614,30 @@ export class CostBaseTracker {
         window.URL.revokeObjectURL(url);
     }
 
-    getFilteredRecords() {
-        return this.selectedProperty
-            ? this.records.filter(r => r.propertyId === this.selectedProperty)
-            : this.records;
+getFilteredRecords() {
+    // Ensure we have valid records array
+    if (!Array.isArray(this.records)) {
+        console.warn('Records array is not valid, returning empty array');
+        return [];
     }
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-AU', {
-            style: 'currency',
-            currency: 'AUD'
-        }).format(amount || 0);
+    
+    // If no records or empty array, return empty
+    if (!this.records.length) {
+        return [];
     }
+    
+    // Filter by property if selected
+    return this.selectedProperty
+        ? this.records.filter(r => r && r.propertyId === this.selectedProperty)
+        : this.records.filter(r => r); // Filter out any null/undefined records
+}
+formatCurrency(amount) {
+    const numAmount = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-AU', {
+        style: 'currency',
+        currency: 'AUD'
+    }).format(numAmount);
+}
 }
 
 // Backwards compatibility
