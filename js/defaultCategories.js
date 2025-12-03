@@ -232,7 +232,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_Inv_council_rates', name: 'Inv Council Rates', type: 'expense', icon: '📄', parentId: 'exp_property' },
 { id: 'exp_Inv_water_rates', name: 'Inv Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_property' },
 { id: 'exp_Land_Tax', name: 'Land Tax', type: 'expense', icon: '🏢', parentId: 'exp_property' },
-{ id: 'exp_repairs', name: 'Repairs & Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_property' },
+{ id: 'exp_repairs', name: 'Repairs & Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_property' }
 
 
 ];
