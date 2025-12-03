@@ -250,8 +250,9 @@ export class CostBaseTracker {
                             <select name="propertyId" class="form-select" ${this.selectedProperty ? 'disabled' : ''}>
                                 <option value="">Select Property</option>
                                 ${this.properties.map(p => `
-                                    <option value="${p.id}" 
-                                        ${(this.editingRecord?.propertyId === p.id || this.selectedProperty === p.id) ? 'selected' : ''}>
+                                    // Use || '' to ensure comparison works safely
+                                    <option value="${p.id}" 
+                                        ${((this.editingRecord?.propertyId || this.selectedProperty) === p.id) ? 'selected' : ''}>
                                         ${p.name}
                                     </option>
                                 `).join('')}
@@ -372,11 +373,12 @@ export class CostBaseTracker {
         });
 
         // Back to properties
-        document.getElementById('btnBackToProperties')?.addEventListener('click', () => {
-            // You'll need to import and call initPropertiesUI
-        });
+        document.getElementById('btnBackToProperties')?.addEventListener('click', () => {
+            initPropertiesUI(); // <-- Implement the function call
+        });
 
         // Modal handlers will be attached when modal opens
+
     }
 
 async refreshRecordsList() {
@@ -445,24 +447,26 @@ async refreshRecordsList() {
         const type = record.type || 'Other';
         const description = record.description || 'No description';
         const amount = parseFloat(record.amount) || 0;
-        const date = record.date ? new Date(record.date) : new Date();
+// ... inside renderRecordItem
+        const date = record.date ? new Date(record.date) : new Date();
 
-        return `
-            <div class="record-item ${record.classification.toLowerCase()}">
-                <div class="record-main">
-                    <div class="record-icon">${typeIcons[record.type] || '📝'}</div>
-                    <div class="record-details">
-                        <div class="record-header">
-                            <h4 class="record-title">${record.description}</h4>
-                            <span class="record-amount ${record.classification.toLowerCase()}">
-                                ${record.classification === 'Capital' ? '+' : '-'}${this.formatCurrency(record.amount)}
-                            </span>
-                        </div>
-                        <div class="record-meta">
-                            <span class="record-type">${typeIcons[record.type] || '📝'} ${record.type}</span>
-                            <span class="record-classification ${record.classification.toLowerCase()}">
-                                ${record.classification}
-                            </span>
+        return `
+            <div class="record-item ${classification.toLowerCase()}">
+                <div class="record-main">
+                    <div class="record-icon">${typeIcons[type] || '📝'}</div>
+                    <div class="record-details">
+                        <div class="record-header">
+                            <h4 class="record-title">${description}</h4>
+                            <span class="record-amount ${classification.toLowerCase()}">
+                                ${classification === 'Capital' ? '+' : '-'}${this.formatCurrency(amount)}
+                            </span>
+                        </div>
+                        <div class="record-meta">
+                            <span class="record-type">${typeIcons[type] || '📝'} ${type}</span>
+                            <span class="record-classification ${classification.toLowerCase()}">
+                                ${classification}
+                            </span>
+                            // ...
                             ${property ? `<span class="record-property">🏠 ${property.name}</span>` : ''}
                             <span class="record-date">📅 ${new Date(record.date).toLocaleDateString('en-AU')}</span>
                         </div>
