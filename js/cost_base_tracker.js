@@ -4,7 +4,7 @@
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 import { html } from './utils/html.js';
-
+import { initPropertiesUI } from './properties.js';
 export class CostBaseTracker {
     constructor() {
         this.records = [];
