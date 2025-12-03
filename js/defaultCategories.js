@@ -50,11 +50,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_Inv_mortgage', name: 'Inv_Mortgage', type: 'expense', icon: '💸', parentId: 'exp_housing' },
 { id: 'exp_Home_Equity_mortgage', name: 'Home_Equity_Mortgage', type: 'expense', icon: '💸', parentId: 'exp_housing' },
 { id: 'exp_rent_payment', name: 'Rent Payment', type: 'expense', icon: '💰', parentId: 'exp_housing' },
-{ id: 'exp_council_rates', name: 'Council Rates', type: 'expense', icon: '📄', parentId: 'exp_housing' },
-{ id: 'exp_Inv_council_rates', name: 'Inv Council Rates', type: 'expense', icon: '📄', parentId: 'exp_housing' },
-{ id: 'exp_Inv_water_rates', name: 'Inv Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_housing' },
-{ id: 'exp_Land_Tax', name: 'Land Tax', type: 'expense', icon: '🏢', parentId: 'exp_housing' },
-{ id: 'exp_repairs', name: 'Repairs & Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_housing' },
+
   
 // Utilities Main
 { id: 'exp_utilities', name: 'Utilities', type: 'expense', icon: '💡', parentId: null },
@@ -223,16 +219,20 @@ export const DEFAULT_CATEGORIES = [
 
 // Add to defaultCategories.js in the appropriate sections
 
-// Property-specific categories (add to housing or create new main category)
-{ id: 'exp_property_maintenance', name: 'Property Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_housing' },
-{ id: 'exp_property_management', name: 'Property Management Fees', type: 'expense', icon: '🏢', parentId: 'exp_housing' },
-{ id: 'exp_property_insurance', name: 'Property Insurance', type: 'expense', icon: '🛡️', parentId: 'exp_insurance' },
-{ id: 'exp_land_tax', name: 'Land Tax', type: 'expense', icon: '🏛️', parentId: 'exp_housing' },
-{ id: 'exp_water_rates', name: 'Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_utilities' },
-{ id: 'exp_body_corporate', name: 'Body Corporate', type: 'expense', icon: '🏘️', parentId: 'exp_housing' },
-
 // Create a new main category for Property Expenses if desired
 { id: 'exp_property', name: 'Property Expenses', type: 'expense', icon: '🏠', parentId: null }
+
+// Property-specific categories (add to housing or create new main category)
+{ id: 'exp_property_maintenance', name: 'Property Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_property' },
+{ id: 'exp_property_management', name: 'Property Management Fees', type: 'expense', icon: '🏢', parentId: 'exp_property' },
+{ id: 'exp_land_tax', name: 'Land Tax', type: 'expense', icon: '🏛️', parentId: 'exp_property' },
+{ id: 'exp_water_rates', name: 'Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_property' },
+{ id: 'exp_body_corporate', name: 'Body Corporate', type: 'expense', icon: '🏘️', parentId: 'exp_property' },
+{ id: 'exp_council_rates', name: 'Council Rates', type: 'expense', icon: '📄', parentId: 'exp_property' },
+{ id: 'exp_Inv_council_rates', name: 'Inv Council Rates', type: 'expense', icon: '📄', parentId: 'exp_property' },
+{ id: 'exp_Inv_water_rates', name: 'Inv Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_property' },
+{ id: 'exp_Land_Tax', name: 'Land Tax', type: 'expense', icon: '🏢', parentId: 'exp_property' },
+{ id: 'exp_repairs', name: 'Repairs & Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_property' },
 
 
 ];
