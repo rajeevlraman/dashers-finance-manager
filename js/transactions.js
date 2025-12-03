@@ -812,6 +812,9 @@ export async function initTransactionsUI() {
     });
   }
 
+// After setting up other event listeners, add:
+initImportSystem(accounts, categories);
+
   function formatDateDisplay(dateString) {
     const date = new Date(dateString);
     const today = new Date();
@@ -1038,8 +1041,7 @@ function initImportSystem(accounts, categories) {
 
 //initialize import system
 
-// After setting up other event listeners, add:
-initImportSystem(accounts, categories);
+
 
 // Parse CSV file
 async function parseCSV(file, accountId, categories) {
