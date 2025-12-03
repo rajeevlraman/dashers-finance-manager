@@ -87,14 +87,14 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_car2_rego', name: '2nd car Registration', type: 'expense', icon: '📄', parentId: 'exp_transport' },
 { id: 'exp_public_transport', name: 'Public Transport', type: 'expense', icon: '🚆', parentId: 'exp_transport' },
 { id: 'exp_citylink_toll', name: 'citylink_toll', type: 'expense', icon: '⛽', parentId: 'exp_transport' },
-{ id: 'exp_Parking_Fees', name: 'parking Fees', type: 'expense', icon: '🚆', parentId: 'exp_transport' },
+{ id: 'exp_Parking_Fees', name: 'parking Fees', type: 'expense', icon: '🅿️', parentId: 'exp_transport' },
 
 { id: 'exp_health', name: 'Health & Medical', type: 'expense', icon: '🩺', parentId: null },
 
 { id: 'exp_gp', name: 'GP Visits', type: 'expense', icon: '👨‍⚕️', parentId: 'exp_health' },
 { id: 'exp_dental', name: 'Dental', type: 'expense', icon: '🦷', parentId: 'exp_health' },
 { id: 'exp_pharmacy', name: 'Pharmacy / Medicine', type: 'expense', icon: '💊', parentId: 'exp_health' },
-{ id: 'exp_Ambulance_Cover', name: 'Anbulance cover', type: 'expense', icon: '🛡️', parentId: 'exp_health' },
+{ id: 'exp_Ambulance_Cover', name: 'Anbulance cover', type: 'expense', icon: '🚑', parentId: 'exp_health' },
 
 // Education Main
 { id: 'exp_education', name: 'Education', type: 'expense', icon: '📚', parentId: null },
@@ -106,7 +106,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_courses', name: 'Courses & Certifications', type: 'expense', icon: '📝', parentId: 'exp_education' },
 
 // Dining Main
-{ id: 'exp_dining', name: 'Dining', type: 'expense', icon: '🍽️', parentId: null },
+{ id: 'exp_dining', name: 'Restaurants & Fastfood', type: 'expense', icon: '🍽️', parentId: null },
 
 // Dining Subcategories
 { id: 'exp_restaurants', name: 'Indian Restaurants', type: 'expense', icon: '🍚', parentId: 'exp_dining' },
@@ -230,7 +230,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_body_corporate', name: 'Body Corporate', type: 'expense', icon: '🏘️', parentId: 'exp_property' },
 { id: 'exp_council_rates', name: 'Council Rates', type: 'expense', icon: '📄', parentId: 'exp_property' },
 { id: 'exp_Inv_council_rates', name: 'Inv Council Rates', type: 'expense', icon: '📄', parentId: 'exp_property' },
-{ id: 'exp_Inv_water_rates', name: 'Inv Water Rates', type: 'expense', icon: '🚰', parentId: 'exp_property' },
+{ id: 'exp_Inv_water_rates', name: 'Inv Water Rates', type: 'expense', icon: '💧', parentId: 'exp_property' },
 { id: 'exp_Land_Tax', name: 'Land Tax', type: 'expense', icon: '🏢', parentId: 'exp_property' },
 { id: 'exp_repairs', name: 'Repairs & Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_property' },
 
