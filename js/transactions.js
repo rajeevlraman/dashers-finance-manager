@@ -50,6 +50,7 @@ export async function initTransactionsUI() {
           <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
           <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
           <button class="btn btn-secondary" id="btnExportTx">📤 Export</button>
+          <button class="btn btn-success" id="btnImportTx">📁 Import Statement</button> <!-- ADD THIS -->
         </div>
       </div>
 
@@ -160,6 +161,74 @@ export async function initTransactionsUI() {
               <label class="form-label">Description (Optional)</label>
               <input type="text" name="description" class="form-input" placeholder="e.g., Groceries at Coles, Dinner out...">
               <small class="form-hint">Add specific details about this transaction</small>
+            </div>
+
+            // Add this after the forms section
+              <!-- csv import Section -->
+            <div id="importModal" class="modal-overlay" style="display: none;">
+              <div class="modal">
+                <div class="modal-header">
+                  <h3>📁 Import Credit Card Statement</h3>
+                  <button class="btn-close" id="closeImportModal">✕</button>
+                </div>
+                <div class="modal-body">
+                  <div class="import-tabs">
+                    <button class="tab-btn active" data-tab="csv">CSV Import</button>
+                    <button class="tab-btn" data-tab="manual">Manual Entry</button>
+                    <button class="tab-btn" data-tab="rules">Auto-Categorization Rules</button>
+                  </div>
+                  
+                  <div id="csvTab" class="tab-content active">
+                    <div class="form-group">
+                      <label class="form-label">Select CSV File</label>
+                      <input type="file" id="csvFile" accept=".csv, .txt" class="form-input">
+                      <small class="form-hint">Supported banks: Commonwealth, ANZ, NAB, Westpac, Citi, etc.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label class="form-label">Account</label>
+                      <select id="importAccount" class="form-select">
+                        <option value="">-- Select Account --</option>
+                        ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+                      </select>
+                    </div>
+                    
+                    <div class="preview-section" style="display: none;">
+                      <h4>Preview (First 5 rows)</h4>
+                      <div id="csvPreview" class="csv-preview"></div>
+                      
+                      <div class="column-mapping">
+                        <h5>Map CSV Columns</h5>
+                        <div id="columnMapping"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div id="manualTab" class="tab-content">
+                    <div class="form-group">
+                      <label class="form-label">Paste Statement Data</label>
+                      <textarea id="statementText" class="form-input" rows="10" placeholder="Paste your statement data here...
+            Date, Description, Amount
+            01/01/2024, COLES MELBOURNE, -85.50
+            02/01/2024, SHELL SERVICE STATION, -65.20
+            03/01/2024, SALARY DEPOSIT, 2500.00"></textarea>
+                    </div>
+                  </div>
+                  
+                  <div id="rulesTab" class="tab-content">
+                    <h4>Auto-Categorization Rules</h4>
+                    <div id="categoryRules">
+                      <!-- Rules will be populated here -->
+                    </div>
+                    <button class="btn btn-secondary" onclick="addCategoryRule()">➕ Add Rule</button>
+                  </div>
+                  
+                  <div class="import-actions">
+                    <button class="btn btn-primary" id="processImport">Process Import</button>
+                    <button class="btn btn-secondary" id="cancelImport">Cancel</button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Property Expense Section -->
@@ -848,6 +917,466 @@ export async function syncAllPropertyExpenses() {
     throw error;
   }
 }
+
+//<--csv import logic -->
+
+// Add this after your existing functions
+function initImportSystem(accounts, categories) {
+  const importBtn = document.getElementById('btnImportTx');
+  const importModal = document.getElementById('importModal');
+  const closeImportBtn = document.getElementById('closeImportModal');
+  const cancelImportBtn = document.getElementById('cancelImport');
+  const csvFileInput = document.getElementById('csvFile');
+  const processImportBtn = document.getElementById('processImport');
+  
+  if (!importBtn) return;
+  
+  // Show import modal
+  importBtn.addEventListener('click', () => {
+    importModal.style.display = 'flex';
+  });
+  
+  // Close import modal
+  closeImportBtn?.addEventListener('click', () => {
+    importModal.style.display = 'none';
+  });
+  
+  cancelImportBtn?.addEventListener('click', () => {
+    importModal.style.display = 'none';
+  });
+  
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+    });
+  });
+  
+  // CSV file preview
+  csvFileInput?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const previewSection = document.querySelector('.preview-section');
+    const previewDiv = document.getElementById('csvPreview');
+    
+    try {
+      const text = await file.text();
+      const rows = text.split('\n').slice(0, 6); // Get first 6 rows (header + 5 data)
+      
+      let previewHTML = '<table class="preview-table">';
+      rows.forEach((row, i) => {
+        const cells = row.split(',');
+        previewHTML += '<tr>';
+        cells.forEach((cell, j) => {
+          if (i === 0) {
+            previewHTML += `<th>Column ${j + 1}</th>`;
+          } else {
+            previewHTML += `<td>${cell.trim()}</td>`;
+          }
+        });
+        previewHTML += '</tr>';
+      });
+      previewHTML += '</table>';
+      
+      previewDiv.innerHTML = previewHTML;
+      previewSection.style.display = 'block';
+      
+      // Auto-detect column mapping
+      autoDetectColumns(rows[0]);
+    } catch (error) {
+      console.error('Error reading CSV:', error);
+      alert('Error reading CSV file');
+    }
+  });
+  
+  // Process import
+  processImportBtn?.addEventListener('click', async () => {
+    const accountId = document.getElementById('importAccount').value;
+    if (!accountId) {
+      alert('Please select an account');
+      return;
+    }
+    
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+    
+    try {
+      let transactions = [];
+      
+      if (activeTab === 'csv') {
+        const file = csvFileInput.files[0];
+        if (!file) {
+          alert('Please select a CSV file');
+          return;
+        }
+        transactions = await parseCSV(file, accountId, categories);
+      } else if (activeTab === 'manual') {
+        const text = document.getElementById('statementText').value;
+        transactions = await parseText(text, accountId, categories);
+      }
+      
+      if (transactions.length === 0) {
+        alert('No transactions found to import');
+        return;
+      }
+      
+      // Save transactions
+      const savedCount = await saveImportedTransactions(transactions);
+      
+      importModal.style.display = 'none';
+      alert(`Successfully imported ${savedCount} transactions!`);
+      initTransactionsUI(); // Refresh the view
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Error importing transactions: ' + error.message);
+    }
+  });
+}
+
+//initialize import system
+
+// After setting up other event listeners, add:
+initImportSystem(accounts, categories);
+
+// Parse CSV file
+async function parseCSV(file, accountId, categories) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const rows = text.split('\n').filter(row => row.trim());
+        const transactions = [];
+        
+        // Skip header row (assuming first row is headers)
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i].split(',');
+          if (row.length < 3) continue;
+          
+          const transaction = createTransactionFromCSV(row, accountId, categories);
+          if (transaction) {
+            transactions.push(transaction);
+          }
+        }
+        
+        resolve(transactions);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
+// Parse manual text entry
+async function parseText(text, accountId, categories) {
+  const lines = text.split('\n').filter(line => line.trim());
+  const transactions = [];
+  
+  for (const line of lines) {
+    // Try different formats
+    const transaction = parseTransactionLine(line, accountId, categories);
+    if (transaction) {
+      transactions.push(transaction);
+    }
+  }
+  
+  return transactions;
+}
+
+// Create transaction from CSV row
+function createTransactionFromCSV(row, accountId, categories) {
+  try {
+    // Common CSV formats:
+    // Format 1: Date, Description, Amount, Balance
+    // Format 2: Date, Description, Debit, Credit, Balance
+    // Format 3: Date, Description, Amount (negative for expenses)
+    
+    let date, description, amount;
+    
+    if (row.length >= 3) {
+      date = parseDate(row[0].trim());
+      description = row[1].trim();
+      
+      if (row[2].includes('/')) {
+        // Might be amount with sign
+        amount = parseFloat(row[2].replace(/[^0-9.-]/g, ''));
+      } else if (row.length >= 4) {
+        // Check for separate debit/credit columns
+        const debit = parseFloat(row[2]) || 0;
+        const credit = parseFloat(row[3]) || 0;
+        amount = credit > 0 ? credit : -debit;
+      }
+    }
+    
+    if (!date || !description || isNaN(amount)) {
+      return null;
+    }
+    
+    const categoryId = autoCategorize(description, amount, categories);
+    
+    return {
+      id: generateId(),
+      type: amount > 0 ? 'income' : 'expense',
+      amount: amount,
+      date: date,
+      description: description,
+      accountId: accountId,
+      categoryId: categoryId,
+      isPropertyExpense: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error parsing CSV row:', error);
+    return null;
+  }
+}
+
+// Parse transaction from text line
+function parseTransactionLine(line, accountId, categories) {
+  // Try to match common patterns
+  const patterns = [
+    // Pattern 1: "DD/MM/YYYY, DESCRIPTION, AMOUNT"
+    /^(\d{1,2}\/\d{1,2}\/\d{4}),\s*(.+?),\s*(-?\$?\d+\.?\d*)/i,
+    
+    // Pattern 2: "YYYY-MM-DD DESCRIPTION AMOUNT"
+    /^(\d{4}-\d{2}-\d{2})\s+(.+?)\s+(-?\$?\d+\.?\d*)/i,
+    
+    // Pattern 3: "DESCRIPTION $AMOUNT DATE"
+    /^(.+?)\s+\$?(-?\d+\.?\d*)\s+(\d{1,2}\/\d{1,2}\/\d{4})/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = line.match(pattern);
+    if (match) {
+      let date, description, amount;
+      
+      if (pattern === patterns[2]) {
+        // Pattern 3: description, amount, date
+        description = match[1].trim();
+        amount = parseFloat(match[2]);
+        date = parseDate(match[3].trim());
+      } else {
+        // Patterns 1 & 2: date, description, amount
+        date = parseDate(match[1].trim());
+        description = match[2].trim();
+        amount = parseFloat(match[3].replace(/[^0-9.-]/g, ''));
+      }
+      
+      if (!date || !description || isNaN(amount)) {
+        continue;
+      }
+      
+      const categoryId = autoCategorize(description, amount, categories);
+      
+      return {
+        id: generateId(),
+        type: amount > 0 ? 'income' : 'expense',
+        amount: amount,
+        date: date,
+        description: description,
+        accountId: accountId,
+        categoryId: categoryId,
+        isPropertyExpense: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
+  }
+  
+  return null;
+}
+
+// Auto-categorize based on description
+function autoCategorize(description, amount, categories) {
+  const desc = description.toLowerCase();
+  let categoryId = null;
+  
+  // Common Australian merchant patterns
+  const rules = [
+    // Supermarkets
+    { pattern: /coles|woolworths|aldi|iga|foodworks|safeway/i, category: 'exp_grocery_supermarket' },
+    
+    // Fuel
+    { pattern: /shell|bp|caltex|7-eleven|united|ampol|fuel/i, category: 'exp_fuel' },
+    
+    // Restaurants
+    { pattern: /mcdonald|kfc|hungry jack|nando|domino|pizza hut|grill'd|restaurant|cafe/i, category: 'exp_restaurants' },
+    
+    // Utilities
+    { pattern: /origin|agl|energy australia|red energy|electricity|gas/i, category: 'exp_electricity' },
+    
+    // Internet/Phone
+    { pattern: /telstra|optus|vodafone|tpg|internet|nbn|mobile/i, category: 'exp_internet' },
+    
+    // Insurance
+    { pattern: /aami|racv|nrma|allianz|qbe|insurance/i, category: 'exp_insurance' },
+    
+    // Salary
+    { pattern: /salary|wage|payroll|income|deposit.*salary/i, category: 'inc_salary' },
+    
+    // Property
+    { pattern: /council rates|water rates|land tax|real estate|property|rent/i, category: 'exp_council_rates' },
+    
+    // Shopping
+    { pattern: /kmart|target|big w|bunnings|harvey norman|jbhifi|officeworks/i, category: 'exp_shopping' },
+    
+    // Transport
+    { pattern: /myki|ptv|public transport|train|tram|bus|uber|taxi/i, category: 'exp_public_transport' },
+    
+    // Medical
+    { pattern: /chemist|pharmacy|priceline|gp|doctor|hospital|medical/i, category: 'exp_pharmacy' }
+  ];
+  
+  for (const rule of rules) {
+    if (rule.pattern.test(desc)) {
+      categoryId = rule.category;
+      break;
+    }
+  }
+  
+  // If no match found, use default categories based on amount
+  if (!categoryId) {
+    if (amount > 0) {
+      categoryId = 'inc_main'; // Default income category
+    } else {
+      categoryId = 'exp_misc'; // Default expense category
+    }
+  }
+  
+  return categoryId;
+}
+
+// Parse various date formats
+function parseDate(dateString) {
+  const formats = [
+    // DD/MM/YYYY
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
+    // YYYY-MM-DD
+    /^(\d{4})-(\d{1,2})-(\d{1,2})$/,
+    // MM/DD/YYYY
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+  ];
+  
+  for (const format of formats) {
+    const match = dateString.match(format);
+    if (match) {
+      let day, month, year;
+      
+      if (format === formats[1]) {
+        // YYYY-MM-DD
+        year = parseInt(match[1]);
+        month = parseInt(match[2]) - 1;
+        day = parseInt(match[3]);
+      } else {
+        // DD/MM/YYYY or MM/DD/YYYY
+        const first = parseInt(match[1]);
+        const second = parseInt(match[2]);
+        
+        // Try to guess format (if first > 12, it's probably DD/MM)
+        if (first > 12) {
+          day = first;
+          month = second - 1;
+        } else {
+          month = first - 1;
+          day = second;
+        }
+        year = parseInt(match[3]);
+      }
+      
+      const date = new Date(year, month, day);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+  }
+  
+  return null;
+}
+
+// Save imported transactions
+async function saveImportedTransactions(transactions) {
+  let savedCount = 0;
+  
+  for (const tx of transactions) {
+    try {
+      await addItem(STORE_NAMES.transactions, tx);
+      savedCount++;
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+    }
+  }
+  
+  return savedCount;
+}
+
+// Auto-detect CSV columns
+function autoDetectColumns(headerRow) {
+  const headers = headerRow.split(',').map(h => h.trim().toLowerCase());
+  const mappingDiv = document.getElementById('columnMapping');
+  
+  if (!mappingDiv) return;
+  
+  let mappingHTML = `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date Column</label>
+        <select class="date-column">
+          <option value="">Auto-detect</option>
+          ${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Description Column</label>
+        <select class="desc-column">
+          <option value="">Auto-detect</option>
+          ${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Amount Column</label>
+        <select class="amount-column">
+          <option value="">Auto-detect</option>
+          ${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
+  
+  mappingDiv.innerHTML = mappingHTML;
+}
+
+// Add category rule function
+window.addCategoryRule = function() {
+  const rulesDiv = document.getElementById('categoryRules');
+  const ruleId = generateId().substring(0, 8);
+  
+  rulesDiv.innerHTML += `
+    <div class="category-rule" data-id="${ruleId}">
+      <div class="form-row">
+        <div class="form-group">
+          <input type="text" placeholder="Description contains..." class="rule-pattern">
+        </div>
+        <div class="form-group">
+          <select class="rule-category">
+            <option value="">Select Category</option>
+            ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-text" onclick="this.closest('.category-rule').remove()">🗑️</button>
+        </div>
+      </div>
+    </div>
+  `;
+};
 
 // Make sync function globally available
 window.syncAllPropertyExpenses = syncAllPropertyExpenses;
