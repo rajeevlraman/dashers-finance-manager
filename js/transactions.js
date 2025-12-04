@@ -829,10 +829,10 @@ export async function initTransactionsUI() {
       day: 'numeric' 
     });
   }
+}
+
 // After setting up other event listeners, add:
 initImportSystem(accounts, categories);
-
-}
 
 // ============================================================================
 // 🏠 Sync to Expenses Function
