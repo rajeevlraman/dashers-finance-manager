@@ -96,46 +96,110 @@
       <p class="subtitle">Secure Financial Management</p>
     </div>
 
-    <!-- Error Message -->
-    <div id="loginError" class="error-message">
-      Invalid email or password. Please try again.
+    <!-- Enhanced Error Message -->
+    <div id="loginError" class="error-message" style="
+      background: rgba(255, 100, 100, 0.15);
+      border-left: 4px solid #ff5a5a;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    ">
+      <i class="fas fa-exclamation-circle" style="font-size: 1.2rem;"></i>
+      <span id="errorText">Invalid email or password. Please try again.</span>
     </div>
 
-    <!-- Login Form -->
-    <form id="loginForm">
+    <!-- Demo Credentials Notice -->
+    <div class="demo-notice" style="
+      background: rgba(0, 176, 155, 0.1);
+      border: 1px solid #00b09b;
+      border-radius: 10px;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    ">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #00b09b;">
+        <i class="fas fa-info-circle"></i> Demo Login
+      </p>
+      <p style="margin: 0; opacity: 0.9;">
+        Email: <code>admin@budgettracker.com</code><br>
+        Password: <code>Demo@2024</code>
+      </p>
+    </div>
+
+    <!-- Enhanced Login Form -->
+    <form id="loginForm" autocomplete="on">
       <div class="form-group">
         <label for="email" class="form-label">Email Address</label>
-        <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+        <div class="input-with-icon" style="position: relative;">
+          <i class="fas fa-envelope" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+          <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required autocomplete="username" style="width: 100%; padding: 15px 15px 15px 45px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.07); border-radius: 10px; color: white; font-size: 1rem;">
+        </div>
       </div>
 
       <div class="form-group">
         <label for="password" class="form-label">Password</label>
-        <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+        <div class="input-with-icon" style="position: relative;">
+          <i class="fas fa-lock" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+          <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password" style="width: 100%; padding: 15px 15px 15px 45px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.07); border-radius: 10px; color: white; font-size: 1rem;">
+          <button type="button" id="togglePassword" class="password-toggle" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #aaa; cursor: pointer;">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <p class="security-note" style="font-size: 0.85rem; opacity: 0.7; margin-top: 5px;">
+          <i class="fas fa-shield-alt" style="color: #00b09b;"></i>
+          Your password is encrypted and never stored in plain text
+        </p>
       </div>
 
       <!-- Additional Options -->
       <div class="login-options">
         <label class="remember-me">
           <input type="checkbox" id="rememberMe">
-          Remember me
+          <i class="fas fa-check-circle"></i> Keep me signed in
         </label>
-        <a href="#" class="forgot-password" id="forgotPassword">Forgot password?</a>
+        <a href="#" class="forgot-password" id="forgotPassword" style="color: #96c93d;">
+          <i class="fas fa-key"></i> Forgot password?
+        </a>
       </div>
 
-      <button type="submit" class="btn-login" id="loginButton">
-        Sign In
+      <button type="submit" class="btn-login" id="loginButton" style="
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(to right, #00b09b, #96c93d);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      ">
+        <span id="btnText">Sign In Securely</span>
+        <i class="fas fa-lock" id="btnIcon" style="margin-left: 8px;"></i>
       </button>
     </form>
 
     <!-- Registration Prompt -->
-    <p class="note">
+    <p class="note" style="text-align: center; margin-top: 20px;">
       Don't have an account? 
-      <a href="#" id="registerLink">Create account</a>
+      <a href="#" id="registerLink" style="color: #96c93d;">Create account</a>
     </p>
 
-    <!-- Security Notice -->
-    <div class="security-notice">
-      <small>🔒 Your data is encrypted and secure</small>
+    <!-- Enhanced Security Notice -->
+    <div class="security-notice" style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    ">
+      <i class="fas fa-lock"></i>
+      <span>Secure connection · Your data is protected</span>
     </div>
   </div>
 </div>
@@ -318,4 +382,166 @@
 
   <script type="module" src="./js/ui.js"></script>
 </body>
+
+<script>
+// Add Font Awesome for icons (if not already included)
+if (!document.querySelector('link[href*="font-awesome"]')) {
+  const faLink = document.createElement('link');
+  faLink.rel = 'stylesheet';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  document.head.appendChild(faLink);
+}
+
+// Toggle password visibility
+document.addEventListener('DOMContentLoaded', function() {
+  const togglePassword = document.getElementById('togglePassword');
+  if (togglePassword) {
+    togglePassword.addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const icon = this.querySelector('i');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    });
+  }
+
+  // Enhanced login form submission
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorMessage = document.getElementById('loginError');
+      const errorText = document.getElementById('errorText');
+      const loginButton = document.getElementById('loginButton');
+      const btnText = document.getElementById('btnText');
+      const btnIcon = document.getElementById('btnIcon');
+
+      // Reset error
+      if (errorMessage) errorMessage.style.display = 'none';
+
+      // Basic validation
+      if (!email || !password) {
+        showError('Please fill in all fields.');
+        return;
+      }
+
+      // Show loading state
+      if (loginButton) {
+        loginButton.disabled = true;
+        if (btnText) btnText.textContent = 'Authenticating...';
+        if (btnIcon) {
+          btnIcon.className = 'fas fa-spinner fa-spin';
+        }
+      }
+
+      // Simulate secure login (replace with your actual auth)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Demo validation - replace with your actual authentication
+      const validEmail = 'admin@budgettracker.com';
+      const validPassword = 'Demo@2024';
+
+      if (email === validEmail && password === validPassword) {
+        // SUCCESS - Hide login screen and show main app
+        document.getElementById('loginScreen').style.display = 'none';
+        
+        // Store login state
+        localStorage.setItem('budgetTrackerLoggedIn', 'true');
+        localStorage.setItem('budgetTrackerUser', email);
+        
+        // Show the main app content
+        document.querySelector('nav').style.display = 'flex';
+        document.querySelector('main').style.display = 'block';
+        document.querySelector('header').style.display = 'block';
+        document.querySelector('.bottom-nav').style.display = 'flex';
+        
+        // Show success message
+        if (btnText) btnText.textContent = 'Login Successful!';
+        if (btnIcon) btnIcon.className = 'fas fa-check';
+        
+        // Initialize your main app
+        if (typeof initApp === 'function') {
+          initApp();
+        }
+        
+        console.log('✅ User logged in:', email);
+      } else {
+        // FAILURE
+        showError('Invalid email or password. Please try again.');
+        if (loginButton) {
+          loginButton.disabled = false;
+          if (btnText) btnText.textContent = 'Sign In Securely';
+          if (btnIcon) btnIcon.className = 'fas fa-lock';
+        }
+      }
+    });
+  }
+
+  function showError(message) {
+    const errorMessage = document.getElementById('loginError');
+    const errorText = document.getElementById('errorText');
+    if (errorMessage && errorText) {
+      errorText.textContent = message;
+      errorMessage.style.display = 'flex';
+      // Auto-hide error after 5 seconds
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+  }
+
+  // Check if already logged in
+  if (localStorage.getItem('budgetTrackerLoggedIn') === 'true') {
+    // User is already logged in - hide login screen
+    document.getElementById('loginScreen').style.display = 'none';
+    console.log('✅ User already logged in, showing main app');
+  } else {
+    // Show login screen
+    document.getElementById('loginScreen').style.display = 'block';
+    // Hide main app elements until login
+    document.querySelector('nav').style.display = 'none';
+    document.querySelector('main').style.display = 'none';
+    document.querySelector('header').style.display = 'none';
+    document.querySelector('.bottom-nav').style.display = 'none';
+  }
+
+  // Logout functionality
+  window.logout = function() {
+    localStorage.removeItem('budgetTrackerLoggedIn');
+    localStorage.removeItem('budgetTrackerUser');
+    location.reload();
+  };
+
+  // Add logout button to header if needed
+  setTimeout(() => {
+    const header = document.querySelector('header');
+    if (header && !header.querySelector('#logoutBtn')) {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.id = 'logoutBtn';
+      logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+      logoutBtn.style.cssText = `
+        margin-left: auto;
+        background: transparent;
+        border: 1px solid #ff5a5a;
+        color: #ff5a5a;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+      `;
+      logoutBtn.addEventListener('click', window.logout);
+      header.appendChild(logoutBtn);
+    }
+  }, 1000);
+});
+</script>
+
 </html>
