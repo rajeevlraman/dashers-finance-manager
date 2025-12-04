@@ -11,7 +11,8 @@ import { processRecurringTransactions, processDueBills } from './recurringJob.js
 import { applyLayoutChanges, LayoutModes } from './layoutManager.js';
 //version import 
 import { APP_VERSION } from './version.js';
-console.log("🚀 Dashers Finance - Version", APP_VERSION);
+
+console.log(`🚀 Dashers Finance Manager v${APP_VERSION}`);
 
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)
