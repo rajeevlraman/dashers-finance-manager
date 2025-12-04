@@ -812,8 +812,7 @@ export async function initTransactionsUI() {
     });
   }
 
-// After setting up other event listeners, add:
-initImportSystem(accounts, categories);
+
 
   function formatDateDisplay(dateString) {
     const date = new Date(dateString);
@@ -830,6 +829,9 @@ initImportSystem(accounts, categories);
       day: 'numeric' 
     });
   }
+// After setting up other event listeners, add:
+initImportSystem(accounts, categories);
+
 }
 
 // ============================================================================
