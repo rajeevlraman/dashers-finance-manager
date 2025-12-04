@@ -843,6 +843,32 @@ async function syncToExpenses(transaction) {
     console.error('❌ Error syncing to expenses:', error);
     throw error;
   }
+
+  // Diagnostic script to identify what's blocking
+console.time('import-diagnostic');
+
+// Test 1: Check if module exists
+try {
+  console.log('Checking module availability...');
+  // Try a non-dynamic require to see if it exists
+  require.resolve('./Transactions');
+  console.log('Module exists');
+} catch (e) {
+  console.error('Module not found:', e);
+}
+
+// Test 2: Check network timing
+const start = performance.now();
+import('./transactions')
+  .then(() => {
+    console.log('Import succeeded in', performance.now() - start, 'ms');
+  })
+  .catch(err => {
+    console.error('Import failed:', err);
+  })
+  .finally(() => {
+    console.timeEnd('import-diagnostic');
+  });
 }
 
 // ============================================================================
