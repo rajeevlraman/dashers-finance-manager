@@ -338,49 +338,43 @@ export async function initTransactionsUI() {
   // Add Import Modal HTML to the DOM
   const importModalHTML = `
     <!-- Import Modal -->
-    <div id="importModal" class="modal-overlay" style="display: none;">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>📁 Import Credit Card Statement</h3>
-          <button class="btn-close" id="closeImportModal">✕</button>
+    <div id="importModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="modal" style="background: white; border-radius: 8px; padding: 20px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="margin: 0;">📁 Import Credit Card Statement</h3>
+          <button class="btn-close" id="closeImportModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
         </div>
         <div class="modal-body">
-          <div class="import-tabs">
-            <button class="tab-btn active" data-tab="csv">CSV Import</button>
-            <button class="tab-btn" data-tab="manual">Manual Entry</button>
-            <button class="tab-btn" data-tab="rules">Auto-Categorization Rules</button>
+          <div class="import-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button class="tab-btn active" data-tab="csv" style="padding: 8px 16px; border: 1px solid #ddd; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">CSV Import</button>
+            <button class="tab-btn" data-tab="manual" style="padding: 8px 16px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer;">Manual Entry</button>
           </div>
           
           <div id="csvTab" class="tab-content active">
-            <div class="form-group">
-              <label class="form-label">Select CSV File</label>
-              <input type="file" id="csvFile" accept=".csv, .txt" class="form-input">
-              <small class="form-hint">Supported banks: Commonwealth, ANZ, NAB, Westpac, Citi, etc.</small>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold;">Select CSV File</label>
+              <input type="file" id="csvFile" accept=".csv, .txt" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              <small style="display: block; margin-top: 5px; color: #666;">Supported banks: Commonwealth, ANZ, NAB, Westpac, Citi, etc.</small>
             </div>
             
-            <div class="form-group">
-              <label class="form-label">Account</label>
-              <select id="importAccount" class="form-select">
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold;">Account</label>
+              <select id="importAccount" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 <option value="">-- Select Account --</option>
                 ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
               </select>
             </div>
             
-            <div class="preview-section" style="display: none;">
-              <h4>Preview (First 5 rows)</h4>
-              <div id="csvPreview" class="csv-preview"></div>
-              
-              <div class="column-mapping">
-                <h5>Map CSV Columns</h5>
-                <div id="columnMapping"></div>
-              </div>
+            <div class="preview-section" style="display: none; margin-top: 20px;">
+              <h4 style="margin-bottom: 10px;">Preview (First 5 rows)</h4>
+              <div id="csvPreview" style="background: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;"></div>
             </div>
           </div>
           
-          <div id="manualTab" class="tab-content">
+          <div id="manualTab" class="tab-content" style="display: none;">
             <div class="form-group">
-              <label class="form-label">Paste Statement Data</label>
-              <textarea id="statementText" class="form-input" rows="10" placeholder="Paste your statement data here...
+              <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold;">Paste Statement Data</label>
+              <textarea id="statementText" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 200px;" placeholder="Paste your statement data here...
 Date, Description, Amount
 01/01/2024, COLES MELBOURNE, -85.50
 02/01/2024, SHELL SERVICE STATION, -65.20
@@ -388,17 +382,9 @@ Date, Description, Amount
             </div>
           </div>
           
-          <div id="rulesTab" class="tab-content">
-            <h4>Auto-Categorization Rules</h4>
-            <div id="categoryRules">
-              <!-- Rules will be populated here -->
-            </div>
-            <button class="btn btn-secondary" onclick="addCategoryRule()">➕ Add Rule</button>
-          </div>
-          
-          <div class="import-actions">
-            <button class="btn btn-primary" id="processImport">Process Import</button>
-            <button class="btn btn-secondary" id="cancelImport">Cancel</button>
+          <div class="import-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-primary" id="processImport" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Process Import</button>
+            <button class="btn btn-secondary" id="cancelImport" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
           </div>
         </div>
       </div>
@@ -814,7 +800,7 @@ Date, Description, Amount
     });
   }
 
-  // Initialize import system
+  // Initialize import system - SIMPLIFIED VERSION
   initImportSystem(accounts, categories);
 }
 
@@ -903,19 +889,21 @@ export async function syncAllPropertyExpenses() {
 }
 
 // ============================================================================
-// 📁 Import System Functions
+// 📁 Import System Functions - SIMPLIFIED VERSION
 // ============================================================================
 function initImportSystem(accounts, categories) {
   const importBtn = document.getElementById('btnImportTx');
   const importModal = document.getElementById('importModal');
   
-  if (!importBtn) {
-    console.error('Import button not found');
+  if (!importBtn || !importModal) {
+    console.error('Import button or modal not found');
     return;
   }
   
   // Show import modal when button is clicked
-  importBtn.addEventListener('click', () => {
+  importBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('Import button clicked');
     importModal.style.display = 'flex';
   });
@@ -923,7 +911,9 @@ function initImportSystem(accounts, categories) {
   // Close modal when X is clicked
   const closeImportBtn = document.getElementById('closeImportModal');
   if (closeImportBtn) {
-    closeImportBtn.addEventListener('click', () => {
+    closeImportBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       importModal.style.display = 'none';
     });
   }
@@ -931,14 +921,24 @@ function initImportSystem(accounts, categories) {
   // Close modal when cancel is clicked
   const cancelImportBtn = document.getElementById('cancelImport');
   if (cancelImportBtn) {
-    cancelImportBtn.addEventListener('click', () => {
+    cancelImportBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       importModal.style.display = 'none';
     });
   }
   
+  // Close modal when clicking outside
+  importModal.addEventListener('click', (e) => {
+    if (e.target === importModal) {
+      importModal.style.display = 'none';
+    }
+  });
+  
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
@@ -946,50 +946,13 @@ function initImportSystem(accounts, categories) {
     });
   });
   
-  // CSV file preview
-  const csvFileInput = document.getElementById('csvFile');
-  if (csvFileInput) {
-    csvFileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      const previewSection = document.querySelector('.preview-section');
-      const previewDiv = document.getElementById('csvPreview');
-      
-      try {
-        const text = await file.text();
-        const rows = text.split('\n').slice(0, 6);
-        
-        let previewHTML = '<table class="preview-table">';
-        rows.forEach((row, i) => {
-          const cells = row.split(',');
-          previewHTML += '<tr>';
-          cells.forEach((cell, j) => {
-            if (i === 0) {
-              previewHTML += `<th>Column ${j + 1}</th>`;
-            } else {
-              previewHTML += `<td>${cell.trim()}</td>`;
-            }
-          });
-          previewHTML += '</tr>';
-        });
-        previewHTML += '</table>';
-        
-        previewDiv.innerHTML = previewHTML;
-        previewSection.style.display = 'block';
-        
-        autoDetectColumns(rows[0]);
-      } catch (error) {
-        console.error('Error reading CSV:', error);
-        alert('Error reading CSV file');
-      }
-    });
-  }
-  
   // Process import
   const processImportBtn = document.getElementById('processImport');
   if (processImportBtn) {
-    processImportBtn.addEventListener('click', async () => {
+    processImportBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
       const accountId = document.getElementById('importAccount').value;
       if (!accountId) {
         alert('Please select an account');
@@ -1010,27 +973,53 @@ function initImportSystem(accounts, categories) {
           transactions = await parseCSV(file, accountId, categories);
         } else if (activeTab === 'manual') {
           const text = document.getElementById('statementText').value;
+          if (!text.trim()) {
+            alert('Please paste statement data');
+            return;
+          }
           transactions = await parseText(text, accountId, categories);
         }
         
         if (transactions.length === 0) {
-          alert('No transactions found to import');
+          alert('No valid transactions found to import');
           return;
         }
+        
+        // Show processing message
+        processImportBtn.textContent = 'Processing...';
+        processImportBtn.disabled = true;
         
         const savedCount = await saveImportedTransactions(transactions);
         
         importModal.style.display = 'none';
         alert(`Successfully imported ${savedCount} transactions!`);
-        initTransactionsUI();
+        
+        // Reset button
+        processImportBtn.textContent = 'Process Import';
+        processImportBtn.disabled = false;
+        
+        // Clear form
+        document.getElementById('csvFile').value = '';
+        document.getElementById('statementText').value = '';
+        document.getElementById('importAccount').value = '';
+        
+        // Don't call initTransactionsUI() here - it causes infinite loop
+        // Instead, reload the page or refresh the transaction list
+        location.reload();
+        
       } catch (error) {
         console.error('Import error:', error);
         alert('Error importing transactions: ' + error.message);
+        
+        // Reset button on error
+        processImportBtn.textContent = 'Process Import';
+        processImportBtn.disabled = false;
       }
     });
   }
 }
 
+// Simplified CSV parser
 async function parseCSV(file, accountId, categories) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1040,14 +1029,42 @@ async function parseCSV(file, accountId, categories) {
         const rows = text.split('\n').filter(row => row.trim());
         const transactions = [];
         
+        // Skip header row (assuming first row is headers)
         for (let i = 1; i < rows.length; i++) {
-          const row = rows[i].split(',');
-          if (row.length < 3) continue;
+          const row = rows[i];
+          if (!row.trim()) continue;
           
-          const transaction = createTransactionFromCSV(row, accountId, categories);
-          if (transaction) {
-            transactions.push(transaction);
-          }
+          // Simple CSV parsing
+          const cells = row.split(',').map(cell => cell.trim());
+          if (cells.length < 3) continue;
+          
+          let date, description, amount;
+          
+          // Try to parse date
+          date = parseDate(cells[0]);
+          if (!date) continue;
+          
+          description = cells[1] || 'Imported Transaction';
+          
+          // Try to parse amount
+          const amountStr = cells[2].replace(/[^0-9.-]/g, '');
+          amount = parseFloat(amountStr);
+          if (isNaN(amount)) continue;
+          
+          const categoryId = autoCategorize(description, amount, categories);
+          
+          transactions.push({
+            id: generateId(),
+            type: amount > 0 ? 'income' : 'expense',
+            amount: amount,
+            date: date,
+            description: description,
+            accountId: accountId,
+            categoryId: categoryId,
+            isPropertyExpense: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
         }
         
         resolve(transactions);
@@ -1060,44 +1077,38 @@ async function parseCSV(file, accountId, categories) {
   });
 }
 
+// Simplified text parser
 async function parseText(text, accountId, categories) {
   const lines = text.split('\n').filter(line => line.trim());
   const transactions = [];
   
-  for (const line of lines) {
-    const transaction = parseTransactionLine(line, accountId, categories);
-    if (transaction) {
-      transactions.push(transaction);
-    }
+  // Skip header if present
+  let startIndex = 0;
+  if (lines[0] && lines[0].toLowerCase().includes('date')) {
+    startIndex = 1;
   }
   
-  return transactions;
-}
-
-function createTransactionFromCSV(row, accountId, categories) {
-  try {
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    
+    const cells = line.split(',').map(cell => cell.trim());
+    if (cells.length < 3) continue;
+    
     let date, description, amount;
     
-    if (row.length >= 3) {
-      date = parseDate(row[0].trim());
-      description = row[1].trim();
-      
-      if (row[2].includes('/')) {
-        amount = parseFloat(row[2].replace(/[^0-9.-]/g, ''));
-      } else if (row.length >= 4) {
-        const debit = parseFloat(row[2]) || 0;
-        const credit = parseFloat(row[3]) || 0;
-        amount = credit > 0 ? credit : -debit;
-      }
-    }
+    date = parseDate(cells[0]);
+    if (!date) continue;
     
-    if (!date || !description || isNaN(amount)) {
-      return null;
-    }
+    description = cells[1] || 'Imported Transaction';
+    
+    const amountStr = cells[2].replace(/[^0-9.-]/g, '');
+    amount = parseFloat(amountStr);
+    if (isNaN(amount)) continue;
     
     const categoryId = autoCategorize(description, amount, categories);
     
-    return {
+    transactions.push({
       id: generateId(),
       type: amount > 0 ? 'income' : 'expense',
       amount: amount,
@@ -1108,99 +1119,40 @@ function createTransactionFromCSV(row, accountId, categories) {
       isPropertyExpense: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
-    };
-  } catch (error) {
-    console.error('Error parsing CSV row:', error);
-    return null;
-  }
-}
-
-function parseTransactionLine(line, accountId, categories) {
-  const patterns = [
-    /^(\d{1,2}\/\d{1,2}\/\d{4}),\s*(.+?),\s*(-?\$?\d+\.?\d*)/i,
-    /^(\d{4}-\d{2}-\d{2})\s+(.+?)\s+(-?\$?\d+\.?\d*)/i,
-    /^(.+?)\s+\$?(-?\d+\.?\d*)\s+(\d{1,2}\/\d{1,2}\/\d{4})/i
-  ];
-  
-  for (const pattern of patterns) {
-    const match = line.match(pattern);
-    if (match) {
-      let date, description, amount;
-      
-      if (pattern === patterns[2]) {
-        description = match[1].trim();
-        amount = parseFloat(match[2]);
-        date = parseDate(match[3].trim());
-      } else {
-        date = parseDate(match[1].trim());
-        description = match[2].trim();
-        amount = parseFloat(match[3].replace(/[^0-9.-]/g, ''));
-      }
-      
-      if (!date || !description || isNaN(amount)) {
-        continue;
-      }
-      
-      const categoryId = autoCategorize(description, amount, categories);
-      
-      return {
-        id: generateId(),
-        type: amount > 0 ? 'income' : 'expense',
-        amount: amount,
-        date: date,
-        description: description,
-        accountId: accountId,
-        categoryId: categoryId,
-        isPropertyExpense: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-    }
+    });
   }
   
-  return null;
+  return transactions;
 }
 
-function autoCategorize(description, amount, categories) {
+// Simple auto-categorize
+function autoCategorize(description, amount) {
   const desc = description.toLowerCase();
-  let categoryId = null;
   
-  const rules = [
-    { pattern: /coles|woolworths|aldi|iga|foodworks|safeway/i, category: 'exp_grocery_supermarket' },
-    { pattern: /shell|bp|caltex|7-eleven|united|ampol|fuel/i, category: 'exp_fuel' },
-    { pattern: /mcdonald|kfc|hungry jack|nando|domino|pizza hut|grill'd|restaurant|cafe/i, category: 'exp_restaurants' },
-    { pattern: /origin|agl|energy australia|red energy|electricity|gas/i, category: 'exp_electricity' },
-    { pattern: /telstra|optus|vodafone|tpg|internet|nbn|mobile/i, category: 'exp_internet' },
-    { pattern: /aami|racv|nrma|allianz|qbe|insurance/i, category: 'exp_insurance' },
-    { pattern: /salary|wage|payroll|income|deposit.*salary/i, category: 'inc_salary' },
-    { pattern: /council rates|water rates|land tax|real estate|property|rent/i, category: 'exp_council_rates' },
-    { pattern: /kmart|target|big w|bunnings|harvey norman|jbhifi|officeworks/i, category: 'exp_shopping' },
-    { pattern: /myki|ptv|public transport|train|tram|bus|uber|taxi/i, category: 'exp_public_transport' },
-    { pattern: /chemist|pharmacy|priceline|gp|doctor|hospital|medical/i, category: 'exp_pharmacy' }
-  ];
+  if (amount > 0) return 'inc_salary'; // Default income category
   
-  for (const rule of rules) {
-    if (rule.pattern.test(desc)) {
-      categoryId = rule.category;
-      break;
-    }
+  // Simple category matching
+  if (desc.includes('coles') || desc.includes('woolworth') || desc.includes('aldi')) {
+    return 'exp_grocery';
+  } else if (desc.includes('shell') || desc.includes('bp') || desc.includes('fuel')) {
+    return 'exp_fuel';
+  } else if (desc.includes('restaurant') || desc.includes('cafe') || desc.includes('mcdonald')) {
+    return 'exp_restaurants';
+  } else if (desc.includes('salary') || desc.includes('payroll') || desc.includes('deposit')) {
+    return 'inc_salary';
   }
   
-  if (!categoryId) {
-    if (amount > 0) {
-      categoryId = 'inc_main';
-    } else {
-      categoryId = 'exp_misc';
-    }
-  }
-  
-  return categoryId;
+  return 'exp_misc'; // Default expense category
 }
 
+// Simple date parser
 function parseDate(dateString) {
+  if (!dateString) return null;
+  
+  // Try common formats
   const formats = [
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
-    /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // DD/MM/YYYY
+    /^(\d{4})-(\d{1,2})-(\d{1,2})$/  // YYYY-MM-DD
   ];
   
   for (const format of formats) {
@@ -1209,20 +1161,14 @@ function parseDate(dateString) {
       let day, month, year;
       
       if (format === formats[1]) {
+        // YYYY-MM-DD
         year = parseInt(match[1]);
         month = parseInt(match[2]) - 1;
         day = parseInt(match[3]);
       } else {
-        const first = parseInt(match[1]);
-        const second = parseInt(match[2]);
-        
-        if (first > 12) {
-          day = first;
-          month = second - 1;
-        } else {
-          month = first - 1;
-          day = second;
-        }
+        // DD/MM/YYYY
+        day = parseInt(match[1]);
+        month = parseInt(match[2]) - 1;
         year = parseInt(match[3]);
       }
       
@@ -1236,6 +1182,7 @@ function parseDate(dateString) {
   return null;
 }
 
+// Save imported transactions
 async function saveImportedTransactions(transactions) {
   let savedCount = 0;
   
@@ -1250,67 +1197,6 @@ async function saveImportedTransactions(transactions) {
   
   return savedCount;
 }
-
-function autoDetectColumns(headerRow) {
-  const headers = headerRow.split(',').map(h => h.trim().toLowerCase());
-  const mappingDiv = document.getElementById('columnMapping');
-  
-  if (!mappingDiv) return;
-  
-  let mappingHTML = `
-    <div class="form-row">
-      <div class="form-group">
-        <label>Date Column</label>
-        <select class="date-column">
-          <option value="">Auto-detect</option>
-          ${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label>Description Column</label>
-        <select class="desc-column">
-          <option value="">Auto-detect</option>
-          ${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label>Amount Column</label>
-        <select class="amount-column">
-          <option value="">Auto-detect</option>
-          ${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}
-        </select>
-      </div>
-    </div>
-  `;
-  
-  mappingDiv.innerHTML = mappingHTML;
-}
-
-// Add category rule function
-window.addCategoryRule = function() {
-  const rulesDiv = document.getElementById('categoryRules');
-  const ruleId = generateId().substring(0, 8);
-  
-  rulesDiv.innerHTML += `
-    <div class="category-rule" data-id="${ruleId}">
-      <div class="form-row">
-        <div class="form-group">
-          <input type="text" placeholder="Description contains..." class="rule-pattern">
-        </div>
-        <div class="form-group">
-          <select class="rule-category">
-            <option value="">Select Category</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <button class="btn btn-text" onclick="this.closest('.category-rule').remove()">🗑️</button>
-        </div>
-      </div>
-    </div>
-  `;
-};
 
 // Make sync function globally available
 window.syncAllPropertyExpenses = syncAllPropertyExpenses;
