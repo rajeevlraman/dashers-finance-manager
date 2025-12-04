@@ -53,6 +53,73 @@
   </script>
 </head>
 <body>
+
+  <!-- Splash Screen -->
+<div id="splash-screen" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+">
+    <!-- Logo/Icon -->
+    <div style="
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    ">
+        <span style="
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        ">💰</span>
+    </div>
+    
+    <!-- App Name -->
+    <h1 style="
+        color: white;
+        font-size: 2.5rem;
+        margin: 10px 0;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    ">Dasher's Finance</h1>
+    
+    <!-- Loading Animation -->
+    <div style="
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+        margin-top: 30px;
+    "></div>
+    
+    <!-- Loading Text -->
+    <p style="
+        color: rgba(255,255,255,0.8);
+        margin-top: 15px;
+        font-size: 1rem;
+    ">Loading your finances...</p>
+</div>
+
+<style>
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
   <div id="splashScreen">
     <div class="splash-inner">
       <img src="assets/icons/icon-192.png" alt="Logo">
@@ -315,6 +382,8 @@
       <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
     </div>
   </div>
+
+
 
   <script type="module" src="./js/ui.js"></script>
 
