@@ -2,7 +2,6 @@ import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId }
 import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
 import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 
-
 // Import expense categories from expenses.js or define here
 const EXPENSE_CATEGORIES = {
   'Maintenance': { type: 'immediate', deductible: true, color: '#3B82F6' },
@@ -27,7 +26,7 @@ export async function initTransactionsUI() {
     getAllItems(STORE_NAMES.categories),
     getAllItems(STORE_NAMES.accounts),
     getAllItems(STORE_NAMES.transactions),
-    getAllItems(STORE_NAMES.properties || 'properties').catch(() => [])
+    getAllItems(STORE_NAMES.properties).catch(() => [])
   ]);
 
   const mainCats = categories.filter(c => !c.parentId);
@@ -50,7 +49,7 @@ export async function initTransactionsUI() {
           <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
           <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
           <button class="btn btn-secondary" id="btnExportTx">📤 Export</button>
-          <button class="btn btn-success" id="btnImportTx">📁 Import Statement</button> <!-- ADD THIS -->
+          <button class="btn btn-success" id="btnImportTx">📁 Import Statement</button>
         </div>
       </div>
 
@@ -161,74 +160,6 @@ export async function initTransactionsUI() {
               <label class="form-label">Description (Optional)</label>
               <input type="text" name="description" class="form-input" placeholder="e.g., Groceries at Coles, Dinner out...">
               <small class="form-hint">Add specific details about this transaction</small>
-            </div>
-
-            // Add this after the forms section
-              <!-- csv import Section -->
-            <div id="importModal" class="modal-overlay" style="display: none;">
-              <div class="modal">
-                <div class="modal-header">
-                  <h3>📁 Import Credit Card Statement</h3>
-                  <button class="btn-close" id="closeImportModal">✕</button>
-                </div>
-                <div class="modal-body">
-                  <div class="import-tabs">
-                    <button class="tab-btn active" data-tab="csv">CSV Import</button>
-                    <button class="tab-btn" data-tab="manual">Manual Entry</button>
-                    <button class="tab-btn" data-tab="rules">Auto-Categorization Rules</button>
-                  </div>
-                  
-                  <div id="csvTab" class="tab-content active">
-                    <div class="form-group">
-                      <label class="form-label">Select CSV File</label>
-                      <input type="file" id="csvFile" accept=".csv, .txt" class="form-input">
-                      <small class="form-hint">Supported banks: Commonwealth, ANZ, NAB, Westpac, Citi, etc.</small>
-                    </div>
-                    
-                    <div class="form-group">
-                      <label class="form-label">Account</label>
-                      <select id="importAccount" class="form-select">
-                        <option value="">-- Select Account --</option>
-                        ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
-                      </select>
-                    </div>
-                    
-                    <div class="preview-section" style="display: none;">
-                      <h4>Preview (First 5 rows)</h4>
-                      <div id="csvPreview" class="csv-preview"></div>
-                      
-                      <div class="column-mapping">
-                        <h5>Map CSV Columns</h5>
-                        <div id="columnMapping"></div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div id="manualTab" class="tab-content">
-                    <div class="form-group">
-                      <label class="form-label">Paste Statement Data</label>
-                      <textarea id="statementText" class="form-input" rows="10" placeholder="Paste your statement data here...
-            Date, Description, Amount
-            01/01/2024, COLES MELBOURNE, -85.50
-            02/01/2024, SHELL SERVICE STATION, -65.20
-            03/01/2024, SALARY DEPOSIT, 2500.00"></textarea>
-                    </div>
-                  </div>
-                  
-                  <div id="rulesTab" class="tab-content">
-                    <h4>Auto-Categorization Rules</h4>
-                    <div id="categoryRules">
-                      <!-- Rules will be populated here -->
-                    </div>
-                    <button class="btn btn-secondary" onclick="addCategoryRule()">➕ Add Rule</button>
-                  </div>
-                  
-                  <div class="import-actions">
-                    <button class="btn btn-primary" id="processImport">Process Import</button>
-                    <button class="btn btn-secondary" id="cancelImport">Cancel</button>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <!-- Property Expense Section -->
@@ -404,6 +335,79 @@ export async function initTransactionsUI() {
     </div>
   `;
 
+  // Add Import Modal HTML to the DOM
+  const importModalHTML = `
+    <!-- Import Modal -->
+    <div id="importModal" class="modal-overlay" style="display: none;">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>📁 Import Credit Card Statement</h3>
+          <button class="btn-close" id="closeImportModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="import-tabs">
+            <button class="tab-btn active" data-tab="csv">CSV Import</button>
+            <button class="tab-btn" data-tab="manual">Manual Entry</button>
+            <button class="tab-btn" data-tab="rules">Auto-Categorization Rules</button>
+          </div>
+          
+          <div id="csvTab" class="tab-content active">
+            <div class="form-group">
+              <label class="form-label">Select CSV File</label>
+              <input type="file" id="csvFile" accept=".csv, .txt" class="form-input">
+              <small class="form-hint">Supported banks: Commonwealth, ANZ, NAB, Westpac, Citi, etc.</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Account</label>
+              <select id="importAccount" class="form-select">
+                <option value="">-- Select Account --</option>
+                ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+              </select>
+            </div>
+            
+            <div class="preview-section" style="display: none;">
+              <h4>Preview (First 5 rows)</h4>
+              <div id="csvPreview" class="csv-preview"></div>
+              
+              <div class="column-mapping">
+                <h5>Map CSV Columns</h5>
+                <div id="columnMapping"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="manualTab" class="tab-content">
+            <div class="form-group">
+              <label class="form-label">Paste Statement Data</label>
+              <textarea id="statementText" class="form-input" rows="10" placeholder="Paste your statement data here...
+Date, Description, Amount
+01/01/2024, COLES MELBOURNE, -85.50
+02/01/2024, SHELL SERVICE STATION, -65.20
+03/01/2024, SALARY DEPOSIT, 2500.00"></textarea>
+            </div>
+          </div>
+          
+          <div id="rulesTab" class="tab-content">
+            <h4>Auto-Categorization Rules</h4>
+            <div id="categoryRules">
+              <!-- Rules will be populated here -->
+            </div>
+            <button class="btn btn-secondary" onclick="addCategoryRule()">➕ Add Rule</button>
+          </div>
+          
+          <div class="import-actions">
+            <button class="btn btn-primary" id="processImport">Process Import</button>
+            <button class="btn btn-secondary" id="cancelImport">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Append modal to main content
+  mainContent.insertAdjacentHTML('beforeend', importModalHTML);
+
   setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
   // Initialize
@@ -413,6 +417,7 @@ export async function initTransactionsUI() {
   // === DOM Elements ===
   const btnAddTx = document.getElementById('btnAddTx');
   const btnFilterTx = document.getElementById('btnFilterTx');
+  const btnImportTx = document.getElementById('btnImportTx');
   const addTxForm = document.getElementById('addTxForm');
   const filterTxForm = document.getElementById('filterTxForm');
   const closeAddForm = document.getElementById('closeAddForm');
@@ -424,11 +429,9 @@ export async function initTransactionsUI() {
 
   // === Form Toggle Logic ===
   function showAddForm(positionAfterElement = null) {
-    // If we have a specific position, move the form there
     if (positionAfterElement) {
       positionAfterElement.insertAdjacentElement('afterend', addTxForm);
     } else {
-      // Otherwise put it back in the forms section (for new transactions)
       if (formsSection && !formsSection.contains(addTxForm)) {
         formsSection.appendChild(addTxForm);
       }
@@ -439,7 +442,6 @@ export async function initTransactionsUI() {
     btnAddTx.classList.add('active');
     btnFilterTx.classList.remove('active');
     
-    // Scroll to form if it's not in view
     setTimeout(() => {
       addTxForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
@@ -451,7 +453,6 @@ export async function initTransactionsUI() {
     btnFilterTx.classList.add('active');
     btnAddTx.classList.remove('active');
     
-    // Scroll to filter form
     setTimeout(() => {
       filterTxForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
@@ -463,7 +464,6 @@ export async function initTransactionsUI() {
     btnAddTx.classList.remove('active');
     btnFilterTx.classList.remove('active');
     
-    // Reset form position back to forms section
     if (formsSection && !formsSection.contains(addTxForm)) {
       formsSection.appendChild(addTxForm);
     }
@@ -472,7 +472,7 @@ export async function initTransactionsUI() {
   // Event Listeners
   btnAddTx.addEventListener('click', () => {
     if (addTxForm.style.display === 'none') {
-      showAddForm(); // Show at default position for new transactions
+      showAddForm();
     } else {
       hideAllForms();
     }
@@ -503,7 +503,6 @@ export async function initTransactionsUI() {
   if (isPropertyExpenseCheckbox) {
     isPropertyExpenseCheckbox.addEventListener('change', function() {
       const propertyFields = document.getElementById('propertyExpenseFields');
-      const propertySection = document.getElementById('propertyExpenseSection');
       propertyFields.style.display = this.checked ? 'block' : 'none';
     });
   }
@@ -524,7 +523,6 @@ export async function initTransactionsUI() {
     }
   };
   
-  // Initialize property expense section
   setTimeout(() => {
     window.togglePropertyExpenseFields();
   }, 100);
@@ -563,7 +561,6 @@ export async function initTransactionsUI() {
     mainSelect.addEventListener('change', () => updateSubcategories(mainSelect, subSelect));
     filterMain.addEventListener('change', () => updateSubcategories(filterMain, filterSub));
     
-    // Initialize subcategories
     updateSubcategories(mainSelect, subSelect);
     updateSubcategories(filterMain, filterSub);
   }
@@ -592,7 +589,6 @@ export async function initTransactionsUI() {
         categoryId: chosenCategoryId,
         accountId: form.accountId.value,
         description: form.description.value.trim(),
-        // Property expense fields
         propertyId: form.propertyId ? form.propertyId.value : null,
         isPropertyExpense: form.isPropertyExpense ? form.isPropertyExpense.checked : false,
         expenseCategory: form.expenseCategory ? form.expenseCategory.value : null,
@@ -610,7 +606,6 @@ export async function initTransactionsUI() {
           await addItem(STORE_NAMES.transactions, txData);
         }
 
-        // If this is a property expense, also save to expenses table
         if (txData.isPropertyExpense && txData.propertyId) {
           await syncToExpenses(txData);
         }
@@ -717,11 +712,9 @@ export async function initTransactionsUI() {
     const property = properties.find(p => p.id === tx.propertyId);
     const isIncome = tx.amount > 0;
     
-    // Get main category (if this is a subcategory, find its parent)
     const mainCategory = category?.parentId ? 
       categories.find(c => c.id === category.parentId) : category;
     
-    // Get subcategory name (if this is a subcategory)
     const subCategory = category?.parentId ? category : null;
 
     return `
@@ -751,7 +744,6 @@ export async function initTransactionsUI() {
   }
 
   function attachTransactionEventListeners(properties) {
-    // Edit transaction
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const txId = btn.dataset.id;
@@ -762,7 +754,6 @@ export async function initTransactionsUI() {
         const mainSelect = document.getElementById('mainCategory');
         const subSelect = document.getElementById('subCategory');
 
-        // Find the category and its parent
         const category = categories.find(c => c.id === txToEdit.categoryId);
         const mainCategoryId = category?.parentId || txToEdit.categoryId;
 
@@ -773,7 +764,6 @@ export async function initTransactionsUI() {
         txForm.accountId.value = txToEdit.accountId;
         txForm.description.value = txToEdit.description || '';
         
-        // Property expense fields
         if (txToEdit.isPropertyExpense) {
           document.getElementById('isPropertyExpense').checked = true;
           document.getElementById('propertyExpenseFields').style.display = 'block';
@@ -784,24 +774,20 @@ export async function initTransactionsUI() {
           if (txToEdit.notes) txForm.expenseNotes.value = txToEdit.notes;
         }
 
-        // Set main category and trigger subcategory update
         mainSelect.value = mainCategoryId;
         mainSelect.dispatchEvent(new Event('change'));
         
-        // Set subcategory after a brief delay to ensure options are populated
         setTimeout(() => {
           if (category?.parentId) {
             subSelect.value = txToEdit.categoryId;
           }
         }, 100);
 
-        // Get the transaction card and show form below it
         const transactionCard = btn.closest('.transaction-card');
         showAddForm(transactionCard);
       });
     });
 
-    // Delete transaction
     document.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (confirm('Are you sure you want to delete this transaction?')) {
@@ -811,8 +797,6 @@ export async function initTransactionsUI() {
       });
     });
   }
-
-
 
   function formatDateDisplay(dateString) {
     const date = new Date(dateString);
@@ -829,28 +813,23 @@ export async function initTransactionsUI() {
       day: 'numeric' 
     });
   }
-// After setting up other event listeners, add:
+
+  // Initialize import system
   initImportSystem(accounts, categories);
-
-
 }
-
-
 
 // ============================================================================
 // 🏠 Sync to Expenses Function
 // ============================================================================
 async function syncToExpenses(transaction) {
   try {
-    // Get existing expenses
-    const expenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
+    const expenses = await getAllItems(STORE_NAMES.expenses).catch(() => []);
     
-    // Check if expense already exists for this transaction
     const existingExpense = expenses.find(e => e.transactionId === transaction.id);
     
     const expenseData = {
       id: existingExpense ? existingExpense.id : generateId(),
-      transactionId: transaction.id, // Link back to transaction
+      transactionId: transaction.id,
       propertyId: transaction.propertyId,
       category: transaction.expenseCategory || 'Other',
       description: transaction.description || 'Property Expense',
@@ -868,11 +847,9 @@ async function syncToExpenses(transaction) {
     };
     
     if (existingExpense) {
-      await updateItem(STORE_NAMES.expenses || 'expenses', expenseData);
-      console.log('✅ Updated existing expense:', expenseData.id);
+      await updateItem(STORE_NAMES.expenses, expenseData);
     } else {
-      await addItem(STORE_NAMES.expenses || 'expenses', expenseData);
-      console.log('✅ Created new expense from transaction:', expenseData.id);
+      await addItem(STORE_NAMES.expenses, expenseData);
     }
     
     return expenseData;
@@ -889,10 +866,9 @@ export async function syncAllPropertyExpenses() {
   try {
     const [transactions, expenses] = await Promise.all([
       getAllItems(STORE_NAMES.transactions),
-      getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => [])
+      getAllItems(STORE_NAMES.expenses).catch(() => [])
     ]);
     
-    // Find property transactions without matching expenses
     const propertyTransactions = transactions.filter(t => 
       t.type === 'expense' && t.propertyId && !t.isPropertyExpense
     );
@@ -926,32 +902,39 @@ export async function syncAllPropertyExpenses() {
   }
 }
 
-//<--csv import logic -->
-
-// Add this after your existing functions
+// ============================================================================
+// 📁 Import System Functions
+// ============================================================================
 function initImportSystem(accounts, categories) {
   const importBtn = document.getElementById('btnImportTx');
   const importModal = document.getElementById('importModal');
-  const closeImportBtn = document.getElementById('closeImportModal');
-  const cancelImportBtn = document.getElementById('cancelImport');
-  const csvFileInput = document.getElementById('csvFile');
-  const processImportBtn = document.getElementById('processImport');
   
-  if (!importBtn) return;
+  if (!importBtn) {
+    console.error('Import button not found');
+    return;
+  }
   
-  // Show import modal
+  // Show import modal when button is clicked
   importBtn.addEventListener('click', () => {
+    console.log('Import button clicked');
     importModal.style.display = 'flex';
   });
   
-  // Close import modal
-  closeImportBtn?.addEventListener('click', () => {
-    importModal.style.display = 'none';
-  });
+  // Close modal when X is clicked
+  const closeImportBtn = document.getElementById('closeImportModal');
+  if (closeImportBtn) {
+    closeImportBtn.addEventListener('click', () => {
+      importModal.style.display = 'none';
+    });
+  }
   
-  cancelImportBtn?.addEventListener('click', () => {
-    importModal.style.display = 'none';
-  });
+  // Close modal when cancel is clicked
+  const cancelImportBtn = document.getElementById('cancelImport');
+  if (cancelImportBtn) {
+    cancelImportBtn.addEventListener('click', () => {
+      importModal.style.display = 'none';
+    });
+  }
   
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -964,91 +947,90 @@ function initImportSystem(accounts, categories) {
   });
   
   // CSV file preview
-  csvFileInput?.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const previewSection = document.querySelector('.preview-section');
-    const previewDiv = document.getElementById('csvPreview');
-    
-    try {
-      const text = await file.text();
-      const rows = text.split('\n').slice(0, 6); // Get first 6 rows (header + 5 data)
+  const csvFileInput = document.getElementById('csvFile');
+  if (csvFileInput) {
+    csvFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
       
-      let previewHTML = '<table class="preview-table">';
-      rows.forEach((row, i) => {
-        const cells = row.split(',');
-        previewHTML += '<tr>';
-        cells.forEach((cell, j) => {
-          if (i === 0) {
-            previewHTML += `<th>Column ${j + 1}</th>`;
-          } else {
-            previewHTML += `<td>${cell.trim()}</td>`;
-          }
+      const previewSection = document.querySelector('.preview-section');
+      const previewDiv = document.getElementById('csvPreview');
+      
+      try {
+        const text = await file.text();
+        const rows = text.split('\n').slice(0, 6);
+        
+        let previewHTML = '<table class="preview-table">';
+        rows.forEach((row, i) => {
+          const cells = row.split(',');
+          previewHTML += '<tr>';
+          cells.forEach((cell, j) => {
+            if (i === 0) {
+              previewHTML += `<th>Column ${j + 1}</th>`;
+            } else {
+              previewHTML += `<td>${cell.trim()}</td>`;
+            }
+          });
+          previewHTML += '</tr>';
         });
-        previewHTML += '</tr>';
-      });
-      previewHTML += '</table>';
-      
-      previewDiv.innerHTML = previewHTML;
-      previewSection.style.display = 'block';
-      
-      // Auto-detect column mapping
-      autoDetectColumns(rows[0]);
-    } catch (error) {
-      console.error('Error reading CSV:', error);
-      alert('Error reading CSV file');
-    }
-  });
+        previewHTML += '</table>';
+        
+        previewDiv.innerHTML = previewHTML;
+        previewSection.style.display = 'block';
+        
+        autoDetectColumns(rows[0]);
+      } catch (error) {
+        console.error('Error reading CSV:', error);
+        alert('Error reading CSV file');
+      }
+    });
+  }
   
   // Process import
-  processImportBtn?.addEventListener('click', async () => {
-    const accountId = document.getElementById('importAccount').value;
-    if (!accountId) {
-      alert('Please select an account');
-      return;
-    }
-    
-    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
-    
-    try {
-      let transactions = [];
-      
-      if (activeTab === 'csv') {
-        const file = csvFileInput.files[0];
-        if (!file) {
-          alert('Please select a CSV file');
-          return;
-        }
-        transactions = await parseCSV(file, accountId, categories);
-      } else if (activeTab === 'manual') {
-        const text = document.getElementById('statementText').value;
-        transactions = await parseText(text, accountId, categories);
-      }
-      
-      if (transactions.length === 0) {
-        alert('No transactions found to import');
+  const processImportBtn = document.getElementById('processImport');
+  if (processImportBtn) {
+    processImportBtn.addEventListener('click', async () => {
+      const accountId = document.getElementById('importAccount').value;
+      if (!accountId) {
+        alert('Please select an account');
         return;
       }
       
-      // Save transactions
-      const savedCount = await saveImportedTransactions(transactions);
+      const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
       
-      importModal.style.display = 'none';
-      alert(`Successfully imported ${savedCount} transactions!`);
-      initTransactionsUI(); // Refresh the view
-    } catch (error) {
-      console.error('Import error:', error);
-      alert('Error importing transactions: ' + error.message);
-    }
-  });
+      try {
+        let transactions = [];
+        
+        if (activeTab === 'csv') {
+          const file = document.getElementById('csvFile').files[0];
+          if (!file) {
+            alert('Please select a CSV file');
+            return;
+          }
+          transactions = await parseCSV(file, accountId, categories);
+        } else if (activeTab === 'manual') {
+          const text = document.getElementById('statementText').value;
+          transactions = await parseText(text, accountId, categories);
+        }
+        
+        if (transactions.length === 0) {
+          alert('No transactions found to import');
+          return;
+        }
+        
+        const savedCount = await saveImportedTransactions(transactions);
+        
+        importModal.style.display = 'none';
+        alert(`Successfully imported ${savedCount} transactions!`);
+        initTransactionsUI();
+      } catch (error) {
+        console.error('Import error:', error);
+        alert('Error importing transactions: ' + error.message);
+      }
+    });
+  }
 }
 
-//initialize import system
-
-
-
-// Parse CSV file
 async function parseCSV(file, accountId, categories) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1058,7 +1040,6 @@ async function parseCSV(file, accountId, categories) {
         const rows = text.split('\n').filter(row => row.trim());
         const transactions = [];
         
-        // Skip header row (assuming first row is headers)
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i].split(',');
           if (row.length < 3) continue;
@@ -1079,13 +1060,11 @@ async function parseCSV(file, accountId, categories) {
   });
 }
 
-// Parse manual text entry
 async function parseText(text, accountId, categories) {
   const lines = text.split('\n').filter(line => line.trim());
   const transactions = [];
   
   for (const line of lines) {
-    // Try different formats
     const transaction = parseTransactionLine(line, accountId, categories);
     if (transaction) {
       transactions.push(transaction);
@@ -1095,14 +1074,8 @@ async function parseText(text, accountId, categories) {
   return transactions;
 }
 
-// Create transaction from CSV row
 function createTransactionFromCSV(row, accountId, categories) {
   try {
-    // Common CSV formats:
-    // Format 1: Date, Description, Amount, Balance
-    // Format 2: Date, Description, Debit, Credit, Balance
-    // Format 3: Date, Description, Amount (negative for expenses)
-    
     let date, description, amount;
     
     if (row.length >= 3) {
@@ -1110,10 +1083,8 @@ function createTransactionFromCSV(row, accountId, categories) {
       description = row[1].trim();
       
       if (row[2].includes('/')) {
-        // Might be amount with sign
         amount = parseFloat(row[2].replace(/[^0-9.-]/g, ''));
       } else if (row.length >= 4) {
-        // Check for separate debit/credit columns
         const debit = parseFloat(row[2]) || 0;
         const credit = parseFloat(row[3]) || 0;
         amount = credit > 0 ? credit : -debit;
@@ -1144,17 +1115,10 @@ function createTransactionFromCSV(row, accountId, categories) {
   }
 }
 
-// Parse transaction from text line
 function parseTransactionLine(line, accountId, categories) {
-  // Try to match common patterns
   const patterns = [
-    // Pattern 1: "DD/MM/YYYY, DESCRIPTION, AMOUNT"
     /^(\d{1,2}\/\d{1,2}\/\d{4}),\s*(.+?),\s*(-?\$?\d+\.?\d*)/i,
-    
-    // Pattern 2: "YYYY-MM-DD DESCRIPTION AMOUNT"
     /^(\d{4}-\d{2}-\d{2})\s+(.+?)\s+(-?\$?\d+\.?\d*)/i,
-    
-    // Pattern 3: "DESCRIPTION $AMOUNT DATE"
     /^(.+?)\s+\$?(-?\d+\.?\d*)\s+(\d{1,2}\/\d{1,2}\/\d{4})/i
   ];
   
@@ -1164,12 +1128,10 @@ function parseTransactionLine(line, accountId, categories) {
       let date, description, amount;
       
       if (pattern === patterns[2]) {
-        // Pattern 3: description, amount, date
         description = match[1].trim();
         amount = parseFloat(match[2]);
         date = parseDate(match[3].trim());
       } else {
-        // Patterns 1 & 2: date, description, amount
         date = parseDate(match[1].trim());
         description = match[2].trim();
         amount = parseFloat(match[3].replace(/[^0-9.-]/g, ''));
@@ -1199,44 +1161,21 @@ function parseTransactionLine(line, accountId, categories) {
   return null;
 }
 
-// Auto-categorize based on description
 function autoCategorize(description, amount, categories) {
   const desc = description.toLowerCase();
   let categoryId = null;
   
-  // Common Australian merchant patterns
   const rules = [
-    // Supermarkets
     { pattern: /coles|woolworths|aldi|iga|foodworks|safeway/i, category: 'exp_grocery_supermarket' },
-    
-    // Fuel
     { pattern: /shell|bp|caltex|7-eleven|united|ampol|fuel/i, category: 'exp_fuel' },
-    
-    // Restaurants
     { pattern: /mcdonald|kfc|hungry jack|nando|domino|pizza hut|grill'd|restaurant|cafe/i, category: 'exp_restaurants' },
-    
-    // Utilities
     { pattern: /origin|agl|energy australia|red energy|electricity|gas/i, category: 'exp_electricity' },
-    
-    // Internet/Phone
     { pattern: /telstra|optus|vodafone|tpg|internet|nbn|mobile/i, category: 'exp_internet' },
-    
-    // Insurance
     { pattern: /aami|racv|nrma|allianz|qbe|insurance/i, category: 'exp_insurance' },
-    
-    // Salary
     { pattern: /salary|wage|payroll|income|deposit.*salary/i, category: 'inc_salary' },
-    
-    // Property
     { pattern: /council rates|water rates|land tax|real estate|property|rent/i, category: 'exp_council_rates' },
-    
-    // Shopping
     { pattern: /kmart|target|big w|bunnings|harvey norman|jbhifi|officeworks/i, category: 'exp_shopping' },
-    
-    // Transport
     { pattern: /myki|ptv|public transport|train|tram|bus|uber|taxi/i, category: 'exp_public_transport' },
-    
-    // Medical
     { pattern: /chemist|pharmacy|priceline|gp|doctor|hospital|medical/i, category: 'exp_pharmacy' }
   ];
   
@@ -1247,27 +1186,21 @@ function autoCategorize(description, amount, categories) {
     }
   }
   
-  // If no match found, use default categories based on amount
   if (!categoryId) {
     if (amount > 0) {
-      categoryId = 'inc_main'; // Default income category
+      categoryId = 'inc_main';
     } else {
-      categoryId = 'exp_misc'; // Default expense category
+      categoryId = 'exp_misc';
     }
   }
   
   return categoryId;
 }
 
-// Parse various date formats
 function parseDate(dateString) {
   const formats = [
-    // DD/MM/YYYY
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
-    // YYYY-MM-DD
-    /^(\d{4})-(\d{1,2})-(\d{1,2})$/,
-    // MM/DD/YYYY
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+    /^(\d{4})-(\d{1,2})-(\d{1,2})$/
   ];
   
   for (const format of formats) {
@@ -1276,16 +1209,13 @@ function parseDate(dateString) {
       let day, month, year;
       
       if (format === formats[1]) {
-        // YYYY-MM-DD
         year = parseInt(match[1]);
         month = parseInt(match[2]) - 1;
         day = parseInt(match[3]);
       } else {
-        // DD/MM/YYYY or MM/DD/YYYY
         const first = parseInt(match[1]);
         const second = parseInt(match[2]);
         
-        // Try to guess format (if first > 12, it's probably DD/MM)
         if (first > 12) {
           day = first;
           month = second - 1;
@@ -1306,7 +1236,6 @@ function parseDate(dateString) {
   return null;
 }
 
-// Save imported transactions
 async function saveImportedTransactions(transactions) {
   let savedCount = 0;
   
@@ -1322,7 +1251,6 @@ async function saveImportedTransactions(transactions) {
   return savedCount;
 }
 
-// Auto-detect CSV columns
 function autoDetectColumns(headerRow) {
   const headers = headerRow.split(',').map(h => h.trim().toLowerCase());
   const mappingDiv = document.getElementById('columnMapping');
@@ -1374,7 +1302,6 @@ window.addCategoryRule = function() {
         <div class="form-group">
           <select class="rule-category">
             <option value="">Select Category</option>
-            ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
