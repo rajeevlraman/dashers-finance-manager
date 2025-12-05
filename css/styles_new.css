@@ -1,0 +1,1511 @@
+/* =========================================================
+styles.css cleaned version
+styles-original-backup is the old file   
+GLOBAL RESET & THEME
+   ========================================================= */
+   /* =========================================================
+   GLOBAL RESET & THEME
+   ========================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f9fafb;
+  --bg-card: #ffffff;
+  --bg-muted: #f3f4f6;
+  --border: #e5e7eb;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --danger: #ef4444;
+  --success: #16a34a;
+  --shadow-soft: 0 2px 8px rgba(0,0,0,0.06);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --nav-height: 70px;
+}
+
+html[data-theme="dark"] {
+  /* Optional dark override if you want later */
+  --bg: #111827;
+  --bg-card: #1f2937;
+  --bg-muted: #111827;
+  --border: #374151;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --accent-soft: #1d4ed8;
+  --shadow-soft: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-main);
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Content container */
+main#mainContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem calc(1.5rem + var(--nav-height));
+  background: transparent;
+}
+
+/* Prevent nav overlap */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+/* Simple page transition */
+.page-transition {
+  animation: fadeSlideIn 0.4s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   BASIC LAYOUT / CARDS / SECTIONS
+   ========================================================= */
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.section-card,
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.section-card:hover,
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Summary KPI cards (rent / income / etc) */
+.summary-row,
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.2rem;
+  color: #fff;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-right: 0.8rem;
+}
+
+.summary-info h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.summary-info p {
+  margin: 0.2rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* Example color roles */
+.summary-card.income { background: linear-gradient(135deg, #16a34a, #22c55e); }
+.summary-card.expense { background: linear-gradient(135deg, #dc2626, #f97373); }
+.summary-card.rent { background: linear-gradient(135deg, #0284c7, #38bdf8); }
+.summary-card.worth { background: linear-gradient(135deg, #6d28d9, #a855f7); }
+
+/* Simple generic progress */
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), #1d4ed8);
+  transition: width 0.3s ease;
+}
+
+/* =========================================================
+   FORMS & BUTTONS (ONE SYSTEM)
+   ========================================================= */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-gap: 1rem 2rem;
+  align-items: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+}
+
+.form-label,
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.form-input,
+.form-select,
+textarea,
+.form-grid input,
+.form-grid select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #d1d5db;
+  background: #f9fafb;
+  font-size: 0.95rem;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.form-input:focus,
+.form-select:focus,
+textarea:focus,
+.form-grid input:focus,
+.form-grid select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+.form-hint { font-size: 0.8rem; color: var(--text-muted); }
+.form-error { font-size: 0.8rem; color: var(--danger); }
+
+/* Enhanced select arrow */
+.form-select,
+.form-grid select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.65rem;
+  padding-right: 2.2rem;
+}
+
+/* Buttons */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.2rem;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-primary,
+.button {
+  background: linear-gradient(135deg, var(--accent), #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(37,99,235,0.25);
+}
+
+.btn-primary:hover,
+.button:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+.btn-secondary,
+.button.secondary {
+  background: #e5e7eb;
+  color: var(--text-main);
+}
+
+.btn-secondary:hover,
+.button.secondary:hover {
+  background: #d1d5db;
+}
+
+.btn-danger,
+.button.red {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.btn-danger:hover,
+.button.red:hover {
+  background: #b91c1c;
+}
+
+/* Form action row */
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* =========================================================
+   NAVIGATION (TOP & BOTTOM)
+   ========================================================= */
+nav {
+  background-color: #1f2937;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+nav li { flex: 1; text-align: center; }
+nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  color: #e5e7eb;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+nav a:hover {
+  background: #374151;
+}
+
+nav a.active {
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+nav .icon { font-size: 1.3rem; }
+nav .label { font-size: 0.8rem; margin-top: 0.1rem; }
+
+/* FINAL unified bottom nav (one definition) */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: #e5e7eb;
+  border-top: 1px solid #d1d5db;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+  z-index: 10000;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav a {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  color: #4b5563;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: color 0.25s ease, transform 0.25s ease;
+  padding-top: 3px;
+}
+
+.bottom-nav .icon {
+  font-size: 1.5rem;
+  margin-bottom: 3px;
+}
+
+.bottom-nav a.active .icon {
+  color: var(--accent);
+  filter: drop-shadow(0 0 6px rgba(37,99,235,0.7));
+  transform: scale(1.1);
+}
+
+.bottom-nav a.active .label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.bottom-nav a:active,
+.bottom-nav a:focus {
+  background: none;
+  outline: none;
+}
+
+/* Avoid overlap */
+main#mainContent {
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Hide top nav on small */
+@media (max-width: 600px) {
+  nav:not(.bottom-nav) {
+    display: none;
+  }
+}
+
+/* =========================================================
+   CATEGORIES – TREE / ACCORDION (LIGHT THEME)
+   ========================================================= */
+
+/* Header row */
+.categories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.categories-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Income / Expense sections */
+.categories-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.category-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1rem 1.25rem;
+}
+
+/* Section title with count */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.4rem;
+}
+
+.section-title.income-title {
+  color: #16a34a;
+  border-bottom-color: #22c55e;
+}
+
+.section-title.expense-title {
+  color: #dc2626;
+  border-bottom-color: #f97373;
+}
+
+.section-count {
+  background: currentColor;
+  color: #ffffff;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+/* List is vertical */
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* CATEGORY CARD (Tree root) */
+.category-card.compact {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 0.9rem 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category-card.compact:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(37,99,235,0.15);
+}
+
+/* Header row: icon + name + actions */
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.category-icon {
+  font-size: 1.4rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg-muted);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-name {
+  flex: 1;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.category-actions,
+.subcategory-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Buttons used by JS: .action-btn with variants */
+.action-btn {
+  background: #eef2ff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 7px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--accent);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #e0e7ff;
+  transform: translateY(-1px);
+}
+
+.action-btn.delete-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.action-btn.delete-btn:hover {
+  background: #fecaca;
+}
+
+/* Accordion toggle below category header */
+.subcategory-toggle {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--bg-muted);
+  cursor: pointer;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.subcategory-toggle:hover {
+  background: #e5e7eb;
+  color: var(--text-main);
+}
+
+/* Collapsed / expanded handled by JS changing display */
+.subcategories-list {
+  margin-left: 22px;
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--accent);
+  display: none; /* JS toggles this */
+}
+
+/* Subcategory row */
+.subcategory-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  margin: 4px 0;
+  gap: 6px;
+}
+
+.subcategory-item:hover {
+  border-color: var(--accent);
+}
+
+.sub-icon {
+  font-size: 1.05rem;
+}
+
+.sub-name {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+/* Tag chips (optional) */
+.tag {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+
+.tag.income {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tag.expense {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ================================
+   FIX: Make subcategory toggle visible
+   ================================ */
+.subcategory-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;        /* light grey contrast */
+  color: #374151;             /* visible dark text */
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-size: 0.86rem;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+}
+
+.subcategory-toggle:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* Ensure the arrow remains visible */
+.subcategory-toggle::before {
+  font-weight: bold;
+}
+
+/* Ensure JS can toggle visibility */
+.subcategories-list {
+  display: none;  /* JS will set block */
+}
+
+/* =========================================================
+   BUDGETS – LIGHT THEME, COMPACT
+   ========================================================= */
+
+.budgets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.budgets-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.view-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.budgets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* Main budget card */
+.budget-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.budget-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.budget-card.over-budget {
+  border-color: #f97373;
+  background: linear-gradient(135deg, #fff, #fef2f2);
+}
+
+/* Left block: icon + name + first line (same vibe as categories) */
+.budget-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.budget-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-muted);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.budget-details {
+  flex: 1;
+}
+
+.budget-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 4px;
+}
+
+.budget-name {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.budget-values {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+/* Second line: bar + status */
+.budget-row2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 4px;
+}
+
+.budget-row2 .progress-bar-container {
+  flex: 1;
+  height: 6px;
+}
+
+.budget-status {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.budget-status.good {
+  color: #16a34a;
+}
+
+.budget-status.over {
+  color: #b91c1c;
+}
+
+/* If you still use the original progress-info row */
+.progress-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 0.3rem;
+}
+
+.progress-info .spent { color: var(--text-main); font-weight: 600; }
+.progress-info .percent { color: var(--accent); font-weight: 600; }
+
+/* Actions on the right */
+.budget-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.budget-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.budget-btn.edit-btn {
+  background: #e0ecff;
+  color: var(--accent);
+}
+
+.budget-btn.delete-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.budget-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Budget editor inline */
+.budget-editor {
+  margin-bottom: 1rem;
+}
+
+.budget-form-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: var(--shadow-soft);
+}
+
+.budget-form-card h3 {
+  margin-bottom: 0.9rem;
+  color: var(--text-main);
+}
+
+/* =========================================================
+   TABLES / TRANSACTIONS / GENERIC TABLE
+   ========================================================= */
+/*
+   .table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.table th {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 0.9rem 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+.table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.table tr:hover {
+  background: #f9fafb;
+}
+
+/* Transactions layout */
+.transactions-header {
+  margin-bottom: 1.5rem;
+}
+
+.transactions-header h2 {
+  font-size: 1.6rem;
+  color: #111827;
+}
+
+.transactions-container {
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr;
+  gap: 1.5rem;
+}
+
+.transactions-list {
+  margin-top: 1.5rem;
+}
+
+/* =========================================================
+   ACCOUNTS / LOANS / PROPERTIES (main visual styles)
+   ========================================================= */
+
+.accounts-grid,
+.loans-grid,
+.properties-grid,
+.roi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.account-card,
+.loan-card,
+.property-card,
+.roi-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid #e5e7eb;
+}
+
+/* Account */
+.account-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.account-icon { font-size: 2rem; }
+
+.account-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.account-type {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.account-balance {
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.account-balance.positive { color: #16a34a; }
+.account-balance.negative { color: var(--danger); }
+
+.account-actions,
+.loan-actions,
+.property-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+/* Loan bits */
+.loan-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.loan-icon {
+  font-size: 2.2rem;
+}
+
+.loan-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.loan-details {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.loan-balance {
+  text-align: right;
+}
+
+.balance-amount {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+/* Simple "next payment" highlight */
+.loan-next-payment {
+  background: #f9fafb;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  margin-top: 0.6rem;
+  border-left: 4px solid var(--accent);
+  font-size: 0.88rem;
+}
+
+/* =========================================================
+   TOAST / SPLASH / INSTALL BANNER / LOGIN
+   ========================================================= */
+#updateToast,
+.update-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #ffffff;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+  z-index: 9999;
+  font-size: 0.9rem;
+  display: none;
+}
+
+#updateToast.show,
+.update-toast.show {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.update-toast .reload-btn {
+  background: #4ade80;
+  border: none;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Splash */
+#splashScreen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent), #22c55e);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.3rem;
+  z-index: 9999;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#splashScreen.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.spinner {
+  margin-top: 0.8rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.4);
+  border-top-color: #ffffff;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Install banner (PWA) */
+.install-banner {
+  display: none;
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  background: #1f2937;
+  color: #ffffff;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  z-index: 9999;
+}
+
+.install-banner.show {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* iOS install hint */
+.ios-install-guide {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #111827;
+  color: #ffffff;
+  padding: 1rem;
+  text-align: center;
+  border-top: 3px solid var(--accent);
+  z-index: 10001;
+}
+
+.ios-install-guide.show {
+  display: block;
+}
+
+/* Login full-screen cover */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.login-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.login-container {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem 2.4rem;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+
+.login-container h1 {
+  font-size: 1.5rem;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.login-container .subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.4rem;
+}
+
+.login-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.login-container input {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+}
+
+.btn-login {
+  margin-top: 0.5rem;
+  width: 100%;
+  background: var(--accent);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  border: none;
+  padding: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-login:hover {
+  background: #1d4ed8;
+}
+
+.note {
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.note a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width: 768px) {
+  main#mainContent {
+    padding: 1rem 1rem calc(var(--nav-height) + 1rem);
+  }
+  
+  .transactions-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .budgets-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .budgets-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .budget-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .budget-actions {
+    align-self: flex-end;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Optional side-nav layout; adapt if you use aside#sideNav */
+  aside#sideNav {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 240px;
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    padding: 1rem;
+  }
+  
+  main#mainContent {
+    margin-left: 240px;
+  }
+}
+
+/* =========================================================
+   CORRECTED TREE / ACCORDION PATCH
+   ========================================================= */
+
+/* Restore accordion visuals */
+.subcategory-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-muted);
+  color: var(--text-main);
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+
+.subcategory-toggle:hover {
+  background: #e5e7eb;
+}
+
+/* Restore indentation + border for the dropdown area */
+.subcategories-list {
+  margin-left: 22px !important;
+  margin-top: 8px !important;
+  padding-left: 12px !important;
+  border-left: 2px solid var(--accent) !important;
+  display: none; /* JS toggles to block */
+}
+
+/* Subcategory item formatting */
+.subcategory-item {
+  padding: 6px 10px;
+  margin: 4px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Make the arrow visible */
+.subcategory-toggle::before {
+  content: "";
+}
+
+/* =========================================================
+   ENHANCED BOTTOM NAV FOR IPHONE
+   ========================================================= */
+
+/* iPhone-specific bottom nav adjustments */
+@media (max-width: 428px) {
+  .bottom-nav {
+    height: 65px !important;
+    padding: 8px 4px 12px !important;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .bottom-nav a {
+    padding: 6px 2px !important;
+    min-height: 44px !important;
+    border-radius: 8px;
+  }
+  
+  .bottom-nav .icon {
+    font-size: 1.3rem !important;
+    margin-bottom: 2px !important;
+  }
+  
+  .bottom-nav .label {
+    font-size: 0.7rem !important;
+    line-height: 1 !important;
+  }
+  
+  main#mainContent {
+    padding-bottom: calc(75px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* =========================================================
+   IPHONE OPTIMIZATIONS
+   ========================================================= */
+
+@media screen and (max-width: 428px) {
+  /* Force single column layout */
+  .summary-cards,
+  .stats-grid,
+  .properties-grid,
+  .accounts-grid,
+  .loans-grid,
+  .expenses-grid,
+  .maintenance-grid,
+  .reports-grid,
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    display: block !important;
+  }
+  
+  /* Stack cards vertically */
+  .card,
+  .stat-card,
+  .account-card,
+  .loan-card,
+  .property-card,
+  .tenant-card,
+  .expense-card,
+  .maintenance-card,
+  .report-card,
+  .transaction-card,
+  .bill-row,
+  .budget-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 10px 0 !important;
+    padding: 15px !important;
+  }
+  
+  /* Touch-friendly buttons */
+  button,
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .action-btn,
+  .tab-btn {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+  }
+  
+  /* Larger form elements */
+  input,
+  select,
+  textarea,
+  .form-input,
+  .form-select,
+  .search-input {
+    font-size: 16px !important;
+    padding: 12px !important;
+    height: 44px !important;
+  }
+  
+  /* Simplify headers */
+  header {
+    padding: 10px 12px !important;
+    flex-wrap: wrap !important;
+  }
+  
+  .header-actions {
+    width: 100% !important;
+    margin-top: 10px !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Reduce font sizes for readability */
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.3rem !important; }
+  h3 { font-size: 1.1rem !important; }
+  
+  .card-value,
+  .stat-value,
+  .account-balance {
+    font-size: 1.2rem !important;
+  }
+  
+  /* Hide less important elements */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Fix modals for mobile */
+  .modal-content,
+  .modal {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 10px !important;
+    padding: 15px !important;
+  }
+  
+  /* Fix splash screen */
+  .splash-title {
+    font-size: 1.8rem !important;
+  }
+  
+  /* Fix login screen */
+  .login-container {
+    width: 95% !important;
+    max-width: 95% !important;
+    padding: 20px 15px !important;
+  }
+  
+  /* Make tables scroll horizontally */
+  table,
+  .calendar-table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Quick actions horizontal scroll */
+  .horizontal-quick-actions,
+  .quick-actions {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 10px !important;
+    gap: 8px !important;
+  }
+  
+  .quick-action-item,
+  .quick-action-btn {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    min-width: 120px !important;
+  }
+}
+
+/* iPhone Landscape */
+@media screen and (max-width: 926px) and (orientation: landscape) {
+  .bottom-nav {
+    display: none !important; /* Hide in landscape */
+  }
+  
+  main#mainContent {
+    padding-bottom: 20px !important;
+  }
+  
+  /* Use 2 columns in landscape for some grids */
+  .stats-grid,
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    display: grid !important;
+  }
+}
+
+/* iPhone Notch Support */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: min(0px, env(safe-area-inset-left));
+    padding-right: min(0px, env(safe-area-inset-right));
+  }
+  
+  .bottom-nav {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+}
+
+/* Prevent text zoom on input focus */
+input,
+select,
+textarea,
+.form-input,
+.form-select,
+.search-input {
+  font-size: 16px !important;
+  max-height: 44px !important;
+}
+
+/* Fix iOS scrolling */
+html,
+body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+/* Improve touch feedback */
+button:active,
+.btn:active,
+.nav-item:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
