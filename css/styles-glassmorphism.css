@@ -1039,3 +1039,32 @@ body {
   max-width: 400px;
   margin: 0 auto;
 }
+
+/*debug  login*/
+
+/* Fix for login button */
+#loginButton {
+    /* Ensure it's properly clickable */
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+    cursor: pointer;
+    /* Prevent any transform on active that might interfere */
+    transition: all 0.2s ease;
+}
+
+#loginButton:active {
+    transform: none !important; /* Override any existing transforms */
+    transition: none !important;
+}
+
+/* Ensure form doesn't have any overlays intercepting clicks */
+#loginForm {
+    position: relative;
+    z-index: 1;
+}
+
+#loginForm * {
+    /* Ensure all form elements are interactive */
+    pointer-events: auto !important;
+}

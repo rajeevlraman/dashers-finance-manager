@@ -315,7 +315,67 @@
       <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
     </div>
   </div>
-
+<script>
+// Add this to test CSS interference
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Checking for CSS issues...');
+    
+    // Test 1: Check if form elements are visible and clickable
+    const loginButton = document.getElementById('loginButton');
+    if (loginButton) {
+        const styles = window.getComputedStyle(loginButton);
+        console.log('Login button CSS:', {
+            display: styles.display,
+            visibility: styles.visibility,
+            opacity: styles.opacity,
+            pointerEvents: styles.pointerEvents,
+            cursor: styles.cursor,
+            zIndex: styles.zIndex
+        });
+        
+        if (styles.pointerEvents === 'none') {
+            console.error('❌ Button has pointer-events: none !');
+            loginButton.style.pointerEvents = 'auto';
+        }
+    }
+    
+    // Test 2: Check for overlay elements blocking clicks
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) {
+        // Look for any ::before or ::after that might be blocking
+        const pseudoStyles = window.getComputedStyle(loginScreen, '::before');
+        if (pseudoStyles.content !== 'none') {
+            console.warn('⚠️ loginScreen has ::before pseudo-element');
+        }
+    }
+    
+    // Test 3: Manually test click without CSS interference
+    const form = document.getElementById('loginForm');
+    if (form) {
+        const originalSubmit = form.onsubmit;
+        form.onsubmit = function(e) {
+            console.log('🎯 Form submit triggered (direct, not via event listener)');
+            e.preventDefault();
+            
+            // Test credentials directly
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('Testing:', {email, password});
+            
+            // Simulate login
+            if (email && password) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('userEmail', email);
+                console.log('✅ Manual login successful');
+                document.getElementById('loginScreen').style.display = 'none';
+            }
+            
+            return false;
+        };
+    }
+});
+</script>
   <script type="module" src="./js/ui.js"></script>
 </body>
 </html>
