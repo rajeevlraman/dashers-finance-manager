@@ -2136,3 +2136,42 @@ main#mainContent {
         flex-direction: column;
     }
 }
+
+
+
+/* Improved Transaction List */
+.rt-item {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+
+.rt-item:last-child {
+  border-bottom: none;
+}
+
+.rt-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rt-desc {
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.rt-amt {
+  font-weight: 600;
+  text-align: right;
+}
+
+.rt-amt.pos {
+  color: var(--success);
+}
+
+.rt-amt.neg {
+  color: var(--danger);
+}
