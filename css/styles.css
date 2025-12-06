@@ -1,19 +1,29 @@
-/* Core Foundation */
+/* Main CSS Entry Point */
 @import 'core/00-reset.css';
 @import 'core/01-variables.css';
 @import 'core/02-typography.css';
 @import 'core/03-base.css';
 
-/* Components */
 @import 'components/10-navigation.css';
 @import 'components/11-cards.css';
 @import 'components/12-forms.css';
+@import 'components/13-tables.css';
+@import 'components/14-modals.css';
+@import 'components/15-filters.css';
+@import 'components/16-charts.css';
+@import 'components/17-badges.css';
+@import 'components/18-loaders.css';
 
-/* Layouts (Dashboard first - it's your main page) */
 @import 'layouts/20-dashboard.css';
+@import 'layouts/21-transactions.css';
+@import 'layouts/22-properties.css';
+@import 'layouts/23-budgets.css';
+@import 'layouts/24-reports.css';
+@import 'layouts/25-accounts.css';
+@import 'layouts/26-bills.css';
+@import 'layouts/27-loans.css';
+@import 'layouts/28-tenants.css';
+@import 'layouts/29-maintenance.css';
+@import 'layouts/30-settings.css';
 
-/* Utilities */
 @import 'utilities/50-utilities.css';
-
-/* Theme (default to light) */
-@import 'themes/40-light.css';
