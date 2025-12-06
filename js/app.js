@@ -392,6 +392,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 700); // fade-out duration
     }, 1500); // overall time on screen
 
+        // --- FORCE LOGIN SCREEN TO APPEAR ---
+    if (!localStorage.getItem("loggedIn")) {
+        const loginScreen = document.getElementById("loginScreen");
+        if (loginScreen) {
+            loginScreen.classList.remove("hidden");
+        }
+    }
+
+
     // --- 3. Initialize core application ---
     await initializeAppCore();
 
