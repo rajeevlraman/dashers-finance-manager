@@ -349,7 +349,11 @@ async function initializeAppCore() {
     });
 */    
     // Initialize UI
-    initUI();
+    // Only initialize UI *after login*
+    if (localStorage.getItem("loggedIn") === "true") {
+        initUI();
+    }
+
     
     // Run automation
     await processRecurringTransactions();
