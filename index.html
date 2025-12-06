@@ -14,12 +14,13 @@
   <style>
     /* RESET & BASE */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    html, body { height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; overflow: hidden; }
     
     /* BACKGROUND GRADIENT (from your original) */
     body {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
+      position: relative;
     }
     
     /* SPLASH SCREEN - WILL SHOW FIRST */
@@ -36,7 +37,6 @@
       z-index: 9999;
       color: white;
       text-align: center;
-      animation: fadeOut 0.5s ease 2s forwards;
     }
     
     .splash-inner img {
@@ -239,10 +239,6 @@
       to { transform: rotate(360deg); }
     }
     
-    @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
-    }
-    
     @keyframes slideUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -271,6 +267,60 @@
     @keyframes slideDown {
       from { transform: translateY(-100%); }
       to { transform: translateY(0); }
+    }
+    
+    /* BOTTOM NAVIGATION */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+      padding: 10px 0;
+    }
+    
+    .bottom-nav-items {
+      display: flex;
+      justify-content: space-around;
+      list-style: none;
+    }
+    
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #666;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+    
+    .bottom-nav-item.active,
+    .bottom-nav-item:hover {
+      background: rgba(99, 102, 241, 0.1);
+      color: #6366f1;
+    }
+    
+    .bottom-nav-icon {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    
+    .bottom-nav-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    /* For mobile screens */
+    @media (max-width: 768px) {
+      .bottom-nav {
+        display: block;
+      }
     }
   </style>
   
@@ -352,8 +402,41 @@
     <!-- Your navigation.js will populate this -->
   </div>
 
+  <!-- Bottom Navigation (required by your navigation.js) -->
+  <nav id="bottomNav" class="bottom-nav">
+    <div class="bottom-nav-items">
+      <a href="#dashboard" data-view="dashboard" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🏠</span>
+        <span class="bottom-nav-label">Home</span>
+      </a>
+      <a href="#transactions" data-view="transactions" class="bottom-nav-item">
+        <span class="bottom-nav-icon">💸</span>
+        <span class="bottom-nav-label">Finance</span>
+      </a>
+      <a href="#reports" data-view="reports" class="bottom-nav-item">
+        <span class="bottom-nav-icon">📊</span>
+        <span class="bottom-nav-label">Reports</span>
+      </a>
+      <a href="#properties" data-view="properties" class="bottom-nav-item">
+        <span class="bottom-nav-icon">🏘️</span>
+        <span class="bottom-nav-label">Properties</span>
+      </a>
+      <a href="#settings" data-view="settings" class="bottom-nav-item">
+        <span class="bottom-nav-icon">⚙️</span>
+        <span class="bottom-nav-label">Settings</span>
+      </a>
+    </div>
+  </nav>
+
   <!-- Simple JavaScript to handle splash and login -->
   <script>
+    // Clear any existing login state for testing
+    localStorage.removeItem('loggedIn');
+    localStorage.removeItem('userEmail');
+    
+    console.log('Budget Tracker loading...');
+    console.log('User agent:', navigator.userAgent);
+    
     // Wait for DOM to load
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded - showing splash screen');
@@ -381,17 +464,9 @@
           loginScreen.style.display = 'flex';
         }
         
-        // Check if already logged in
-        const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
-        if (isLoggedIn) {
-          console.log('Already logged in, showing app');
-          if (loginScreen) loginScreen.style.display = 'none';
-          if (appContainer) appContainer.classList.remove('hidden');
-          // Initialize your navigation here
-          if (typeof initNavigation === 'function') {
-            initNavigation();
-          }
-        }
+        // Clear any previous login state for testing
+        localStorage.removeItem('loggedIn');
+        localStorage.removeItem('userEmail');
       }, 2000);
       
       // Handle login form submission
@@ -433,6 +508,11 @@
             } else {
               console.warn('initNavigation function not found');
             }
+            
+            // Call checkAuthState if it exists (for your ui.js)
+            if (typeof checkAuthState === 'function') {
+              checkAuthState();
+            }
           } else {
             // Show error
             if (loginError) {
@@ -462,9 +542,13 @@
       }
     });
     
-    // Add some debugging info
-    console.log('Budget Tracker loading...');
-    console.log('User agent:', navigator.userAgent);
+    // Define missing function that your ui.js expects
+    window.checkAuthState = function() {
+      console.log('checkAuthState called');
+      const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
+      console.log('Is logged in?', isLoggedIn);
+      return isLoggedIn;
+    };
     
     // Register service worker if available
     if ('serviceWorker' in navigator) {
