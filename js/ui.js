@@ -20,7 +20,7 @@ import { initExpensesUI } from './expenses.js';
 import { initTaxComplianceUI } from './tax_compliance.js';
 import { initCostBaseTrackerUI } from './cost_base_tracker.js';
 //import { initDashboardMobileV3UI } from './dashboard_mobile_v3_ui.js';
-import { initNavigation, showAppContainer, updateActiveNav } from './navigation.js';
+
 // ============================================================================
 // 📱 BOTTOM NAVIGATION ENHANCEMENTS
 // ============================================================================
@@ -289,8 +289,7 @@ export function initUI() {
 
   // Initialize bottom navigation first
   initBottomNavigation();
-  checkAuthState();
-  initNavigation();
+
   // Enhanced event delegation for both sidebar and bottom nav
   ['click', 'touchstart'].forEach(evt => {
     document.addEventListener(evt, e => {
