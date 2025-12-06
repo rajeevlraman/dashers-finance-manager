@@ -1,6 +1,7 @@
 import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId } from './db.js';
 import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
 import { DEFAULT_CATEGORIES } from './defaultCategories.js';
+import { initImportModal } from './importModal.js';
 
 // ============================================================================
 //  Transactions UI Initialization
@@ -284,6 +285,10 @@ export async function initTransactionsUI() {
 
     </div>
   `;
+
+  initImportModal();
+
+
 
   // UI + Event setup
   setupCategoryLinking(categories, subCats);
