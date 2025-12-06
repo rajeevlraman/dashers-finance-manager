@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,42 +6,287 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Budget Tracker">
-
-  <!-- Enhanced Viewport for iOS -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Budget Tracker</title>
-
-  <!-- IMPORTANT: base path matches GitHub Pages repo -->
   <base href="/dashers-finance-manager/">
-
-  <!-- Organized CSS Structure -->
-  <link rel="stylesheet" href="./css/styles.css" />
-  <link rel="manifest" href="./manifest.json">
+  
+  <!-- Inline CSS for immediate visibility -->
+  <style>
+    /* RESET & BASE */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    
+    /* BACKGROUND GRADIENT (from your original) */
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    /* SPLASH SCREEN - WILL SHOW FIRST */
+    #splashScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: white;
+      text-align: center;
+      animation: fadeOut 0.5s ease 2s forwards;
+    }
+    
+    .splash-inner img {
+      width: 96px;
+      height: 96px;
+      margin-bottom: 20px;
+      border-radius: 20px;
+      animation: pulse 2s infinite;
+    }
+    
+    .splash-inner h1 {
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      color: white;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin: 0 auto;
+    }
+    
+    /* LOGIN SCREEN - WILL SHOW AFTER SPLASH */
+    #loginScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: none; /* Hidden initially */
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.5s ease-out;
+    }
+    
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .login-logo img {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-title {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+    }
+    
+    .login-subtitle {
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+    
+    .version-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    /* FORM STYLES */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #1f2937;
+      font-weight: 500;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .login-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #6b7280;
+    }
+    
+    .checkbox-custom {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      display: inline-block;
+      position: relative;
+    }
+    
+    .checkbox-label input:checked + .checkbox-custom {
+      background: #6366f1;
+      border-color: #6366f1;
+    }
+    
+    .checkbox-label input:checked + .checkbox-custom::after {
+      content: '✓';
+      position: absolute;
+      color: white;
+      font-size: 12px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    .forgot-password {
+      color: #6366f1;
+      font-size: 0.875rem;
+      text-decoration: underline;
+    }
+    
+    .btn-login {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-note {
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+    }
+    
+    .security-notice {
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+    
+    /* ANIMATIONS */
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* HIDDEN CLASS */
+    .hidden {
+      display: none !important;
+    }
+    
+    /* DEVELOPMENT BANNER */
+    .dev-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #f39c12;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+      z-index: 1001;
+      animation: slideDown 0.5s ease;
+    }
+    
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+  </style>
   
   <!-- Icons -->
   <link rel="icon" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-192.png">
-
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="format-detection" content="telephone=no">
-
-  <!-- Charts (local) -->
-  <script src="js/vendor/chart.umd.min.js"></script>
-
-  <!-- ✅ Dexie: load local UMD to create global window.Dexie -->
-  <script src="js/vendor/dexie.min.js"></script>
+  <link rel="manifest" href="./manifest.json">
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div id="splashScreen" class="splash-screen">
+  <!-- Development Banner -->
+  <div id="branchIndicator" class="dev-banner">
+    ⚠️ DEVELOPMENT VERSION - Data resets may occur ⚠️
+  </div>
+
+  <!-- Splash Screen (shows first) -->
+  <div id="splashScreen">
     <div class="splash-inner">
       <img src="assets/icons/icon-192.png" alt="Budget Tracker Logo">
       <h1>Budget Tracker</h1>
@@ -50,30 +294,22 @@
     </div>
   </div>
 
-  <!-- Development Banner -->
-  <div id="branchIndicator" class="dev-banner">
-    ⚠️ DEVELOPMENT VERSION - Data resets may occur ⚠️
-  </div>
-
-  <!-- Login Screen -->
-  <div id="loginScreen" class="login-screen">
+  <!-- Login Screen (shows after splash) -->
+  <div id="loginScreen">
     <div class="login-container">
-      <!-- Logo and Title -->
       <div class="login-header">
         <div class="login-logo">
-          <img src="assets/icons/icon-192.png" alt="Budget Tracker" width="64" height="64">
+          <img src="assets/icons/icon-192.png" alt="Budget Tracker">
         </div>
         <h1 class="login-title">Budget Tracker</h1>
         <p class="login-subtitle">Secure Financial Management</p>
         <div class="version-badge">Development Version</div>
       </div>
 
-      <!-- Error Message -->
-      <div id="loginError" class="error-message hidden">
-        Invalid email or password. Please try again.
+      <div id="loginError" class="hidden" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: none;">
+        Invalid email or password
       </div>
 
-      <!-- Login Form -->
       <form id="loginForm" class="login-form">
         <div class="form-group">
           <label for="email" class="form-label">Email Address</label>
@@ -85,191 +321,163 @@
           <input type="password" id="password" class="form-input" placeholder="••••••••" value="admin123" required>
         </div>
 
-        <!-- Additional Options -->
         <div class="login-options">
           <label class="checkbox-label">
             <input type="checkbox" id="rememberMe" checked>
             <span class="checkbox-custom"></span>
             <span class="checkbox-text">Remember me</span>
           </label>
-          <a href="#" class="link forgot-password" id="forgotPassword">Forgot password?</a>
+          <a href="#" class="forgot-password" id="forgotPassword">Forgot password?</a>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-login" id="loginButton">
-          <span class="btn-text">Sign In</span>
-          <span class="btn-loader hidden"></span>
+        <button type="submit" class="btn-login" id="loginButton">
+          Sign In
         </button>
       </form>
 
-      <!-- Registration Prompt -->
       <p class="login-note">
         Don't have an account? 
-        <a href="#" class="link" id="registerLink">Create account</a>
+        <a href="#" class="link" id="registerLink" style="color: #6366f1;">Create account</a>
       </p>
 
-      <!-- Security Notice -->
       <div class="security-notice">
-        <span class="security-icon">🔒</span>
+        <span style="margin-right: 5px;">🔒</span>
         <small>Your data is encrypted and stored locally</small>
       </div>
     </div>
   </div>
 
-  <!-- App Container (will be populated by navigation.js) -->
-  <div class="app-container">
-    <!-- Navigation.js will populate this area -->
+  <!-- Main App Container (hidden until login) -->
+  <div id="app" class="hidden">
+    <!-- Your navigation.js will populate this -->
   </div>
 
-  <!-- Old navigation (hidden initially, navigation.js will handle it) -->
-  <nav style="display: none;">
-    <ul>
-      <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
-      <li><a href="#transactions" data-view="transactions"><span class="icon">💸</span><span class="label">Transactions</span></a></li>
-      <li><a href="#budgets" data-view="budgets"><span class="icon">🎯</span><span class="label">Budgets</span></a></li>
-      <li><a href="#accounts" data-view="accounts"><span class="icon">💳</span><span class="label">Accounts</span></a></li>
-      <li><a href="#categories" data-view="categories"><span class="icon">🗂️</span><span class="label">Categories</span></a></li>
-      <li><a href="#reports" data-view="reports"><span class="icon">📊</span><span class="label">Reports</span></a></li>
-      <li><a href="#bills" data-view="bills"><span class="icon">🧾</span><span class="label">Bills</span></a></li>
-      <li><a href="#settings" data-view="settings"><span class="icon">⚙️</span><span class="label">Settings</span></a></li>
-      <li><a href="#calendar" data-view="calendar"><span class="icon">📅</span><span class="label">Calendar</span></a></li>
-      <li><a href="#recurring" data-view="recurring"><span class="icon">🔁</span><span class="label">Recurring</span></a></li>
-      <li><a href="#loans" data-view="loans"><span class="icon">🏦</span><span class="label">Loans</span></a></li>
-      <li><a href="#properties" data-view="properties"><span class="icon">🏠</span><span class="label">Properties</span></a></li>
-      <li><a href="#tenants" data-view="tenants"><span class="icon">👤</span><span class="label">Tenants</span></a></li>
-      <li><a href="#maintenance" data-view="maintenance"><span class="icon">🧰</span><span class="label">Maintenance</span></a></li>
-      <li><a href="#expenses" data-view="expenses"><span class="icon">💸</span><span class="label">Expenses</span></a></li>
-      <li><a href="#tax" data-view="tax"><span class="icon">📘</span><span class="label">ATO Reports</span></a></li>
-      <li><a href="#costbase" data-view="costbase"><span class="icon">🧱</span><span class="label">Cost Base</span></a></li>
-    </ul>
-  </nav>
-
-  <!-- Old main content (hidden initially, navigation.js will handle it) -->
-  <main id="mainContent" style="display: none;"></main>
-
-  <!-- Old bottom nav (hidden initially, navigation.js will handle it) -->
-  <nav class="bottom-nav" id="bottomNav" style="display: none;">
-    <a href="#dashboard" data-view="dashboard" class="nav-item active">
-      <span class="icon">🏠</span>
-      <span class="label">Home</span>
-    </a>
-    <a href="#transactions" data-view="transactions" class="nav-item">
-      <span class="icon">💸</span>
-      <span class="label">Finance</span>
-    </a>
-    <a href="#reports" data-view="reports" class="nav-item">
-      <span class="icon">📊</span>
-      <span class="label">Reports</span>
-    </a>
-    <a href="#properties" data-view="properties" class="nav-item">
-      <span class="icon">🏘️</span>
-      <span class="label">Properties</span>
-    </a>
-    <a href="#settings" data-view="settings" class="nav-item">
-      <span class="icon">⚙️</span>
-      <span class="label">Settings</span>
-    </a>
-  </nav>
-
-  <!-- PWA Installation Banner -->
-  <div id="installBanner" class="install-banner hidden">
-    <div class="install-banner__content">
-      <span class="install-banner__icon">📱</span>
-      <div class="install-banner__text">
-        <strong>Install Budget Tracker</strong>
-        <p>Get quick access and offline support — install to your device.</p>
-      </div>
-      <div class="install-banner__actions">
-        <button id="installBtn" class="btn btn-primary btn-sm">Install</button>
-        <button id="installDismiss" class="btn btn-text btn-sm">Dismiss</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- iOS Installation Guide -->
-  <div id="iosInstallGuide" class="ios-install-guide hidden">
-    <div class="ios-install-content">
-      <button class="ios-install-close" id="closeIosGuide" aria-label="Close">×</button>
-      <h3 class="ios-install-title">📱 Install on iOS</h3>
-      <ol class="ios-install-steps">
-        <li>
-          <span class="step-number">①</span>
-          <div class="step-content">
-            Tap the <strong class="step-highlight">Share</strong> button
-            <span class="ios-icon">⎔</span>
-          </div>
-        </li>
-        <li>
-          <span class="step-number">②</span>
-          <div class="step-content">
-            Scroll down and tap <strong>"Add to Home Screen"</strong>
-          </div>
-        </li>
-        <li>
-          <span class="step-number">③</span>
-          <div class="step-content">
-            Tap <strong>"Add"</strong> in the top right
-          </div>
-        </li>
-      </ol>
-      <p class="ios-install-tip">
-        <small>💡 This will add an app icon to your home screen for quick access.</small>
-      </p>
-    </div>
-  </div>
-
-  <!-- Basic initialization script (minimal, most logic is in modules) -->
+  <!-- Simple JavaScript to handle splash and login -->
   <script>
-    // Minimal initialization that doesn't conflict with modules
+    // Wait for DOM to load
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loaded, initializing...');
+      console.log('DOM loaded - showing splash screen');
       
-      // Hide splash screen after a delay
-      setTimeout(() => {
-        const splash = document.getElementById('splashScreen');
-        if (splash) splash.style.display = 'none';
-      }, 1000);
-      
-      // Check login status
-      const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
+      const splashScreen = document.getElementById('splashScreen');
       const loginScreen = document.getElementById('loginScreen');
+      const appContainer = document.getElementById('app');
+      const loginForm = document.getElementById('loginForm');
+      const loginError = document.getElementById('loginError');
       
-      if (isLoggedIn && loginScreen) {
-        loginScreen.style.display = 'none';
-        console.log('User is logged in');
-      } else if (loginScreen) {
-        loginScreen.style.display = 'flex';
-        console.log('Showing login screen');
+      // Show splash screen immediately
+      if (splashScreen) {
+        splashScreen.style.display = 'flex';
       }
       
-      // Set up service worker
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
-          .then((reg) => {
-            console.log('✅ Service Worker registered:', reg.scope);
-          })
-          .catch((err) => {
-            console.error('❌ Service Worker registration failed:', err);
-          });
+      // After 2 seconds, hide splash and show login
+      setTimeout(function() {
+        console.log('Hiding splash, showing login');
+        
+        if (splashScreen) {
+          splashScreen.style.display = 'none';
+        }
+        
+        if (loginScreen) {
+          loginScreen.style.display = 'flex';
+        }
+        
+        // Check if already logged in
+        const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
+        if (isLoggedIn) {
+          console.log('Already logged in, showing app');
+          if (loginScreen) loginScreen.style.display = 'none';
+          if (appContainer) appContainer.classList.remove('hidden');
+          // Initialize your navigation here
+          if (typeof initNavigation === 'function') {
+            initNavigation();
+          }
+        }
+      }, 2000);
+      
+      // Handle login form submission
+      if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          console.log('Login form submitted');
+          
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+          
+          // Simple validation
+          if (email && password) {
+            console.log('Login successful');
+            
+            // Hide error if shown
+            if (loginError) {
+              loginError.style.display = 'none';
+            }
+            
+            // Hide login screen
+            if (loginScreen) {
+              loginScreen.style.display = 'none';
+            }
+            
+            // Show app container
+            if (appContainer) {
+              appContainer.classList.remove('hidden');
+            }
+            
+            // Save login state
+            localStorage.setItem('loggedIn', 'true');
+            localStorage.setItem('userEmail', email);
+            
+            // Initialize your navigation
+            if (typeof initNavigation === 'function') {
+              console.log('Initializing navigation');
+              initNavigation();
+            } else {
+              console.warn('initNavigation function not found');
+            }
+          } else {
+            // Show error
+            if (loginError) {
+              loginError.style.display = 'block';
+              loginError.textContent = 'Please enter both email and password';
+            }
+          }
+        });
+      }
+      
+      // Forgot password link
+      const forgotPassword = document.getElementById('forgotPassword');
+      if (forgotPassword) {
+        forgotPassword.addEventListener('click', function(e) {
+          e.preventDefault();
+          alert('Password reset feature coming soon!');
+        });
+      }
+      
+      // Register link
+      const registerLink = document.getElementById('registerLink');
+      if (registerLink) {
+        registerLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          alert('Registration feature coming soon! Use admin@budgettracker.com / admin123');
+        });
       }
     });
     
-    // Device detection for CSS classes
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    // Add some debugging info
+    console.log('Budget Tracker loading...');
+    console.log('User agent:', navigator.userAgent);
     
-    if (isIOS) {
-      document.documentElement.classList.add('ios-device');
-    }
-    if (isAndroid) {
-      document.documentElement.classList.add('android-device');
-    }
-    if (isStandalone) {
-      document.documentElement.classList.add('pwa-standalone');
+    // Register service worker if available
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./serviceWorker.js')
+          .then(reg => console.log('Service Worker registered:', reg.scope))
+          .catch(err => console.log('Service Worker failed:', err));
+      });
     }
   </script>
-
-  <!-- Load modules -->
+  
+  <!-- Load your modules -->
+  <script src="js/vendor/dexie.min.js"></script>
   <script type="module" src="./js/app.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script type="module" src="./js/navigation.js"></script>
