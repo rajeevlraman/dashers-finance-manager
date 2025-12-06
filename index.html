@@ -20,10 +20,9 @@
   <!-- IMPORTANT: base path matches GitHub Pages repo -->
   <base href="/dashers-finance-manager/">
 
-  <!-- Load organized CSS -->
-  <link rel="stylesheet" href="./css/styles.css" />
+  <!--<link rel="stylesheet" href="./css/styles.css" /> -->
   <link rel="manifest" href="./manifest.json">
-
+  <link rel="stylesheet" href="./css/styles-original-backup.css" />
   <!-- Icons -->
   <link rel="icon" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
@@ -40,6 +39,8 @@
   <!-- ✅ Dexie: load local UMD to create global window.Dexie -->
   <script src="js/vendor/dexie.min.js"></script>
 
+
+
   <script type="module" src="./js/app.js"></script>
 
   <!-- iOS PWA Detection -->
@@ -53,11 +54,23 @@
 </head>
 <body>
   <div id="splashScreen">
-    
+    <div class="splash-inner">
+      <img src="assets/icons/icon-192.png" alt="Logo">
+      <h1>Budget Tracker Dev Version</h1>
+      <div class="spinner"></div>
+    </div>
   </div>
 
-  <!-- Development Indicator Banner -->
-  <div id="branchIndicator" style="display:none; 
+  <header>
+    <h1>Budget Tracker Dev Version</h1>
+    <div class="header-status">
+      <span id="connectionStatus" title="Online">🟢</span>
+    </div>
+    <div class="header-actions">
+      <button id="btnExport">Backup Data</button>
+      <button id="btnImport">Restore Data</button>
+    </div>
+    <div id="branchIndicator" style="display:none; 
     background-color: #f39c12; 
     color: white; 
     text-align: center; 
@@ -69,58 +82,64 @@
     right: 0; 
     z-index: 10000;">
     ⚠️ DEVELOPMENT VERSION ⚠️
-  </div>
+    </div>
+  </header>
 
-  <!-- Login Screen -->
-  <div id="loginScreen" class="login-screen">
-    
+<div id="loginScreen" class="login-screen">
+  <div class="login-container">
+    <!-- Logo and Title -->
+    <div class="login-header">
+      <div class="logo">
+        <img src="assets/icons/icon-192.png" alt="Budget Tracker" width="48" height="48">
+      </div>
+      <h1>Budget Tracker</h1>
+      <p class="subtitle">Secure Financial Management</p>
+    </div>
+
+    <!-- Error Message -->
+    <div id="loginError" class="error-message">
+      Invalid email or password. Please try again.
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
       </div>
 
-      <!-- Error Message -->
-      <div id="loginError" class="error-message">
-        Invalid email or password. Please try again.
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
       </div>
 
-      <!-- Login Form -->
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email" class="form-label">Email Address</label>
-          <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
-        </div>
-
-        <div class="form-group">
-          <label for="password" class="form-label">Password</label>
-          <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
-        </div>
-
-        <!-- Additional Options -->
-        <div class="login-options">
-          <label class="remember-me">
-            <input type="checkbox" id="rememberMe">
-            Remember me
-          </label>
-          <a href="#" class="forgot-password" id="forgotPassword">Forgot password?</a>
-        </div>
-
-        <button type="submit" class="btn-login" id="loginButton">
-          Sign In
-        </button>
-      </form>
-
-      <!-- Registration Prompt -->
-      <p class="note">
-        Don't have an account? 
-        <a href="#" id="registerLink">Create account</a>
-      </p>
-
-      <!-- Security Notice -->
-      <div class="security-notice">
-        <small>🔒 Your data is encrypted and secure</small>
+      <!-- Additional Options -->
+      <div class="login-options">
+        <label class="remember-me">
+          <input type="checkbox" id="rememberMe">
+          Remember me
+        </label>
+        <a href="#" class="forgot-password" id="forgotPassword">Forgot password?</a>
       </div>
+
+      <button type="submit" class="btn-login" id="loginButton">
+        Sign In
+      </button>
+    </form>
+
+    <!-- Registration Prompt -->
+    <p class="note">
+      Don't have an account? 
+      <a href="#" id="registerLink">Create account</a>
+    </p>
+
+    <!-- Security Notice -->
+    <div class="security-notice">
+      <small>🔒 Your data is encrypted and secure</small>
     </div>
   </div>
+</div>
 
-  <!-- Old Navigation (will be hidden by CSS) -->
   <nav>
     <ul>
       <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
@@ -144,8 +163,8 @@
   </nav>
 
   <main id="mainContent"></main>
-<div class="app-container"></div>
-  <!-- Old Bottom Nav (will be replaced by new navigation system) -->
+
+  <!-- Bottom Nav -->
   <nav class="bottom-nav" id="bottomNav">
     <a href="#dashboard" data-view="dashboard" class="nav-item active">
       <span class="icon">🏠</span>
@@ -168,8 +187,7 @@
       <span class="label">Settings</span>
     </a>
   </nav>
-  <!-- Navigation structure -->
-</div>
+
   <!-- PWA Installation Banner -->
   <div id="installBanner" class="install-banner hidden">
     <div class="install-banner-content">
@@ -184,30 +202,13 @@
       </div>
     </div>
   </div>
-  
-  <!-- Database Migration Button -->
   <button id="btnMigrateToDexie" class="btn-warning">⚙️ Migrate to Dexie Database</button>
 
-  <!-- Debug Button -->
   <div style="position: fixed; top: 10px; right: 10px; z-index: 10000; display: none;" id="debugPWA">
     <button onclick="checkPWAStatus()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;">Check PWA</button>
   </div>
 
-  <!-- iOS Installation Guide -->
-  <div id="iosInstallGuide" class="ios-install-guide">
-    <div class="ios-install-content">
-      <h3>📱 Install Budget Tracker on iOS</h3>
-      <ol class="ios-install-steps">
-        <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
-        <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-        <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
-      </ol>
-      <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
-    </div>
-  </div>
-
   <script>
-    // iOS PWA and Service Worker setup (keep existing)
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
 
@@ -240,7 +241,6 @@
       });
     }
 
-    // iOS install guide functions
     function showIOSInstallGuide() {
       const guide = document.getElementById('iosInstallGuide');
       if (guide && !localStorage.getItem('iosGuideDismissed')) {
@@ -248,7 +248,6 @@
         guide.classList.add('show');
       }
     }
-    
     function hideIOSInstallGuide() {
       const guide = document.getElementById('iosInstallGuide');
       if (guide) {
@@ -275,7 +274,6 @@
         document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
       }
 
-      // Install button handlers
       const installBtn = document.getElementById('installBtn');
       if (installBtn && isAndroid) {
         installBtn.addEventListener('click', async () => {
@@ -294,12 +292,6 @@
           if (banner) banner.classList.add('hidden');
         });
       }
-      
-      // Show development banner
-      const branchIndicator = document.getElementById('branchIndicator');
-      if (branchIndicator) {
-        branchIndicator.style.display = 'block';
-      }
     });
 
     if (isAndroid) {
@@ -311,6 +303,79 @@
     }
   </script>
 
+  <!-- iOS Installation Guide -->
+  <div id="iosInstallGuide" class="ios-install-guide">
+    <div class="ios-install-content">
+      <h3>📱 Install Budget Tracker on iOS</h3>
+      <ol class="ios-install-steps">
+        <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
+        <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+        <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
+      </ol>
+      <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
+    </div>
+  </div>
+<script>
+// Add this to test CSS interference
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Checking for CSS issues...');
+    
+    // Test 1: Check if form elements are visible and clickable
+    const loginButton = document.getElementById('loginButton');
+    if (loginButton) {
+        const styles = window.getComputedStyle(loginButton);
+        console.log('Login button CSS:', {
+            display: styles.display,
+            visibility: styles.visibility,
+            opacity: styles.opacity,
+            pointerEvents: styles.pointerEvents,
+            cursor: styles.cursor,
+            zIndex: styles.zIndex
+        });
+        
+        if (styles.pointerEvents === 'none') {
+            console.error('❌ Button has pointer-events: none !');
+            loginButton.style.pointerEvents = 'auto';
+        }
+    }
+    
+    // Test 2: Check for overlay elements blocking clicks
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) {
+        // Look for any ::before or ::after that might be blocking
+        const pseudoStyles = window.getComputedStyle(loginScreen, '::before');
+        if (pseudoStyles.content !== 'none') {
+            console.warn('⚠️ loginScreen has ::before pseudo-element');
+        }
+    }
+    
+    // Test 3: Manually test click without CSS interference
+    const form = document.getElementById('loginForm');
+    if (form) {
+        const originalSubmit = form.onsubmit;
+        form.onsubmit = function(e) {
+            console.log('🎯 Form submit triggered (direct, not via event listener)');
+            e.preventDefault();
+            
+            // Test credentials directly
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('Testing:', {email, password});
+            
+            // Simulate login
+            if (email && password) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('userEmail', email);
+                console.log('✅ Manual login successful');
+                document.getElementById('loginScreen').style.display = 'none';
+            }
+            
+            return false;
+        };
+    }
+});
+</script>
   <script type="module" src="./js/ui.js"></script>
 </body>
 </html>
