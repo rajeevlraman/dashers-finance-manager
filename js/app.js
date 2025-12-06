@@ -102,6 +102,17 @@ function setupProfessionalLogin() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
 
+
+/* */
+    // ==============================================
+    // 🚀 DEMO MODE BYPASS (always redirect to dashboard)
+    // ==============================================
+    console.log("🚀 DEMO MODE ACTIVE – Auto login enabled");
+    localStorage.setItem('loggedIn', 'true');
+    localStorage.setItem('userEmail', 'demo@demo.com');
+    document.getElementById('loginScreen')?.classList.add('hidden');
+    return;
+
     // Check for saved credentials
     const savedEmail = localStorage.getItem('savedEmail');
     const rememberMe = localStorage.getItem('rememberMe') === 'true';
