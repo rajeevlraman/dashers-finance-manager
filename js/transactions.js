@@ -1025,7 +1025,7 @@ console.time('import-diagnostic');
 try {
   console.log('Checking module availability...');
   // Try a non-dynamic require to see if it exists
-  require.resolve('./Transactions');
+  require.resolve('./transactions');
   console.log('Module exists');
 } catch (e) {
   console.error('Module not found:', e);
