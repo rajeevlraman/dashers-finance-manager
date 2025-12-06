@@ -1,55 +1,40 @@
-/* /css/core/00-reset.css - Modern CSS Reset */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
+/* Reset with proper stacking context */
 * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 html, body {
   height: 100%;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body {
-  line-height: 1.5;
-  -webkit-text-size-adjust: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+  position: relative;
 }
 
-img, picture, video, canvas, svg {
-  display: block;
-  max-width: 100%;
+/* Ensure splash and login appear on top */
+#splashScreen {
+  z-index: 9999 !important;
 }
 
-input, button, textarea, select {
-  font: inherit;
+#loginScreen {
+  z-index: 1000 !important;
 }
 
-p, h1, h2, h3, h4, h5, h6 {
-  overflow-wrap: break-word;
+/* Prevent scrolling when splash/login are visible */
+body.splash-active,
+body.login-active {
+  overflow: hidden;
 }
 
-#root, #__next {
-  isolation: isolate;
-}
-
-/* Remove default button styles */
-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-/* Remove list styles */
-ul, ol {
-  list-style: none;
-}
-
-/* Remove default table spacing */
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
+/* Smooth transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }

@@ -1,78 +1,27 @@
-/* /css/core/03-base.css */
-html, body {
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
+/* Base styles - ensure proper layering */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: var(--text-primary);
+  position: relative;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
+/* Main app container - hidden initially */
+.app-container {
+  display: none;
   min-height: 100vh;
 }
 
-#mainContent {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+.app-container.active {
+  display: block;
 }
 
-/* iOS Safe Area Insets */
-.ios-device {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
+/* Content area */
+.main-content {
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-/* Print Styles */
-@media print {
-  .bottom-nav,
-  .install-banner,
-  .ios-install-guide,
-  #splashScreen {
-    display: none !important;
-  }
-  
-  body {
-    background: white !important;
-    color: black !important;
-  }
-  
-  a {
-    color: black !important;
-    text-decoration: none !important;
-  }
-}
-
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* High Contrast */
-@media (prefers-contrast: high) {
-  :root {
-    --border-light: #000000;
-    --text-primary: #000000;
-  }
-}
-
-/* Focus Styles */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-/* Selection */
-::selection {
-  background-color: var(--color-primary-light);
-  color: var(--color-white);
+.main-content.loaded {
+  opacity: 1;
 }
