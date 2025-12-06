@@ -5,6 +5,8 @@
 @import url('./core/03-base.css');
 
 /* Components */
+/* Add this after the core imports */
+@import url('./components/10-auth.css');
 @import url('./components/10-navigation.css');
 @import url('./components/11-cards.css');
 @import url('./components/12-forms.css');
