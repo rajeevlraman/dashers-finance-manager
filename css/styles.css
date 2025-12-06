@@ -34,3 +34,13 @@
 
 /* Utilities */
 @import url('./utilities/50-utilities.css');
+
+/* Temporary - hide login for testing */
+#loginScreen {
+  display: none !important;
+}
+
+/* Show app container */
+.app-container {
+  display: grid !important; /* or flex for mobile */
+}

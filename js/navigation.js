@@ -43,12 +43,14 @@ export function initNavigation() {
 }
 
 function setupNavigation() {
-  // Hide old navigation
-  const oldNav = document.querySelector('nav:not(.bottom-nav)');
-  if (oldNav) {
-    oldNav.style.display = 'none';
-  }
-  
+  // Wait for DOM to be fully ready
+  setTimeout(() => {
+    // Hide old navigation
+    const oldNav = document.querySelector('nav:not(.bottom-nav)');
+    if (oldNav) {
+      oldNav.style.display = 'none';
+    }
+    
   // Create app container if it doesn't exist
   let appContainer = document.querySelector('.app-container');
   if (!appContainer) {
@@ -74,6 +76,8 @@ function setupNavigation() {
   populateBottomNav();
   
   console.log('Navigation setup complete');
+
+  }, 100);
 }
 
 function buildNavigationStructure(container) {
