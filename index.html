@@ -15,7 +15,7 @@
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
-  <title>Dashers Finance Manager</title>
+  <title>Budget Tracker</title>
 
   <!-- IMPORTANT: base path matches GitHub Pages repo -->
   <base href="/dashers-finance-manager/">
@@ -44,8 +44,8 @@
   <!-- Splash Screen -->
   <div id="splashScreen" class="splash-screen">
     <div class="splash-inner">
-      <img src="assets/icons/icon-192.png" alt="Dashers Finance Logo">
-      <h1 class="text-gradient">Dashers Finance Manager</h1>
+      <img src="assets/icons/icon-192.png" alt="Budget Tracker Logo">
+      <h1>Budget Tracker</h1>
       <div class="spinner"></div>
     </div>
   </div>
@@ -55,131 +55,15 @@
     ⚠️ DEVELOPMENT VERSION - Data resets may occur ⚠️
   </div>
 
-  <!-- Mobile/Tablet Top Navigation -->
-  <header class="top-nav">
-    <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
-      <svg class="menu-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M4 6h16M4 12h16M4 18h16"/>
-      </svg>
-    </button>
-    
-    <div class="top-nav__logo">
-      <img src="assets/icons/icon-48.png" alt="Logo" width="24" height="24">
-      <span class="logo-text">Dashers Finance</span>
-    </div>
-    
-    <div class="top-nav__actions">
-      <span id="connectionStatus" class="connection-status" title="Online">🟢</span>
-      <button id="btnExport" class="btn-icon" title="Backup Data">💾</button>
-      <button id="btnMigrateToDexie" class="btn-icon btn-warning" title="Migrate Database">⚙️</button>
-    </div>
-  </header>
-
-  <!-- Desktop Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar__header">
-      <div class="sidebar__logo">
-        <img src="assets/icons/icon-96.png" alt="Dashers Finance" width="48" height="48">
-        <div>
-          <h1 class="logo-text">Dashers Finance</h1>
-          <p class="logo-subtitle">Manager</p>
-        </div>
-      </div>
-    </div>
-
-    <nav class="sidebar__nav">
-      <a href="#dashboard" data-view="dashboard" class="nav-item nav-item--active">
-        <span class="nav-item__icon">🏠</span>
-        <span class="nav-item__label">Dashboard</span>
-      </a>
-      <a href="#transactions" data-view="transactions" class="nav-item">
-        <span class="nav-item__icon">💸</span>
-        <span class="nav-item__label">Transactions</span>
-      </a>
-      <a href="#budgets" data-view="budgets" class="nav-item">
-        <span class="nav-item__icon">🎯</span>
-        <span class="nav-item__label">Budgets</span>
-      </a>
-      <a href="#accounts" data-view="accounts" class="nav-item">
-        <span class="nav-item__icon">💳</span>
-        <span class="nav-item__label">Accounts</span>
-      </a>
-      <a href="#categories" data-view="categories" class="nav-item">
-        <span class="nav-item__icon">🗂️</span>
-        <span class="nav-item__label">Categories</span>
-      </a>
-      <a href="#reports" data-view="reports" class="nav-item">
-        <span class="nav-item__icon">📊</span>
-        <span class="nav-item__label">Reports</span>
-      </a>
-      <a href="#bills" data-view="bills" class="nav-item">
-        <span class="nav-item__icon">🧾</span>
-        <span class="nav-item__label">Bills</span>
-      </a>
-      <a href="#settings" data-view="settings" class="nav-item">
-        <span class="nav-item__icon">⚙️</span>
-        <span class="nav-item__label">Settings</span>
-      </a>
-      <a href="#calendar" data-view="calendar" class="nav-item">
-        <span class="nav-item__icon">📅</span>
-        <span class="nav-item__label">Calendar</span>
-      </a>
-      <a href="#recurring" data-view="recurring" class="nav-item">
-        <span class="nav-item__icon">🔁</span>
-        <span class="nav-item__label">Recurring</span>
-      </a>
-      <a href="#loans" data-view="loans" class="nav-item">
-        <span class="nav-item__icon">🏦</span>
-        <span class="nav-item__label">Loans</span>
-      </a>
-      <a href="#properties" data-view="properties" class="nav-item">
-        <span class="nav-item__icon">🏠</span>
-        <span class="nav-item__label">Properties</span>
-      </a>
-      <a href="#tenants" data-view="tenants" class="nav-item">
-        <span class="nav-item__icon">👤</span>
-        <span class="nav-item__label">Tenants</span>
-      </a>
-      <a href="#maintenance" data-view="maintenance" class="nav-item">
-        <span class="nav-item__icon">🧰</span>
-        <span class="nav-item__label">Maintenance</span>
-      </a>
-      <a href="#expenses" data-view="expenses" class="nav-item">
-        <span class="nav-item__icon">💸</span>
-        <span class="nav-item__label">Expenses</span>
-      </a>
-      <a href="#tax" data-view="tax" class="nav-item">
-        <span class="nav-item__icon">📘</span>
-        <span class="nav-item__label">ATO Reports</span>
-      </a>
-      <a href="#costbase" data-view="costbase" class="nav-item">
-        <span class="nav-item__icon">🧱</span>
-        <span class="nav-item__label">Cost Base</span>
-      </a>
-    </nav>
-
-    <div class="sidebar__footer">
-      <div class="user-profile">
-        <div class="user-avatar">
-          <span>👤</span>
-        </div>
-        <div class="user-info">
-          <p class="user-name">Admin</p>
-          <p class="user-email">admin@dashers.finance</p>
-        </div>
-      </div>
-    </div>
-  </aside>
-
   <!-- Login Screen -->
   <div id="loginScreen" class="login-screen">
     <div class="login-container">
       <!-- Logo and Title -->
       <div class="login-header">
         <div class="login-logo">
-          <img src="assets/icons/icon-192.png" alt="Dashers Finance" width="64" height="64">
+          <img src="assets/icons/icon-192.png" alt="Budget Tracker" width="64" height="64">
         </div>
-        <h1 class="login-title">Dashers Finance</h1>
+        <h1 class="login-title">Budget Tracker</h1>
         <p class="login-subtitle">Secure Financial Management</p>
         <div class="version-badge">Development Version</div>
       </div>
@@ -193,7 +77,7 @@
       <form id="loginForm" class="login-form">
         <div class="form-group">
           <label for="email" class="form-label">Email Address</label>
-          <input type="email" id="email" class="form-input" placeholder="admin@dashers.finance" value="admin@dashers.finance" required>
+          <input type="email" id="email" class="form-input" placeholder="admin@budgettracker.com" value="admin@budgettracker.com" required>
         </div>
 
         <div class="form-group">
@@ -231,113 +115,58 @@
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <main class="main-content" id="mainContent">
-    <!-- Content will be dynamically loaded here -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Welcome back! Here's your financial overview.</p>
-      </div>
-      <div class="page-actions">
-        <button class="btn btn-icon" id="btnRefresh" title="Refresh">↻</button>
-        <button class="btn btn-icon" id="btnAdd" title="Add new">+</button>
-      </div>
-    </div>
+  <!-- App Container (will be populated by navigation.js) -->
+  <div class="app-container">
+    <!-- Navigation.js will populate this area -->
+  </div>
 
-    <div class="dashboard-grid">
-      <!-- Cards will be dynamically generated here -->
-      <div class="card card--stat">
-        <div class="card__header">
-          <h3 class="card__title">Total Balance</h3>
-          <span class="card__badge success">+2.5%</span>
-        </div>
-        <div class="card__value">$12,458.00</div>
-        <div class="card__subtitle">Across all accounts</div>
-      </div>
+  <!-- Old navigation (hidden initially, navigation.js will handle it) -->
+  <nav style="display: none;">
+    <ul>
+      <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
+      <li><a href="#transactions" data-view="transactions"><span class="icon">💸</span><span class="label">Transactions</span></a></li>
+      <li><a href="#budgets" data-view="budgets"><span class="icon">🎯</span><span class="label">Budgets</span></a></li>
+      <li><a href="#accounts" data-view="accounts"><span class="icon">💳</span><span class="label">Accounts</span></a></li>
+      <li><a href="#categories" data-view="categories"><span class="icon">🗂️</span><span class="label">Categories</span></a></li>
+      <li><a href="#reports" data-view="reports"><span class="icon">📊</span><span class="label">Reports</span></a></li>
+      <li><a href="#bills" data-view="bills"><span class="icon">🧾</span><span class="label">Bills</span></a></li>
+      <li><a href="#settings" data-view="settings"><span class="icon">⚙️</span><span class="label">Settings</span></a></li>
+      <li><a href="#calendar" data-view="calendar"><span class="icon">📅</span><span class="label">Calendar</span></a></li>
+      <li><a href="#recurring" data-view="recurring"><span class="icon">🔁</span><span class="label">Recurring</span></a></li>
+      <li><a href="#loans" data-view="loans"><span class="icon">🏦</span><span class="label">Loans</span></a></li>
+      <li><a href="#properties" data-view="properties"><span class="icon">🏠</span><span class="label">Properties</span></a></li>
+      <li><a href="#tenants" data-view="tenants"><span class="icon">👤</span><span class="label">Tenants</span></a></li>
+      <li><a href="#maintenance" data-view="maintenance"><span class="icon">🧰</span><span class="label">Maintenance</span></a></li>
+      <li><a href="#expenses" data-view="expenses"><span class="icon">💸</span><span class="label">Expenses</span></a></li>
+      <li><a href="#tax" data-view="tax"><span class="icon">📘</span><span class="label">ATO Reports</span></a></li>
+      <li><a href="#costbase" data-view="costbase"><span class="icon">🧱</span><span class="label">Cost Base</span></a></li>
+    </ul>
+  </nav>
 
-      <div class="card card--stat">
-        <div class="card__header">
-          <h3 class="card__title">Monthly Budget</h3>
-          <span class="card__badge warning">-15%</span>
-        </div>
-        <div class="card__value">$2,850 / $3,000</div>
-        <div class="card__subtitle">85% used</div>
-      </div>
+  <!-- Old main content (hidden initially, navigation.js will handle it) -->
+  <main id="mainContent" style="display: none;"></main>
 
-      <div class="card card--stat">
-        <div class="card__header">
-          <h3 class="card__title">Properties</h3>
-          <span class="card__badge">3</span>
-        </div>
-        <div class="card__value">$485,000</div>
-        <div class="card__subtitle">Total portfolio value</div>
-      </div>
-
-      <div class="card card--chart">
-        <div class="card__header">
-          <h3 class="card__title">Spending Trend</h3>
-          <select class="select-sm">
-            <option>This Month</option>
-            <option>Last Month</option>
-            <option>Last 3 Months</option>
-          </select>
-        </div>
-        <div class="card__chart">
-          <canvas id="spendingChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <div class="content-section">
-      <h2 class="section-title">Recent Transactions</h2>
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Category</th>
-              <th>Amount</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Transactions will be loaded here -->
-            <tr>
-              <td>Today</td>
-              <td>Grocery Store</td>
-              <td><span class="badge badge-food">Food</span></td>
-              <td class="amount negative">-$85.50</td>
-              <td><span class="status status-completed">Completed</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <!-- Mobile Bottom Navigation -->
-  <nav class="bottom-nav" id="bottomNav">
-    <a href="#dashboard" data-view="dashboard" class="bottom-nav__item bottom-nav__item--active">
-      <span class="bottom-nav__icon">🏠</span>
-      <span class="bottom-nav__label">Home</span>
+  <!-- Old bottom nav (hidden initially, navigation.js will handle it) -->
+  <nav class="bottom-nav" id="bottomNav" style="display: none;">
+    <a href="#dashboard" data-view="dashboard" class="nav-item active">
+      <span class="icon">🏠</span>
+      <span class="label">Home</span>
     </a>
-    <a href="#transactions" data-view="transactions" class="bottom-nav__item">
-      <span class="bottom-nav__icon">💸</span>
-      <span class="bottom-nav__label">Finance</span>
+    <a href="#transactions" data-view="transactions" class="nav-item">
+      <span class="icon">💸</span>
+      <span class="label">Finance</span>
     </a>
-    <a href="#reports" data-view="reports" class="bottom-nav__item">
-      <span class="bottom-nav__icon">📊</span>
-      <span class="bottom-nav__label">Reports</span>
+    <a href="#reports" data-view="reports" class="nav-item">
+      <span class="icon">📊</span>
+      <span class="label">Reports</span>
     </a>
-    <a href="#properties" data-view="properties" class="bottom-nav__item">
-      <span class="bottom-nav__icon">🏘️</span>
-      <span class="bottom-nav__label">Properties</span>
+    <a href="#properties" data-view="properties" class="nav-item">
+      <span class="icon">🏘️</span>
+      <span class="label">Properties</span>
     </a>
-    <a href="#settings" data-view="settings" class="bottom-nav__item">
-      <span class="bottom-nav__icon">⚙️</span>
-      <span class="bottom-nav__label">Settings</span>
+    <a href="#settings" data-view="settings" class="nav-item">
+      <span class="icon">⚙️</span>
+      <span class="label">Settings</span>
     </a>
   </nav>
 
@@ -346,7 +175,7 @@
     <div class="install-banner__content">
       <span class="install-banner__icon">📱</span>
       <div class="install-banner__text">
-        <strong>Install Dashers Finance</strong>
+        <strong>Install Budget Tracker</strong>
         <p>Get quick access and offline support — install to your device.</p>
       </div>
       <div class="install-banner__actions">
@@ -357,7 +186,7 @@
   </div>
 
   <!-- iOS Installation Guide -->
-  <div id="iosInstallGuide" class="ios-install-guide">
+  <div id="iosInstallGuide" class="ios-install-guide hidden">
     <div class="ios-install-content">
       <button class="ios-install-close" id="closeIosGuide" aria-label="Close">×</button>
       <h3 class="ios-install-title">📱 Install on iOS</h3>
@@ -388,260 +217,61 @@
     </div>
   </div>
 
-  <!-- Debug Panel (Hidden by default) -->
-  <div id="debugPanel" class="debug-panel hidden">
-    <div class="debug-panel__header">
-      <h4>Debug Information</h4>
-      <button class="debug-panel__close" onclick="document.getElementById('debugPanel').classList.add('hidden')">×</button>
-    </div>
-    <div class="debug-panel__content">
-      <div class="debug-item">
-        <strong>Service Worker:</strong> <span id="swStatus">Checking...</span>
-      </div>
-      <div class="debug-item">
-        <strong>Database:</strong> <span id="dbStatus">Checking...</span>
-      </div>
-      <div class="debug-item">
-        <strong>Storage:</strong> <span id="storageStatus">Checking...</span>
-      </div>
-      <button onclick="checkPWAStatus()" class="btn btn-sm btn-secondary">Check PWA Status</button>
-    </div>
-  </div>
-
-  <!-- JavaScript -->
+  <!-- Basic initialization script (minimal, most logic is in modules) -->
   <script>
-    // Device detection
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-
-    // Apply device-specific classes
-    if (isIOS) {
-      document.documentElement.classList.add('ios-device');
-      console.log('📱 iOS Device Detected');
-    }
-    if (isAndroid) {
-      document.documentElement.classList.add('android-device');
-      console.log('📱 Android Device Detected');
-    }
-    if (isStandalone) {
-      document.documentElement.classList.add('pwa-standalone');
-      console.log('📱 PWA Running in Standalone Mode');
-    }
-
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
-          .then((reg) => {
-            console.log('✅ Service Worker registered:', reg.scope);
-            document.getElementById('swStatus').textContent = 'Registered';
-          })
-          .catch((err) => {
-            console.error('❌ Service Worker registration failed:', err);
-            document.getElementById('swStatus').textContent = 'Failed';
-          });
-      });
-    }
-
-    // Mobile Menu Toggle
+    // Minimal initialization that doesn't conflict with modules
     document.addEventListener('DOMContentLoaded', function() {
-      const menuToggle = document.getElementById('menuToggle');
-      const sidebar = document.getElementById('sidebar');
+      console.log('DOM loaded, initializing...');
       
-      if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', function() {
-          sidebar.classList.toggle('sidebar--open');
-          const isOpen = sidebar.classList.contains('sidebar--open');
-          menuToggle.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
-          menuToggle.setAttribute('aria-expanded', isOpen);
-          
-          // Close when clicking outside on mobile
-          if (isOpen && window.innerWidth <= 1023) {
-            const closeOnClickOutside = (e) => {
-              if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                sidebar.classList.remove('sidebar--open');
-                menuToggle.setAttribute('aria-expanded', 'false');
-                document.removeEventListener('click', closeOnClickOutside);
-              }
-            };
-            setTimeout(() => document.addEventListener('click', closeOnClickOutside), 10);
-          }
-        });
-      }
-
-      // Close sidebar on escape key
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('sidebar--open')) {
-          sidebar.classList.remove('sidebar--open');
-          menuToggle.setAttribute('aria-expanded', 'false');
-        }
-      });
-
-      // PWA Install Banner
-      let deferredPrompt;
-      
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        
-        if (isAndroid) {
-          setTimeout(() => {
-            const banner = document.getElementById('installBanner');
-            if (banner && !localStorage.getItem('installBannerDismissed')) {
-              banner.classList.remove('hidden');
-            }
-          }, 3000);
-        }
-      });
-
-      const installBtn = document.getElementById('installBtn');
-      if (installBtn) {
-        installBtn.addEventListener('click', async () => {
-          if (!deferredPrompt) return;
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          console.log(`User ${outcome} the install prompt`);
-          deferredPrompt = null;
-          document.getElementById('installBanner').classList.add('hidden');
-        });
-      }
-
-      const installDismiss = document.getElementById('installDismiss');
-      if (installDismiss) {
-        installDismiss.addEventListener('click', () => {
-          const banner = document.getElementById('installBanner');
-          if (banner) {
-            banner.classList.add('hidden');
-            localStorage.setItem('installBannerDismissed', 'true');
-          }
-        });
-      }
-
-      // iOS Install Guide
-      const closeIosGuide = document.getElementById('closeIosGuide');
-      if (closeIosGuide) {
-        closeIosGuide.addEventListener('click', () => {
-          const guide = document.getElementById('iosInstallGuide');
-          if (guide) {
-            guide.classList.remove('show');
-            localStorage.setItem('iosGuideDismissed', 'true');
-          }
-        });
-      }
-
-      // Show iOS guide on first interaction
-      if (isIOS && !localStorage.getItem('iosGuideDismissed')) {
-        const showIosGuide = () => {
-          setTimeout(() => {
-            const guide = document.getElementById('iosInstallGuide');
-            if (guide) guide.classList.add('show');
-          }, 1500);
-        };
-        document.addEventListener('touchstart', showIosGuide, { once: true });
-        document.addEventListener('click', showIosGuide, { once: true });
-      }
-
-      // Auto-hide splash screen
+      // Hide splash screen after a delay
       setTimeout(() => {
         const splash = document.getElementById('splashScreen');
         if (splash) splash.style.display = 'none';
-      }, 2000);
-
+      }, 1000);
+      
       // Check login status
-      const loginScreen = document.getElementById('loginScreen');
       const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
+      const loginScreen = document.getElementById('loginScreen');
       
       if (isLoggedIn && loginScreen) {
         loginScreen.style.display = 'none';
+        console.log('User is logged in');
       } else if (loginScreen) {
         loginScreen.style.display = 'flex';
+        console.log('Showing login screen');
       }
-
-      // Login form handler
-      const loginForm = document.getElementById('loginForm');
-      if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          
-          const email = document.getElementById('email').value;
-          const password = document.getElementById('password').value;
-          const errorElement = document.getElementById('loginError');
-          const loginButton = document.getElementById('loginButton');
-          const btnText = loginButton.querySelector('.btn-text');
-          const btnLoader = loginButton.querySelector('.btn-loader');
-          
-          // Show loading
-          btnText.classList.add('hidden');
-          btnLoader.classList.remove('hidden');
-          
-          // Simulate API call
-          setTimeout(() => {
-            if (email && password) {
-              localStorage.setItem('loggedIn', 'true');
-              localStorage.setItem('userEmail', email);
-              loginScreen.style.display = 'none';
-              console.log('✅ Login successful');
-            } else {
-              errorElement.classList.remove('hidden');
-              btnText.classList.remove('hidden');
-              btnLoader.classList.add('hidden');
-            }
-          }, 1000);
-        });
+      
+      // Set up service worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
+          .then((reg) => {
+            console.log('✅ Service Worker registered:', reg.scope);
+          })
+          .catch((err) => {
+            console.error('❌ Service Worker registration failed:', err);
+          });
       }
     });
-
-    // Debug function
-    function checkPWAStatus() {
-      const debugPanel = document.getElementById('debugPanel');
-      debugPanel.classList.remove('hidden');
-      
-      // Update statuses
-      document.getElementById('dbStatus').textContent = 'Dexie Loaded';
-      document.getElementById('storageStatus').textContent = `${localStorage.length} items`;
+    
+    // Device detection for CSS classes
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isIOS) {
+      document.documentElement.classList.add('ios-device');
     }
-
-    // Initialize Charts
-    function initCharts() {
-      const ctx = document.getElementById('spendingChart');
-      if (ctx) {
-        new Chart(ctx.getContext('2d'), {
-          type: 'line',
-          data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-              label: 'Spending',
-              data: [1200, 1900, 1500, 2500, 2200, 3000],
-              borderColor: '#6366f1',
-              backgroundColor: 'rgba(99, 102, 241, 0.1)',
-              tension: 0.4,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: false }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(0, 0, 0, 0.05)' }
-              }
-            }
-          }
-        });
-      }
+    if (isAndroid) {
+      document.documentElement.classList.add('android-device');
     }
-
-    // Initialize on load
-    window.addEventListener('load', initCharts);
+    if (isStandalone) {
+      document.documentElement.classList.add('pwa-standalone');
+    }
   </script>
 
-  <!-- App JavaScript -->
+  <!-- Load modules -->
   <script type="module" src="./js/app.js"></script>
   <script type="module" src="./js/ui.js"></script>
+  <script type="module" src="./js/navigation.js"></script>
 </body>
 </html>
