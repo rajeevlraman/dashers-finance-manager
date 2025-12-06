@@ -376,12 +376,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 2. Splash screen fade‐out ---
     const splash = document.getElementById('splashScreen');
-    if (splash) {
-        window.addEventListener("load", () => {
+    if (splash) return; {
+     // Show splash for 2.2 seconds total
     setTimeout(() => {
-        splash.classList.add("hidden");
-    }, 800);
-});
+        splash.classList.add("fade-out");
+        setTimeout(() => {
+            splash.classList.add("hidden");
+        }, 600); // fade-out duration
+    }, 1600); // display time
+
 
     }
 

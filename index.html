@@ -85,25 +85,28 @@
     </div>
   </header>
 
-<div id="loginScreen" class="login-screen">
+<div id="loginScreen" class="login-screen hidden">
 
-  <!-- DEMO MODE will hide this anyway, but login must exist -->
   <form id="loginForm" class="login-form">
+    <h2 style="color:white; text-align:center; margin-bottom:10px;">
+      Welcome Back
+    </h2>
+    
     <input id="email" type="email" placeholder="Email Address" required />
     <input id="password" type="password" placeholder="Password" required />
-    
-    <label class="remember-me">
-      <input type="checkbox" id="rememberMe"> Remember me
+
+    <label class="remember-me" style="color:white; display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="rememberMe">
+      Remember me
     </label>
 
-    <button id="loginButton" type="submit">Login</button>
+    <button id="loginButton" type="submit">Sign In</button>
 
-    <p id="loginError" class="error-message" style="display:none;">
-      Invalid email or password.
-    </p>
+    <p id="loginError" style="display:none;">Invalid email or password</p>
   </form>
 
 </div>
+
 
 
   <nav>
