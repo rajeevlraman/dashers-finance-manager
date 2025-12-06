@@ -292,8 +292,8 @@ export function initUI() {
   initBottomNavigation();
 
   // In your initUI function:
-  export function initUI() {
-    console.log('✅ initUI() running...');
+ 
+  console.log('✅ initUI() running...');
   
   // Check authentication state
   checkAuthState();
