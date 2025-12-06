@@ -85,9 +85,26 @@
     </div>
   </header>
 
-<div id="loginScreen" class="login-screen"></div>
+<div id="loginScreen" class="login-screen">
 
-<div id="loginScreen" class="login-screen"></div>
+  <!-- DEMO MODE will hide this anyway, but login must exist -->
+  <form id="loginForm" class="login-form">
+    <input id="email" type="email" placeholder="Email Address" required />
+    <input id="password" type="password" placeholder="Password" required />
+    
+    <label class="remember-me">
+      <input type="checkbox" id="rememberMe"> Remember me
+    </label>
+
+    <button id="loginButton" type="submit">Login</button>
+
+    <p id="loginError" class="error-message" style="display:none;">
+      Invalid email or password.
+    </p>
+  </form>
+
+</div>
+
 
 <script>
   // DEMO MODE (auto login)

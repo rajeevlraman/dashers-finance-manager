@@ -65,6 +65,7 @@ function hideInstallBanner() {
 
 // Listen for the beforeinstallprompt event
 window.addEventListener('beforeinstallprompt', (e) => {
+    console.log("📥 beforeinstallprompt fired!"); 
     e.preventDefault();
     deferredPrompt = e;
     console.log('📥 beforeinstallprompt event captured');
@@ -383,7 +384,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 2. Splash screen fade‐out ---
     const splash = document.getElementById('splashScreen');
     if (splash) {
-        setTimeout(() => splash.classList.add('hidden'), 1200);
+        window.addEventListener("load", () => {
+    setTimeout(() => {
+        splash.classList.add("hidden");
+    }, 800);
+});
+
     }
 
     // --- 3. Initialize core application ---
