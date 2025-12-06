@@ -46,3 +46,25 @@
 .app-container {
   display: grid !important; /* or flex for mobile */
 }
+
+/* TEMPORARY DEBUG CSS - Add to styles.css */
+#loginScreen {
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+}
+
+.login-container {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  border-radius: 20px !important;
+  padding: 40px 35px !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+  color: white !important;
+  margin: 20px !important;
+}
