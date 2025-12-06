@@ -7,23 +7,22 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Budget Tracker">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Budget Tracker</title>
+  <title>Dashers Finance Manager</title>
   <base href="/dashers-finance-manager/">
   
-  <!-- Inline CSS for immediate visibility -->
+  <!-- CSS for splash and login only -->
   <style>
     /* RESET & BASE */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; overflow: hidden; }
+    html, body { height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; overflow-x: hidden; }
     
-    /* BACKGROUND GRADIENT (from your original) */
+    /* BACKGROUND GRADIENT */
     body {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      position: relative;
     }
     
-    /* SPLASH SCREEN - WILL SHOW FIRST */
+    /* SPLASH SCREEN */
     #splashScreen {
       position: fixed;
       top: 0;
@@ -37,6 +36,7 @@
       z-index: 9999;
       color: white;
       text-align: center;
+      transition: opacity 0.5s ease;
     }
     
     .splash-inner img {
@@ -44,7 +44,6 @@
       height: 96px;
       margin-bottom: 20px;
       border-radius: 20px;
-      animation: pulse 2s infinite;
     }
     
     .splash-inner h1 {
@@ -63,7 +62,7 @@
       margin: 0 auto;
     }
     
-    /* LOGIN SCREEN - WILL SHOW AFTER SPLASH */
+    /* LOGIN SCREEN */
     #loginScreen {
       position: fixed;
       top: 0;
@@ -71,7 +70,7 @@
       right: 0;
       bottom: 0;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: none; /* Hidden initially */
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
@@ -85,7 +84,6 @@
       width: 100%;
       max-width: 400px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      animation: slideUp 0.5s ease-out;
     }
     
     .login-header {
@@ -230,18 +228,8 @@
     }
     
     /* ANIMATIONS */
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    
     @keyframes spin {
       to { transform: rotate(360deg); }
-    }
-    
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
     }
     
     /* HIDDEN CLASS */
@@ -261,66 +249,6 @@
       padding: 10px;
       font-weight: bold;
       z-index: 1001;
-      animation: slideDown 0.5s ease;
-    }
-    
-    @keyframes slideDown {
-      from { transform: translateY(-100%); }
-      to { transform: translateY(0); }
-    }
-    
-    /* BOTTOM NAVIGATION */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-      display: none;
-      z-index: 100;
-      padding: 10px 0;
-    }
-    
-    .bottom-nav-items {
-      display: flex;
-      justify-content: space-around;
-      list-style: none;
-    }
-    
-    .bottom-nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #666;
-      text-decoration: none;
-      padding: 8px 12px;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-    }
-    
-    .bottom-nav-item.active,
-    .bottom-nav-item:hover {
-      background: rgba(99, 102, 241, 0.1);
-      color: #6366f1;
-    }
-    
-    .bottom-nav-icon {
-      font-size: 1.5rem;
-      margin-bottom: 4px;
-    }
-    
-    .bottom-nav-label {
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    
-    /* For mobile screens */
-    @media (max-width: 768px) {
-      .bottom-nav {
-        display: block;
-      }
     }
   </style>
   
@@ -335,23 +263,23 @@
     ⚠️ DEVELOPMENT VERSION - Data resets may occur ⚠️
   </div>
 
-  <!-- Splash Screen (shows first) -->
+  <!-- Splash Screen -->
   <div id="splashScreen">
     <div class="splash-inner">
       <img src="assets/icons/icon-192.png" alt="Budget Tracker Logo">
-      <h1>Budget Tracker</h1>
+      <h1>Dashers Finance Manager</h1>
       <div class="spinner"></div>
     </div>
   </div>
 
-  <!-- Login Screen (shows after splash) -->
+  <!-- Login Screen -->
   <div id="loginScreen">
     <div class="login-container">
       <div class="login-header">
         <div class="login-logo">
           <img src="assets/icons/icon-192.png" alt="Budget Tracker">
         </div>
-        <h1 class="login-title">Budget Tracker</h1>
+        <h1 class="login-title">Dashers Finance</h1>
         <p class="login-subtitle">Secure Financial Management</p>
         <div class="version-badge">Development Version</div>
       </div>
@@ -397,122 +325,74 @@
     </div>
   </div>
 
-  <!-- Main App Container (hidden until login) -->
-  <div id="app" class="hidden">
-    <!-- Your navigation.js will populate this -->
-  </div>
+  <!-- Main App Container (navigation.js will populate this) -->
+  <div id="appContainer" style="display: none;"></div>
 
-  <!-- Bottom Navigation (required by your navigation.js) -->
-  <nav id="bottomNav" class="bottom-nav">
-    <div class="bottom-nav-items">
-      <a href="#dashboard" data-view="dashboard" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏠</span>
-        <span class="bottom-nav-label">Home</span>
-      </a>
-      <a href="#transactions" data-view="transactions" class="bottom-nav-item">
-        <span class="bottom-nav-icon">💸</span>
-        <span class="bottom-nav-label">Finance</span>
-      </a>
-      <a href="#reports" data-view="reports" class="bottom-nav-item">
-        <span class="bottom-nav-icon">📊</span>
-        <span class="bottom-nav-label">Reports</span>
-      </a>
-      <a href="#properties" data-view="properties" class="bottom-nav-item">
-        <span class="bottom-nav-icon">🏘️</span>
-        <span class="bottom-nav-label">Properties</span>
-      </a>
-      <a href="#settings" data-view="settings" class="bottom-nav-item">
-        <span class="bottom-nav-icon">⚙️</span>
-        <span class="bottom-nav-label">Settings</span>
-      </a>
-    </div>
-  </nav>
-
-  <!-- Simple JavaScript to handle splash and login -->
+  <!-- JavaScript that integrates with your modules -->
   <script>
-    // Clear any existing login state for testing
-    localStorage.removeItem('loggedIn');
-    localStorage.removeItem('userEmail');
-    
-    console.log('Budget Tracker loading...');
-    console.log('User agent:', navigator.userAgent);
-    
-    // Wait for DOM to load
+    // Minimal initialization that works with your modules
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loaded - showing splash screen');
+      console.log('DOM Content Loaded - Initializing...');
       
       const splashScreen = document.getElementById('splashScreen');
       const loginScreen = document.getElementById('loginScreen');
-      const appContainer = document.getElementById('app');
+      const appContainer = document.getElementById('appContainer');
       const loginForm = document.getElementById('loginForm');
       const loginError = document.getElementById('loginError');
       
-      // Show splash screen immediately
-      if (splashScreen) {
-        splashScreen.style.display = 'flex';
-      }
+      // Force clear login state for testing
+      localStorage.removeItem('loggedIn');
+      localStorage.removeItem('userEmail');
       
-      // After 2 seconds, hide splash and show login
-      setTimeout(function() {
-        console.log('Hiding splash, showing login');
+      // Show splash immediately
+      splashScreen.style.display = 'flex';
+      
+      // Hide splash after 1.5 seconds and check auth
+      setTimeout(() => {
+        splashScreen.style.opacity = '0';
         
-        if (splashScreen) {
+        setTimeout(() => {
           splashScreen.style.display = 'none';
-        }
-        
-        if (loginScreen) {
-          loginScreen.style.display = 'flex';
-        }
-        
-        // Clear any previous login state for testing
-        localStorage.removeItem('loggedIn');
-        localStorage.removeItem('userEmail');
-      }, 2000);
+          
+          // Check if user is already logged in
+          const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
+          
+          if (isLoggedIn) {
+            console.log('User is already logged in, showing app');
+            showApp();
+          } else {
+            console.log('User not logged in, showing login screen');
+            loginScreen.style.display = 'flex';
+          }
+        }, 500);
+      }, 1500);
       
       // Handle login form submission
       if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
           e.preventDefault();
-          console.log('Login form submitted');
           
           const email = document.getElementById('email').value;
           const password = document.getElementById('password').value;
           
-          // Simple validation
+          // Simple validation - accept any non-empty credentials
           if (email && password) {
-            console.log('Login successful');
+            console.log('Login successful with:', email);
             
-            // Hide error if shown
+            // Hide login error if shown
             if (loginError) {
               loginError.style.display = 'none';
-            }
-            
-            // Hide login screen
-            if (loginScreen) {
-              loginScreen.style.display = 'none';
-            }
-            
-            // Show app container
-            if (appContainer) {
-              appContainer.classList.remove('hidden');
             }
             
             // Save login state
             localStorage.setItem('loggedIn', 'true');
             localStorage.setItem('userEmail', email);
             
-            // Initialize your navigation
-            if (typeof initNavigation === 'function') {
-              console.log('Initializing navigation');
-              initNavigation();
-            } else {
-              console.warn('initNavigation function not found');
-            }
+            // Hide login screen
+            loginScreen.style.display = 'none';
             
-            // Call checkAuthState if it exists (for your ui.js)
-            if (typeof checkAuthState === 'function') {
-              checkAuthState();
-            }
+            // Show app
+            showApp();
           } else {
             // Show error
             if (loginError) {
@@ -523,12 +403,34 @@
         });
       }
       
+      // Function to show the app
+      function showApp() {
+        console.log('Showing app container');
+        appContainer.style.display = 'block';
+        
+        // Let your modules know they can initialize now
+        window.dispatchEvent(new CustomEvent('appReady'));
+        
+        // Initialize navigation if the function exists
+        if (typeof initNavigation === 'function') {
+          console.log('Calling initNavigation');
+          initNavigation();
+        } else {
+          console.warn('initNavigation function not found');
+        }
+      }
+      
+      // Define checkAuthState for your UI module
+      window.checkAuthState = function() {
+        return localStorage.getItem('loggedIn') === 'true';
+      };
+      
       // Forgot password link
       const forgotPassword = document.getElementById('forgotPassword');
       if (forgotPassword) {
         forgotPassword.addEventListener('click', function(e) {
           e.preventDefault();
-          alert('Password reset feature coming soon!');
+          alert('Password reset: Use admin@budgettracker.com / admin123');
         });
       }
       
@@ -537,30 +439,22 @@
       if (registerLink) {
         registerLink.addEventListener('click', function(e) {
           e.preventDefault();
-          alert('Registration feature coming soon! Use admin@budgettracker.com / admin123');
+          alert('Register: Coming soon! Use admin@budgettracker.com / admin123 for now');
         });
       }
     });
     
-    // Define missing function that your ui.js expects
-    window.checkAuthState = function() {
-      console.log('checkAuthState called');
-      const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
-      console.log('Is logged in?', isLoggedIn);
-      return isLoggedIn;
-    };
-    
-    // Register service worker if available
+    // Register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./serviceWorker.js')
-          .then(reg => console.log('Service Worker registered:', reg.scope))
+          .then(reg => console.log('Service Worker registered'))
           .catch(err => console.log('Service Worker failed:', err));
       });
     }
   </script>
   
-  <!-- Load your modules -->
+  <!-- Load your modules AFTER the DOM is ready -->
   <script src="js/vendor/dexie.min.js"></script>
   <script type="module" src="./js/app.js"></script>
   <script type="module" src="./js/ui.js"></script>
