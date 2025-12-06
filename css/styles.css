@@ -8489,14 +8489,3 @@ th {
     pointer-events: none;
 }
 
-#loginScreen,
-.login-screen,
-.login-form {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: flex !important;
-    z-index: 99999 !important;
-    position: fixed !important;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-}
