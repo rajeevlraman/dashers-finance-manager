@@ -375,18 +375,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupProfessionalLogin();
 
     // --- 2. Splash screen fade‐out ---
-    const splash = document.getElementById('splashScreen');
-    if (splash) return; {
-     // Show splash for 2.2 seconds total
+    const splash = document.getElementById("splashScreen");
+    if (!splash) return;
+
+    // Minimum splash duration
     setTimeout(() => {
         splash.classList.add("fade-out");
+        
+        // Ensure complete removal
         setTimeout(() => {
             splash.classList.add("hidden");
-        }, 600); // fade-out duration
-    }, 1600); // display time
-
-
-    }
+        }, 700); // fade-out duration
+    }, 1500); // overall time on screen
 
     // --- 3. Initialize core application ---
     await initializeAppCore();
