@@ -41,9 +41,12 @@ export async function initTransactionsUI() {
       <div class="page-header">
         <h2>💸 Transactions</h2>
         <div class="page-actions">
-          <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
-          <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
+            <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
+            <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
+            <button class="btn btn-secondary" id="btnExportTx">📤 Export</button>
+            <button class="btn btn-success" id="btnImportTx">📁 Import</button>
         </div>
+
       </div>
 
       <!-- Compact Summary Cards -->
@@ -289,7 +292,7 @@ export async function initTransactionsUI() {
 
   initImportModal();
 
-
+  initImportModal("btnImportTx");
 
   // UI + Event setup
   setupCategoryLinking(categories, subCats);
