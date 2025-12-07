@@ -9,6 +9,10 @@ import { logImportDebug, isImportDebugEnabled } from './debug.js';
 
 // Public entry
 export function initImportModal({ accounts, categories, onImported } = {}) {
+    console.log("[IMPORT] initImportModal() executed");
+
+  logImportDebug("initImportModal: function executed");
+
   document.getElementById("btnImportTx");
   console.log("IMPORT BTN:", document.getElementById("btnImportTx"));
 
