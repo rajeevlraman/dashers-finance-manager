@@ -8,6 +8,9 @@ import { logImportDebug, isImportDebugEnabled } from './debug.js';
 
 // Public entry
 export function initImportModal({ accounts, categories, onImported } = {}) {
+  document.getElementById("btnImportTx");
+  console.log("IMPORT BTN:", document.getElementById("btnImportTx"));
+
   logImportDebug('initImportModal: starting…');
 
   // 1) Wire up existing "Import Statement" button in transactions header

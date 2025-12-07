@@ -1,7 +1,7 @@
 import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId } from './db.js';
 import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
 import { DEFAULT_CATEGORIES } from './defaultCategories.js';
-import { initImportModal } from 'https://rajeevlraman.github.io/dashers-finance-manager/js/import/modal.js';
+import { initImportModal } from './import/modal.js';
 import { saveImportedTransactions } from './import/saver.js';
 import { parseCSVFile, parseStatementText } from './import/parser.js';
 
