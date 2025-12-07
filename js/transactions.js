@@ -2,6 +2,7 @@ import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId }
 import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
 import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 import { initImportModal } from './importModal.js';
+import { saveImportedTransactions } from './importSaver.js';
 
 // ============================================================================
 //  Transactions UI Initialization
