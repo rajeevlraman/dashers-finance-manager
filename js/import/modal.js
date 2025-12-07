@@ -1,6 +1,7 @@
 // ============================================================================
 // 📁 import/modal.js — Import UI (CSV + Manual)
 // ============================================================================
+console.log("[IMPORT] modal.js loaded!");
 
 import { parseCSVFile, parseStatementText } from './parser.js';
 import { saveImportedTransactions } from './saver.js';
