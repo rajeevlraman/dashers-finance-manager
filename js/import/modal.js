@@ -45,12 +45,13 @@ export function initImportModal({ accounts, categories, onImported } = {}) {
   }
 
   // -------------------- Open / Close --------------------
-  importBtn.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    modal.style.display = 'flex';
-    logImportDebug('Import modal opened');
-  };
+importBtn.onclick = (e) => {
+  e?.preventDefault?.();
+  e?.stopPropagation?.();
+  modal.style.display = "flex";
+  logImportDebug("Import modal opened");
+};
+
 
   const closeModal = () => {
     modal.style.display = 'none';
