@@ -1,22 +1,30 @@
 // ============================================================================
-// 📄 importParser.js — Advanced CSV / Text Import System
-// Supports AU banks, merchant cleaner, auto-category, duplicate detection
+// 📄 importParser.js — Advanced CSV / Text Import System with DEBUG Logging
 // ============================================================================
 
 import { generateId } from './db.js';
+
+// Force debug mode ON
+const DEBUG = true;
+
+function log(...args) {
+    if (DEBUG) console.log("[IMPORT-DEBUG]", ...args);
+}
 
 // ============================================================================
 // 🔍 PUBLIC: Parse CSV File
 // ============================================================================
 export async function parseCSVFile(file, options = {}) {
+    log("📥 CSV file selected:", file.name, file.size + " bytes");
     const text = await file.text();
     return parseCSVText(text, options);
 }
 
 // ============================================================================
-// 🔍 PUBLIC: Parse Manual Statement Text
+// 🔍 PUBLIC: Parse Manual Text
 // ============================================================================
 export function parseStatementText(text, options = {}) {
+    log("📥 Parsing pasted statement text");
     return parseCSVText(text, options);
 }
 
@@ -24,14 +32,25 @@ export function parseStatementText(text, options = {}) {
 // 🔥 MAIN CSV/TEXT PARSER
 // ============================================================================
 export function parseCSVText(text, options = {}) {
+    log("=============== IMPORT START ===============");
+    log("Raw input text first 300 chars:", text.substring(0, 300));
+
     const rows = text.split(/\r?\n/).map(r => r.trim()).filter(r => r.length);
 
-    if (rows.length < 2) return [];
+    if (rows.length < 2) {
+        log("❌ ERROR: Not enough rows for parsing");
+        return [];
+    }
 
     const header = rows[0].toLowerCase();
-    const accountId = options.accountId || null;
-    const previewOnly = options.previewOnly || false;
+    log("📌 Header row detected:", header);
 
+    const previewOnly = options.previewOnly || false;
+    const accountId = options.accountId || null;
+
+    // -------------------------------------------------------------------------
+    // Detect Bank Format
+    // -------------------------------------------------------------------------
     const isMacquarie =
         header.includes("transaction date") &&
         header.includes("details") &&
@@ -46,86 +65,109 @@ export function parseCSVText(text, options = {}) {
         header.includes("transaction date") &&
         header.includes("amount (aud)");
 
+    if (isMacquarie) log("🏦 Detected: MACQUARIE format");
+    else if (isCBA) log("🏦 Detected: CBA format");
+    else if (isANZ) log("🏦 Detected: ANZ format");
+    else log("🏦 UNKNOWN BANK FORMAT → Using GENERIC parser");
+
     const parsed = [];
 
+    // -------------------------------------------------------------------------
+    // Row-by-row parsing
+    // -------------------------------------------------------------------------
     for (let i = 1; i < rows.length; i++) {
-        const cols = safeSplitCSV(rows[i]);
-        if (!cols.length) continue;
+        const rawRow = rows[i];
+        log(`\n➡️ Processing row ${i}:`, rawRow);
+
+        const cols = safeSplitCSV(rawRow);
+        log("🔎 Split columns:", cols);
+
+        if (!cols.length) {
+            log("⚠️ Skipped: empty row");
+            continue;
+        }
 
         let entry = null;
 
-        // ---------------------------------------------------------------------
-        // BANK-SPECIFIC HANDLERS
-        // ---------------------------------------------------------------------
         if (isMacquarie) entry = parseMacquarie(cols);
         else if (isCBA) entry = parseCBA(cols);
         else if (isANZ) entry = parseANZ(cols);
         else entry = parseGeneric(cols);
 
-        if (!entry) continue;
+        log("📌 Extracted entry:", entry);
 
-        // Normalize & clean
+        if (!entry || !entry.date || isNaN(entry.amount)) {
+            log("❌ Row rejected — invalid date or amount");
+            continue;
+        }
+
+        // Normalize fields
         entry.date = parseDate(entry.date);
-        if (!entry.date || isNaN(entry.amount)) continue;
-
+        entry.descriptionOriginal = entry.description;
         entry.description = cleanMerchant(entry.description);
+        log("🧽 Merchant cleaned:", entry.descriptionOriginal, "→", entry.description);
 
         entry.type = entry.amount > 0 ? "income" : "expense";
+
         entry.categoryId = autoCategorize(entry.description, entry.amount);
+        log("📂 Auto-category:", entry.categoryId);
 
         if (previewOnly) {
+            log("👀 PREVIEW MODE: Entry stored only for preview");
             parsed.push(entry);
             continue;
         }
 
-        // ---------------------------------------------------------------------
-        // DUPLICATE DETECTION
-        // ---------------------------------------------------------------------
+        // Duplicate detection
         if (isDuplicate(entry, parsed)) {
+            log("⚠️ DUPLICATE detected → Marked as duplicate");
             entry._duplicate = true;
         }
 
+        // Final packaging
         entry.id = generateId();
         entry.accountId = accountId;
         entry.createdAt = new Date().toISOString();
         entry.updatedAt = new Date().toISOString();
 
+        log("✅ FINAL ENTRY:", entry);
+
         parsed.push(entry);
     }
+
+    log("=============== IMPORT COMPLETE ===============");
+    log("Total parsed entries:", parsed.length);
 
     return parsed;
 }
 
 // ============================================================================
-// 🧠 BANK PARSERS
+// 🧠 BANK-SPECIFIC PARSERS (with debug logs)
 // ============================================================================
 
 function parseMacquarie(cols) {
-    const rawDate = cols[0].replace(/"/g, "");
-    const desc = cols[1];
+    log("🔵 Macquarie parser engaged");
     const debit = parseAmount(cols[7]);
     const credit = parseAmount(cols[8]);
 
-    let amount = 0;
-    if (debit) amount = -Math.abs(debit);
-    if (credit) amount = Math.abs(credit);
-
     return {
-        date: rawDate,
-        description: desc,
-        amount
+        date: cols[0].replace(/"/g, ""),
+        description: cols[1],
+        amount: credit ? Math.abs(credit) : debit ? -Math.abs(debit) : 0
     };
 }
 
 function parseCBA(cols) {
+    log("🟡 CBA parser engaged");
     return {
         date: cols[0],
         description: cols[1],
-        amount: parseAmount(cols[2]) || -parseAmount(cols[3]) || 0
+        amount: parseAmount(cols[2]) || -parseAmount(cols[3])
     };
 }
 
 function parseANZ(cols) {
+    log("🔴 ANZ parser engaged");
     return {
         date: cols[0],
         description: cols[1],
@@ -134,15 +176,16 @@ function parseANZ(cols) {
 }
 
 function parseGeneric(cols) {
+    log("⚪ GENERIC parser engaged");
     return {
-        date: parseDate(cols[0]),
-        description: cols[1] || "Imported Transaction",
+        date: cols[0],
+        description: cols[1],
         amount: parseAmount(cols[2])
     };
 }
 
 // ============================================================================
-// 🧠 SAFE CSV SPLIT (handles quotes)
+// 🧠 SAFE CSV SPLITTER
 // ============================================================================
 function safeSplitCSV(line) {
     const result = [];
@@ -150,45 +193,41 @@ function safeSplitCSV(line) {
     let insideQuotes = false;
 
     for (let char of line) {
-        if (char === '"') {
-            insideQuotes = !insideQuotes;
-        } else if (char === ',' && !insideQuotes) {
+        if (char === '"') insideQuotes = !insideQuotes;
+        else if (char === ',' && !insideQuotes) {
             result.push(current.trim());
             current = "";
-        } else {
-            current += char;
-        }
+        } else current += char;
     }
-
     result.push(current.trim());
+
     return result;
 }
 
 // ============================================================================
-// 🧠 DATE PARSER
+// 📅 DATE PARSER
 // ============================================================================
-function parseDate(input) {
-    if (!input) return null;
-    const str = input.replace(/"/g, "").trim();
+function parseDate(str) {
+    if (!str) return null;
+
+    log("⏳ Parsing date:", str);
+
+    const s = str.replace(/"/g, "").trim();
 
     // YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-
-    // DD MMM YYYY (Macquarie)
-    const mac = str.match(/^(\d{1,2})\s([A-Za-z]{3})\s(\d{4})$/);
-    if (mac) {
-        const map = { Jan:1, Feb:2, Mar:3, Apr:4, May:5, Jun:6, Jul:7, Aug:8, Sep:9, Oct:10, Nov:11, Dec:12 };
-        const d = mac[1].padStart(2, "0");
-        const m = map[mac[2]].toString().padStart(2, "0");
-        return `${mac[3]}-${m}-${d}`;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        log("📅 Date format: ISO");
+        return s;
     }
 
     // DD/MM/YYYY
-    const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (dmy) {
+        log("📅 Date format: DD/MM/YYYY");
         return `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
     }
 
+    log("❌ DATE PARSE FAILED");
     return null;
 }
 
@@ -197,53 +236,73 @@ function parseDate(input) {
 // ============================================================================
 function parseAmount(str) {
     if (!str) return 0;
-    return parseFloat(str.replace(/[^0-9.-]/g, ""));
+    let cleaned = parseFloat(str.replace(/[^0-9.-]/g, ""));
+    log("💲 Parsed amount:", str, "→", cleaned);
+    return cleaned;
 }
 
 // ============================================================================
-// 🧽 MERCHANT CLEANER
+// 🧽 MERCHANT CLEANING
 // ============================================================================
 function cleanMerchant(str) {
-    const s = str.toLowerCase();
+    if (!str) return "";
+
+    log("🧽 Cleaning merchant:", str);
+
+    const lower = str.toLowerCase();
 
     const patterns = [
-        { key: "paypal", replace: /paypal\s*\*?([^0-9]+)/i },
-        { key: "uber", replace: /uber\s*trip/i },
-        { key: "amazon", replace: /amazon\s*(web services)?/i },
-        { key: "coles", replace: /coles\s*[0-9]*/i },
-        { key: "woolworth", replace: /woolworths?\s*[0-9]*/i },
-        { key: "7-eleven", replace: /7-?eleven\s*[0-9]*/i },
-        { key: "linkt", replace: /linkt/i }
+        { key: "PAYPAL", regex: /paypal\s*\*?([^0-9]+)/i },
+        { key: "UBER", regex: /uber\s*trip/i },
+        { key: "AMAZON", regex: /amazon\s*(web services)?/i },
+        { key: "COLES", regex: /coles\s*[0-9]*/i },
+        { key: "WOOLWORTHS", regex: /woolworths?\s*[0-9]*/i },
+        { key: "7-ELEVEN", regex: /7-?eleven\s*[0-9]*/i },
+        { key: "LINKT", regex: /linkt/i }
     ];
 
     for (let p of patterns) {
-        const match = str.match(p.replace);
-        if (match) return match[1] || p.key.toUpperCase();
+        const match = str.match(p.regex);
+        if (match) {
+            log(`✨ Cleaned merchant matched: ${p.key}`);
+            return p.key;
+        }
     }
 
-    return str.replace(/\s{2,}/g, " ").trim();
+    log("⚠️ No cleaning rule matched → keeping raw description");
+    return str.trim();
 }
 
 // ============================================================================
-// 🤖 CATEGORY ENGINE
+// 📂 AUTO-CATEGORIZER
 // ============================================================================
 function autoCategorize(desc, amount) {
+    log("📂 Auto-categorising:", desc, "Amount:", amount);
+
     const d = desc.toLowerCase();
 
     if (amount > 0) {
-        if (d.includes("salary") || d.includes("payroll") || d.includes("deposit")) return "inc_salary";
+        if (d.includes("salary") || d.includes("payroll") || d.includes("deposit"))
+            return "inc_salary";
         return "inc_other";
     }
 
-    if (d.includes("coles") || d.includes("woolworth") || d.includes("aldi")) return "exp_grocery";
-    if (d.includes("shell") || d.includes("bp") || d.includes("fuel")) return "exp_fuel";
-    if (d.includes("uber") || d.includes("13cabs")) return "exp_transport";
-    if (d.includes("kmart") || d.includes("big w") || d.includes("amazon")) return "exp_shopping";
-    if (d.includes("netflix") || d.includes("disney") || d.includes("youtube")) return "exp_entertainment";
-    if (d.includes("linkt")) return "exp_tolls";
-    if (d.includes("council")) return "exp_council";
-    if (d.includes("telstra") || d.includes("optus")) return "exp_utilities";
+    if (d.includes("coles") || d.includes("woolworth") || d.includes("aldi"))
+        return "exp_grocery";
 
+    if (d.includes("shell") || d.includes("bp") || d.includes("fuel"))
+        return "exp_fuel";
+
+    if (d.includes("uber") || d.includes("13cabs"))
+        return "exp_transport";
+
+    if (d.includes("amazon") || d.includes("kmart") || d.includes("big w"))
+        return "exp_shopping";
+
+    if (d.includes("linkt"))
+        return "exp_tolls";
+
+    log("📁 No rule matched → assigned exp_misc");
     return "exp_misc";
 }
 
@@ -251,9 +310,14 @@ function autoCategorize(desc, amount) {
 // 🔁 DUPLICATE DETECTION
 // ============================================================================
 function isDuplicate(entry, list) {
-    return list.some(e =>
+    const duplicate = list.some(e =>
         e.date === entry.date &&
         Math.abs(e.amount) === Math.abs(entry.amount) &&
-        e.description.toLowerCase().slice(0, 12) === entry.description.toLowerCase().slice(0, 12)
+        e.description.substring(0, 12).toLowerCase() ===
+        entry.description.substring(0, 12).toLowerCase()
     );
+
+    if (duplicate) log("⚠️ DUPLICATE detected:", entry);
+
+    return duplicate;
 }
