@@ -75,6 +75,16 @@ export async function initSettingsUI() {
           </div>
         </div>
 
+          // Inside your initSettingsUI() HTML template, add something like:
+          <section class="settings-section">
+            <h3>Developer Options</h3>
+            <label class="settings-toggle">
+              <input type="checkbox" id="importDebugToggle">
+              <span>Enable Import Debug Logs</span>
+            </label>
+          </section>
+
+
         <!-- Data Management Section -->
         <div class="settings-card">
           <div class="settings-card-header">

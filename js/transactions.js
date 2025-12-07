@@ -1,8 +1,8 @@
 import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId } from './db.js';
 import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
 import { DEFAULT_CATEGORIES } from './defaultCategories.js';
-import { initImportModal } from './importModal.js';
-import { saveImportedTransactions } from './importSaver.js';
+import { initImportModal } from './import/modal.js';
+import { saveImportedTransactions } from './import/saver.js';
 
 // ============================================================================
 //  Transactions UI Initialization
@@ -290,9 +290,16 @@ export async function initTransactionsUI() {
     </div>
   `;
 
-  initImportModal();
+  // Initialize Import Modal AFTER HTML is rendered
+initImportModal({
+  accounts,
+  categories,
+  onImported: async (savedCount) => {
+    console.log('[IMPORT] Refreshing transactions after import, saved:', savedCount);
+    await initTransactionsUI(); // Reload page to show new transactions
+  }
+});
 
-  initImportModal("btnImportTx");
 
   // UI + Event setup
   setupCategoryLinking(categories, subCats);
