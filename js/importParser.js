@@ -16,37 +16,71 @@ export async function parseCSVFile(file, options = {}) {
     const previewOnly = options.previewOnly;
     const accountId = options.accountId;
 
-    // Get first row to detect format
     const header = rows[0].toLowerCase();
 
-    // Auto-detect formats
-    const indexMap = detectColumnIndexes(header);
+    const isMacquarie =
+        header.includes("transaction date") &&
+        header.includes("details") &&
+        header.includes("debit") &&
+        header.includes("credit");
 
     const parsed = [];
 
     for (let i = 1; i < rows.length; i++) {
         const cols = safeSplitCSV(rows[i]);
-        if (cols.length < 3) continue;
+        if (cols.length < 5) continue;
 
-        let date = parseDate(cols[indexMap.date]);
-        let description = cols[indexMap.description] || 'Imported Transaction';
-        let amount = parseAmount(cols[indexMap.amount]);
+        // MACQUARIE FORMAT HANDLER
+        if (isMacquarie) {
+            const rawDate = cols[0].replace(/"/g, "").trim();
+            const description = cols[1].replace(/"/g, "").trim();
+            const debit = cols[7]?.replace(/[^0-9.-]/g, "") || "";
+            const credit = cols[8]?.replace(/[^0-9.-]/g, "") || "";
 
-        if (!date || isNaN(amount)) continue;
+            let amount = 0;
+            if (debit) amount = -Math.abs(parseFloat(debit));
+            if (credit) amount = Math.abs(parseFloat(credit));
 
-        if (previewOnly) {
-            parsed.push(`${date} | ${description} | ${amount}`);
+            const date = parseDate(rawDate);
+            if (!date || isNaN(amount)) continue;
+
+            if (previewOnly) {
+                parsed.push(`${date} | ${description} | ${amount}`);
+                continue;
+            }
+
+            parsed.push({
+                id: generateId(),
+                type: amount > 0 ? "income" : "expense",
+                amount,
+                date,
+                description,
+                accountId,
+                categoryId: autoCategorize(description, amount),
+                isPropertyExpense: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+
             continue;
         }
+
+        // FALLBACK: DEFAULT FORMAT
+        const cols2 = safeSplitCSV(rows[i]);
+        const date = parseDate(cols2[0]);
+        const desc = cols2[1] || "Imported Transaction";
+        const amount = parseAmount(cols2[2]);
+
+        if (!date || isNaN(amount)) continue;
 
         parsed.push({
             id: generateId(),
             type: amount > 0 ? "income" : "expense",
-            amount: amount,
-            date: date,
-            description: description,
-            accountId: accountId,
-            categoryId: autoCategorize(description, amount),
+            amount,
+            date,
+            description: desc,
+            accountId,
+            categoryId: autoCategorize(desc, amount),
             isPropertyExpense: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -55,6 +89,7 @@ export async function parseCSVFile(file, options = {}) {
 
     return parsed;
 }
+
 
 // ---------------------------------------------------------------------------
 // 🔍 PUBLIC: Parse Manual Pasted Text
