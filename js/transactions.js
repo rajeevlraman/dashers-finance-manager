@@ -1,5 +1,6 @@
 import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId } from './db.js';
-import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
+// Remove this import if it's causing issues
+// import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
 import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 import { initImportModal } from './import/modal.js';
 import { saveImportedTransactions } from './import/saver.js';
@@ -9,10 +10,23 @@ import { parseCSVFile, parseStatementText } from './import/parser.js';
 //  Transactions UI Initialization (FIXED VERSION)
 // ============================================================================
 
+// Define property expense categories locally if import fails
+const PROPERTY_EXPENSE_CATEGORIES = [
+  "Mortgage", "Rates", "Insurance", "Repairs", "Maintenance",
+  "Utilities", "Strata Fees", "Property Management", "Advertising",
+  "Legal Fees", "Council Rates", "Water Rates", "Gardening",
+  "Cleaning", "Security", "Other"
+];
+
 export async function initTransactionsUI() {
   console.log("[TX] initTransactionsUI() starting…");
 
   const mainContent = document.getElementById('mainContent');
+  if (!mainContent) {
+    console.error("[TX] mainContent element not found!");
+    return;
+  }
+  
   mainContent.classList.add('page-transition');
 
   const [categories, accounts, transactions, properties] = await Promise.all([
@@ -214,35 +228,24 @@ export async function initTransactionsUI() {
   // ========================================================================
   // ✔ FIX: Initialize Import Modal
   // ========================================================================
-// ========================================================================
-// FIXED: Initialize Import Modal (robust, delayed, retried)
-// ========================================================================
-function safeInitImportModal() {
-  const importBtn = document.getElementById("btnImportTx");
-
-  console.log("[IMPORT] checking for btnImportTx →", importBtn);
-
-  if (!importBtn) {
-    console.warn("[IMPORT] btnImportTx not ready — retrying in 100ms");
-    setTimeout(safeInitImportModal, 100);
-    return;
-  }
-
-  console.log("[IMPORT] btnImportTx FOUND — initializing modal now");
-
-  initImportModal({
-    accounts,
-    categories,
-    onImported: async (savedCount) => {
-      console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
-      await initTransactionsUI();
+  setTimeout(() => {
+    console.log("[IMPORT] initImportModal() invoked AFTER render");
+    
+    // Check if button exists before initializing
+    const importBtn = document.getElementById("btnImportTx");
+    if (importBtn) {
+      initImportModal({
+        accounts,
+        categories,
+        onImported: async (savedCount) => {
+          console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
+          await initTransactionsUI(); // reload transactions UI
+        }
+      });
+    } else {
+      console.warn("[IMPORT] btnImportTx not found in DOM");
     }
-  });
-}
-
-// 🔥 Invoke safe initializer AFTER HTML render
-setTimeout(safeInitImportModal, 50);
-
+  }, 100);
 
   // ========================================================================
   // UI + Event setup (WITH SAFETY CHECKS)
