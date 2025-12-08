@@ -290,40 +290,45 @@ export async function initTransactionsUI() {
   // ========================================================================
 // ✔ FIX: Initialize Import Modal
 // ========================================================================
+// In transactions.js, replace the setTimeout section with this:
+
+// ========================================================================
+// Initialize Import Modal
+// ========================================================================
 setTimeout(() => {
-  console.log("[IMPORT] initImportModal() invoked AFTER render");
+  console.log("[TX] Setting up import functionality...");
   
-  // Check if button exists before initializing
   const importBtn = document.getElementById("btnImportTx");
-  console.log("[IMPORT] btnImportTx element:", importBtn);
-  
   if (importBtn) {
-    console.log("[IMPORT] Button found, setting up click handler manually...");
+    console.log("[TX] Found import button");
     
-    // First, manually add a click handler to test
-    importBtn.addEventListener("click", () => {
-      console.log("[IMPORT] Manual click handler triggered");
-      alert("Import button clicked! If modal doesn't open, check initImportModal function.");
-    });
+    // Remove any existing event listeners by cloning
+    const newBtn = importBtn.cloneNode(true);
+    importBtn.parentNode.replaceChild(newBtn, importBtn);
     
-    // Then try to initialize the modal
     try {
+      // Initialize the modal
       initImportModal({
         accounts,
         categories,
         onImported: async (savedCount) => {
-          console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
-          await initTransactionsUI(); // reload transactions UI
+          console.log("[TX] Import complete, refreshing UI...");
+          await initTransactionsUI(); // Refresh the view
         }
       });
-      console.log("[IMPORT] initImportModal called successfully");
+      console.log("[TX] Import modal initialized successfully");
     } catch (error) {
-      console.error("[IMPORT] Error calling initImportModal:", error);
+      console.error("[TX] Failed to initialize import modal:", error);
+      
+      // Fallback simple handler
+      newBtn.addEventListener("click", () => {
+        alert("Import feature is currently unavailable. Please check console for errors.");
+      });
     }
   } else {
-    console.warn("[IMPORT] btnImportTx not found in DOM");
+    console.error("[TX] Import button not found!");
   }
-}, 100);
+}, 200);
 }
 
 // ============================================================================
