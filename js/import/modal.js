@@ -1,38 +1,408 @@
-// modal.js - Updated to work with your bankFormats.js structure
+// modal.js - Fixed version with proper function order
 import { parseCSVFile, parseStatementText } from './parser.js';
 import { saveImportedTransactions } from './saver.js';
-import { BANK_FORMATS } from './bankFormats.js'; // This is an array in your file
+import { BANK_FORMATS } from './bankFormats.js';
 
 let modalInitialized = false;
 
-export function initImportModal({ accounts, categories, onImported }) {
-  console.log("[MODAL] initImportModal called");
+// ============================================================================
+// Helper Functions (define these FIRST)
+// ============================================================================
+function hideImportModal() {
+  const modal = document.getElementById("importModal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+    console.log("[MODAL] Modal hidden");
+  }
+}
+
+function handleParseData() {
+  console.log("[MODAL] handleParseData called");
   
-  const btnImportTx = document.getElementById("btnImportTx");
-  console.log("[MODAL] Button element:", btnImportTx);
+  const parseBtn = document.getElementById("parseData");
+  const saveBtn = document.getElementById("saveImport");
   
-  if (!btnImportTx) {
-    console.error("[MODAL] btnImportTx not found!");
+  if (!parseBtn || !saveBtn) {
+    console.error("[MODAL] Parse or Save button not found");
     return;
   }
   
-  // Remove any existing click handlers first
-  const newBtn = btnImportTx.cloneNode(true);
-  btnImportTx.parentNode.replaceChild(newBtn, btnImportTx);
+  parseBtn.disabled = true;
+  parseBtn.textContent = "Parsing...";
   
-  // Create modal HTML if it doesn't exist
-  if (!document.getElementById("importModal")) {
-    createImportModal();
+  try {
+    let transactions = [];
+    const accountId = document.getElementById("importAccount").value;
+    
+    if (!accountId) {
+      alert("⚠️ Please select an account first!");
+      parseBtn.disabled = false;
+      parseBtn.textContent = "Parse Data";
+      return;
+    }
+    
+    // Check which tab is active
+    const isCSVTab = document.getElementById("csvTab").classList.contains("active");
+    
+    if (isCSVTab) {
+      // Parse CSV
+      const fileInput = document.getElementById("csvFile");
+      const format = document.getElementById("csvFormat").value;
+      
+      if (!fileInput.files.length) {
+        alert("⚠️ Please select a CSV file first!");
+        parseBtn.disabled = false;
+        parseBtn.textContent = "Parse Data";
+        return;
+      }
+      
+      if (!format) {
+        alert("⚠️ Please select a bank format!");
+        parseBtn.disabled = false;
+        parseBtn.textContent = "Parse Data";
+        return;
+      }
+      
+      console.log("[MODAL] Parsing CSV file:", fileInput.files[0].name, "with format:", format);
+      transactions = await parseCSVFile(fileInput.files[0], format);
+      
+    } else {
+      // Parse text
+      const text = document.getElementById("statementText").value;
+      const format = document.getElementById("textFormat").value;
+      
+      if (!text.trim()) {
+        alert("⚠️ Please enter statement text!");
+        parseBtn.disabled = false;
+        parseBtn.textContent = "Parse Data";
+        return;
+      }
+      
+      if (!format) {
+        alert("⚠️ Please select a bank format!");
+        parseBtn.disabled = false;
+        parseBtn.textContent = "Parse Data";
+        return;
+      }
+      
+      console.log("[MODAL] Parsing text with format:", format);
+      transactions = await parseStatementText(text, format);
+    }
+    
+    if (!transactions || transactions.length === 0) {
+      alert("❌ No transactions found in the data!");
+      parseBtn.disabled = false;
+      parseBtn.textContent = "Parse Data";
+      return;
+    }
+    
+    // Add accountId to all transactions
+    transactions = transactions.map(tx => ({
+      ...tx,
+      accountId: accountId
+    }));
+    
+    // Store for saving
+    window._importData.pendingTransactions = transactions;
+    
+    // Show preview
+    showImportPreview(transactions);
+    
+    console.log("[MODAL] Successfully parsed", transactions.length, "transactions");
+    
+  } catch (error) {
+    console.error("[MODAL] Parse error:", error);
+    alert("❌ Error parsing data: " + error.message);
+  } finally {
+    parseBtn.disabled = false;
+    parseBtn.textContent = "Parse Data";
+  }
+}
+
+function showImportPreview(transactions) {
+  console.log("[MODAL] Showing preview of", transactions.length, "transactions");
+  
+  const previewDiv = document.getElementById("importPreview");
+  const headersDiv = document.getElementById("previewHeaders");
+  const rowsDiv = document.getElementById("previewRows");
+  const statsDiv = document.getElementById("previewStats");
+  
+  if (!previewDiv || !headersDiv || !rowsDiv || !statsDiv) {
+    console.error("[MODAL] Preview elements not found");
+    return;
   }
   
-  // Add click handler to the new button
-  newBtn.addEventListener("click", () => {
-    console.log("[MODAL] Button clicked, showing modal");
-    showImportModal({ accounts, categories, onImported });
+  if (transactions.length === 0) {
+    alert("No transactions found in the data!");
+    return;
+  }
+  
+  // Show preview section
+  previewDiv.style.display = "block";
+  
+  // Create table headers from first transaction keys
+  const firstTx = transactions[0];
+  const headers = Object.keys(firstTx);
+  
+  headersDiv.innerHTML = `
+    <tr>
+      ${headers.map(h => `<th style="padding: 12px; border: 1px solid #bae6fd; text-align: left; font-weight: 600;">${formatHeader(h)}</th>`).join('')}
+    </tr>
+  `;
+  
+  // Show first 5 transactions
+  const previewRows = transactions.slice(0, 5);
+  rowsDiv.innerHTML = previewRows.map(tx => {
+    return `
+      <tr>
+        ${headers.map(h => {
+          let value = tx[h] || '';
+          if (h === 'amount' || h === 'Amount') {
+            const num = parseFloat(value);
+            value = num.toFixed(2);
+            if (num < 0) {
+              value = `<span style="color: #dc2626;">-$${Math.abs(num).toFixed(2)}</span>`;
+            } else if (num > 0) {
+              value = `<span style="color: #059669;">+$${num.toFixed(2)}</span>`;
+            }
+          }
+          return `<td style="padding: 10px 12px; border: 1px solid #e5e7eb; vertical-align: top;">${value}</td>`;
+        }).join('')}
+      </tr>
+    `;
+  }).join('');
+  
+  // Calculate stats
+  const totalCount = transactions.length;
+  const incomeCount = transactions.filter(t => {
+    const amount = parseFloat(t.amount) || 0;
+    return amount > 0;
+  }).length;
+  const expenseCount = transactions.filter(t => {
+    const amount = parseFloat(t.amount) || 0;
+    return amount < 0;
+  }).length;
+  const totalAmount = transactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+  
+  statsDiv.innerHTML = `
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Total Transactions</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: #0369a1;">${totalCount}</div>
+    </div>
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Income</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: #059669;">${incomeCount}</div>
+    </div>
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Expenses</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: #dc2626;">${expenseCount}</div>
+    </div>
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Net Total</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: ${totalAmount >= 0 ? '#059669' : '#dc2626'};">$${Math.abs(totalAmount).toFixed(2)}</div>
+    </div>
+  `;
+  
+  // Show save button and hide parse button
+  document.getElementById("saveImport").style.display = "inline-block";
+  document.getElementById("parseData").style.display = "none";
+  
+  console.log("[MODAL] Preview displayed");
+}
+
+function formatHeader(header) {
+  // Convert camelCase or snake_case to Title Case
+  return header
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/_/g, ' ')
+    .replace(/^./, str => str.toUpperCase())
+    .trim();
+}
+
+async function handleSaveImport() {
+  console.log("[MODAL] handleSaveImport called");
+  
+  const saveBtn = document.getElementById("saveImport");
+  if (!saveBtn) {
+    console.error("[MODAL] Save button not found");
+    return;
+  }
+  
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving...";
+  
+  try {
+    const transactions = window._importData?.pendingTransactions;
+    
+    if (!transactions || transactions.length === 0) {
+      alert("❌ No transactions to save!");
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save Transactions";
+      return;
+    }
+    
+    console.log("[MODAL] Saving", transactions.length, "transactions");
+    
+    // Save transactions
+    const savedCount = await saveImportedTransactions(transactions);
+    
+    if (savedCount > 0) {
+      alert(`✅ Successfully saved ${savedCount} transactions!`);
+      
+      // Call callback if provided
+      if (window._importData?.onImported) {
+        console.log("[MODAL] Calling import callback");
+        await window._importData.onImported(savedCount);
+      }
+      
+      // Close modal
+      hideImportModal();
+    } else {
+      alert("⚠️ No transactions were saved. Please check the data format.");
+    }
+    
+  } catch (error) {
+    console.error("[MODAL] Save error:", error);
+    alert("❌ Error saving transactions: " + error.message);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save Transactions";
+  }
+}
+
+// Helper function to get bank options
+function getBankOptions() {
+  console.log("[MODAL] Getting bank options from BANK_FORMATS");
+  
+  // If BANK_FORMATS is an array (from your structure)
+  const bankOptions = [];
+  
+  if (Array.isArray(BANK_FORMATS)) {
+    // Your format: array of objects with id and label
+    BANK_FORMATS.forEach(format => {
+      bankOptions.push({
+        value: format.id,
+        name: format.label,
+        description: `Auto-detects ${format.label} format`
+      });
+    });
+  }
+  
+  // Add an auto-detect option
+  bankOptions.unshift({
+    value: 'auto',
+    name: 'Auto-detect',
+    description: 'Automatically detect bank format from file headers'
   });
   
-  modalInitialized = true;
-  console.log("[MODAL] Modal initialized successfully");
+  // Add generic fallback options
+  bankOptions.push(
+    {
+      value: 'generic_csv',
+      name: 'Generic CSV',
+      description: 'Standard CSV with Date,Description,Amount columns'
+    },
+    {
+      value: 'anz',
+      name: 'ANZ Bank',
+      description: 'ANZ bank statement format'
+    },
+    {
+      value: 'commbank',
+      name: 'Commonwealth Bank',
+      description: 'CommBank CSV export'
+    },
+    {
+      value: 'nab',
+      name: 'NAB',
+      description: 'NAB transaction export'
+    },
+    {
+      value: 'westpac',
+      name: 'Westpac',
+      description: 'Westpac CSV format'
+    }
+  );
+  
+  console.log("[MODAL] Bank options:", bankOptions);
+  return bankOptions;
+}
+
+// ============================================================================
+// Modal Setup Functions
+// ============================================================================
+function setupModalEvents() {
+  console.log("[MODAL] Setting up modal events");
+  
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.style.background = '#6b7280';
+        b.classList.remove('active');
+      });
+      this.style.background = '#3b82f6';
+      this.classList.add('active');
+      
+      // Show corresponding tab content
+      const tabId = this.getAttribute('data-tab') + 'Tab';
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+        content.classList.remove('active');
+      });
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) {
+        targetTab.style.display = 'block';
+        targetTab.classList.add('active');
+      }
+    });
+  });
+  
+  // Close modal events
+  const closeBtn = document.getElementById('closeImportModal');
+  const cancelBtn = document.getElementById('cancelImport');
+  const overlay = document.getElementById('importModalOverlay');
+  
+  if (closeBtn) closeBtn.addEventListener('click', hideImportModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideImportModal);
+  if (overlay) overlay.addEventListener('click', hideImportModal);
+  
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideImportModal();
+    }
+  });
+  
+  // Parse button
+  const parseBtn = document.getElementById('parseData');
+  if (parseBtn) {
+    parseBtn.addEventListener('click', handleParseData);
+  }
+  
+  // Save button
+  const saveBtn = document.getElementById('saveImport');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', handleSaveImport);
+  }
+  
+  // Style file input on change
+  const fileInput = document.getElementById('csvFile');
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        this.style.borderColor = '#10b981';
+        this.style.backgroundColor = '#f0fdf4';
+      } else {
+        this.style.borderColor = '#d1d5db';
+        this.style.backgroundColor = 'white';
+      }
+    });
+  }
+  
+  console.log("[MODAL] All event listeners set up");
 }
 
 function createImportModal() {
@@ -140,128 +510,37 @@ function createImportModal() {
   setupModalEvents();
 }
 
-function setupModalEvents() {
-  console.log("[MODAL] Setting up modal events");
+// ============================================================================
+// Public Functions
+// ============================================================================
+export function initImportModal({ accounts, categories, onImported }) {
+  console.log("[MODAL] initImportModal called");
   
-  // Tab switching
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      // Update tab buttons
-      document.querySelectorAll('.tab-btn').forEach(b => {
-        b.style.background = '#6b7280';
-        b.classList.remove('active');
-      });
-      this.style.background = '#3b82f6';
-      this.classList.add('active');
-      
-      // Show corresponding tab content
-      const tabId = this.getAttribute('data-tab') + 'Tab';
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.style.display = 'none';
-        content.classList.remove('active');
-      });
-      const targetTab = document.getElementById(tabId);
-      if (targetTab) {
-        targetTab.style.display = 'block';
-        targetTab.classList.add('active');
-      }
-    });
-  });
+  const btnImportTx = document.getElementById("btnImportTx");
+  console.log("[MODAL] Button element:", btnImportTx);
   
-  // Close modal events
-  const closeBtn = document.getElementById('closeImportModal');
-  const cancelBtn = document.getElementById('cancelImport');
-  const overlay = document.getElementById('importModalOverlay');
-  
-  if (closeBtn) closeBtn.addEventListener('click', hideImportModal);
-  if (cancelBtn) cancelBtn.addEventListener('click', hideImportModal);
-  if (overlay) overlay.addEventListener('click', hideImportModal);
-  
-  // Close on Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      hideImportModal();
-    }
-  });
-  
-  // Parse button
-  const parseBtn = document.getElementById('parseData');
-  if (parseBtn) {
-    parseBtn.addEventListener('click', handleParseData);
+  if (!btnImportTx) {
+    console.error("[MODAL] btnImportTx not found!");
+    return;
   }
   
-  // Save button
-  const saveBtn = document.getElementById('saveImport');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', handleSaveImport);
+  // Remove any existing click handlers first
+  const newBtn = btnImportTx.cloneNode(true);
+  btnImportTx.parentNode.replaceChild(newBtn, btnImportTx);
+  
+  // Create modal HTML if it doesn't exist
+  if (!document.getElementById("importModal")) {
+    createImportModal();
   }
   
-  // Style file input on change
-  const fileInput = document.getElementById('csvFile');
-  if (fileInput) {
-    fileInput.addEventListener('change', function() {
-      if (this.files.length > 0) {
-        this.style.borderColor = '#10b981';
-        this.style.backgroundColor = '#f0fdf4';
-      } else {
-        this.style.borderColor = '#d1d5db';
-        this.style.backgroundColor = 'white';
-      }
-    });
-  }
-  
-  console.log("[MODAL] All event listeners set up");
-}
-
-// Helper function to get bank options from your BANK_FORMATS array
-function getBankOptions() {
-  console.log("[MODAL] Getting bank options from BANK_FORMATS");
-  
-  // Your BANK_FORMATS is an array of format objects
-  const bankOptions = BANK_FORMATS.map(format => ({
-    value: format.id,
-    name: format.label,
-    description: `Auto-detects ${format.label} format`
-  }));
-  
-  // Add an auto-detect option
-  bankOptions.unshift({
-    value: 'auto',
-    name: 'Auto-detect',
-    description: 'Automatically detect bank format from file headers'
+  // Add click handler to the new button
+  newBtn.addEventListener("click", () => {
+    console.log("[MODAL] Button clicked, showing modal");
+    showImportModal({ accounts, categories, onImported });
   });
   
-  // Add generic fallback options
-  bankOptions.push(
-    {
-      value: 'generic_csv',
-      name: 'Generic CSV',
-      description: 'Standard CSV with Date,Description,Amount columns'
-    },
-    {
-      value: 'anz',
-      name: 'ANZ Bank',
-      description: 'ANZ bank statement format'
-    },
-    {
-      value: 'commbank',
-      name: 'Commonwealth Bank',
-      description: 'CommBank CSV export'
-    },
-    {
-      value: 'nab',
-      name: 'NAB',
-      description: 'NAB transaction export'
-    },
-    {
-      value: 'westpac',
-      name: 'Westpac',
-      description: 'Westpac CSV format'
-    }
-  );
-  
-  console.log("[MODAL] Bank options:", bankOptions);
-  return bankOptions;
+  modalInitialized = true;
+  console.log("[MODAL] Modal initialized successfully");
 }
 
 export function showImportModal({ accounts, categories, onImported }) {
@@ -279,7 +558,7 @@ export function showImportModal({ accounts, categories, onImported }) {
     return;
   }
   
-  // Get bank options from your BANK_FORMATS array
+  // Get bank options
   const bankOptions = getBankOptions();
   console.log("[MODAL] Bank options loaded:", bankOptions.length, "formats");
   
@@ -348,6 +627,5 @@ export function showImportModal({ accounts, categories, onImported }) {
   console.log("[MODAL] Modal shown successfully");
 }
 
-// The rest of the modal.js file remains the same...
-// (hideImportModal, handleParseData, showImportPreview, handleSaveImport functions)
-// Just make sure they use the updated bank format handling
+// Make hideImportModal available globally if needed
+window.hideImportModal = hideImportModal;
