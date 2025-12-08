@@ -246,21 +246,9 @@ async function handleSaveImport() {
     
     console.log("[MODAL] Saving", transactions.length, "transactions");
     
-  const selectedAccountId = document.getElementById("importAccountSelect").value;
-
-  const normalisedTx = transactions.map(tx => ({
-    ...tx,
-    id: crypto.randomUUID(),
-    accountId: selectedAccountId,
-    categoryId: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }));
-
-const result = await saveImportedTransactions(normalisedTx);
 
 
-
+    
     // Save transactions
     const savedCount = await saveImportedTransactions(transactions);
     
