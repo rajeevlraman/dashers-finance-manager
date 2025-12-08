@@ -1,292 +1,339 @@
-// ============================================================================
-// 📁 import/modal.js — Import UI (CSV + Manual)
-// ============================================================================
-console.log("[IMPORT] modal.js loaded!");
-
-import { parseCSVFile, parseStatementText } from './parser.js';
+// modal.js - Import Modal functionality
+import { parseCSVFile } from './parser.js';
 import { saveImportedTransactions } from './saver.js';
-import { logImportDebug, isImportDebugEnabled } from './debug.js';
 
-// Public entry
-export function initImportModal({ accounts, categories, onImported } = {}) {
-    console.log("[IMPORT] initImportModal() executed");
-
-  logImportDebug("initImportModal: function executed");
-
-  document.getElementById("btnImportTx");
-  console.log("IMPORT BTN:", document.getElementById("btnImportTx"));
-
-  logImportDebug('initImportModal: starting…');
-
-  // 1) Wire up existing "Import Statement" button in transactions header
-  const importBtn = document.getElementById('btnImportTx');
-  if (!importBtn) {
-    console.warn('[IMPORT] btnImportTx not found; cannot init import modal');
+export function initImportModal({ accounts, categories, onImported }) {
+  console.log("[MODAL] initImportModal called");
+  
+  const btnImportTx = document.getElementById("btnImportTx");
+  const modal = document.getElementById("importModal");
+  
+  console.log("[MODAL] Button:", btnImportTx);
+  console.log("[MODAL] Modal element:", modal);
+  
+  if (!btnImportTx) {
+    console.error("[MODAL] btnImportTx not found!");
     return;
   }
-
-  // 2) Ensure modal exists (inject once)
-  let modal = document.getElementById('importModal');
+  
+  // Create modal if it doesn't exist
   if (!modal) {
-    logImportDebug('initImportModal: injecting HTML');
-    document.body.insertAdjacentHTML('beforeend', buildImportModalHTML(accounts));
-    modal = document.getElementById('importModal');
+    createImportModal();
   }
-
-  // Re-query important elements
-  const closeBtn = document.getElementById('closeImportModal');
-  const cancelBtn = document.getElementById('cancelImport');
-  const processBtn = document.getElementById('processImport');
-  const csvFileInput = document.getElementById('csvFile');
-  const accountSelect = document.getElementById('importAccount');
-  const csvPreview = document.getElementById('csvPreview');
-  const previewSection = document.querySelector('.preview-section');
-  const statementText = document.getElementById('statementText');
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  const debugStatusSpan = document.getElementById('importDebugStatus');
-
-  if (debugStatusSpan) {
-    debugStatusSpan.textContent = isImportDebugEnabled() ? 'ON' : 'OFF';
-  }
-
-  // -------------------- Open / Close --------------------
-importBtn.onclick = (e) => {
-  e?.preventDefault?.();
-  e?.stopPropagation?.();
-  modal.style.display = "flex";
-  logImportDebug("Import modal opened");
-};
-
-
-  const closeModal = () => {
-    modal.style.display = 'none';
-    if (csvFileInput) csvFileInput.value = '';
-    if (statementText) statementText.value = '';
-    csvPreview.innerHTML = '';
-    previewSection.style.display = 'none';
-  };
-
-  closeBtn.onclick = closeModal;
-  cancelBtn.onclick = (e) => {
-    e.preventDefault();
-    closeModal();
-  };
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeModal();
-    }
+  
+  // Add click handler
+  btnImportTx.addEventListener("click", () => {
+    console.log("[MODAL] Import button clicked, showing modal...");
+    showImportModal({ accounts, categories, onImported });
   });
-
-  // -------------------- Tabs --------------------
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tab = btn.dataset.tab;
-      tabButtons.forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(tab + 'Tab').classList.add('active');
-      logImportDebug('Import tab switched to', tab);
-    });
-  });
-
-  // -------------------- CSV Preview --------------------
-  if (csvFileInput) {
-    csvFileInput.addEventListener('change', async () => {
-      const file = csvFileInput.files[0];
-      if (!file) return;
-
-      const accountId = accountSelect.value;
-      logImportDebug('CSV file selected', { name: file.name, size: file.size, accountId });
-
-      try {
-        const previewRows = await parseCSVFile(file, { previewOnly: true, accountId });
-        logImportDebug('CSV preview rows', previewRows);
-
-        if (!previewRows.length) {
-          csvPreview.innerHTML = '<p>No valid rows detected. Check format and try again.</p>';
-          previewSection.style.display = 'block';
-          return;
-        }
-
-        const limited = previewRows.slice(0, 5);
-        csvPreview.innerHTML = `
-          <pre style="font-size:0.85rem; white-space:pre-wrap;">${limited.join('\n')}</pre>
-        `;
-        previewSection.style.display = 'block';
-      } catch (err) {
-        console.error('[IMPORT] CSV preview error', err);
-        csvPreview.innerHTML = `<p style="color:red;">Error parsing CSV: ${err.message}</p>`;
-        previewSection.style.display = 'block';
-      }
-    });
-  }
-
-  // -------------------- Process Import --------------------
-  processBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-
-    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'csv';
-    const accountId = accountSelect.value;
-
-    if (!accountId) {
-      alert('Please select an account for these transactions.');
-      return;
-    }
-
-    logImportDebug('processImport: starting', { activeTab, accountId });
-
-    let txs = [];
-
-    try {
-      if (activeTab === 'csv') {
-        const file = csvFileInput.files[0];
-        if (!file) {
-          alert('Please select a CSV file');
-          return;
-        }
-        txs = await parseCSVFile(file, { accountId });
-      } else {
-        const txt = statementText.value;
-        if (!txt.trim()) {
-          alert('Please paste your statement data');
-          return;
-        }
-        txs = await parseStatementText(txt, { accountId });
-      }
-
-      if (!txs.length) {
-        alert('No valid transactions found. Check format and try again.');
-        logImportDebug('processImport: 0 transactions after parse');
-        return;
-      }
-
-      logImportDebug('processImport: parsed transactions', txs);
-
-      // Visual feedback
-      processBtn.disabled = true;
-      processBtn.textContent = 'Processing…';
-
-      const { saved, skipped } = await saveImportedTransactions(txs, { dedupe: true });
-
-      alert(`Import complete!\nSaved: ${saved}\nSkipped (duplicates/errors): ${skipped}`);
-      logImportDebug('processImport: finished', { saved, skipped });
-
-      processBtn.disabled = false;
-      processBtn.textContent = 'Process Import';
-
-      closeModal();
-
-      if (typeof onImported === 'function') {
-        onImported(saved);
-      } else {
-        // Fallback: reload page
-        window.location.reload();
-      }
-    } catch (err) {
-      console.error('[IMPORT] Error during processing', err);
-      alert('Error during import: ' + err.message);
-      processBtn.disabled = false;
-      processBtn.textContent = 'Process Import';
-    }
-  });
+  
+  console.log("[MODAL] Event listener added to button");
 }
 
-// ---------------------------------------------------------------------------
-// HTML Builder
-// ---------------------------------------------------------------------------
-function buildImportModalHTML(accounts) {
-  const accountOptions = (accounts || [])
-    .map(a => `<option value="${a.id}">${a.name}</option>`)
-    .join('');
-
-  return `
-    <div id="importModal" class="modal-overlay"
-      style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-             background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
-      <div class="modal"
-        style="background:#ffffff;border-radius:12px;padding:20px;max-width:640px;
-               width:95%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-        <div class="modal-header"
-          style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div>
-            <h3 style="margin:0;font-size:1.1rem;">📁 Import Transactions</h3>
-            <small style="color:#4b5563;">Macquarie / ANZ / NAB / ME CSV & statements</small>
-          </div>
-          <button id="closeImportModal"
-            style="background:none;border:none;font-size:1.3rem;cursor:pointer;">✕</button>
+function createImportModal() {
+  console.log("[MODAL] Creating modal HTML...");
+  
+  const modalHTML = `
+    <div id="importModal" class="modal" style="display: none;">
+      <div class="modal-overlay" id="importModalOverlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📁 Import Transactions</h3>
+          <button class="modal-close" id="closeImportModal">✕</button>
         </div>
-
-        <div style="font-size:0.8rem;color:#6b7280;margin-bottom:8px;">
-          Debug: <span id="importDebugStatus">${isImportDebugEnabled() ? 'ON' : 'OFF'}</span>
-          (toggle in Settings)
-        </div>
-
         <div class="modal-body">
-          <div class="import-tabs" style="display:flex;gap:8px;margin-bottom:16px;">
-            <button class="tab-btn active" data-tab="csv"
-              style="padding:6px 12px;border-radius:999px;border:1px solid #d1d5db;
-                     background:#2563eb;color:#fff;font-size:0.85rem;cursor:pointer;">
-              CSV Import
-            </button>
-            <button class="tab-btn" data-tab="manual"
-              style="padding:6px 12px;border-radius:999px;border:1px solid #d1d5db;
-                     background:#f3f4f6;font-size:0.85rem;cursor:pointer;">
-              Manual Paste
-            </button>
+          <div class="import-tabs">
+            <button class="tab-btn active" data-tab="csv">CSV File</button>
+            <button class="tab-btn" data-tab="text">Statement Text</button>
           </div>
-
+          
           <div id="csvTab" class="tab-content active">
-            <div class="form-group" style="margin-bottom:12px;">
-              <label style="display:block;font-weight:600;margin-bottom:4px;">Select CSV File</label>
-              <input type="file" id="csvFile" accept=".csv,.txt"
-                style="width:100%;padding:8px;border-radius:8px;border:1px solid #d1d5db;">
-              <small style="display:block;margin-top:4px;color:#6b7280;">
-                Supported: Macquarie, ANZ, NAB, ME bank exports (AU)
-              </small>
+            <div class="form-group">
+              <label>Select CSV File</label>
+              <input type="file" id="csvFile" accept=".csv,.txt" class="form-control">
+              <small class="form-text">Supported formats: CSV, TSV, Bank statements</small>
             </div>
-
-            <div class="form-group" style="margin-bottom:12px;">
-              <label style="display:block;font-weight:600;margin-bottom:4px;">Account</label>
-              <select id="importAccount"
-                style="width:100%;padding:8px;border-radius:8px;border:1px solid #d1d5db;">
-                <option value="">-- Select Account --</option>
-                ${accountOptions}
+            <div class="form-group">
+              <label>Bank/Format</label>
+              <select id="csvFormat" class="form-control">
+                <option value="anz">ANZ Bank</option>
+                <option value="commbank">CommBank</option>
+                <option value="nab">NAB</option>
+                <option value="westpac">Westpac</option>
+                <option value="generic">Generic CSV</option>
               </select>
             </div>
-
-            <div class="preview-section" style="display:none;margin-top:12px;">
-              <h4 style="margin:0 0 4px;font-size:0.95rem;">Preview (first 5 rows)</h4>
-              <div id="csvPreview"
-                style="background:#f9fafb;border-radius:8px;padding:8px;border:1px solid #e5e7eb;
-                       max-height:200px;overflow-y:auto;font-family:monospace;font-size:0.8rem;"></div>
+          </div>
+          
+          <div id="textTab" class="tab-content">
+            <div class="form-group">
+              <label>Paste Statement Text</label>
+              <textarea id="statementText" class="form-control" rows="6" placeholder="Paste your bank statement text here..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Bank</label>
+              <select id="textFormat" class="form-control">
+                <option value="anz">ANZ Bank</option>
+                <option value="commbank">CommBank</option>
+                <option value="nab">NAB</option>
+                <option value="westpac">Westpac</option>
+              </select>
             </div>
           </div>
-
-          <div id="manualTab" class="tab-content" style="display:none;">
-            <div class="form-group" style="margin-bottom:12px;">
-              <label style="display:block;font-weight:600;margin-bottom:4px;">Paste Statement Data</label>
-              <textarea id="statementText"
-                style="width:100%;padding:8px;border-radius:8px;border:1px solid #d1d5db;
-                       min-height:180px;font-family:monospace;font-size:0.8rem;"
-                placeholder="Paste your statement data here...
-Date, Description, Amount
-01/12/2025, COLES MELBOURNE, -85.50
-02 Dec 2025, AMAZON WEB SERVICES SYDNEY, -1.64"></textarea>
+          
+          <div class="form-group">
+            <label>Default Account</label>
+            <select id="importAccount" class="form-control">
+              <option value="">Select Account</option>
+            </select>
+          </div>
+          
+          <div id="importPreview" style="display: none;">
+            <h4>Preview (first 5 rows)</h4>
+            <div class="preview-table-container">
+              <table class="preview-table">
+                <thead id="previewHeaders"></thead>
+                <tbody id="previewRows"></tbody>
+              </table>
             </div>
+            <div class="preview-stats" id="previewStats"></div>
           </div>
-
-          <div class="import-actions" style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
-            <button class="btn btn-secondary" id="cancelImport"
-              style="padding:8px 14px;border-radius:999px;border:1px solid #d1d5db;
-                     background:#f3f4f6;cursor:pointer;">Cancel</button>
-            <button class="btn btn-primary" id="processImport"
-              style="padding:8px 14px;border-radius:999px;border:none;
-                     background:#2563eb;color:#fff;cursor:pointer;">Process Import</button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="parseData" class="btn btn-primary">Parse Data</button>
+          <button id="saveImport" class="btn btn-success" style="display: none;">Save Transactions</button>
+          <button id="cancelImport" class="btn btn-secondary">Cancel</button>
         </div>
       </div>
     </div>
   `;
+  
+  // Add modal to body
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  console.log("[MODAL] Modal HTML added to body");
+  
+  // Setup tab switching
+  setupImportTabs();
+  
+  // Setup close handlers
+  const overlay = document.getElementById("importModalOverlay");
+  const closeBtn = document.getElementById("closeImportModal");
+  const cancelBtn = document.getElementById("cancelImport");
+  
+  if (overlay) overlay.addEventListener("click", hideImportModal);
+  if (closeBtn) closeBtn.addEventListener("click", hideImportModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", hideImportModal);
+}
+
+function setupImportTabs() {
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      // Remove active class from all tabs
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      
+      // Add active class to clicked tab
+      btn.classList.add("active");
+      const tabId = btn.dataset.tab + "Tab";
+      document.getElementById(tabId).classList.add("active");
+    });
+  });
+}
+
+export function showImportModal({ accounts, categories, onImported }) {
+  console.log("[MODAL] showImportModal called");
+  
+  const modal = document.getElementById("importModal");
+  if (!modal) {
+    console.error("[MODAL] Modal not found!");
+    return;
+  }
+  
+  // Populate account dropdown
+  const accountSelect = document.getElementById("importAccount");
+  if (accountSelect) {
+    accountSelect.innerHTML = '<option value="">Select Account</option>' +
+      accounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
+  }
+  
+  // Clear previous data
+  document.getElementById("csvFile").value = "";
+  document.getElementById("statementText").value = "";
+  document.getElementById("importPreview").style.display = "none";
+  document.getElementById("saveImport").style.display = "none";
+  document.getElementById("parseData").style.display = "block";
+  
+  // Store callback
+  modal.dataset.onImported = onImported ? 'true' : 'false';
+  window.importCallback = onImported;
+  window.importAccounts = accounts;
+  window.importCategories = categories;
+  
+  // Setup parse button
+  const parseBtn = document.getElementById("parseData");
+  if (parseBtn) {
+    parseBtn.onclick = handleParseData;
+  }
+  
+  // Setup save button
+  const saveBtn = document.getElementById("saveImport");
+  if (saveBtn) {
+    saveBtn.onclick = handleSaveImport;
+  }
+  
+  // Show modal
+  modal.style.display = "block";
+  document.body.style.overflow = "hidden";
+  
+  console.log("[MODAL] Modal displayed");
+}
+
+function hideImportModal() {
+  const modal = document.getElementById("importModal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
+}
+
+async function handleParseData() {
+  console.log("[MODAL] Parsing data...");
+  
+  const csvTab = document.getElementById("csvTab");
+  const textTab = document.getElementById("textTab");
+  let data = [];
+  
+  try {
+    if (csvTab.classList.contains("active")) {
+      // Parse CSV file
+      const fileInput = document.getElementById("csvFile");
+      const format = document.getElementById("csvFormat").value;
+      
+      if (!fileInput.files.length) {
+        alert("Please select a file first!");
+        return;
+      }
+      
+      data = await parseCSVFile(fileInput.files[0], format);
+    } else {
+      // Parse text
+      const text = document.getElementById("statementText").value;
+      const format = document.getElementById("textFormat").value;
+      
+      if (!text.trim()) {
+        alert("Please enter statement text!");
+        return;
+      }
+      
+      data = await parseStatementText(text, format);
+    }
+    
+    if (data.length === 0) {
+      alert("No transactions found in the data!");
+      return;
+    }
+    
+    // Show preview
+    showImportPreview(data);
+    
+  } catch (error) {
+    console.error("[MODAL] Parse error:", error);
+    alert("Error parsing data: " + error.message);
+  }
+}
+
+function showImportPreview(transactions) {
+  const preview = document.getElementById("importPreview");
+  const headers = document.getElementById("previewHeaders");
+  const rows = document.getElementById("previewRows");
+  const stats = document.getElementById("previewStats");
+  
+  if (transactions.length === 0) return;
+  
+  // Show preview section
+  preview.style.display = "block";
+  
+  // Create headers from first transaction keys
+  const sample = transactions[0];
+  const headerCells = Object.keys(sample).map(key => 
+    `<th>${key.charAt(0).toUpperCase() + key.slice(1)}</th>`
+  ).join('');
+  headers.innerHTML = `<tr>${headerCells}</tr>`;
+  
+  // Show first 5 rows
+  const previewData = transactions.slice(0, 5);
+  rows.innerHTML = previewData.map(tx => {
+    const cells = Object.values(tx).map(val => 
+      `<td>${val}</td>`
+    ).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+  
+  // Show stats
+  const total = transactions.length;
+  const incomeCount = transactions.filter(t => t.amount > 0).length;
+  const expenseCount = transactions.filter(t => t.amount < 0).length;
+  const totalAmount = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  
+  stats.innerHTML = `
+    <p>Found ${total} transactions</p>
+    <p>${incomeCount} income, ${expenseCount} expenses</p>
+    <p>Net total: $${totalAmount.toFixed(2)}</p>
+  `;
+  
+  // Store transactions for saving
+  window.pendingImport = transactions;
+  
+  // Show save button
+  document.getElementById("saveImport").style.display = "inline-block";
+  document.getElementById("parseData").style.display = "none";
+}
+
+async function handleSaveImport() {
+  const saveBtn = document.getElementById("saveImport");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving...";
+  
+  try {
+    const accountId = document.getElementById("importAccount").value;
+    if (!accountId) {
+      alert("Please select an account!");
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save Transactions";
+      return;
+    }
+    
+    const transactions = window.pendingImport || [];
+    if (transactions.length === 0) {
+      alert("No transactions to save!");
+      return;
+    }
+    
+    // Add accountId to all transactions
+    const transactionsWithAccount = transactions.map(tx => ({
+      ...tx,
+      accountId: accountId
+    }));
+    
+    // Save to database
+    const savedCount = await saveImportedTransactions(transactionsWithAccount);
+    
+    alert(`Successfully saved ${savedCount} transactions!`);
+    
+    // Call callback if provided
+    if (window.importCallback) {
+      window.importCallback(savedCount);
+    }
+    
+    // Close modal
+    hideImportModal();
+    
+  } catch (error) {
+    console.error("[MODAL] Save error:", error);
+    alert("Error saving transactions: " + error.message);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save Transactions";
+  }
 }
