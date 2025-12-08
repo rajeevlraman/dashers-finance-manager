@@ -5,13 +5,8 @@ import { initImportModal } from './import/modal.js';
 import { saveImportedTransactions } from './import/saver.js';
 import { parseCSVFile, parseStatementText } from './import/parser.js';
 
-
-
 // ============================================================================
-//  Transactions UI Initialization
-// ============================================================================
-// ============================================================================
-//  Transactions UI Initialization  (FULL PATCHED VERSION)
+//  Transactions UI Initialization (FIXED VERSION)
 // ============================================================================
 
 export async function initTransactionsUI() {
@@ -42,26 +37,159 @@ export async function initTransactionsUI() {
     .reduce((s, t) => s + (t.amount || 0), 0);
 
   // ========================================================================
-  // HTML Rendering (Import button included)
+  // HTML Rendering (COMPLETE with all required elements)
   // ========================================================================
   mainContent.innerHTML = `
     <div class="page-container">
 
       <div class="page-header">
         <h2>💸 Transactions</h2>
-
         <div class="page-actions">
-            <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
-            <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
-            <button class="btn btn-secondary" id="btnExportTx">📤 Export</button>
-            <button class="btn btn-success" id="btnImportTx">📁 Import</button>
+          <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
+          <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
+          <button class="btn btn-secondary" id="btnExportTx">📤 Export</button>
+          <button class="btn btn-success" id="btnImportTx">📁 Import</button>
         </div>
       </div>
 
-      <!-- Summary Cards + Quick Actions (your existing HTML unchanged) -->
-      ... YOUR ENTIRE EXISTING PAGE HTML HERE ...
-      <!-- DO NOT REMOVE ANYTHING BELOW UNTIL AFTER txList DIV -->
-      
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="summary-label">Total Income</div>
+          <div class="summary-value positive">$${totalIncome.toFixed(2)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Expenses</div>
+          <div class="summary-value negative">$${totalExpenses.toFixed(2)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Net Flow</div>
+          <div class="summary-value ${netFlow >= 0 ? 'positive' : 'negative'}">$${Math.abs(netFlow).toFixed(2)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">This Month</div>
+          <div class="summary-value ${thisMonthTotal >= 0 ? 'positive' : 'negative'}">$${Math.abs(thisMonthTotal).toFixed(2)}</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="quick-action-btn" data-amount="50">➕ $50</button>
+        <button class="quick-action-btn" data-amount="100">➕ $100</button>
+        <button class="quick-action-btn" data-amount="200">➕ $200</button>
+        <button class="quick-action-btn" data-amount="-50">➖ $50</button>
+        <button class="quick-action-btn" data-amount="-100">➖ $100</button>
+        <button class="quick-action-btn" data-amount="-200">➖ $200</button>
+      </div>
+
+      <!-- Transaction Form -->
+      <div id="addTxForm" style="display: none;" class="section-card">
+        <div class="form-header">
+          <h3>Add Transaction</h3>
+          <button id="closeAddForm" class="btn-close">✕</button>
+        </div>
+        <form id="txForm">
+          <div class="form-row">
+            <select name="type" id="txType" class="form-control" onchange="togglePropertyExpenseFields()">
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+            <input type="number" name="amount" class="form-control" placeholder="Amount" step="0.01" required>
+            <input type="date" name="date" class="form-control" value="${today}" required>
+            <select name="accountId" class="form-control" required>
+              <option value="">Select Account</option>
+              ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-row">
+            <input type="text" name="description" class="form-control" placeholder="Description">
+          </div>
+          <div class="form-row">
+            <select id="mainCategory" name="mainCategory" class="form-control" required>
+              <option value="">Select Category</option>
+              ${mainCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+            </select>
+            <select id="subCategory" name="subCategory" class="form-control">
+              <option value="">-- None --</option>
+            </select>
+          </div>
+          
+          <!-- Property Expense Section -->
+          <div id="propertyExpenseSection" style="display: none;">
+            <div class="form-row">
+              <label class="checkbox-label">
+                <input type="checkbox" id="isPropertyExpense" onchange="togglePropertyExpenseCheckbox()">
+                Property Expense
+              </label>
+            </div>
+            <div id="propertyExpenseFields" style="display: none;">
+              <div class="form-row">
+                <select name="propertyId" class="form-control">
+                  <option value="">Select Property</option>
+                  ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                </select>
+                <select name="expenseCategory" class="form-control">
+                  <option value="">Expense Category</option>
+                  ${PROPERTY_EXPENSE_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+                <select name="expenseStatus" class="form-control">
+                  <option value="Paid">Paid</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Due">Due</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <input type="text" name="receiptUrl" class="form-control" placeholder="Receipt URL">
+                <textarea name="expenseNotes" class="form-control" placeholder="Notes" rows="2"></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Transaction</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filter Form -->
+      <div id="filterTxForm" style="display: none;" class="section-card">
+        <div class="form-header">
+          <h3>Filter Transactions</h3>
+          <button id="closeFilterForm" class="btn-close">✕</button>
+        </div>
+        <form id="filterForm">
+          <div class="form-row">
+            <select name="type" class="form-control">
+              <option value="">All Types</option>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+            <select name="accountId" class="form-control">
+              <option value="">All Accounts</option>
+              ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-row">
+            <select name="mainCategory" class="form-control">
+              <option value="">All Categories</option>
+              ${mainCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+            </select>
+            <select name="subCategory" class="form-control">
+              <option value="">All Subcategories</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <input type="date" name="startDate" class="form-control" placeholder="Start Date">
+            <input type="date" name="endDate" class="form-control" placeholder="End Date">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <button type="button" id="clearFilters" class="btn btn-secondary">Clear Filters</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Transactions List -->
       <div class="section-card">
         <div class="transactions-header">
           <h3>Recent Transactions</h3>
@@ -84,67 +212,98 @@ export async function initTransactionsUI() {
   console.log("[TX] HTML rendered, scheduling import modal init…");
 
   // ========================================================================
-  // ✔ FIX: Delay import modal init until DOM is fully settled
+  // ✔ FIX: Initialize Import Modal
   // ========================================================================
   setTimeout(() => {
     console.log("[IMPORT] initImportModal() invoked AFTER render");
-
-    initImportModal({
-      accounts,
-      categories,
-      onImported: async (savedCount) => {
-        console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
-        await initTransactionsUI(); // reload transactions UI
-      }
-    });
-
-  }, 50);  // ← critical timing fix
-
+    
+    // Check if button exists before initializing
+    const importBtn = document.getElementById("btnImportTx");
+    if (importBtn) {
+      initImportModal({
+        accounts,
+        categories,
+        onImported: async (savedCount) => {
+          console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
+          await initTransactionsUI(); // reload transactions UI
+        }
+      });
+    } else {
+      console.warn("[IMPORT] btnImportTx not found in DOM");
+    }
+  }, 100);
 
   // ========================================================================
-  // UI + Event setup
+  // UI + Event setup (WITH SAFETY CHECKS)
   // ========================================================================
   setupCategoryLinking(categories, subCats);
   setupFormHandlers(categories, accounts, properties);
   renderTransactions(transactions, categories, accounts, properties);
 
-  document.getElementById("btnAddTx").addEventListener("click", toggleAddForm);
-  document.getElementById("btnFilterTx").addEventListener("click", toggleFilterForm);
-  document.getElementById("closeAddForm").addEventListener("click", hideForms);
-  document.getElementById("closeFilterForm").addEventListener("click", hideForms);
-  document.getElementById("clearFilters").addEventListener("click", clearFilterForm);
-
-  document.getElementById("sortTransactions").addEventListener("change", () => {
-    renderTransactions(transactions, categories, accounts, properties);
-  });
+  // SAFE event listener attachment
+  safeAddEventListener("btnAddTx", "click", toggleAddForm);
+  safeAddEventListener("btnFilterTx", "click", toggleFilterForm);
+  safeAddEventListener("closeAddForm", "click", hideForms);
+  safeAddEventListener("closeFilterForm", "click", hideForms);
+  safeAddEventListener("clearFilters", "click", clearFilterForm);
+  
+  const sortSelect = document.getElementById("sortTransactions");
+  if (sortSelect) {
+    sortSelect.addEventListener("change", () => {
+      renderTransactions(transactions, categories, accounts, properties);
+    });
+  }
 
   // Quick action buttons
   document.querySelectorAll(".quick-action-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       toggleAddForm();
-      document.querySelector("#txForm [name='amount']").value = Math.abs(btn.dataset.amount);
-      document.querySelector("#txForm [name='type']").value =
-        btn.dataset.amount > 0 ? "income" : "expense";
+      const amountInput = document.querySelector("#txForm [name='amount']");
+      const typeSelect = document.querySelector("#txForm [name='type']");
+      if (amountInput && typeSelect) {
+        amountInput.value = Math.abs(btn.dataset.amount);
+        typeSelect.value = btn.dataset.amount > 0 ? "income" : "expense";
+        togglePropertyExpenseFields();
+      }
     });
   });
+
+  // Initialize property expense toggle
+  togglePropertyExpenseFields();
 
   setTimeout(() => mainContent.classList.remove("page-transition"), 300);
 }
 
 // ============================================================================
-// Category Linking
+// Helper: Safe Event Listener
+// ============================================================================
+function safeAddEventListener(id, event, handler) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.addEventListener(event, handler);
+  } else {
+    console.warn(`[TX] Element #${id} not found for event ${event}`);
+  }
+}
+
+// ============================================================================
+// Category Linking (FIXED)
 // ============================================================================
 function setupCategoryLinking(categories, subCats) {
   const mainSelect = document.getElementById("mainCategory");
   const subSelect = document.getElementById("subCategory");
-  const filterMain = document.querySelector("#filterForm [name='mainCategoryId']");
-  const filterSub = document.querySelector("#filterForm [name='subCategoryId']");
+  const filterMain = document.querySelector("#filterForm [name='mainCategory']");
+  const filterSub = document.querySelector("#filterForm [name='subCategory']");
 
-  // 🔥 Safety check — prevents the crash that destroyed your Import button
-  if (!mainSelect || !subSelect || !filterMain || !filterSub) {
-    console.warn("[TX] Category linking skipped — missing elements:", {
-      mainSelect, subSelect, filterMain, filterSub
-    });
+  // 🔥 FIXED: Added comprehensive safety checks
+  const missingElements = [];
+  if (!mainSelect) missingElements.push("mainCategory");
+  if (!subSelect) missingElements.push("subCategory");
+  if (!filterMain) missingElements.push("filterForm [name='mainCategory']");
+  if (!filterSub) missingElements.push("filterForm [name='subCategory']");
+
+  if (missingElements.length > 0) {
+    console.warn("[TX] Category linking skipped — missing elements:", missingElements);
     return;
   }
 
@@ -159,6 +318,7 @@ function setupCategoryLinking(categories, subCats) {
   mainSelect.addEventListener("change", () => updateSubs(mainSelect, subSelect));
   filterMain.addEventListener("change", () => updateSubs(filterMain, filterSub));
 
+  // Initial update
   updateSubs(mainSelect, subSelect);
   updateSubs(filterMain, filterSub);
 
@@ -166,11 +326,16 @@ function setupCategoryLinking(categories, subCats) {
 }
 
 // ============================================================================
-// Form Handlers
+// Form Handlers (FIXED with safety checks)
 // ============================================================================
 function setupFormHandlers(categories, accounts, properties) {
   const txForm = document.getElementById("txForm");
   const filterForm = document.getElementById("filterForm");
+
+  if (!txForm) {
+    console.warn("[TX] Transaction form not found");
+    return;
+  }
 
   txForm.addEventListener("submit", async e => {
     e.preventDefault();
@@ -202,20 +367,33 @@ function setupFormHandlers(categories, accounts, properties) {
       tx.notes = txForm.expenseNotes.value;
     }
 
-    if (txForm.dataset.id) {
-      await updateItem(STORE_NAMES.transactions, tx);
-    } else {
-      await addItem(STORE_NAMES.transactions, tx);
+    try {
+      if (txForm.dataset.id) {
+        await updateItem(STORE_NAMES.transactions, tx);
+      } else {
+        await addItem(STORE_NAMES.transactions, tx);
+      }
+
+      // Sync property expenses if needed
+      if (isProp) {
+        await syncToExpenses(tx);
+      }
+
+      hideForms();
+      initTransactionsUI();
+    } catch (error) {
+      console.error("[TX] Failed to save transaction:", error);
+      alert("Failed to save transaction. Please try again.");
     }
-
-    hideForms();
-    initTransactionsUI();
   });
 
-  filterForm.addEventListener("submit", e => {
-    e.preventDefault();
-    const filters = Object.fromEntries(new FormData(filterForm));
-  });
+  if (filterForm) {
+    filterForm.addEventListener("submit", e => {
+      e.preventDefault();
+      // Apply filters logic here
+      console.log("Filter form submitted");
+    });
+  }
 }
 
 // ============================================================================
@@ -223,7 +401,13 @@ function setupFormHandlers(categories, accounts, properties) {
 // ============================================================================
 function renderTransactions(transactions, categories, accounts, properties) {
   const list = document.getElementById("txList");
-  const sort = document.getElementById("sortTransactions").value;
+  if (!list) {
+    console.warn("[TX] txList element not found");
+    return;
+  }
+
+  const sortSelect = document.getElementById("sortTransactions");
+  const sort = sortSelect ? sortSelect.value : "date-desc";
 
   let txs = [...transactions];
 
@@ -233,7 +417,7 @@ function renderTransactions(transactions, categories, accounts, properties) {
   if (sort === "amount-asc") txs.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount));
 
   if (txs.length === 0) {
-    list.innerHTML = `<p>No transactions found.</p>`;
+    list.innerHTML = `<div class="empty-state">No transactions found. Add your first transaction!</div>`;
     return;
   }
 
@@ -252,7 +436,6 @@ function renderTransactions(transactions, categories, accounts, properties) {
             <span>${formatDate(date)}</span>
             <span class="${total >= 0 ? "positive" : "negative"}">$${Math.abs(total).toFixed(2)}</span>
           </div>
-
           ${dayTxs.map(t => renderTransactionCard(t, categories, accounts, properties)).join("")}
         </div>
       `;
@@ -273,10 +456,10 @@ function renderTransactionCard(tx, categories, accounts, properties) {
       <div class="transaction-main">
         <div class="transaction-icon">${category?.icon || (isIncome ? "💰" : "💸")}</div>
         <div class="transaction-details">
-          <div class="transaction-title">${category?.name}</div>
+          <div class="transaction-title">${category?.name || "Uncategorized"}</div>
           <div class="transaction-meta">
-            <span>${account?.name}</span>
-            ${tx.isPropertyExpense ? `<span class="property-tag">🏠 ${property?.name}</span>` : ""}
+            <span>${account?.name || "Unknown Account"}</span>
+            ${tx.isPropertyExpense && property ? `<span class="property-tag">🏠 ${property.name}</span>` : ""}
           </div>
           ${tx.description ? `<div class="transaction-description">${tx.description}</div>` : ""}
         </div>
@@ -285,8 +468,8 @@ function renderTransactionCard(tx, categories, accounts, properties) {
         </div>
       </div>
       <div class="transaction-actions">
-        <button class="edit-btn" data-id="${tx.id}">✏️</button>
-        <button class="delete-btn" data-id="${tx.id}">🗑️</button>
+        <button class="edit-btn" data-id="${tx.id}" title="Edit">✏️</button>
+        <button class="delete-btn" data-id="${tx.id}" title="Delete">🗑️</button>
       </div>
     </div>
   `;
@@ -299,15 +482,22 @@ function attachTxEvents(transactions, categories, accounts, properties) {
   document.querySelectorAll(".edit-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const tx = transactions.find(t => t.id === btn.dataset.id);
-      loadTransactionIntoForm(tx, categories, properties);
+      if (tx) {
+        loadTransactionIntoForm(tx, categories, properties);
+      }
     });
   });
 
   document.querySelectorAll(".delete-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (confirm("Delete this transaction?")) {
-        await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
-        initTransactionsUI();
+        try {
+          await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
+          initTransactionsUI();
+        } catch (error) {
+          console.error("[TX] Failed to delete transaction:", error);
+          alert("Failed to delete transaction. Please try again.");
+        }
       }
     });
   });
@@ -315,26 +505,55 @@ function attachTxEvents(transactions, categories, accounts, properties) {
 
 function loadTransactionIntoForm(tx, categories, properties) {
   const form = document.getElementById("txForm");
+  if (!form) return;
+
   form.dataset.id = tx.id;
 
   form.type.value = tx.amount > 0 ? "income" : "expense";
   form.amount.value = Math.abs(tx.amount);
   form.date.value = tx.date;
-  form.accountId.value = tx.accountId;
-  form.description.value = tx.description;
+  form.accountId.value = tx.accountId || "";
+  form.description.value = tx.description || "";
 
-  document.getElementById("mainCategory").value = tx.categoryId;
+  // Set category
+  const mainCat = document.getElementById("mainCategory");
+  const subCat = document.getElementById("subCategory");
+  if (tx.categoryId) {
+    const category = categories.find(c => c.id === tx.categoryId);
+    if (category) {
+      if (category.parentId) {
+        // It's a subcategory
+        mainCat.value = category.parentId;
+        setTimeout(() => {
+          subCat.value = tx.categoryId;
+        }, 100);
+      } else {
+        // It's a main category
+        mainCat.value = tx.categoryId;
+        subCat.value = "";
+      }
+    }
+  }
 
+  // Property expense fields
+  const isPropertyExpense = document.getElementById("isPropertyExpense");
+  const propertyExpenseSection = document.getElementById("propertyExpenseSection");
+  const propertyExpenseFields = document.getElementById("propertyExpenseFields");
+  
   if (tx.isPropertyExpense) {
-    document.getElementById("isPropertyExpense").checked = true;
-    document.getElementById("propertyExpenseSection").style.display = "block";
-    document.getElementById("propertyExpenseFields").style.display = "block";
-
-    form.propertyId.value = tx.propertyId;
-    form.expenseCategory.value = tx.expenseCategory;
-    form.expenseStatus.value = tx.expenseStatus;
-    form.receiptUrl.value = tx.receiptUrl;
-    form.expenseNotes.value = tx.notes;
+    isPropertyExpense.checked = true;
+    propertyExpenseSection.style.display = "block";
+    propertyExpenseFields.style.display = "block";
+    
+    form.propertyId.value = tx.propertyId || "";
+    form.expenseCategory.value = tx.expenseCategory || "";
+    form.expenseStatus.value = tx.expenseStatus || "Paid";
+    form.receiptUrl.value = tx.receiptUrl || "";
+    form.expenseNotes.value = tx.notes || "";
+  } else {
+    isPropertyExpense.checked = false;
+    propertyExpenseSection.style.display = "none";
+    propertyExpenseFields.style.display = "none";
   }
 
   toggleAddForm();
@@ -344,36 +563,89 @@ function loadTransactionIntoForm(tx, categories, properties) {
 // UI helpers
 // ============================================================================
 function toggleAddForm() {
-  document.getElementById("addTxForm").style.display =
-    document.getElementById("addTxForm").style.display === "none"
-      ? "block"
-      : "none";
-  document.getElementById("filterTxForm").style.display = "none";
+  const addForm = document.getElementById("addTxForm");
+  const filterForm = document.getElementById("filterTxForm");
+  
+  if (addForm && filterForm) {
+    addForm.style.display = addForm.style.display === "none" ? "block" : "none";
+    filterForm.style.display = "none";
+  }
 }
 
 function toggleFilterForm() {
-  document.getElementById("filterTxForm").style.display =
-    document.getElementById("filterTxForm").style.display === "none"
-      ? "block"
-      : "none";
-  document.getElementById("addTxForm").style.display = "none";
+  const addForm = document.getElementById("addTxForm");
+  const filterForm = document.getElementById("filterTxForm");
+  
+  if (addForm && filterForm) {
+    filterForm.style.display = filterForm.style.display === "none" ? "block" : "none";
+    addForm.style.display = "none";
+  }
 }
 
 function hideForms() {
-  document.getElementById("addTxForm").style.display = "none";
-  document.getElementById("filterTxForm").style.display = "none";
+  const addForm = document.getElementById("addTxForm");
+  const filterForm = document.getElementById("filterTxForm");
+  
+  if (addForm) addForm.style.display = "none";
+  if (filterForm) filterForm.style.display = "none";
 }
 
 function clearFilterForm() {
-  document.getElementById("filterForm").reset();
-  initTransactionsUI();
+  const filterForm = document.getElementById("filterForm");
+  if (filterForm) {
+    filterForm.reset();
+    initTransactionsUI();
+  }
+}
+
+// ============================================================================
+// Property Expense Toggle Functions
+// ============================================================================
+function togglePropertyExpenseFields() {
+  const typeSelect = document.querySelector("[name='type']");
+  const section = document.getElementById("propertyExpenseSection");
+  
+  if (typeSelect && section) {
+    section.style.display = typeSelect.value === "expense" ? "block" : "none";
+    
+    if (typeSelect.value !== "expense") {
+      const isPropertyCheckbox = document.getElementById("isPropertyExpense");
+      const propertyFields = document.getElementById("propertyExpenseFields");
+      
+      if (isPropertyCheckbox) isPropertyCheckbox.checked = false;
+      if (propertyFields) propertyFields.style.display = "none";
+    }
+  }
+}
+
+function togglePropertyExpenseCheckbox() {
+  const checkbox = document.getElementById("isPropertyExpense");
+  const propertyFields = document.getElementById("propertyExpenseFields");
+  
+  if (checkbox && propertyFields) {
+    propertyFields.style.display = checkbox.checked ? "block" : "none";
+  }
+}
+
+// Make functions available globally for inline onclick handlers
+window.togglePropertyExpenseFields = togglePropertyExpenseFields;
+window.togglePropertyExpenseCheckbox = togglePropertyExpenseCheckbox;
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+function formatDate(date) {
+  try {
+    const d = new Date(date);
+    return d.toLocaleDateString("en-AU", { weekday: "short", month: "short", day: "numeric" });
+  } catch (e) {
+    return date;
+  }
 }
 
 // ============================================================================
 // 🏠 SYNC: Push Property-Related Transactions → Expenses Store
 // ============================================================================
-
-// Create or update an expense entry based on a transaction
 export async function syncToExpenses(transaction) {
   try {
     const expenses = await getAllItems(STORE_NAMES.expenses).catch(() => []);
@@ -412,11 +684,9 @@ export async function syncToExpenses(transaction) {
   }
 }
 
-
 // ============================================================================
 // 🔄 SYNC ALL: Ensure all property expenses appear in Expenses page
 // ============================================================================
-
 export async function syncAllPropertyExpenses() {
   try {
     const [transactions, expenses] = await Promise.all([
@@ -467,24 +737,4 @@ export async function syncAllPropertyExpenses() {
       message: "Sync failed due to an unexpected error."
     };
   }
-}
-
-
-function togglePropertyExpenseFields() {
-  const type = document.querySelector("[name='type']").value;
-  const section = document.getElementById("propertyExpenseSection");
-
-  section.style.display = type === "expense" ? "block" : "none";
-
-  if (type !== "expense") {
-    document.getElementById("isPropertyExpense").checked = false;
-    document.getElementById("propertyExpenseFields").style.display = "none";
-  }
-}
-
-window.togglePropertyExpenseFields = togglePropertyExpenseFields;
-
-function formatDate(date) {
-  const d = new Date(date);
-  return d.toLocaleDateString("en-AU", { weekday: "short", month: "short", day: "numeric" });
 }
