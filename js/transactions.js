@@ -286,6 +286,44 @@ export async function initTransactionsUI() {
   togglePropertyExpenseFields();
 
   setTimeout(() => mainContent.classList.remove("page-transition"), 300);
+
+  // ========================================================================
+// ✔ FIX: Initialize Import Modal
+// ========================================================================
+setTimeout(() => {
+  console.log("[IMPORT] initImportModal() invoked AFTER render");
+  
+  // Check if button exists before initializing
+  const importBtn = document.getElementById("btnImportTx");
+  console.log("[IMPORT] btnImportTx element:", importBtn);
+  
+  if (importBtn) {
+    console.log("[IMPORT] Button found, setting up click handler manually...");
+    
+    // First, manually add a click handler to test
+    importBtn.addEventListener("click", () => {
+      console.log("[IMPORT] Manual click handler triggered");
+      alert("Import button clicked! If modal doesn't open, check initImportModal function.");
+    });
+    
+    // Then try to initialize the modal
+    try {
+      initImportModal({
+        accounts,
+        categories,
+        onImported: async (savedCount) => {
+          console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
+          await initTransactionsUI(); // reload transactions UI
+        }
+      });
+      console.log("[IMPORT] initImportModal called successfully");
+    } catch (error) {
+      console.error("[IMPORT] Error calling initImportModal:", error);
+    }
+  } else {
+    console.warn("[IMPORT] btnImportTx not found in DOM");
+  }
+}, 100);
 }
 
 // ============================================================================
