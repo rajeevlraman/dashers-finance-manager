@@ -224,57 +224,78 @@ function formatHeader(header) {
 
 async function handleSaveImport() {
   console.log("[MODAL] handleSaveImport called");
-  
+
   const saveBtn = document.getElementById("saveImport");
   if (!saveBtn) {
     console.error("[MODAL] Save button not found");
     return;
   }
-  
+
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving...";
-  
+
   try {
     const transactions = window._importData?.pendingTransactions;
-    
+
     if (!transactions || transactions.length === 0) {
       alert("❌ No transactions to save!");
       saveBtn.disabled = false;
       saveBtn.textContent = "Save Transactions";
       return;
     }
-    
-    console.log("[MODAL] Saving", transactions.length, "transactions");
-    
 
+    const selectedAccountId = document.getElementById("importAccount").value;
 
-    
-    // Save transactions
-    const savedCount = await saveImportedTransactions(transactions);
-    
+    if (!selectedAccountId) {
+      alert("⚠️ Please select an account!");
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save Transactions";
+      return;
+    }
+
+    console.log("[MODAL] Preparing", transactions.length, "transactions for saving");
+
+    // Normalise transactions before saving
+    const normalisedTx = transactions.map(tx => ({
+      ...tx,
+      id: crypto.randomUUID(),
+      accountId: selectedAccountId,
+      categoryId: tx.categoryId ?? null,   // Keep null instead of undefined
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }));
+
+    console.log("[MODAL] Normalised transactions:", normalisedTx);
+
+    // ⛔️ FIXED: ONLY ONE SAVE CALL
+    const savedCount = await saveImportedTransactions(normalisedTx);
+
     if (savedCount > 0) {
+      console.log(`[MODAL] ${savedCount} transactions saved successfully`);
       alert(`✅ Successfully saved ${savedCount} transactions!`);
-      
-      // Call callback if provided
+
+      // Trigger callback to refresh UI
       if (window._importData?.onImported) {
         console.log("[MODAL] Calling import callback");
         await window._importData.onImported(savedCount);
       }
-      
-      // Close modal
+
       hideImportModal();
     } else {
+      console.warn("[MODAL] No transactions saved");
       alert("⚠️ No transactions were saved. Please check the data format.");
     }
-    
+
   } catch (error) {
     console.error("[MODAL] Save error:", error);
     alert("❌ Error saving transactions: " + error.message);
+
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = "Save Transactions";
   }
 }
+
 
 // Helper function to get bank options
 function getBankOptions() {
