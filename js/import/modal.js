@@ -1,4 +1,5 @@
-// modal.js - Fixed version with proper function order
+// modal.js - Clean, working version
+
 import { parseCSVFile, parseStatementText } from './parser.js';
 import { saveImportedTransactions } from './saver.js';
 import { BANK_FORMATS } from './bankFormats.js';
@@ -6,16 +7,8 @@ import { BANK_FORMATS } from './bankFormats.js';
 let modalInitialized = false;
 
 // ============================================================================
-// Helper Functions (define these FIRST)
+// Helper Functions
 // ============================================================================
-function hideImportModal() {
-  const modal = document.getElementById("importModal");
-  if (modal) {
-    modal.style.display = "none";
-    document.body.style.overflow = "auto";
-    console.log("[MODAL] Modal hidden");
-  }
-}
 
 function hideImportModal() {
   const modal = document.getElementById("importModal");
@@ -26,7 +19,7 @@ function hideImportModal() {
   }
 }
 
-async function handleParseData() {  // ADDED 'async' keyword here
+async function handleParseData() {
   console.log("[MODAL] handleParseData called");
   
   const parseBtn = document.getElementById("parseData");
@@ -341,6 +334,7 @@ function getBankOptions() {
 // ============================================================================
 // Modal Setup Functions
 // ============================================================================
+
 function setupModalEvents() {
   console.log("[MODAL] Setting up modal events");
   
@@ -522,6 +516,7 @@ function createImportModal() {
 // ============================================================================
 // Public Functions
 // ============================================================================
+
 export function initImportModal({ accounts, categories, onImported }) {
   console.log("[MODAL] initImportModal called");
   
