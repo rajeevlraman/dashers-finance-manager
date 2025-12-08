@@ -17,7 +17,16 @@ function hideImportModal() {
   }
 }
 
-function handleParseData() {
+function hideImportModal() {
+  const modal = document.getElementById("importModal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+    console.log("[MODAL] Modal hidden");
+  }
+}
+
+async function handleParseData() {  // ADDED 'async' keyword here
   console.log("[MODAL] handleParseData called");
   
   const parseBtn = document.getElementById("parseData");
