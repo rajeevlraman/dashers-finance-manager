@@ -1,6 +1,7 @@
-// modal.js - Import Modal functionality
+// modal.js - Complete Import Modal functionality
 import { parseCSVFile, parseStatementText } from './parser.js';
 import { saveImportedTransactions } from './saver.js';
+import { getBankOptions, BANK_FORMATS } from './bankFormats.js';
 
 let modalInitialized = false;
 
@@ -70,11 +71,7 @@ function createImportModal() {
             <div style="margin-bottom: 20px;">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Bank Format</label>
               <select id="csvFormat" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 8px; background: white; cursor: pointer;">
-                <option value="anz">ANZ Bank</option>
-                <option value="commbank">Commonwealth Bank</option>
-                <option value="nab">NAB</option>
-                <option value="westpac">Westpac</option>
-                <option value="generic">Generic CSV</option>
+                <option value="">-- Loading formats --</option>
               </select>
             </div>
           </div>
@@ -88,10 +85,7 @@ function createImportModal() {
             <div style="margin-bottom: 20px;">
               <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Bank</label>
               <select id="textFormat" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 8px; background: white; cursor: pointer;">
-                <option value="anz">ANZ Bank</option>
-                <option value="commbank">Commonwealth Bank</option>
-                <option value="nab">NAB</option>
-                <option value="westpac">Westpac</option>
+                <option value="">-- Loading formats --</option>
               </select>
             </div>
           </div>
@@ -101,7 +95,7 @@ function createImportModal() {
             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #111827;">Default Account for Import</label>
             <select id="importAccount" style="width: 100%; padding: 12px; border: 2px solid #9ca3af; border-radius: 8px; background: white; font-weight: 500;">
               <option value="">-- Select Account --</option>
-              <!-- Accounts will be populated -->
+              <!-- Accounts will be populated dynamically -->
             </select>
             <small style="display: block; margin-top: 8px; color: #6b7280;">All imported transactions will be assigned to this account</small>
           </div>
@@ -129,7 +123,7 @@ function createImportModal() {
         <div class="modal-footer" style="padding: 20px 24px; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; gap: 12px; justify-content: flex-end;">
           <button id="parseData" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s;">Parse Data</button>
           <button id="saveImport" style="padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s; display: none;">💾 Save Transactions</button>
-          <button id="cancelImport" style="padding: 12px 24px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s;">Cancel</button>
+          <button id="cancelImport" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s;">Cancel</button>
         </div>
         
       </div>
@@ -153,15 +147,22 @@ function setupModalEvents() {
       // Update tab buttons
       document.querySelectorAll('.tab-btn').forEach(b => {
         b.style.background = '#6b7280';
+        b.classList.remove('active');
       });
       this.style.background = '#3b82f6';
+      this.classList.add('active');
       
       // Show corresponding tab content
       const tabId = this.getAttribute('data-tab') + 'Tab';
       document.querySelectorAll('.tab-content').forEach(content => {
         content.style.display = 'none';
+        content.classList.remove('active');
       });
-      document.getElementById(tabId).style.display = 'block';
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) {
+        targetTab.style.display = 'block';
+        targetTab.classList.add('active');
+      }
     });
   });
   
@@ -225,14 +226,41 @@ export function showImportModal({ accounts, categories, onImported }) {
     return;
   }
   
+  // Get bank options from bankFormats.js
+  const bankOptions = getBankOptions();
+  console.log("[MODAL] Bank options loaded:", bankOptions.length, "formats");
+  
+  // Populate bank format dropdowns with dynamic options from bankFormats.js
+  const csvFormatSelect = document.getElementById("csvFormat");
+  const textFormatSelect = document.getElementById("textFormat");
+  
+  if (csvFormatSelect && bankOptions.length > 0) {
+    csvFormatSelect.innerHTML = bankOptions.map(bank => 
+      `<option value="${bank.value}" title="${bank.description}">${bank.name}</option>`
+    ).join('');
+    console.log("[MODAL] CSV format dropdown populated");
+  }
+  
+  if (textFormatSelect && bankOptions.length > 0) {
+    // Text import might not support generic format
+    const textFormats = bankOptions.filter(bank => bank.value !== 'generic');
+    textFormatSelect.innerHTML = textFormats.map(bank => 
+      `<option value="${bank.value}" title="${bank.description}">${bank.name}</option>`
+    ).join('');
+    console.log("[MODAL] Text format dropdown populated");
+  }
+  
   // Populate account dropdown
   const accountSelect = document.getElementById("importAccount");
   console.log("[MODAL] Account select found:", !!accountSelect);
   
-  if (accountSelect && accounts) {
+  if (accountSelect && accounts && accounts.length > 0) {
     console.log("[MODAL] Populating accounts dropdown with", accounts.length, "accounts");
     accountSelect.innerHTML = '<option value="">-- Select Account --</option>' +
       accounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
+  } else if (accountSelect) {
+    accountSelect.innerHTML = '<option value="">No accounts available</option>';
+    console.warn("[MODAL] No accounts available for import");
   }
   
   // Reset form
@@ -247,7 +275,8 @@ export function showImportModal({ accounts, categories, onImported }) {
     accounts,
     categories,
     onImported,
-    pendingTransactions: null
+    pendingTransactions: null,
+    bankOptions
   };
   
   // Show modal
@@ -257,7 +286,10 @@ export function showImportModal({ accounts, categories, onImported }) {
   // Focus on first input
   setTimeout(() => {
     const firstInput = document.querySelector('#importModal input, #importModal select, #importModal textarea');
-    if (firstInput) firstInput.focus();
+    if (firstInput) {
+      firstInput.focus();
+      console.log("[MODAL] Focus set on first input");
+    }
   }, 100);
   
   console.log("[MODAL] Modal shown successfully");
@@ -276,6 +308,13 @@ async function handleParseData() {
   console.log("[MODAL] handleParseData called");
   
   const parseBtn = document.getElementById("parseData");
+  const saveBtn = document.getElementById("saveImport");
+  
+  if (!parseBtn || !saveBtn) {
+    console.error("[MODAL] Parse or Save button not found");
+    return;
+  }
+  
   parseBtn.disabled = true;
   parseBtn.textContent = "Parsing...";
   
@@ -284,14 +323,14 @@ async function handleParseData() {
     const accountId = document.getElementById("importAccount").value;
     
     if (!accountId) {
-      alert("Please select an account first!");
+      alert("⚠️ Please select an account first!");
       parseBtn.disabled = false;
       parseBtn.textContent = "Parse Data";
       return;
     }
     
     // Check which tab is active
-    const isCSVTab = document.getElementById("csvTab").style.display !== "none";
+    const isCSVTab = document.getElementById("csvTab").classList.contains("active");
     
     if (isCSVTab) {
       // Parse CSV
@@ -299,29 +338,53 @@ async function handleParseData() {
       const format = document.getElementById("csvFormat").value;
       
       if (!fileInput.files.length) {
-        alert("Please select a CSV file first!");
+        alert("⚠️ Please select a CSV file first!");
         parseBtn.disabled = false;
         parseBtn.textContent = "Parse Data";
         return;
       }
       
+      if (!format) {
+        alert("⚠️ Please select a bank format!");
+        parseBtn.disabled = false;
+        parseBtn.textContent = "Parse Data";
+        return;
+      }
+      
+      console.log("[MODAL] Parsing CSV file:", fileInput.files[0].name, "with format:", format);
       transactions = await parseCSVFile(fileInput.files[0], format);
+      
     } else {
       // Parse text
       const text = document.getElementById("statementText").value;
       const format = document.getElementById("textFormat").value;
       
       if (!text.trim()) {
-        alert("Please enter statement text!");
+        alert("⚠️ Please enter statement text!");
         parseBtn.disabled = false;
         parseBtn.textContent = "Parse Data";
         return;
       }
       
+      if (!format) {
+        alert("⚠️ Please select a bank format!");
+        parseBtn.disabled = false;
+        parseBtn.textContent = "Parse Data";
+        return;
+      }
+      
+      console.log("[MODAL] Parsing text with format:", format);
       transactions = await parseStatementText(text, format);
     }
     
-    // Add accountId to transactions
+    if (!transactions || transactions.length === 0) {
+      alert("❌ No transactions found in the data!");
+      parseBtn.disabled = false;
+      parseBtn.textContent = "Parse Data";
+      return;
+    }
+    
+    // Add accountId to all transactions
     transactions = transactions.map(tx => ({
       ...tx,
       accountId: accountId
@@ -333,9 +396,11 @@ async function handleParseData() {
     // Show preview
     showImportPreview(transactions);
     
+    console.log("[MODAL] Successfully parsed", transactions.length, "transactions");
+    
   } catch (error) {
     console.error("[MODAL] Parse error:", error);
-    alert("Error parsing data: " + error.message);
+    alert("❌ Error parsing data: " + error.message);
   } finally {
     parseBtn.disabled = false;
     parseBtn.textContent = "Parse Data";
@@ -350,6 +415,11 @@ function showImportPreview(transactions) {
   const rowsDiv = document.getElementById("previewRows");
   const statsDiv = document.getElementById("previewStats");
   
+  if (!previewDiv || !headersDiv || !rowsDiv || !statsDiv) {
+    console.error("[MODAL] Preview elements not found");
+    return;
+  }
+  
   if (transactions.length === 0) {
     alert("No transactions found in the data!");
     return;
@@ -358,12 +428,13 @@ function showImportPreview(transactions) {
   // Show preview section
   previewDiv.style.display = "block";
   
-  // Create table headers from first transaction
+  // Create table headers from first transaction keys
   const firstTx = transactions[0];
   const headers = Object.keys(firstTx);
+  
   headersDiv.innerHTML = `
     <tr>
-      ${headers.map(h => `<th style="padding: 8px; border: 1px solid #ddd;">${h}</th>`).join('')}
+      ${headers.map(h => `<th style="padding: 12px; border: 1px solid #bae6fd; text-align: left; font-weight: 600;">${formatHeader(h)}</th>`).join('')}
     </tr>
   `;
   
@@ -372,32 +443,79 @@ function showImportPreview(transactions) {
   rowsDiv.innerHTML = previewRows.map(tx => {
     return `
       <tr>
-        ${headers.map(h => `<td style="padding: 8px; border: 1px solid #ddd;">${tx[h] || ''}</td>`).join('')}
+        ${headers.map(h => {
+          let value = tx[h] || '';
+          if (h === 'amount' || h === 'Amount') {
+            const num = parseFloat(value);
+            value = num.toFixed(2);
+            if (num < 0) {
+              value = `<span style="color: #dc2626;">-$${Math.abs(num).toFixed(2)}</span>`;
+            } else if (num > 0) {
+              value = `<span style="color: #059669;">+$${num.toFixed(2)}</span>`;
+            }
+          }
+          return `<td style="padding: 10px 12px; border: 1px solid #e5e7eb; vertical-align: top;">${value}</td>`;
+        }).join('')}
       </tr>
     `;
   }).join('');
   
   // Calculate stats
   const totalCount = transactions.length;
-  const incomeCount = transactions.filter(t => t.amount > 0).length;
-  const expenseCount = transactions.filter(t => t.amount < 0).length;
+  const incomeCount = transactions.filter(t => {
+    const amount = parseFloat(t.amount) || 0;
+    return amount > 0;
+  }).length;
+  const expenseCount = transactions.filter(t => {
+    const amount = parseFloat(t.amount) || 0;
+    return amount < 0;
+  }).length;
   const totalAmount = transactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
   
   statsDiv.innerHTML = `
-    <div>Total: ${totalCount} transactions</div>
-    <div>Income: ${incomeCount}, Expenses: ${expenseCount}</div>
-    <div>Net total: $${totalAmount.toFixed(2)}</div>
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Total Transactions</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: #0369a1;">${totalCount}</div>
+    </div>
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Income</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: #059669;">${incomeCount}</div>
+    </div>
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Expenses</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: #dc2626;">${expenseCount}</div>
+    </div>
+    <div style="padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #bae6fd;">
+      <div style="font-size: 0.875rem; color: #6b7280;">Net Total</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: ${totalAmount >= 0 ? '#059669' : '#dc2626'};">$${Math.abs(totalAmount).toFixed(2)}</div>
+    </div>
   `;
   
-  // Show save button
+  // Show save button and hide parse button
   document.getElementById("saveImport").style.display = "inline-block";
   document.getElementById("parseData").style.display = "none";
+  
+  console.log("[MODAL] Preview displayed");
+}
+
+function formatHeader(header) {
+  // Convert camelCase or snake_case to Title Case
+  return header
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/_/g, ' ')
+    .replace(/^./, str => str.toUpperCase())
+    .trim();
 }
 
 async function handleSaveImport() {
   console.log("[MODAL] handleSaveImport called");
   
   const saveBtn = document.getElementById("saveImport");
+  if (!saveBtn) {
+    console.error("[MODAL] Save button not found");
+    return;
+  }
+  
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving...";
   
@@ -405,7 +523,7 @@ async function handleSaveImport() {
     const transactions = window._importData?.pendingTransactions;
     
     if (!transactions || transactions.length === 0) {
-      alert("No transactions to save!");
+      alert("❌ No transactions to save!");
       saveBtn.disabled = false;
       saveBtn.textContent = "Save Transactions";
       return;
@@ -416,16 +534,20 @@ async function handleSaveImport() {
     // Save transactions
     const savedCount = await saveImportedTransactions(transactions);
     
-    alert(`✅ Successfully saved ${savedCount} transactions!`);
-    
-    // Call callback if provided
-    if (window._importData?.onImported) {
-      console.log("[MODAL] Calling import callback");
-      await window._importData.onImported(savedCount);
+    if (savedCount > 0) {
+      alert(`✅ Successfully saved ${savedCount} transactions!`);
+      
+      // Call callback if provided
+      if (window._importData?.onImported) {
+        console.log("[MODAL] Calling import callback");
+        await window._importData.onImported(savedCount);
+      }
+      
+      // Close modal
+      hideImportModal();
+    } else {
+      alert("⚠️ No transactions were saved. Please check the data format.");
     }
-    
-    // Close modal
-    hideImportModal();
     
   } catch (error) {
     console.error("[MODAL] Save error:", error);
@@ -435,3 +557,6 @@ async function handleSaveImport() {
     saveBtn.textContent = "Save Transactions";
   }
 }
+
+// Make hideImportModal available globally if needed
+window.hideImportModal = hideImportModal;
