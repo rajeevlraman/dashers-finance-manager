@@ -140,10 +140,19 @@ function setupCategoryLinking(categories, subCats) {
   const filterMain = document.querySelector("#filterForm [name='mainCategoryId']");
   const filterSub = document.querySelector("#filterForm [name='subCategoryId']");
 
+  // 🔥 Safety check — prevents the crash that destroyed your Import button
+  if (!mainSelect || !subSelect || !filterMain || !filterSub) {
+    console.warn("[TX] Category linking skipped — missing elements:", {
+      mainSelect, subSelect, filterMain, filterSub
+    });
+    return;
+  }
+
   function updateSubs(source, target) {
     const parentId = source.value;
     const subs = subCats.filter(s => s.parentId === parentId);
-    target.innerHTML = `<option value="">-- None --</option>` +
+    target.innerHTML =
+      `<option value="">-- None --</option>` +
       subs.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
   }
 
@@ -152,6 +161,8 @@ function setupCategoryLinking(categories, subCats) {
 
   updateSubs(mainSelect, subSelect);
   updateSubs(filterMain, filterSub);
+
+  console.log("[TX] Category linking initialized successfully");
 }
 
 // ============================================================================
