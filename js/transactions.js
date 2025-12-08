@@ -214,24 +214,35 @@ export async function initTransactionsUI() {
   // ========================================================================
   // ✔ FIX: Initialize Import Modal
   // ========================================================================
-  setTimeout(() => {
-    console.log("[IMPORT] initImportModal() invoked AFTER render");
-    
-    // Check if button exists before initializing
-    const importBtn = document.getElementById("btnImportTx");
-    if (importBtn) {
-      initImportModal({
-        accounts,
-        categories,
-        onImported: async (savedCount) => {
-          console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
-          await initTransactionsUI(); // reload transactions UI
-        }
-      });
-    } else {
-      console.warn("[IMPORT] btnImportTx not found in DOM");
+// ========================================================================
+// FIXED: Initialize Import Modal (robust, delayed, retried)
+// ========================================================================
+function safeInitImportModal() {
+  const importBtn = document.getElementById("btnImportTx");
+
+  console.log("[IMPORT] checking for btnImportTx →", importBtn);
+
+  if (!importBtn) {
+    console.warn("[IMPORT] btnImportTx not ready — retrying in 100ms");
+    setTimeout(safeInitImportModal, 100);
+    return;
+  }
+
+  console.log("[IMPORT] btnImportTx FOUND — initializing modal now");
+
+  initImportModal({
+    accounts,
+    categories,
+    onImported: async (savedCount) => {
+      console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
+      await initTransactionsUI();
     }
-  }, 100);
+  });
+}
+
+// 🔥 Invoke safe initializer AFTER HTML render
+setTimeout(safeInitImportModal, 50);
+
 
   // ========================================================================
   // UI + Event setup (WITH SAFETY CHECKS)
