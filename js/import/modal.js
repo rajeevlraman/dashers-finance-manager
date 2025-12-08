@@ -37,35 +37,41 @@ export function initImportModal({ accounts, categories, onImported }) {
 function createImportModal() {
   console.log("[MODAL] Creating modal HTML structure");
   
+  // Remove existing modal if it exists
+  const existingModal = document.getElementById("importModal");
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
   const modalHTML = `
-    <div id="importModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;">
-      <div class="modal-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);"></div>
-      <div class="modal-content" style="position: relative; background: white; border-radius: 8px; max-width: 700px; margin: 50px auto; padding: 0; z-index: 1001;">
+    <div id="importModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
+      <div class="modal-overlay" id="importModalOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);"></div>
+      <div class="modal-content" style="position: relative; background: white; border-radius: 12px; max-width: 800px; width: 90%; margin: 5vh auto; padding: 0; z-index: 10000; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
         
-        <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0;">📁 Import Transactions</h3>
-          <button id="closeImportModal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+        <div class="modal-header" style="padding: 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f9fafb;">
+          <h3 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #111827;">📁 Import Transactions</h3>
+          <button id="closeImportModal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 4px 8px; border-radius: 6px; line-height: 1;">&times;</button>
         </div>
         
-        <div class="modal-body" style="padding: 20px;">
+        <div class="modal-body" style="padding: 24px; overflow-y: auto; flex: 1;">
           
-          <div class="tab-buttons" style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button class="tab-btn active" data-tab="csv" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">CSV File</button>
-            <button class="tab-btn" data-tab="text" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Text</button>
+          <div class="import-tabs" style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">
+            <button class="tab-btn active" data-tab="csv" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">CSV File</button>
+            <button class="tab-btn" data-tab="text" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">Text Import</button>
           </div>
           
           <!-- CSV Tab -->
-          <div id="csvTab" class="tab-content active" style="display: block;">
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Select CSV File</label>
-              <input type="file" id="csvFile" accept=".csv,.txt" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-              <small style="color: #666;">Supported: CSV, TSV, Excel export</small>
+          <div id="csvTab" class="tab-content active">
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Select CSV File</label>
+              <input type="file" id="csvFile" accept=".csv,.txt,.xlsx,.xls" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 8px; background: white; cursor: pointer; transition: border-color 0.2s;">
+              <small style="display: block; margin-top: 6px; color: #6b7280; font-size: 0.875rem;">Supported: CSV, TXT, Excel files</small>
             </div>
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Bank Format</label>
-              <select id="csvFormat" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Bank Format</label>
+              <select id="csvFormat" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 8px; background: white; cursor: pointer;">
                 <option value="anz">ANZ Bank</option>
-                <option value="commbank">CommBank</option>
+                <option value="commbank">Commonwealth Bank</option>
                 <option value="nab">NAB</option>
                 <option value="westpac">Westpac</option>
                 <option value="generic">Generic CSV</option>
@@ -75,15 +81,15 @@ function createImportModal() {
           
           <!-- Text Tab -->
           <div id="textTab" class="tab-content" style="display: none;">
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Paste Statement Text</label>
-              <textarea id="statementText" rows="6" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Paste your bank statement here..."></textarea>
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Paste Bank Statement Text</label>
+              <textarea id="statementText" rows="6" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-family: monospace; resize: vertical;" placeholder="Paste your bank statement text here..."></textarea>
             </div>
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Bank</label>
-              <select id="textFormat" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Bank</label>
+              <select id="textFormat" style="width: 100%; padding: 10px; border: 2px solid #d1d5db; border-radius: 8px; background: white; cursor: pointer;">
                 <option value="anz">ANZ Bank</option>
-                <option value="commbank">CommBank</option>
+                <option value="commbank">Commonwealth Bank</option>
                 <option value="nab">NAB</option>
                 <option value="westpac">Westpac</option>
               </select>
@@ -91,36 +97,39 @@ function createImportModal() {
           </div>
           
           <!-- Account Selection -->
-          <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Default Account</label>
-            <select id="importAccount" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-              <option value="">Select Account</option>
+          <div style="margin-bottom: 24px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #111827;">Default Account for Import</label>
+            <select id="importAccount" style="width: 100%; padding: 12px; border: 2px solid #9ca3af; border-radius: 8px; background: white; font-weight: 500;">
+              <option value="">-- Select Account --</option>
               <!-- Accounts will be populated -->
             </select>
+            <small style="display: block; margin-top: 8px; color: #6b7280;">All imported transactions will be assigned to this account</small>
           </div>
           
           <!-- Preview Area -->
-          <div id="importPreview" style="display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
-            <h4 style="margin-top: 0;">Preview</h4>
-            <div id="previewTable" style="overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead id="previewHeaders" style="background: #e9ecef;">
+          <div id="importPreview" style="display: none; margin-top: 24px; padding: 20px; background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 8px;">
+            <h4 style="margin-top: 0; margin-bottom: 16px; color: #0369a1; font-size: 1.125rem;">Preview (First 5 transactions)</h4>
+            <div id="previewTable" style="overflow-x: auto; margin-bottom: 16px;">
+              <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden;">
+                <thead id="previewHeaders" style="background: #e0f2fe;">
                   <!-- Headers will be populated -->
                 </thead>
-                <tbody id="previewRows">
+                <tbody id="previewRows" style="font-family: monospace; font-size: 0.875rem;">
                   <!-- Rows will be populated -->
                 </tbody>
               </table>
             </div>
-            <div id="previewStats" style="margin-top: 10px; font-weight: bold;"></div>
+            <div id="previewStats" style="display: flex; gap: 24px; font-weight: 500; color: #0c4a6e;">
+              <!-- Stats will be populated -->
+            </div>
           </div>
           
         </div>
         
-        <div class="modal-footer" style="padding: 20px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end;">
-          <button id="parseData" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Parse Data</button>
-          <button id="saveImport" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; display: none;">Save Transactions</button>
-          <button id="cancelImport" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+        <div class="modal-footer" style="padding: 20px 24px; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; gap: 12px; justify-content: flex-end;">
+          <button id="parseData" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s;">Parse Data</button>
+          <button id="saveImport" style="padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s; display: none;">💾 Save Transactions</button>
+          <button id="cancelImport" style="padding: 12px 24px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s;">Cancel</button>
         </div>
         
       </div>
@@ -143,11 +152,9 @@ function setupModalEvents() {
     btn.addEventListener('click', function() {
       // Update tab buttons
       document.querySelectorAll('.tab-btn').forEach(b => {
-        b.style.background = '#6c757d';
-        b.classList.remove('active');
+        b.style.background = '#6b7280';
       });
-      this.style.background = '#007bff';
-      this.classList.add('active');
+      this.style.background = '#3b82f6';
       
       // Show corresponding tab content
       const tabId = this.getAttribute('data-tab') + 'Tab';
@@ -159,30 +166,72 @@ function setupModalEvents() {
   });
   
   // Close modal events
-  document.getElementById('closeImportModal').addEventListener('click', hideImportModal);
-  document.getElementById('cancelImport').addEventListener('click', hideImportModal);
-  document.querySelector('.modal-overlay').addEventListener('click', hideImportModal);
+  const closeBtn = document.getElementById('closeImportModal');
+  const cancelBtn = document.getElementById('cancelImport');
+  const overlay = document.getElementById('importModalOverlay');
+  
+  if (closeBtn) closeBtn.addEventListener('click', hideImportModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideImportModal);
+  if (overlay) overlay.addEventListener('click', hideImportModal);
+  
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideImportModal();
+    }
+  });
   
   // Parse button
-  document.getElementById('parseData').addEventListener('click', handleParseData);
+  const parseBtn = document.getElementById('parseData');
+  if (parseBtn) {
+    parseBtn.addEventListener('click', handleParseData);
+  }
   
   // Save button
-  document.getElementById('saveImport').addEventListener('click', handleSaveImport);
+  const saveBtn = document.getElementById('saveImport');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', handleSaveImport);
+  }
+  
+  // Style file input on change
+  const fileInput = document.getElementById('csvFile');
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        this.style.borderColor = '#10b981';
+        this.style.backgroundColor = '#f0fdf4';
+      } else {
+        this.style.borderColor = '#d1d5db';
+        this.style.backgroundColor = 'white';
+      }
+    });
+  }
+  
+  console.log("[MODAL] All event listeners set up");
 }
 
 export function showImportModal({ accounts, categories, onImported }) {
-  console.log("[MODAL] showImportModal called");
+  console.log("[MODAL] showImportModal called with:", {
+    accountsCount: accounts?.length,
+    categoriesCount: categories?.length,
+    hasCallback: !!onImported
+  });
   
   const modal = document.getElementById("importModal");
+  console.log("[MODAL] Modal element found:", !!modal);
+  
   if (!modal) {
-    console.error("[MODAL] Modal not found!");
+    console.error("[MODAL] Modal not found in DOM!");
     return;
   }
   
   // Populate account dropdown
   const accountSelect = document.getElementById("importAccount");
+  console.log("[MODAL] Account select found:", !!accountSelect);
+  
   if (accountSelect && accounts) {
-    accountSelect.innerHTML = '<option value="">Select Account</option>' +
+    console.log("[MODAL] Populating accounts dropdown with", accounts.length, "accounts");
+    accountSelect.innerHTML = '<option value="">-- Select Account --</option>' +
       accounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
   }
   
@@ -205,7 +254,13 @@ export function showImportModal({ accounts, categories, onImported }) {
   modal.style.display = "block";
   document.body.style.overflow = "hidden";
   
-  console.log("[MODAL] Modal shown");
+  // Focus on first input
+  setTimeout(() => {
+    const firstInput = document.querySelector('#importModal input, #importModal select, #importModal textarea');
+    if (firstInput) firstInput.focus();
+  }, 100);
+  
+  console.log("[MODAL] Modal shown successfully");
 }
 
 function hideImportModal() {
