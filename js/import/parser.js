@@ -106,6 +106,27 @@ export async function parseCSVFile(file, format) {
     return transactions;
 }
 
+import { suggestCategoryForTransaction } from './categoryMapper.js';
+
+// Example: NAB CSV with a “Category” column from the bank
+function processImportedTransactions(parsedTxs, bankId, bankCategoryColumnName) {
+  return parsedTxs.map(tx => {
+    // bankCategory might be missing for some banks
+    const bankCategory = tx.bankCategory || null; // or pull from raw CSV if you keep it
+
+    const { categoryId, source } = suggestCategoryForTransaction(tx, bankCategory, {
+      bankId // e.g. 'nab'
+    });
+
+    return {
+      ...tx,
+      categoryId,
+      categorySource: source
+    };
+  });
+}
+
+
 /* -------------------------------------------------------------
    TEXT STATEMENT PARSER
 ------------------------------------------------------------- */

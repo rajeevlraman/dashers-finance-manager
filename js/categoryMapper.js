@@ -1,243 +1,422 @@
+// ============================================================================
 // categoryMapper.js
-// ------------------------------------------------------------
-// Smart category assignment for imported transactions.
-// - Normalises merchant description
-// - Tries merchantRules (brand-based)
-// - Falls back to bank category mapping
-// - Final fallback: Uncategorised
-// - Hybrid auto-create: if the SAME merchant appears >= 3 times,
-//   create a dedicated merchant category under a sensible parent.
-// ------------------------------------------------------------
+// Smart category engine for imported transactions
+// - Uses: merchant rules, bank category mappings, keyword matching
+// - Auto-learns merchant rules after repeated consistent matches
+// ============================================================================
 
-import { findMerchantRule } from './merchantRules.js';
-import { bankCategoryToCategoryId } from './bankCategoryMap.js';
+// Where we persist auto-learned merchant rules
+const LOCAL_STORAGE_KEY = 'dfm_category_rules_v1';
 
-// Use the same ID as in defaultCategories.js for uncategorised
-const FALLBACK_CATEGORY_ID = 'ms_uncategorised';
+// In-memory rule list
+let merchantRules = [];
 
-// Threshold for hybrid auto-create
-const MERCHANT_AUTOCREATE_THRESHOLD = 3;
+// Auto-learn threshold (how many consistent matches before we save a rule)
+const AUTO_LEARN_THRESHOLD = 3;
 
-// LocalStorage key for merchant occurrence stats
-const MERCHANT_STATS_KEY = 'dfm_merchant_counts_v1';
+// For counting repeated matches during a session
+// key = `${field}:${pattern}:${categoryId}`
+const pendingStats = {};
 
-// ------------------------------------------------------------
-// Merchant normalisation
-// ------------------------------------------------------------
-export function normalizeMerchant(raw) {
-  if (!raw) return '';
-
-  let text = String(raw).toUpperCase();
-
-  // Remove obvious date/time fragments like 05/12, 10:33, 2024, etc.
-  text = text.replace(/\b\d{1,2}[:/]\d{1,2}([:/]\d{2,4})?\b/g, ' ');
-
-  // Remove standalone years like 2023, 2024
-  text = text.replace(/\b20\d{2}\b/g, ' ');
-
-  // Remove booking / reference numbers (# or * or long digit sequences)
-  text = text.replace(/[#*][A-Z0-9]+/g, ' ');
-  text = text.replace(/\b\d{4,}\b/g, ' ');
-
-  // Collapse PAYPAL *XXXX → PAYPAL
-  text = text.replace(/\bPAYPAL[^ ]*/g, 'PAYPAL');
-
-  // Normalise safe variants
-  text = text.replace(/\bSAFEWAY\b/g, 'WOOLWORTHS');
-  text = text.replace(/\bCOLES EXPRESS\b/g, 'COLES');
-  text = text.replace(/\b7[\s-]*ELEVEN\b/g, '7-ELEVEN');
-
-  // Collapse multiple spaces and trim
-  text = text.replace(/\s+/g, ' ').trim();
-
-  return text;
-}
-
-// Nice display version for auto-created categories
-function toTitleCase(str) {
-  return str
+// ---------------------------------------------------------------------------
+// Normalisation helpers (must be consistent with parser.js behaviour)
+// ---------------------------------------------------------------------------
+function normaliseKey(str) {
+  return (str || '')
     .toLowerCase()
-    .split(' ')
-    .map(w => (w.length ? w[0].toUpperCase() + w.slice(1) : ''))
-    .join(' ');
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-// ------------------------------------------------------------
-// Merchant stats in localStorage (for hybrid auto-create)
-// ------------------------------------------------------------
-function loadMerchantStats() {
+// ---------------------------------------------------------------------------
+// LocalStorage load/save
+// ---------------------------------------------------------------------------
+function loadRulesFromStorage() {
   try {
-    const raw = localStorage.getItem(MERCHANT_STATS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(r => ({
+      pattern: r.pattern || '',
+      field: r.field || 'merchant',
+      categoryId: r.categoryId,
+      confidence: typeof r.confidence === 'number' ? r.confidence : 1,
+      hitCount: typeof r.hitCount === 'number' ? r.hitCount : 0,
+      lastUsed: r.lastUsed || null
+    })).filter(r => r.pattern && r.categoryId);
+  } catch (err) {
+    console.warn('[CategoryMapper] Failed to load rules from storage', err);
+    return [];
   }
 }
 
-function saveMerchantStats(stats) {
+function saveRulesToStorage() {
   try {
-    localStorage.setItem(MERCHANT_STATS_KEY, JSON.stringify(stats));
-  } catch {
-    // ignore storage errors
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merchantRules));
+  } catch (err) {
+    console.warn('[CategoryMapper] Failed to save rules to storage', err);
   }
 }
 
-function bumpMerchantCount(cleanedMerchant) {
-  if (!cleanedMerchant) return 1;
-  const stats = loadMerchantStats();
-  const key = cleanedMerchant;
-  const current = stats[key] || 0;
+// ---------------------------------------------------------------------------
+// Public: Initialise mapper (call once at app startup)
+// ---------------------------------------------------------------------------
+export function initCategoryMapper() {
+  merchantRules = loadRulesFromStorage();
+  console.log(`[CategoryMapper] Loaded ${merchantRules.length} merchant rules`);
+}
+
+// Optional: for debugging in your debug console
+export function getMerchantRules() {
+  return [...merchantRules];
+}
+
+// ---------------------------------------------------------------------------
+// Rule finders
+// ---------------------------------------------------------------------------
+function findMerchantRuleForTransaction(tx) {
+  if (!tx) return null;
+
+  const merchantKey = normaliseKey(tx.merchant);
+  const descKey = normaliseKey(tx.cleanDescription || tx.description);
+
+  // Prioritise merchant-based rules first
+  let bestRule = null;
+
+  for (const rule of merchantRules) {
+    const rulePattern = rule.pattern;
+    if (!rulePattern) continue;
+
+    if (rule.field === 'merchant') {
+      if (!merchantKey.includes(rulePattern)) continue;
+    } else if (rule.field === 'description') {
+      if (!descKey.includes(rulePattern)) continue;
+    } else {
+      continue;
+    }
+
+    if (
+      !bestRule ||
+      (rule.confidence || 1) > (bestRule.confidence || 1) ||
+      (rule.hitCount || 0) > (bestRule.hitCount || 0)
+    ) {
+      bestRule = rule;
+    }
+  }
+
+  return bestRule;
+}
+
+// ---------------------------------------------------------------------------
+// Bank category → categoryId mappings
+// (NAB-specific strings + generic fallbacks)
+// ---------------------------------------------------------------------------
+const GENERIC_BANK_CATEGORY_MAP = {
+  // Common high-level concepts
+  'groceries': 'exp_groceries',
+  'supermarket': 'exp_grocery_supermarket',
+  'food': 'exp_groceries',
+  'dining': 'exp_dining',
+  'restaurants': 'exp_dining',
+  'fast food': 'exp_dining',
+  'takeaway': 'exp_dining',
+
+  'medical': 'exp_health',
+  'health': 'exp_health',
+
+  'fuel': 'exp_fuel',
+  'petrol': 'exp_fuel',
+  'transport': 'exp_transport',
+  'tolls': 'exp_Parking_Fees',
+  'parking': 'exp_Parking_Fees',
+  'public transport': 'exp_public_transport',
+  'transit': 'exp_public_transport',
+
+  'insurance': 'exp_insurance',
+  'home insurance': 'exp_home_ins',
+  'car insurance': 'exp_car_ins',
+  'life insurance': 'exp_life_ins',
+  'health insurance': 'exp_health_ins',
+
+  'utilities': 'exp_utilities',
+  'electricity': 'exp_electricity',
+  'gas': 'exp_gas',
+  'water': 'exp_water_usage',
+  'internet': 'exp_internet',
+  'phone': 'exp_mobile',
+
+  'education': 'exp_education',
+  'school fees': 'exp_school_fees',
+  'university': 'exp_uni_fees',
+
+  'fees': 'exp_fees',
+  'charges': 'exp_fees',
+
+  'rent': 'exp_rent_payment',
+  'mortgage': 'exp_Home_mortgage',
+
+  'travel': 'exp_travel',
+  'flights': 'exp_flights',
+  'accommodation': 'exp_hotel',
+
+  'savings': 'sav_main',
+  'investment': 'sav_invest',
+  'loan repayment': 'debt_main'
+};
+
+const BANK_CATEGORY_MAP_BY_BANK = {
+  // You can expand specific bank mappings here
+  nab: {
+    'groceries': 'exp_groceries',
+    'supermarket': 'exp_grocery_supermarket',
+    'medical': 'exp_health',
+    'health': 'exp_health',
+    'fuel': 'exp_fuel',
+    'petrol': 'exp_fuel',
+    'transport': 'exp_transport',
+    'tolls': 'exp_Parking_Fees',
+    'parking': 'exp_Parking_Fees',
+    'insurance': 'exp_insurance',
+    'electricity': 'exp_electricity',
+    'gas': 'exp_gas',
+    'water': 'exp_water_usage',
+    'internet': 'exp_internet',
+    'phone': 'exp_mobile',
+    'education': 'exp_education',
+    'fees': 'exp_fees',
+    'rent': 'exp_rent_payment',
+    'mortgage': 'exp_Home_mortgage'
+    // etc.
+  }
+};
+
+// Resolve bank category to a categoryId
+function resolveBankCategory(bankCategoryRaw, opts = {}) {
+  if (!bankCategoryRaw) return null;
+  const bankId = (opts.bankId || '').toLowerCase();
+  const raw = bankCategoryRaw.toLowerCase().trim();
+
+  const bankMap = BANK_CATEGORY_MAP_BY_BANK[bankId] || {};
+  const allKeys = [
+    ...Object.keys(bankMap),
+    ...Object.keys(GENERIC_BANK_CATEGORY_MAP)
+  ];
+
+  for (const key of allKeys) {
+    if (!key) continue;
+    if (raw.includes(key)) {
+      return bankMap[key] || GENERIC_BANK_CATEGORY_MAP[key] || null;
+    }
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Keyword → categoryId matching
+// Uses cleanDescription / merchant keyword matches
+// ---------------------------------------------------------------------------
+const KEYWORD_CATEGORY_MAP = [
+  // Groceries & supermarkets
+  { pattern: /safeway|woolworths|woolies|coles|aldi|iga/gi, categoryId: 'exp_groceries' },
+  { pattern: /indian\s+grocer|spice\s+house|malvic|dosa\s+hut\s+grocer/gi, categoryId: 'exp_Indian_Groceries' },
+
+  // Fast food / dining
+  { pattern: /kfc/gi, categoryId: 'exp_kfc' },
+  { pattern: /mcdonald'?s|maccas/gi, categoryId: 'exp_mcd' },
+  { pattern: /hungry\s+jacks?/gi, categoryId: 'exp_hj' },
+  { pattern: /nando'?s/gi, categoryId: 'exp_nandos' },
+  { pattern: /domino'?s/gi, categoryId: 'exp_dominos' },
+  { pattern: /pizza\s+hut/gi, categoryId: 'exp_pizzahut' },
+  { pattern: /restaurant|diner|bistro|cafe|coffee/gi, categoryId: 'exp_dining' },
+
+  // Fuel / transport
+  { pattern: /bp\s+petrol|caltex|shell|7-eleven.*fuel|ampol/gi, categoryId: 'exp_fuel' },
+  { pattern: /rego|registration/gi, categoryId: 'exp_rego' },
+  { pattern: /myki|opal.*card|ptv/gi, categoryId: 'exp_public_transport' },
+  { pattern: /parking|parkmate|wilson\s+parking/gi, categoryId: 'exp_Parking_Fees' },
+  { pattern: /citylink|toll/gi, categoryId: 'exp_citylink_toll' },
+
+  // Utilities
+  { pattern: /agl|origin\s+energy|simply\s+energy|red\s+energy|powershop/gi, categoryId: 'exp_electricity' },
+  { pattern: /nbn|telstra|optus|vocus|tpg|aussie\s+broadband/gi, categoryId: 'exp_internet' },
+
+  // Health & medical
+  { pattern: /chemist\s*warehouse|pharmacy|amcal/gi, categoryId: 'exp_pharmacy' },
+  { pattern: /gp\s+clinic|medical\s+centre/gi, categoryId: 'exp_gp' },
+  { pattern: /dental|dentist/gi, categoryId: 'exp_dental' },
+
+  // Kids / school
+  { pattern: /childcare|early\s+learning/gi, categoryId: 'exp_childcare' },
+  { pattern: /school\s+fees|school\s+payment/gi, categoryId: 'exp_school_fees' },
+
+  // Subscriptions
+  { pattern: /netflix|stan|binge/gi, categoryId: 'exp_netflix' },
+  { pattern: /disney\+?/gi, categoryId: 'exp_disney' },
+  { pattern: /prime\s+video|amazon\s+prime/gi, categoryId: 'exp_prime' },
+  { pattern: /spotify|apple\s+music|youtube\s+music/gi, categoryId: 'exp_music' },
+
+  // Insurance
+  { pattern: /allianz|aami|budget\s+direct|nrma|racv|bupa|medibank|nib/gi, categoryId: 'exp_insurance' },
+
+  // Property / rates
+  { pattern: /council\s+rates|city\s+of\s+/gi, categoryId: 'exp_council_rates' },
+  { pattern: /body\s+corporate|owners\s+corp/gi, categoryId: 'exp_body_corporate' },
+  { pattern: /land\s+tax/gi, categoryId: 'exp_Land_Tax' },
+
+  // Tech & home office
+  { pattern: /jb\s+hi-fi|harvey\s+norman|good\s+guys/gi, categoryId: 'exp_tech' },
+  { pattern: /officeworks/gi, categoryId: 'exp_home_office' }
+];
+
+function keywordCategoryMatch(tx) {
+  if (!tx) return null;
+  const haystack =
+    `${tx.description || ''} ${tx.rawDescription || ''} ${tx.merchant || ''}`.toLowerCase();
+
+  for (const rule of KEYWORD_CATEGORY_MAP) {
+    if (rule.pattern.test(haystack)) {
+      return rule.categoryId;
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Auto-learning engine
+// ---------------------------------------------------------------------------
+function trackAutoLearning(field, patternRaw, categoryId) {
+  const pattern = normaliseKey(patternRaw);
+  if (!pattern || pattern.length < 3) return; // ignore tiny patterns
+
+  const key = `${field}:${pattern}:${categoryId}`;
+  const current = pendingStats[key] || 0;
   const next = current + 1;
-  stats[key] = next;
-  saveMerchantStats(stats);
-  return next;
-}
+  pendingStats[key] = next;
 
-// ------------------------------------------------------------
-// Find a reasonable parent category for auto-created categories
-// based on the base category we're mapping to.
-// ------------------------------------------------------------
-function inferParentCategoryId(baseCategoryId, categoriesById) {
-  if (!baseCategoryId) return 'ms_general';
+  if (next < AUTO_LEARN_THRESHOLD) return;
 
-  const base = categoriesById.get(baseCategoryId);
-  if (!base) return 'ms_general';
-
-  // If base has a parent, use its parent as the parent for merchant category
-  if (base.parentId) return base.parentId;
-
-  // Otherwise use the base itself as parent (if it's a 'main' category)
-  return baseCategoryId;
-}
-
-// ------------------------------------------------------------
-// Hybrid auto-create merchant-specific category when frequent
-// ------------------------------------------------------------
-async function maybeAutoCreateMerchantCategory(
-  cleanedMerchant,
-  baseCategoryId,
-  categories,
-  dbFunctions
-) {
-  const { addItem, STORE_NAMES } = dbFunctions;
-  if (!cleanedMerchant || !baseCategoryId) return baseCategoryId;
-
-  const merchantCount = bumpMerchantCount(cleanedMerchant);
-
-  // Only auto-create after the merchant appears multiple times
-  if (merchantCount < MERCHANT_AUTOCREATE_THRESHOLD) {
-    return baseCategoryId;
-  }
-
-  const categoriesById = new Map(categories.map(c => [c.id, c]));
-  const categoriesByName = new Map(
-    categories.map(c => [c.name.toLowerCase(), c])
+  // Already a rule?
+  const existing = merchantRules.find(
+    r => r.field === field && r.pattern === pattern && r.categoryId === categoryId
   );
-
-  const slug = cleanedMerchant
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-  const merchantCategoryId = `mch_${slug}`;
-
-  // If already exists (either by id or name), just use it
-  if (categoriesById.has(merchantCategoryId)) {
-    return merchantCategoryId;
+  if (existing) {
+    existing.hitCount = (existing.hitCount || 0) + 1;
+    existing.lastUsed = new Date().toISOString();
+  } else {
+    merchantRules.push({
+      field,
+      pattern,
+      categoryId,
+      confidence: 1,
+      hitCount: next,
+      lastUsed: new Date().toISOString()
+    });
+    console.log(
+      `[CategoryMapper] Auto-learned rule: ${field} contains "${pattern}" → ${categoryId}`
+    );
   }
-  const existingByName = categoriesByName.get(cleanedMerchant.toLowerCase());
-  if (existingByName) {
-    return existingByName.id;
-  }
 
-  // Create new category under inferred parent
-  const parentId = inferParentCategoryId(baseCategoryId, categoriesById);
-  const newCategory = {
-    id: merchantCategoryId,
-    name: toTitleCase(cleanedMerchant),
-    type: 'expense',
-    icon: '🏷️',
-    parentId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-
-  await addItem(STORE_NAMES.categories, newCategory);
-  return merchantCategoryId;
+  saveRulesToStorage();
 }
 
-// ------------------------------------------------------------
-// MAIN ENTRY:
-// mapTransactionCategory({ description, bankCategory, amount }, dbFns)
-// ------------------------------------------------------------
-export async function mapTransactionCategory(
-  { description, bankCategory, amount },
-  dbFunctions
-) {
-  const { getAllItems, STORE_NAMES } = dbFunctions;
+// ---------------------------------------------------------------------------
+// Public: Learn from manual category choice
+// Call this when user sets/changes a category in the UI
+// ---------------------------------------------------------------------------
+export function learnFromManualCategory(tx, categoryId, opts = {}) {
+  if (!tx || !categoryId) return;
 
-  const cleanedMerchant = normalizeMerchant(description);
-  const allCategories = await getAllItems(STORE_NAMES.categories);
-  const categoriesById = new Map(allCategories.map(c => [c.id, c]));
+  // Prefer merchant-based learning
+  if (tx.merchant) {
+    trackAutoLearning('merchant', tx.merchant, categoryId);
+  } else if (tx.cleanDescription || tx.description) {
+    const keySource = tx.cleanDescription || tx.description;
+    trackAutoLearning('description', keySource, categoryId);
+  }
 
-  // 1) Merchant-based rules first (brand-specific)
-  const rule = findMerchantRule(cleanedMerchant);
-  if (rule && rule.categoryId && categoriesById.has(rule.categoryId)) {
+  if (opts.log !== false) {
+    console.log('[CategoryMapper] Learned from manual choice', {
+      merchant: tx.merchant,
+      description: tx.description,
+      categoryId
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public: Suggest category for a transaction
+// PRIORITY:
+// 1) Explicit userCategoryId (if passed in)
+// 2) Merchant rule (auto-learned or manual future rules)
+// 3) Bank category mapping (if provided)
+// 4) Keyword-based mapping from description/merchant
+// 5) Fallback: ms_uncategorised (or exp_misc_items)
+// ---------------------------------------------------------------------------
+export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, options = {}) {
+  // 1) User override (if importer already knows a manual choice)
+  if (options.userCategoryId) {
     return {
-      categoryId: rule.categoryId,
-      source: 'merchant-rule',
-      confidence: rule.confidence ?? 0.9,
-      normalizedMerchant: cleanedMerchant
+      categoryId: options.userCategoryId,
+      source: 'user_override',
+      rule: null
     };
   }
 
-  // 2) Bank category label mapping
-  let baseCategoryId = null;
-  if (bankCategory) {
-    const label = String(bankCategory).trim();
-    baseCategoryId = bankCategoryToCategoryId[label] || null;
-  }
-
-  // If bank category mapped to a known category, consider hybrid auto-create
-  if (baseCategoryId && categoriesById.has(baseCategoryId)) {
-    const finalId = await maybeAutoCreateMerchantCategory(
-      cleanedMerchant,
-      baseCategoryId,
-      allCategories,
-      dbFunctions
-    );
+  // 2) Merchant rule
+  const merchantRule = findMerchantRuleForTransaction(tx);
+  if (merchantRule) {
+    merchantRule.hitCount = (merchantRule.hitCount || 0) + 1;
+    merchantRule.lastUsed = new Date().toISOString();
+    saveRulesToStorage();
 
     return {
-      categoryId: finalId,
-      source: 'bank-category',
-      confidence: 0.6,
-      normalizedMerchant: cleanedMerchant
+      categoryId: merchantRule.categoryId,
+      source: 'merchant_rule',
+      rule: merchantRule
     };
   }
 
-  // 3) Heuristic tiny fallback: if merchant name hints at something obvious
-  // (This is optional, can be extended later)
-  if (cleanedMerchant.includes('KFC')) {
-    return {
-      categoryId: 'ms_food_fast_food',
-      source: 'heuristic',
-      confidence: 0.7,
-      normalizedMerchant: cleanedMerchant
-    };
+  // 3) Bank category mapping
+  if (bankCategoryRaw) {
+    const catIdFromBank = resolveBankCategory(bankCategoryRaw, {
+      bankId: options.bankId
+    });
+    if (catIdFromBank) {
+      // Auto-learn based on merchant + this category (your option A)
+      if (tx && tx.merchant) {
+        trackAutoLearning('merchant', tx.merchant, catIdFromBank);
+      }
+      return {
+        categoryId: catIdFromBank,
+        source: 'bank_category',
+        rule: {
+          bankCategory: bankCategoryRaw
+        }
+      };
+    }
   }
-  if (cleanedMerchant.includes('CHEMIST')) {
+
+  // 4) Keyword-based mapping from description/merchant
+  const catIdFromKeywords = keywordCategoryMatch(tx);
+  if (catIdFromKeywords) {
+    if (tx && tx.merchant) {
+      trackAutoLearning('merchant', tx.merchant, catIdFromKeywords);
+    }
     return {
-      categoryId: 'ms_health_pharmacies',
-      source: 'heuristic',
-      confidence: 0.7,
-      normalizedMerchant: cleanedMerchant
+      categoryId: catIdFromKeywords,
+      source: 'keyword_match',
+      rule: null
     };
   }
 
-  // 4) Final fallback: pure uncategorised
+  // 5) Fallback
+  const fallback = 'ms_uncategorised'; // or 'exp_misc_items'
   return {
-    categoryId: FALLBACK_CATEGORY_ID,
+    categoryId: fallback,
     source: 'fallback',
-    confidence: 0.1,
-    normalizedMerchant: cleanedMerchant
+    rule: null
   };
 }

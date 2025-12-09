@@ -20,6 +20,9 @@ import { initExpensesUI } from './expenses.js';
 import { initTaxComplianceUI } from './tax_compliance.js';
 import { initCostBaseTrackerUI } from './cost_base_tracker.js';
 //import { initDashboardMobileV3UI } from './dashboard_mobile_v3_ui.js';
+import { initCategoryMapper } from './categoryMapper.js';
+
+initCategoryMapper();
 
 // ============================================================================
 // 📱 BOTTOM NAVIGATION ENHANCEMENTS
