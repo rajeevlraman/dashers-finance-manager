@@ -502,6 +502,37 @@ function renderTransactions(transactions, categories, accounts, properties) {
   attachTxEvents(txs, categories, accounts, properties);
 }
 
+// ============================================================================
+// Smart Category Name Resolver
+// ============================================================================
+function getCategoryDisplayName(tx, categories) {
+
+  // 1️⃣ Internal category match via categoryId
+  if (tx.categoryId) {
+    const cat = categories.find(c => c.id === tx.categoryId);
+    if (cat) return cat.name;
+  }
+
+  // 2️⃣ NAB/Bank-provided category
+  if (tx.bankCategory && tx.bankCategory.trim() !== "") {
+    return tx.bankCategory;
+  }
+
+  // 3️⃣ Cleaned keyword text extracted from description
+  if (tx.categoryText && tx.categoryText.trim() !== "") {
+    return tx.categoryText;
+  }
+
+  // 4️⃣ Merchant name
+  if (tx.merchant && tx.merchant.trim() !== "") {
+    return tx.merchant;
+  }
+
+  // 5️⃣ Fallback
+  return "Uncategorized";
+}
+
+
 function renderTransactionCard(tx, categories, accounts, properties) {
   const category = categories.find(c => c.id === tx.categoryId);
   const account = accounts.find(a => a.id === tx.accountId);
