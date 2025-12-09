@@ -4,6 +4,7 @@
 
 import { addItem, getAllItems, STORE_NAMES } from '../db.js';
 import { logImportDebug } from './debug.js';
+import { buildCategoryIndex, autoAssignCategory } from './categoryRules.js';
 
 export async function saveImportedTransactions(transactions, options = {}) {
   const { dedupe = true } = options;
@@ -13,13 +14,20 @@ export async function saveImportedTransactions(transactions, options = {}) {
     dedupe
   });
 
-  if (!transactions.length) return { saved: 0, skipped: 0 };
+  if (!transactions.length) {
+    return { saved: 0, skipped: 0 };
+  }
 
   const accountId = transactions[0].accountId;
-  const existing = await getAllItems(STORE_NAMES.transactions);
 
-  // Filter same account only for dedupe
+  // Load existing tx + categories in parallel
+  const [existing, categories] = await Promise.all([
+    getAllItems(STORE_NAMES.transactions),
+    getAllItems(STORE_NAMES.categories).catch(() => [])
+  ]);
+
   const existingForAccount = existing.filter(tx => tx.accountId === accountId);
+  const categoryIndex = buildCategoryIndex(categories);
 
   logImportDebug('Existing transactions for account', existingForAccount.length);
 
@@ -27,6 +35,15 @@ export async function saveImportedTransactions(transactions, options = {}) {
   let skipped = 0;
 
   for (const tx of transactions) {
+    // 🔹 Auto-assign category IF missing
+    if (!tx.categoryId && categories.length && categoryIndex.length) {
+      const autoCatId = autoAssignCategory(tx, categories, categoryIndex);
+      if (autoCatId) {
+        tx.categoryId = autoCatId;
+      }
+    }
+
+    // 🔹 De-duplication
     if (dedupe && isDuplicate(tx, existingForAccount)) {
       skipped++;
       continue;

@@ -192,19 +192,57 @@ function parseANZGeneric(lines) {
   });
 }
 
-function parseNABGeneric(lines) {
-  const header = lines[0].toLowerCase();
-  const cols = header.split(',').map(x => x.trim());
+// ============================================================================
+// NAB Bank Parser (matches your sample layout)
+// ============================================================================
+function parseNAB(lines) {
+  console.log("[PARSER] Parsing NAB format");
 
-  return parseWithBankFormat(lines, {
-    bankId: 'nab_generic',
-    dateIndex: cols.findIndex(c => c.includes('date')),
-    descriptionIndex: cols.findIndex(c => c.includes('description') || c.includes('details')),
-    debitIndex: cols.findIndex(c => c.includes('debit')),
-    creditIndex: cols.findIndex(c => c.includes('credit')),
-    amountIndex: cols.findIndex(c => c.includes('amount'))
-  });
+  if (!lines.length) return [];
+
+  // Header: Date,Amount,Account Number,,Transaction Type,Transaction Details,Balance,Category,Merchant Name
+  const header = lines[0].toLowerCase();
+  const hasHeaderDate = header.includes('date') && header.includes('amount');
+
+  const startIndex = hasHeaderDate ? 1 : 0;
+
+  return lines.slice(startIndex).map((line, index) => {
+    try {
+      const parts = line.split(',').map(p => p.trim());
+
+      if (parts.length < 2) return null;
+
+      const rawDate = parts[0];          // Date
+      const rawAmount = parts[1];        // Amount
+      const txnDetails = parts[5] || ''; // Transaction Details
+      const merchantName = parts[8] || '';// Merchant Name
+
+      const date = parseDate(rawDate);   // auto handles DD/MM/YY vs DD MMM etc.
+      const amountNum = parseFloat(rawAmount);
+
+      if (!date || isNaN(amountNum) || amountNum === 0) return null;
+
+      const description =
+        (merchantName || txnDetails || '').trim() || `NAB Transaction ${index + 1}`;
+
+      const amount = amountNum; // already signed in CSV (-86.91 etc.)
+      const type = amount > 0 ? 'income' : 'expense';
+
+      return {
+        date,
+        description: description.substring(0, 200),
+        amount,
+        type,
+        source: 'NAB Import',
+        originalLine: index + startIndex + 1
+      };
+    } catch (error) {
+      console.warn(`[PARSER] Error parsing NAB line ${index}:`, error);
+      return null;
+    }
+  }).filter(tx => tx !== null);
 }
+
 
 function parseMEGeneric(lines) {
   return parseWithBankFormat(lines, {

@@ -268,23 +268,24 @@ async function handleSaveImport() {
     console.log("[MODAL] Normalised transactions:", normalisedTx);
 
     // ⛔️ FIXED: ONLY ONE SAVE CALL
-    const savedCount = await saveImportedTransactions(normalisedTx);
+    const { saved, skipped } = await saveImportedTransactions(normalisedTx);
 
-    if (savedCount > 0) {
-      console.log(`[MODAL] ${savedCount} transactions saved successfully`);
-      alert(`✅ Successfully saved ${savedCount} transactions!`);
+    if (saved > 0) {
+      console.log(`[MODAL] ${saved} transactions saved successfully (${skipped} skipped as duplicates)`);
+      alert(`✅ Successfully saved ${saved} transactions (${skipped} skipped as duplicates).`);
 
       // Trigger callback to refresh UI
       if (window._importData?.onImported) {
         console.log("[MODAL] Calling import callback");
-        await window._importData.onImported(savedCount);
+        await window._importData.onImported(saved);
       }
 
       hideImportModal();
     } else {
       console.warn("[MODAL] No transactions saved");
-      alert("⚠️ No transactions were saved. Please check the data format.");
+      alert("⚠️ No transactions were saved. Please check the data format or duplicates.");
     }
+
 
   } catch (error) {
     console.error("[MODAL] Save error:", error);

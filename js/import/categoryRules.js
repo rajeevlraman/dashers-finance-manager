@@ -1,154 +1,108 @@
-// js/import/categoryRules.js
+// ============================================================================
+// 🧠 categoryRules.js — Auto-category engine (Option C)
+// ----------------------------------------------------------------------------
+// Builds a lightweight keyword index from your existing categories and uses
+// it to auto-assign categoryId for imported transactions.
+// ============================================================================
 
-// ✅ This is the fallback ID for uncategorised
-export const UNCATEGORISED_ID = 'uncategorised';
+import { logImportDebug } from './debug.js';
 
-// ✅ Keyword → categoryId rules
-// Extend this list over time with your real patterns.
-export const CATEGORY_KEYWORD_RULES = [
-  // Groceries / supermarkets
-  {
-    categoryId: 'exp_Coles',         // Your Coles category
-    keywords: ['coles']
-  },
-  {
-    categoryId: 'exp_Safeway',       // Woolworths / Safeway
-    keywords: ['safeway', 'woolworths', 'woolies']
-  },
-  {
-    categoryId: 'exp_Aldi',
-    keywords: ['aldi']
-  },
-  {
-    categoryId: 'exp_Indian_Groceries',
-    keywords: ['india', 'indian grocer', 'spice world', 'bharat', 'kirana']
-  },
+// Some words are too generic to be useful as category keywords
+const GENERIC_WORDS = new Set([
+  'expense', 'expenses', 'income', 'other', 'misc', 'miscellaneous',
+  'general', 'uncategorised', 'uncategorized', 'bills', 'bill'
+]);
 
-  // Fuel / petrol
-  {
-    categoryId: 'exp_fuel',
-    keywords: ['ampol', 'caltex', 'bp ', 'bp-', 'servo', 'petrol ', 'fuel ', 'shell', 'united ']
-  },
-  {
-    categoryId: 'exp_Car2_fuel',
-    keywords: ['car2 fuel', 'second car fuel'] // tweak for your statements if needed
-  },
+// ----------------------------------------------------------------------------
+// Build a keyword index from your categories
+// ----------------------------------------------------------------------------
+export function buildCategoryIndex(categories = []) {
+  const index = [];
 
-  // Fast food / dining (examples – adjust names to your bank’s descriptions)
-  {
-    categoryId: 'exp_kfc',
-    keywords: ['kfc']
-  },
-  {
-    categoryId: 'exp_mcd',
-    keywords: ['mcdonald', 'maccas', 'mc donalds']
-  },
-  {
-    categoryId: 'exp_hj',
-    keywords: ['hungry jacks', 'hungry jack\'s', 'hj']
-  },
-  {
-    categoryId: 'exp_dominos',
-    keywords: ['domino\'s', 'dominos']
-  },
-  {
-    categoryId: 'exp_pizzahut',
-    keywords: ['pizza hut']
-  },
+  categories.forEach(cat => {
+    if (!cat || !cat.name) return;
 
-  // Utilities
-  {
-    categoryId: 'exp_electricity',
-    keywords: ['agl', 'origin energy', 'powershop', 'electricity', 'energy australia']
-  },
-  {
-    categoryId: 'exp_gas',
-    keywords: ['gas bill', 'natural gas']
-  },
-  {
-    categoryId: 'exp_water_usage',
-    keywords: ['yvw', 'yarra valley water', 'water corp', 'water bill']
-  },
-  {
-    categoryId: 'exp_internet',
-    keywords: ['telstra', 'optus', 'tpg', 'superloop', 'nbn', 'internet']
-  },
-  {
-    categoryId: 'exp_mobile',
-    keywords: ['amaysim', 'boost mobile', 'vodafone', 'mobile recharge']
-  },
+    const isSub = !!cat.parentId;
+    const baseWeight = isSub ? 3 : 1; // prefer subcategories
 
-  // Generic catch-alls
-  {
-    categoryId: 'exp_misc_items',
-    keywords: ['misc', 'various', 'general']
-  }
-];
+    const raw = String(cat.name).toLowerCase();
 
-// 🔍 Try to map a parsed transaction → categoryId
-export function autoDetectCategory(parsedTx, categories) {
-  // 0. If parser already set categoryId and it exists in DB, trust it
-  if (parsedTx.categoryId) {
-    const existing = categories.find(c => c.id === parsedTx.categoryId);
-    if (existing) return existing.id;
-  }
+    const tokens = raw
+      .split(/[^a-z0-9]+/i)
+      .map(t => t.trim())
+      .filter(t => t.length >= 3 && !GENERIC_WORDS.has(t));
 
-  // 1. Try to match by category name (e.g. MoneySmart or your own text)
-  const possibleNames = [
-    parsedTx.categoryName,
-    parsedTx.rawCategory,
-    parsedTx.bankCategory,
-    parsedTx.sourceCategory
-  ].filter(Boolean);
+    const uniqueTokens = new Set(tokens);
 
-  for (const name of possibleNames) {
-    const needle = name.trim().toLowerCase();
-    if (!needle) continue;
+    uniqueTokens.forEach(word => {
+      index.push({
+        keyword: word,
+        categoryId: cat.id,
+        weight: baseWeight + (word.length >= 6 ? 1 : 0)
+      });
+    });
+  });
 
-    const match = categories.find(
-      c => c.name && c.name.trim().toLowerCase() === needle
-    );
-    if (match) {
-      return match.id;
-    }
-  }
+  logImportDebug('buildCategoryIndex()', {
+    categoryCount: categories.length,
+    ruleCount: index.length
+  });
 
-  // 2. Keyword rules based on description / memo / merchant
-  const haystack = [
-    parsedTx.description || '',
-    parsedTx.memo || '',
-    parsedTx.merchant || ''
-  ].join(' ').toLowerCase();
-
-  if (haystack) {
-    for (const rule of CATEGORY_KEYWORD_RULES) {
-      const existsInDb = categories.some(c => c.id === rule.categoryId);
-      if (!existsInDb) continue; // skip rule if that category doesn't exist
-
-      const hit = rule.keywords.some(kw =>
-        haystack.includes(kw.toLowerCase())
-      );
-
-      if (hit) {
-        return rule.categoryId;
-      }
-    }
-  }
-
-  // 3. Fallback: your "uncategorised" category
-  const unc = categories.find(
-    c =>
-      c.id === UNCATEGORISED_ID ||
-      (c.name && c.name.trim().toLowerCase() === 'uncategorised')
-  );
-
-  return unc ? unc.id : null;
+  return index;
 }
 
-// 🧩 Optional helper: map an entire array of parsed rows
-export function applyAutoCategories(parsedRows, categories) {
-  return parsedRows.map(row => ({
-    ...row,
-    categoryId: autoDetectCategory(row, categories)
-  }));
+// ----------------------------------------------------------------------------
+// Auto-assign a categoryId based on description & keyword index
+// ----------------------------------------------------------------------------
+export function autoAssignCategory(tx, categories = [], index = []) {
+  // Do NOT override existing categoryId
+  if (tx.categoryId) return tx.categoryId;
+
+  const desc = (tx.description || '').toLowerCase().trim();
+  if (!desc || !index.length) return null;
+
+  // Collect scores per category
+  const scores = new Map(); // categoryId -> score
+
+  index.forEach(rule => {
+    if (desc.includes(rule.keyword)) {
+      const prev = scores.get(rule.categoryId) || 0;
+      scores.set(rule.categoryId, prev + rule.weight);
+    }
+  });
+
+  if (scores.size === 0) return null;
+
+  // Pick best scoring category, tie-breaker prefers subcategories
+  let bestCatId = null;
+  let bestScore = 0;
+
+  scores.forEach((score, catId) => {
+    if (score > bestScore) {
+      bestScore = score;
+      bestCatId = catId;
+    } else if (score === bestScore && bestCatId) {
+      const existing = categories.find(c => c.id === bestCatId);
+      const candidate = categories.find(c => c.id === catId);
+
+      if (candidate && candidate.parentId && !existing?.parentId) {
+        bestCatId = catId; // prefer subcategory in tie
+      }
+    }
+  });
+
+  // Require at least a minimal confidence
+  if (!bestCatId || bestScore < 2) {
+    return null;
+  }
+
+  const chosen = categories.find(c => c.id === bestCatId);
+  logImportDebug('autoAssignCategory(): chosen category', {
+    txDescription: tx.description,
+    categoryId: bestCatId,
+    categoryName: chosen?.name,
+    score: bestScore
+  });
+
+  return bestCatId;
 }
