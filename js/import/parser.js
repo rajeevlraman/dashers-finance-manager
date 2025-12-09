@@ -29,7 +29,8 @@ function buildTxObject({
   amount,
   type,
   source,
-  originalLine
+  originalLine,
+  bankCategory = null
 }) {
   const clean = normaliseDescription(description);
   return {
@@ -41,10 +42,12 @@ function buildTxObject({
     categoryText: extractCategoryText(description),
     amount,
     type,
+    bankCategory,      // ⭐ NEW FIELD
     source,
     originalLine
   };
 }
+
 
 /* -------------------------------------------------------------
    CSV File Parser
@@ -172,15 +175,38 @@ function parseWithBankFormat(lines, bankFormat) {
 ------------------------------------------------------------- */
 
 function parseMacquarie(lines) {
-  return parseWithBankFormat(lines, {
-    bankId: 'macquarie',
-    dateIndex: 0,
-    descriptionIndex: 1,
-    debitIndex: 7,
-    creditIndex: 8,
-    amountIndex: -1
-  });
+  const startIndex = 1; // header exists
+  const txs = [];
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const parts = lines[i].split(',').map(p => p.replace(/"/g, '').trim());
+    if (parts.length < 10) continue;
+
+    const date = parseDate(parts[0]);
+    const description = parts[1];
+    const bankCategory = parts[3] || null;   // ← Bank "Category" column
+    const debit = parseFloat(parts[7]) || 0;
+    const credit = parseFloat(parts[8]) || 0;
+    const amount = credit > 0 ? credit : -Math.abs(debit);
+
+    if (!date || !description || amount === 0) continue;
+
+    txs.push(
+      buildTxObject({
+        date,
+        description,
+        amount,
+        type: amount > 0 ? 'income' : 'expense',
+        bankCategory,
+        source: 'Macquarie Import',
+        originalLine: i + 1
+      })
+    );
+  }
+
+  return txs;
 }
+
 
 function parseANZGeneric(lines) {
   return parseWithBankFormat(lines, {
@@ -198,50 +224,46 @@ function parseANZGeneric(lines) {
 function parseNAB(lines) {
   console.log("[PARSER] Parsing NAB format");
 
-  if (!lines.length) return [];
-
-  // Header: Date,Amount,Account Number,,Transaction Type,Transaction Details,Balance,Category,Merchant Name
   const header = lines[0].toLowerCase();
-  const hasHeaderDate = header.includes('date') && header.includes('amount');
+  const startIndex = header.includes("date") ? 1 : 0;
 
-  const startIndex = hasHeaderDate ? 1 : 0;
+  const txs = [];
 
-  return lines.slice(startIndex).map((line, index) => {
-    try {
-      const parts = line.split(',').map(p => p.trim());
+  for (let i = startIndex; i < lines.length; i++) {
+    const parts = lines[i].split(',').map(p => p.trim());
 
-      if (parts.length < 2) return null;
+    if (parts.length < 2) continue;
 
-      const rawDate = parts[0];          // Date
-      const rawAmount = parts[1];        // Amount
-      const txnDetails = parts[5] || ''; // Transaction Details
-      const merchantName = parts[8] || '';// Merchant Name
+    const rawDate = parts[0];
+    const rawAmount = parts[1];
 
-      const date = parseDate(rawDate);   // auto handles DD/MM/YY vs DD MMM etc.
-      const amountNum = parseFloat(rawAmount);
+    const txnDetails = parts[5] || "";
+    const merchantName = parts[8] || "";
+    const bankCategory = parts[7] || null;   // ⭐ NAB BANK CATEGORY
 
-      if (!date || isNaN(amountNum) || amountNum === 0) return null;
+    const date = parseDate(rawDate);
+    const amountNum = parseFloat(rawAmount);
 
-      const description =
-        (merchantName || txnDetails || '').trim() || `NAB Transaction ${index + 1}`;
+    if (!date || isNaN(amountNum) || amountNum === 0) continue;
 
-      const amount = amountNum; // already signed in CSV (-86.91 etc.)
-      const type = amount > 0 ? 'income' : 'expense';
+    const description = (merchantName || txnDetails).trim() || "NAB Transaction";
 
-      return {
+    txs.push(
+      buildTxObject({
         date,
-        description: description.substring(0, 200),
-        amount,
-        type,
-        source: 'NAB Import',
-        originalLine: index + startIndex + 1
-      };
-    } catch (error) {
-      console.warn(`[PARSER] Error parsing NAB line ${index}:`, error);
-      return null;
-    }
-  }).filter(tx => tx !== null);
+        description,
+        amount: amountNum,
+        type: amountNum > 0 ? "income" : "expense",
+        bankCategory,
+        source: "NAB Import",
+        originalLine: i + 1
+      })
+    );
+  }
+
+  return txs;
 }
+
 
 
 function parseMEGeneric(lines) {
@@ -277,10 +299,12 @@ function parseANZ(lines) {
         date,
         description,
         amount,
-        type: amount > 0 ? 'income' : 'expense',
-        source: 'ANZ Import',
+        type: amount > 0 ? "income" : "expense",
+        bankCategory: null,
+        source: "Generic CSV Import",
         originalLine: index + startIndex + 1
       });
+
 
     } catch (err) {
       return null;
@@ -308,6 +332,7 @@ function parseCommBank(lines) {
         description,
         amount,
         type: amount > 0 ? 'income' : 'expense',
+        bankCategory: null,    // ⭐ Always null for these
         source: 'CommBank Import',
         originalLine: index + startIndex + 1
       });
@@ -340,6 +365,7 @@ function parseWestpac(lines) {
         description,
         amount,
         type: amount > 0 ? 'income' : 'expense',
+        bankCategory: null,    // ⭐ Always null for these 
         source: 'Westpac Import',
         originalLine: index + startIndex + 1
       });
