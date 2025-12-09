@@ -382,6 +382,20 @@ function setupCategoryLinking(categories, subCats) {
   console.log("[TX] Category linking initialized successfully");
 }
 
+//fix for editing-
+function rebuildSubcategoriesForEdit(mainCategoryId, subCats) {
+  const subSelect = document.getElementById("subCategory");
+  if (!subSelect) return;
+
+  const subs = subCats.filter(s => s.parentId === mainCategoryId);
+
+  subSelect.innerHTML =
+    `<option value="">-- None --</option>` +
+    subs.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+}
+
+
+
 // ============================================================================
 // Form Handlers (FIXED with safety checks)
 // ============================================================================
@@ -616,17 +630,22 @@ function loadTransactionIntoForm(tx, categories, properties) {
     const category = categories.find(c => c.id === tx.categoryId);
     if (category) {
       if (category.parentId) {
-        // It's a subcategory
+        // Set main category
         mainCat.value = category.parentId;
-        setTimeout(() => {
-          subCat.value = tx.categoryId;
-        }, 100);
+
+        // Rebuild subcategory list BEFORE selecting
+        rebuildSubcategoriesForEdit(category.parentId, categories);
+
+        // Select subcategory
+        subCat.value = tx.categoryId;
       } else {
-        // It's a main category
+        // No subcategory
         mainCat.value = tx.categoryId;
-        subCat.value = "";
+
+        rebuildSubcategoriesForEdit(tx.categoryId, categories);
       }
     }
+
   }
 
   // Property expense fields
