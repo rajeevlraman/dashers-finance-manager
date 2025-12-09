@@ -508,12 +508,17 @@ function renderTransactionCard(tx, categories, accounts, properties) {
   const property = properties.find(p => p.id === tx.propertyId);
   const isIncome = tx.amount > 0;
 
+  const displayCategory = getCategoryDisplayName(tx, categories);
+
   return `
     <div class="transaction-card ${isIncome ? "income" : "expense"}" data-id="${tx.id}">
       <div class="transaction-main">
         <div class="transaction-icon">${category?.icon || (isIncome ? "💰" : "💸")}</div>
         <div class="transaction-details">
-          <div class="transaction-title">${category?.name || "Uncategorized"}</div>
+
+          <!-- KEY FIX HERE -->
+          <div class="transaction-title">${displayCategory}</div>
+
           <div class="transaction-meta">
             <span>${account?.name || "Unknown Account"}</span>
             ${tx.isPropertyExpense && property ? `<span class="property-tag">🏠 ${property.name}</span>` : ""}
@@ -531,6 +536,7 @@ function renderTransactionCard(tx, categories, accounts, properties) {
     </div>
   `;
 }
+
 
 // ============================================================================
 // Event Handlers
