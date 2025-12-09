@@ -7,7 +7,7 @@
 
 // 🔹 Database configuration
 const DB_NAME = 'budgetTrackerDB';
-const DB_VERSION = 13; // 🆙 incremented from 11 → 12 for tax records and enhanced schema
+const DB_VERSION = 12; // 🆙 incremented from 11 → 12 for tax records and enhanced schema
 
 // 🔹 Centralized object store definitions
 export const STORE_NAMES = {

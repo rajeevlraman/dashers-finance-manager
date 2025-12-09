@@ -318,38 +318,7 @@ function parseCommBank(lines) {
   }).filter(Boolean);
 }
 
-function parseNAB(lines) {
-  const startIndex = lines[0].toLowerCase().includes('date') ? 1 : 0;
 
-  return lines.slice(startIndex).map((line, index) => {
-    try {
-      const parts = line.split(',').map(p => p.trim());
-
-      if (parts.length < 3) return null;
-
-      const date = parseDate(parts[0]);
-      const description = parts[1];
-
-      let amount = 0;
-      if (parts[2] && parseFloat(parts[2]) > 0) amount = -parseFloat(parts[2]);
-      else if (parts[3] && parseFloat(parts[3]) > 0) amount = parseFloat(parts[3]);
-
-      if (!date || !description || amount === 0) return null;
-
-      return buildTxObject({
-        date,
-        description,
-        amount,
-        type: amount > 0 ? 'income' : 'expense',
-        source: 'NAB Import',
-        originalLine: index + startIndex + 1
-      });
-
-    } catch (err) {
-      return null;
-    }
-  }).filter(Boolean);
-}
 
 function parseWestpac(lines) {
   const startIndex = lines[0].toLowerCase().includes('date') ? 1 : 0;
