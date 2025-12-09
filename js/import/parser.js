@@ -106,7 +106,7 @@ export async function parseCSVFile(file, format) {
     return transactions;
 }
 
-import { suggestCategoryForTransaction } from './categoryMapper.js';
+import { suggestCategoryForTransaction } from '.import/categoryMapper.js';
 
 // Example: NAB CSV with a “Category” column from the bank
 function processImportedTransactions(parsedTxs, bankId, bankCategoryColumnName) {
