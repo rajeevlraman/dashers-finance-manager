@@ -852,6 +852,8 @@ export async function syncAllPropertyExpenses() {
     };
   }
 
+}
+
   function getFullCategoryName(category, categories) {
   if (!category) return "Uncategorized";
 
@@ -865,6 +867,4 @@ export async function syncAllPropertyExpenses() {
 
   // If no parent → show main category only
   return category.name;
-}
-
 }
