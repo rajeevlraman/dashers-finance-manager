@@ -5,6 +5,31 @@
 // - Auto-learns merchant rules after repeated consistent matches
 // ============================================================================
 
+//To activate logo + category matching in your app, add line 10 to 29 here inside categoryMapper.js:
+
+import { merchantLogos } from "./merchantLogos.js";
+import { merchantCategories } from "./merchantCategories.js";
+
+export function resolveMerchantLogo(cleanDesc) {
+  for (const key of Object.keys(merchantLogos)) {
+    if (cleanDesc.includes(key)) {
+      return merchantLogos[key];
+    }
+  }
+  return null;
+}
+
+export function resolveMerchantCategory(cleanDesc) {
+  for (const key of Object.keys(merchantCategories)) {
+    if (cleanDesc.includes(key)) {
+      return merchantCategories[key];
+    }
+  }
+  return merchantCategories["default"];
+}
+
+
+
 // Where we persist auto-learned merchant rules
 const LOCAL_STORAGE_KEY = 'dfm_category_rules_v1';
 

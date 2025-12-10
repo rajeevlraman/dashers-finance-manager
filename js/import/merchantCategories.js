@@ -1,45 +1,63 @@
 // merchantCategories.js
-// Maps merchant keywords to YOUR category IDs.
+// Maps merchant keywords → { categoryId, confidence }
 
-// IMPORTANT: Replace these with the actual IDs from your DB if necessary.
-export const CATEGORY_MAP = [
-  // 👇 Groceries
-  { keywords: ["woolworths", "woolies"], categoryId: "exp_groceries" },
-  { keywords: ["mal vic", "malvic"], categoryId: "exp_groceries" },
+export const merchantCategories = {
 
-  // 👇 Fast Food / Restaurants
-  { keywords: ["mcdonald", "maccas"], categoryId: "exp_fastfood" },
-  { keywords: ["kfc"], categoryId: "exp_fastfood" },
-  { keywords: ["kebab"], categoryId: "exp_restaurants" },
+  // Groceries
+  "woolworths": { categoryId: "exp_groceries", confidence: 0.95 },
+  "coles": { categoryId: "exp_groceries", confidence: 0.95 },
+  "malvic": { categoryId: "exp_groceries", confidence: 0.95 },
+  "eve iga": { categoryId: "exp_groceries", confidence: 0.9 },
+  "marketplace fresh": { categoryId: "exp_groceries", confidence: 0.9 },
+  "fish pier": { categoryId: "exp_groceries", confidence: 0.85 },
+  "antony ivan francis angelo": { categoryId: "exp_groceries", confidence: 0.7 },
 
-  // 👇 Utilities
-  { keywords: ["globird", "glo bird"], categoryId: "exp_utilities" },
+  // Restaurants & Takeaway
+  "casey kebab": { categoryId: "exp_takeaway", confidence: 0.9 },
+  "mcdonald": { categoryId: "exp_takeaway", confidence: 0.95 },
+  "kfc": { categoryId: "exp_takeaway", confidence: 0.95 },
+  "next mark": { categoryId: "exp_takeaway", confidence: 0.7 },
+  "domino": { categoryId: "exp_takeaway", confidence: 0.9 },
+  "walker's doughnuts": { categoryId: "exp_cafe", confidence: 0.85 },
 
-  // 👇 Insurance
-  { keywords: ["aami"], categoryId: "exp_insurance" },
+  // Utilities
+  "globird": { categoryId: "exp_utilities", confidence: 0.95 },
+  "origin energy": { categoryId: "exp_utilities", confidence: 0.95 },
+  "south east water": { categoryId: "exp_utilities", confidence: 0.95 },
 
-  // 👇 Pharmacy / Health
-  { keywords: ["chemist warehouse", "chemistwarehouse"], categoryId: "exp_medical" },
+  // Fuel
+  "united petroleum": { categoryId: "exp_fuel", confidence: 0.9 },
+  "7-eleven": { categoryId: "exp_fuel", confidence: 0.85 },
+  "shell reddy express": { categoryId: "exp_fuel", confidence: 0.9 },
 
-  // 👇 Online / Shopping
-  { keywords: ["paypal"], categoryId: "exp_online_shopping" },
-  { keywords: ["amazon"], categoryId: "exp_online_shopping" },
+  // Medical
+  "chemist warehouse": { categoryId: "exp_medical", confidence: 0.95 },
+  "myhealth": { categoryId: "exp_medical", confidence: 0.9 },
 
-  // 👇 Entertainment / Gaming
-  { keywords: ["eb games", "ebgames"], categoryId: "exp_entertainment" },
+  // Shopping / General
+  "paypal": { categoryId: "exp_online_shopping", confidence: 0.8 },
+  "square": { categoryId: "exp_misc", confidence: 0.6 },
+  "temu": { categoryId: "exp_online_shopping", confidence: 0.95 },
+  "amazon": { categoryId: "exp_online_shopping", confidence: 0.95 },
+  "uniqlo": { categoryId: "exp_clothing", confidence: 0.9 },
 
-  // 👇 Cloud / SaaS
-  { keywords: ["aws", "amazon web services"], categoryId: "exp_cloud_services" }
-];
+  // Insurance
+  "aami": { categoryId: "exp_insurance", confidence: 0.95 },
 
-// Returns matching categoryId or null
-export function getMerchantCategory(description = "") {
-  const text = description.toLowerCase();
+  // Gaming
+  "eb games": { categoryId: "exp_entertainment", confidence: 0.9 },
 
-  for (const entry of CATEGORY_MAP) {
-    if (entry.keywords.some(k => text.includes(k))) {
-      return entry.categoryId;
-    }
-  }
-  return null; // fallback → manual selection or fallback rule
-}
+  // Gambling
+  "the lott": { categoryId: "exp_gambling", confidence: 0.9 },
+
+  // Subscriptions
+  "apple": { categoryId: "exp_subscriptions", confidence: 0.95 },
+
+  // Transfers / Investment
+  "ray white": { categoryId: "inc_investment", confidence: 0.95 },
+  "krithik": { categoryId: "exp_transfers", confidence: 0.8 },
+  "dias maths": { categoryId: "exp_education", confidence: 0.9 },
+
+  // Uncategorized fallback
+  "default": { categoryId: "uncategorised", confidence: 0.1 }
+};
