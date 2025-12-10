@@ -456,7 +456,7 @@ function guessCategoryIcon(name = '') {
 // CATEGORY HELPERS FOR UI
 // ============================================================================
 
-import { getAllItems } from './db.js';
+//import { getAllItems } from './db.js';
 
 // Cache categories to avoid repeated DB calls
 let _categoryCache = null;
