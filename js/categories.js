@@ -451,3 +451,55 @@ function guessCategoryIcon(name = '') {
   const key = Object.keys(map).find(k => lowerName.includes(k));
   return map[key] || (lowerName.includes('sub') ? '↪️' : '📁');
 }
+
+// ============================================================================
+// CATEGORY HELPERS FOR UI
+// ============================================================================
+
+import { getAllItems } from './db.js';
+
+// Cache categories to avoid repeated DB calls
+let _categoryCache = null;
+
+async function loadCategoryCache() {
+    if (_categoryCache === null) {
+        _categoryCache = await getAllItems("categories");
+    }
+    return _categoryCache;
+}
+
+/**
+ * Get a single category by ID
+ */
+export async function getCategoryById(id) {
+    if (!id) return null;
+    const cats = await loadCategoryCache();
+    return cats.find(c => c.id === id) || null;
+}
+
+/**
+ * Build full hierarchical path — e.g.:
+ * Groceries → Indian Groceries → Malvic Grocery
+ */
+export async function getCategoryPath(id) {
+    const cats = await loadCategoryCache();
+    const path = [];
+
+    let current = cats.find(c => c.id === id);
+    while (current) {
+        path.unshift(current.name);
+        current = cats.find(c => c.id === current.parentId);
+    }
+
+    return path;
+}
+
+/**
+ * The UI calls this — MUST exist.
+ * Example output: "Groceries / Indian Groceries"
+ */
+export async function getFullCategoryName(id) {
+    if (!id) return "Uncategorised";
+    const path = await getCategoryPath(id);
+    return path.length ? path.join(" / ") : "Uncategorised";
+}
