@@ -562,7 +562,8 @@ function renderTransactionCard(tx, categories, accounts, properties) {
         <div class="transaction-details">
 
           <!-- KEY FIX HERE -->
-         <div class="transaction-title">${getFullCategoryName(category, categories)}</div>
+          <div class="transaction-title">${getFullCategoryName(tx.categoryId, categories)}</div>
+
 
 
           <div class="transaction-meta">
@@ -854,17 +855,18 @@ export async function syncAllPropertyExpenses() {
 
 }
 
-  function getFullCategoryName(category, categories) {
+function getFullCategoryName(categoryId, categories) {
+  if (!categoryId) return "Uncategorized";
+
+  const category = categories.find(c => c.id === categoryId);
   if (!category) return "Uncategorized";
 
-  // If it has a parent → show "Parent > Subcategory"
+  // If subcategory → show Parent › Child
   if (category.parentId) {
     const parent = categories.find(c => c.id === category.parentId);
-    if (parent) {
-      return `${parent.name} › ${category.name}`;
-    }
+    if (parent) return `${parent.name} › ${category.name}`;
   }
 
-  // If no parent → show main category only
+  // Main category only
   return category.name;
 }
