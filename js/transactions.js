@@ -553,19 +553,24 @@ function renderTransactionCard(tx, categories, accounts, properties) {
   const property = properties.find(p => p.id === tx.propertyId);
   const isIncome = tx.amount > 0;
 
-  const displayCategory = getCategoryDisplayName(tx, categories);
+  // Show bank category if no category assigned
+  const displayCategory = getFullCategoryName(tx.categoryId, categories);
+  const displayName = displayCategory === "Uncategorized" && tx.bankCategory 
+    ? `[Bank: ${tx.bankCategory}] ${tx.description}`
+    : displayCategory;
 
   return `
     <div class="transaction-card ${isIncome ? "income" : "expense"}" data-id="${tx.id}">
       <div class="transaction-main">
         <div class="transaction-icon">${category?.icon || (isIncome ? "💰" : "💸")}</div>
         <div class="transaction-details">
-
-          <!-- KEY FIX HERE -->
-          <div class="transaction-title">${getFullCategoryName(tx.categoryId, categories)}</div>
-
-
-
+          <!-- Show bank category hint if not categorized -->
+          <div class="transaction-title">${displayName}</div>
+          ${!tx.categoryId && tx.bankCategory ? 
+            `<div class="transaction-hint" style="font-size: 0.8em; color: #666;">
+              Bank categorized as: ${tx.bankCategory}
+            </div>` 
+            : ''}
           <div class="transaction-meta">
             <span>${account?.name || "Unknown Account"}</span>
             ${tx.isPropertyExpense && property ? `<span class="property-tag">🏠 ${property.name}</span>` : ""}
@@ -583,7 +588,6 @@ function renderTransactionCard(tx, categories, accounts, properties) {
     </div>
   `;
 }
-
 
 // ============================================================================
 // Event Handlers
