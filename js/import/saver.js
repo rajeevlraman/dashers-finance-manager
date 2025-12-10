@@ -2,7 +2,7 @@
 import { addItem, getAllItems, STORE_NAMES } from '../db.js';
 import { logImportDebug } from './debug.js';
 import { buildCategoryIndex, autoAssignCategory } from './categoryRules.js';
-import { bankCategoryToCategoryId } from './bankCategoryMap.js'; // You'll need to create this
+import { bankCategoryToCategoryId } from '../bankCategoryMap.js'; // You'll need to create this
 
 export async function saveImportedTransactions(transactions, options = {}) {
   const { dedupe = true } = options;
