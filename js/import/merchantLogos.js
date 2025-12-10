@@ -33,6 +33,9 @@ export const MERCHANT_LOGOS = [
   { keywords: ["aami"], logo: "aami.png" },
 ];
 
+// Compatibility export (old name)
+export const merchantLogos = MERCHANT_LOGOS;
+
 // Return the correct logo path (or null)
 export function getMerchantLogo(description = "") {
   const text = description.toLowerCase();
