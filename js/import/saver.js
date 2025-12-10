@@ -1,10 +1,8 @@
-// ============================================================================
-// 💾 import/saver.js — Save Imported Transactions with De-duplication
-// ============================================================================
-
+// saver.js - Updated version
 import { addItem, getAllItems, STORE_NAMES } from '../db.js';
 import { logImportDebug } from './debug.js';
 import { buildCategoryIndex, autoAssignCategory } from './categoryRules.js';
+import { bankCategoryToCategoryId } from './bankCategoryMap.js'; // You'll need to create this
 
 export async function saveImportedTransactions(transactions, options = {}) {
   const { dedupe = true } = options;
@@ -35,11 +33,39 @@ export async function saveImportedTransactions(transactions, options = {}) {
   let skipped = 0;
 
   for (const tx of transactions) {
-    // 🔹 Auto-assign category IF missing
+    // 🔹 1. FIRST TRY: Use bank category if available
+    if (!tx.categoryId && tx.bankCategory) {
+      const mappedId = mapBankCategoryToCategoryId(tx.bankCategory, categories);
+      if (mappedId) {
+        tx.categoryId = mappedId;
+        logImportDebug('Mapped bank category to category', {
+          bankCategory: tx.bankCategory,
+          categoryId: mappedId
+        });
+      }
+    }
+
+    // 🔹 2. SECOND TRY: Auto-assign category based on description/merchant
     if (!tx.categoryId && categories.length && categoryIndex.length) {
       const autoCatId = autoAssignCategory(tx, categories, categoryIndex);
       if (autoCatId) {
         tx.categoryId = autoCatId;
+        logImportDebug('Auto-assigned category', {
+          description: tx.description,
+          categoryId: autoCatId
+        });
+      }
+    }
+
+    // 🔹 3. THIRD TRY: Special merchant mappings (e.g., Malvic)
+    if (!tx.categoryId && tx.merchant) {
+      const merchantCatId = mapMerchantToCategoryId(tx.merchant, categories);
+      if (merchantCatId) {
+        tx.categoryId = merchantCatId;
+        logImportDebug('Mapped merchant to category', {
+          merchant: tx.merchant,
+          categoryId: merchantCatId
+        });
       }
     }
 
@@ -63,35 +89,71 @@ export async function saveImportedTransactions(transactions, options = {}) {
   return { saved, skipped };
 }
 
-// ---------------------------------------------------------------------------
-// Simple duplicate detection: same date, amount, description, account
-// within +/- 2 days considerate buffer
-// ---------------------------------------------------------------------------
-function isDuplicate(tx, existingList) {
-  const txAmt = roundAmount(tx.amount);
-  const txDate = tx.date;
-  const txDesc = (tx.description || '').toLowerCase();
+// Helper function to map bank categories to your category IDs
+function mapBankCategoryToCategoryId(bankCategory, categories) {
+  const bankCategoryMap = {
+    'Groceries': 'exp_groceries',
+    'Supermarket': 'exp_groceries',
+    'Restaurants': 'exp_dining',
+    'Fast Food': 'exp_dining',
+    'Medical': 'exp_health',
+    'Health': 'exp_health',
+    'Fuel': 'exp_fuel',
+    'Petrol': 'exp_fuel',
+    'Transport': 'exp_transport',
+    'Parking': 'exp_Parking_Fees',
+    'Insurance': 'exp_insurance',
+    'Electricity': 'exp_electricity',
+    'Gas': 'exp_gas',
+    'Water': 'exp_water_usage',
+    'Internet': 'exp_internet',
+    'Phone': 'exp_mobile',
+    'Education': 'exp_education',
+    'Fees': 'exp_fees',
+    'Rent': 'exp_rent_payment',
+    'Mortgage': 'exp_Home_mortgage'
+  };
 
-  return existingList.some(e => {
-    const sameAmt = roundAmount(e.amount) === txAmt;
-    const sameDesc = (e.description || '').toLowerCase() === txDesc;
-    const sameAccount = e.accountId === tx.accountId;
-    const closeDate = Math.abs(dayDiff(e.date, txDate)) <= 2;
+  const targetName = bankCategoryMap[bankCategory];
+  if (!targetName) return null;
 
-    const dup = sameAmt && sameDesc && sameAccount && closeDate;
-    if (dup) {
-      logImportDebug('Duplicate detected, skipping:', { tx, existing: e });
-    }
-    return dup;
-  });
+  // Try to find exact match first
+  let category = categories.find(c => c.name.toLowerCase() === targetName.toLowerCase());
+  
+  // If not found, try partial match
+  if (!category) {
+    category = categories.find(c => 
+      c.name.toLowerCase().includes(targetName.toLowerCase()) ||
+      targetName.toLowerCase().includes(c.name.toLowerCase())
+    );
+  }
+  
+  // If still not found, try by ID pattern
+  if (!category) {
+    category = categories.find(c => c.id.includes(targetName));
+  }
+
+  return category?.id || null;
 }
 
-function roundAmount(n) {
-  return Math.round((Number(n) || 0) * 100) / 100;
+// Helper function for specific merchant mappings
+function mapMerchantToCategoryId(merchant, categories) {
+  const merchantLower = (merchant || '').toLowerCase();
+  
+  // Special cases
+  if (merchantLower.includes('malvic')) {
+    const indianGrocery = categories.find(c => c.id === 'exp_Indian_Groceries');
+    return indianGrocery?.id || null;
+  }
+  
+  if (merchantLower.includes('woolworths') || merchantLower.includes('coles') || merchantLower.includes('safeway')) {
+    const grocery = categories.find(c => c.id === 'exp_groceries');
+    return grocery?.id || null;
+  }
+  
+  // Add more merchant mappings as needed
+  
+  return null;
 }
 
-function dayDiff(d1, d2) {
-  const a = new Date(d1);
-  const b = new Date(d2);
-  return Math.round((a - b) / (1000 * 60 * 60 * 24));
-}
+// ... keep the existing isDuplicate, roundAmount, dayDiff functions
