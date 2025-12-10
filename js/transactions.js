@@ -562,7 +562,8 @@ function renderTransactionCard(tx, categories, accounts, properties) {
         <div class="transaction-details">
 
           <!-- KEY FIX HERE -->
-          <div class="transaction-title">${displayCategory}</div>
+         <div class="transaction-title">${getFullCategoryName(category, categories)}</div>
+
 
           <div class="transaction-meta">
             <span>${account?.name || "Unknown Account"}</span>
@@ -850,4 +851,20 @@ export async function syncAllPropertyExpenses() {
       message: "Sync failed due to an unexpected error."
     };
   }
+
+  function getFullCategoryName(category, categories) {
+  if (!category) return "Uncategorized";
+
+  // If it has a parent → show "Parent > Subcategory"
+  if (category.parentId) {
+    const parent = categories.find(c => c.id === category.parentId);
+    if (parent) {
+      return `${parent.name} › ${category.name}`;
+    }
+  }
+
+  // If no parent → show main category only
+  return category.name;
+}
+
 }
