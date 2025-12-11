@@ -91,7 +91,7 @@ function checkBranchIndicator() {
         }
     }
 }
-
+/*
 // --------------------------
 // Enhanced Professional Login Functionality
 // --------------------------
@@ -248,7 +248,7 @@ function showRegistrationModal() {
     `;
     document.body.appendChild(modal);
 }
-
+*/
 // --------------------------
 // Auxiliary UI Helpers (Toast, Offline Banner, Connection Icon)
 // --------------------------
@@ -350,9 +350,9 @@ async function initializeAppCore() {
 */    
     // Initialize UI
     // Only initialize UI *after login*
-    if (localStorage.getItem("loggedIn") === "true") {
+    //if (localStorage.getItem("loggedIn") === "true") {
         initUI();
-    }
+  //  }
 
     
     // Run automation
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkBranchIndicator();
 
     // --- 1. Enhanced Professional Login ---
-    setupProfessionalLogin();
+   // setupProfessionalLogin();
 
     // --- 2. Splash screen fade‐out ---
     const splash = document.getElementById("splashScreen");
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             splash.classList.add("hidden");
         }, 700); // fade-out duration
     }, 1500); // overall time on screen
-
+/*
         // --- FORCE LOGIN SCREEN TO APPEAR ---
     if (!localStorage.getItem("loggedIn")) {
         const loginScreen = document.getElementById("loginScreen");
@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             loginScreen.classList.remove("hidden");
         }
     }
-
+*/
 
     // --- 3. Initialize core application ---
     await initializeAppCore();
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('🎉 Budget Tracker fully initialized!');
 });
-
+/*
 // --------------------------
 // Optional: Fake logout function
 // --------------------------
@@ -477,7 +477,7 @@ window.logout = () => {
     }
     console.log('🚪 User logged out');
 };
-
+*/
 // --------------------------
 // Service Worker Debugging
 // --------------------------
