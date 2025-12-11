@@ -9,6 +9,7 @@
 @import url("./core/03-base.css");
 
 /* COMPONENTS */
+@import url("./components/09-header.css");
 @import url("./components/10-auth.css");
 @import url("./components/10-navigation.css");
 @import url("./components/11-cards.css");
