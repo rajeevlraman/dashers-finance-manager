@@ -1,9 +1,9 @@
 // /js/navigation.js
-// ------------------------------------------------------
-// CLEAN TOP NAVIGATION (Dashboard + Dropdown Groups)
-// ------------------------------------------------------
+// CLEAN TOP NAVIGATION WITH GROUPED MENUS
 
-// NAVIGATION GROUPS FOR DROPDOWN MENUS
+// ------------------------------
+// Grouped Navigation Structure
+// ------------------------------
 const navGroups = [
   {
     title: "Finance",
@@ -34,10 +34,12 @@ const navGroups = [
   }
 ];
 
-// ------------------------------------------------------
-// INITIALIZATION
-// ------------------------------------------------------
+// ------------------------------
+// Initialize Navigation
+// ------------------------------
 export function initNavigation() {
+  console.log("NAV: initNavigation()");
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupNavigation);
   } else {
@@ -45,115 +47,88 @@ export function initNavigation() {
   }
 }
 
+// ------------------------------
+// Build Navigation Bar
+// ------------------------------
 function setupNavigation() {
-  console.log("🚀 Navigation initialized");
+  console.log("NAV: Building top navigation bar…");
 
-  const appContainer = ensureAppContainer();
+  const container = document.body;
 
-  buildTopNavigation(appContainer);
-  attachTopNavEvents();
-}
-
-// ------------------------------------------------------
-// CREATE APP WRAPPER + MAIN CONTENT AREA
-// ------------------------------------------------------
-function ensureAppContainer() {
-  let container = document.querySelector(".app-container");
-
-  if (!container) {
-    container = document.createElement("div");
-    container.className = "app-container";
-
-    const main = document.getElementById("mainContent");
-    if (main) {
-      main.parentNode.insertBefore(container, main);
-      main.remove(); // Remove old mainContent
-    }
-
-    container.innerHTML = `<main id="mainContent"></main>`;
-  }
-
-  return container;
-}
-
-// ------------------------------------------------------
-// BUILD TOP HEADER NAVIGATION
-// ------------------------------------------------------
-function buildTopNavigation(container) {
-  container.insertAdjacentHTML(
-    "afterbegin",
-    `
-<header class="top-header">
-  <div class="top-left">
-    <img src="./assets/icons/icon-180.png" class="header-logo" />
-    <span class="app-title">Budget Tracker</span>
-  </div>
-
-  <nav class="top-nav">
-    <a href="#dashboard" class="top-nav-item" data-view="dashboard">🏠 Dashboard</a>
-
-    ${navGroups
-      .map(
-        (group) => `
-      <div class="top-nav-group">
-        <button class="top-nav-group-btn">
-          ${group.icon} ${group.title} ▼
-        </button>
-        <div class="top-nav-dropdown">
-          ${group.items
-            .map(
-              (i) => `
-            <a href="#${i.view}" class="dropdown-item" data-view="${i.view}">
-              ${i.icon} ${i.label}
-            </a>`
-            )
-            .join("")}
-        </div>
+  // Inject top navigation bar
+  const topNavHTML = `
+  <header class="top-header">
+      <div class="top-left">
+        <img src="assets/icons/icon-180.png" class="header-logo" />
+        <span class="app-title">Budget Tracker</span>
       </div>
-    `
-      )
-      .join("")}
-  </nav>
 
-  <div class="top-right">
-    <button id="btnExport">Backup</button>
-    <button id="btnImport">Restore</button>
-  </div>
-</header>
-`
-  );
+      <nav class="top-nav">
+        <a href="#dashboard" class="top-nav-item" data-view="dashboard">🏠 Dashboard</a>
+
+        ${navGroups
+          .map(
+            (group) => `
+          <div class="top-nav-group">
+            <button class="top-nav-group-btn">
+              ${group.icon} ${group.title} ▼
+            </button>
+            <div class="top-nav-dropdown">
+              ${group.items
+                .map(
+                  (i) => `
+                <a href="#${i.view}" class="dropdown-item" data-view="${i.view}">
+                  ${i.icon} ${i.label}
+                </a>`
+                )
+                .join("")}
+            </div>
+          </div>
+        `
+          )
+          .join("")}
+      </nav>
+
+      <div class="top-right">
+        <span id="connectionStatus" title="Online">🟢</span>
+        <button id="btnExport">Backup</button>
+        <button id="btnImport">Restore</button>
+      </div>
+  </header>
+  `;
+
+  // Add to DOM
+  container.insertAdjacentHTML("afterbegin", topNavHTML);
+
+  initNavHandlers();
 }
 
-// ------------------------------------------------------
-// TOP NAV EVENTS
-// ------------------------------------------------------
-function attachTopNavEvents() {
+// ------------------------------
+// Navigation Click Handlers
+// ------------------------------
+function initNavHandlers() {
+  console.log("NAV: click handlers ready");
+
   document.addEventListener("click", (e) => {
     const link = e.target.closest("[data-view]");
     if (!link) return;
 
-    e.preventDefault();
-
     const view = link.dataset.view;
     window.location.hash = view;
 
+    // Update active items
     updateActiveNav(view);
 
-    if (window.loadView) {
-      window.loadView(view);
-    }
+    // Notify UI loader (ui.js handles this)
+    window.dispatchEvent(new CustomEvent("navigate", { detail: { view } }));
   });
-
-  // Initialize proper state
-  const view = window.location.hash.replace("#", "") || "dashboard";
-  updateActiveNav(view);
 }
 
-// ------------------------------------------------------
-// UPDATE ACTIVE LINKS
-// ------------------------------------------------------
-export function updateActiveNav(view) {
+// ------------------------------
+// Active State Sync
+// ------------------------------
+export function updateActiveNav(currentView) {
   document.querySelectorAll(".top-nav-item, .dropdown-item").forEach((el) => {
-    el.classList.toggle("active", el.dataset.view === view);
+    el.classList.toggle("active", el.dataset.view === currentView);
   });
 }
