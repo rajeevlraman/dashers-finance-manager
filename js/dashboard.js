@@ -121,7 +121,7 @@ export async function initDashboardUI() {
     mainContent.innerHTML = `
       <div class="page-container">
         <div class="page-header">
-          <h2>📊 Dashboard</h2>
+          <h2>📊 Dashboard new</h2>
           <div class="page-actions">
             <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
             <button id="exportDashboard" class="btn btn-outline">📊 Export Data</button>
