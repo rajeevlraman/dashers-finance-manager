@@ -54,6 +54,25 @@ window.showDrillDownModal = function(label, data) {
 
 export async function initDashboardUI() {
   console.log("✅ initDashboardUI() executing...");
+
+// Greeting + Date Helpers
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning, Rajeev";
+  if (hour < 17) return "Good Afternoon, Rajeev";
+  return "Good Evening, Rajeev";
+}
+
+function getTodayDate() {
+  return new Date().toLocaleDateString("en-AU", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+
+
   const mainContent = document.getElementById('mainContent');
   mainContent.classList.add('page-transition');
   mainContent.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading dashboard...</p></div>';
@@ -393,6 +412,12 @@ export async function initDashboardUI() {
         <button class="fab-main">+</button>
       </div>
     `;
+
+    // Populate Welcome Banner
+    document.getElementById("welcomeGreeting").textContent = getGreeting();
+    document.getElementById("welcomeDate").textContent = getTodayDate();
+    document.getElementById("welcomeWeather").textContent = ""; // Weather later
+
 
     setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
