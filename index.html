@@ -65,27 +65,24 @@
 
 
   <header>
-    <h1>Budget Tracker Dev Version 7-12-2025</h1>
-    <div class="header-status">
-      <span id="connectionStatus" title="Online">🟢</span>
-    </div>
-    <div class="header-actions">
-      <button id="btnExport">Backup Data</button>
-      <button id="btnImport">Restore Data</button>
-    </div>
-    <div id="branchIndicator" style="display:none; 
-    background-color: #f39c12; 
-    color: white; 
-    text-align: center; 
-    padding: 5px; 
-    font-weight: bold; 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    right: 0; 
-    z-index: 10000;">
+<header class="app-header">
+
+  <div class="header-left">
+    <h1>Budget Tracker <small>Dev v7-12-2025</small></h1>
+    <span id="connectionStatus" class="status-indicator" title="Online">🟢</span>
+  </div>
+
+  <div class="header-right">
+    <button id="btnExport" class="header-btn">Backup</button>
+    <button id="btnImport" class="header-btn">Restore</button>
+  </div>
+
+  <div id="branchIndicator" class="branch-banner">
     ⚠️ DEVELOPMENT VERSION ⚠️
-    </div>
+  </div>
+
+</header>
+
   </header>
 
 <!--
