@@ -1,6 +1,7 @@
-/* ---------------------------
+/* ----------------------------------------------------
    TOP NAVIGATION BAR
----------------------------- */
+---------------------------------------------------- */
+
 .top-header {
   display: flex;
   justify-content: space-between;
@@ -24,16 +25,25 @@
   height: 32px;
 }
 
+.app-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* ----------------------------------------------------
+   TOP NAV
+---------------------------------------------------- */
+
 .top-nav {
   display: flex;
-  gap: 1rem;
   align-items: center;
+  gap: 1rem;
 }
 
 .top-nav-item {
+  text-decoration: none;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
-  text-decoration: none;
   color: #333;
   font-weight: 500;
 }
@@ -43,7 +53,8 @@
   color: #0074d9;
 }
 
-/* GROUPED MENU */
+/* ---------- GROUPED DROPDOWNS ---------- */
+
 .top-nav-group {
   position: relative;
 }
@@ -54,21 +65,19 @@
   padding: 0.4rem 0.8rem;
   cursor: pointer;
   font-weight: 500;
-  color: #333;
 }
 
 .top-nav-dropdown {
   position: absolute;
   top: 120%;
   left: 0;
-  background: white;
+  display: none;
+  background: #fff;
   border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 0.5rem;
   min-width: 180px;
-  box-shadow: rgba(0,0,0,0.1) 0 4px 12px;
-  display: none;
-  z-index: 2000;
+  padding: 0.5rem;
+  box-shadow: rgba(0, 0, 0, 0.12) 0 4px 12px;
 }
 
 .top-nav-group:hover .top-nav-dropdown {
@@ -77,85 +86,42 @@
 
 .dropdown-item {
   display: block;
-  padding: 0.4rem 0.6rem;
-  border-radius: 4px;
-  color: #333;
   text-decoration: none;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  color: #333;
 }
 
 .dropdown-item:hover {
-  background: #f0f0f0;
+  background: #f3f4f6;
 }
 
-/* Right header buttons */
+.dropdown-item.active {
+  background: #0074d9;
+  color: #fff;
+}
+
+/* ----------------------------------------------------
+   RIGHT SIDE BUTTONS
+---------------------------------------------------- */
+
 .top-right button {
-  margin-left: 10px;
   padding: 0.4rem 0.8rem;
-}
-
-
-/* -----------------------------
-   MENU GROUPS
--------------------------------- */
-.menu-group {
-  margin-bottom: 1rem;
-}
-
-.menu-group-header {
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.5rem;
+  margin-left: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
   cursor: pointer;
-  border-radius: 6px;
-  display: flex;
-  justify-content: space-between;
 }
 
-.menu-group-header:hover {
-  background: var(--bg-secondary);
+.top-right button:hover {
+  background: #f1f1f1;
 }
 
-.arrow {
-  opacity: 0.7;
-}
+/* ----------------------------------------------------
+   MAIN CONTENT OFFSET
+---------------------------------------------------- */
 
-/* collapsed state */
-.menu-group.collapsed .menu-items {
-  display: none;
-}
-
-/* -----------------------------
-   MENU ITEMS
--------------------------------- */
-.menu-items {
-  list-style: none;
-  padding-left: 0.75rem;
-  margin: 0.5rem 0;
-}
-
-.menu-items li {
-  margin-bottom: 0.4rem;
-}
-
-.menu-items a {
-  display: block;
-  padding: 0.45rem 0.5rem;
-  border-radius: 6px;
-  text-decoration: none;
-  color: var(--text-color);
-  font-size: 0.92rem;
-}
-
-.menu-items a:hover {
-  background: var(--bg-secondary);
-}
-
-.menu-items a.active {
-  background: var(--accent-color);
-  color: white;
-}
-
-/* Push page content */
-.page-container {
-  margin-left: 260px; /* sidebar width + padding */
+#mainContent {
+  padding: 1rem 1.5rem;
 }
