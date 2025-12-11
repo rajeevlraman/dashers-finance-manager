@@ -7,11 +7,8 @@
    PAGE WRAPPER + HEADER
 -------------------------------- */
 .page-container {
-  background: #f4f4f5;     /* your preferred neutral grey */
-  min-height: 100vh;       /* so the background covers the full screen */
   padding: 1.5rem;
 }
-
 
 .page-header {
   display: flex;
