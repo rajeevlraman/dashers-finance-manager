@@ -559,36 +559,57 @@ function renderTransactionCard(tx, categories, accounts, properties) {
     ? `[Bank: ${tx.bankCategory}] ${tx.description}`
     : displayCategory;
 
+// Get logo with fallback
+  const logoUrl = getMerchantLogo(tx.description, tx.merchant);
+  const hasLogo = !!logoUrl;
+  
+  // Create safe image HTML with error handling
+  const logoHtml = hasLogo ? `
+    <img src="${logoUrl}" 
+         alt="${tx.merchant || 'Merchant'}"
+         class="merchant-logo"
+         onerror="this.style.display='none'; this.parentElement.innerHTML='${category?.icon || (isIncome ? '💰' : '💸')}'">
+  ` : (category?.icon || (isIncome ? '💰' : '💸'));
+  
   return `
-    <div class="transaction-card ${isIncome ? "income" : "expense"}" data-id="${tx.id}">
+    <div class="transaction-card" data-id="${tx.id}">
       <div class="transaction-main">
-        <div class="transaction-icon">${category?.icon || (isIncome ? "💰" : "💸")}</div>
-        <div class="transaction-details">
-          <!-- Show bank category hint if not categorized -->
-          <div class="transaction-title">${displayName}</div>
-          ${!tx.categoryId && tx.bankCategory ? 
-            `<div class="transaction-hint" style="font-size: 0.8em; color: #666;">
-              Bank categorized as: ${tx.bankCategory}
-            </div>` 
-            : ''}
-          <div class="transaction-meta">
-            <span>${account?.name || "Unknown Account"}</span>
-            ${tx.isPropertyExpense && property ? `<span class="property-tag">🏠 ${property.name}</span>` : ""}
-          </div>
-          ${tx.description ? `<div class="transaction-description">${tx.description}</div>` : ""}
+        <div class="transaction-icon">
+          ${logoHtml}
         </div>
-        <div class="transaction-amount ${isIncome ? "positive" : "negative"}">
-          ${isIncome ? "+" : "-"}$${Math.abs(tx.amount).toFixed(2)}
+        
+        <div class="transaction-details">
+          <div class="transaction-title">${displayName}</div>
+          
+          ${tx.merchant ? `<div class="transaction-merchant">${tx.merchant}</div>` : ''}
+          
+          ${tx.bankCategory ? `
+            <div class="bank-category-hint">
+              🏦 Bank: ${tx.bankCategory}
+            </div>
+          ` : ''}
+          
+          <div class="transaction-meta">
+            <span>${account?.name || 'Unknown Account'}</span>
+          </div>
+          
+          ${tx.description && tx.description !== tx.merchant ? `
+            <div class="transaction-description">${tx.description}</div>
+          ` : ''}
+        </div>
+        
+        <div class="transaction-amount ${isIncome ? 'positive' : 'negative'}">
+          ${isIncome ? '+' : '-'}$${Math.abs(tx.amount).toFixed(2)}
         </div>
       </div>
+      
       <div class="transaction-actions">
-        <button class="edit-btn" data-id="${tx.id}" title="Edit">✏️</button>
-        <button class="delete-btn" data-id="${tx.id}" title="Delete">🗑️</button>
+        <button class="edit-btn" data-id="${tx.id}">✏️</button>
+        <button class="delete-btn" data-id="${tx.id}">🗑️</button>
       </div>
     </div>
   `;
 }
-
 // ============================================================================
 // Event Handlers
 // ============================================================================
