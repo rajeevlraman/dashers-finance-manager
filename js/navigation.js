@@ -1,34 +1,37 @@
 // /js/navigation.js
 
 // Navigation items data
-const navItems = [
-  { icon: '🏠', label: 'Dashboard', view: 'dashboard' },
-  { icon: '💸', label: 'Transactions', view: 'transactions' },
-  { icon: '🎯', label: 'Budgets', view: 'budgets' },
-  { icon: '💳', label: 'Accounts', view: 'accounts' },
-  { icon: '🗂️', label: 'Categories', view: 'categories' },
-  { icon: '📊', label: 'Reports', view: 'reports' },
-  { icon: '🧾', label: 'Bills', view: 'bills' },
-  { icon: '📅', label: 'Calendar', view: 'calendar' },
-  { icon: '🔁', label: 'Recurring', view: 'recurring' },
-  { icon: '🏦', label: 'Loans', view: 'loans' },
-  { icon: '🏠', label: 'Properties', view: 'properties' },
-  { icon: '👤', label: 'Tenants', view: 'tenants' },
-  { icon: '🧰', label: 'Maintenance', view: 'maintenance' },
-  { icon: '💸', label: 'Expenses', view: 'expenses' },
-  { icon: '📘', label: 'ATO Reports', view: 'tax' },
-  { icon: '🧱', label: 'Cost Base', view: 'costbase' },
-  { icon: '⚙️', label: 'Settings', view: 'settings' }
+// GROUPED TOP NAV
+const navGroups = [
+  {
+    title: "Finance",
+    icon: "💰",
+    items: [
+      { icon: "💸", label: "Transactions", view: "transactions" },
+      { icon: "🎯", label: "Budgets", view: "budgets" },
+      { icon: "💳", label: "Accounts", view: "accounts" }
+    ]
+  },
+  {
+    title: "Properties",
+    icon: "🏠",
+    items: [
+      { icon: "🏠", label: "Properties", view: "properties" },
+      { icon: "👤", label: "Tenants", view: "tenants" },
+      { icon: "🧰", label: "Maintenance", view: "maintenance" }
+    ]
+  },
+  {
+    title: "System",
+    icon: "⚙️",
+    items: [
+      { icon: "⚙️", label: "Settings", view: "settings" },
+      { icon: "📘", label: "ATO Reports", view: "tax" },
+      { icon: "🧱", label: "Cost Base", view: "costbase" }
+    ]
+  }
 ];
 
-// Bottom navigation items (for mobile)
-const bottomNavItems = [
-  { icon: '🏠', label: 'Home', view: 'dashboard' },
-  { icon: '💸', label: 'Finance', view: 'transactions' },
-  { icon: '📊', label: 'Reports', view: 'reports' },
-  { icon: '🏘️', label: 'Properties', view: 'properties' },
-  { icon: '⚙️', label: 'Settings', view: 'settings' }
-];
 
 // Initialize navigation system
 export function initNavigation() {
@@ -93,49 +96,39 @@ function buildNavigationStructure(container) {
       </div>
       <nav class="nav-menu">
         <!-- Navigation items will be populated by JavaScript -->
-      </nav>
-    </aside>
-    
-    <!-- Sidebar Overlay for Mobile/Tablet -->
-    <div class="sidebar-overlay"></div>
-    
-    <!-- Main Header -->
-    <header>
-      <div class="header-left">
-        <div class="hamburger-menu">
-          <button class="hamburger-btn">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-          </button>
-          <div class="header-title">Budget Tracker</div>
+<header class="top-header">
+  <div class="top-left">
+    <img src="assets/icons/icon-180.png" class="header-logo" />
+    <span class="app-title">Budget Tracker</span>
+  </div>
+
+  <nav class="top-nav">
+    <a href="#dashboard" class="top-nav-item" data-view="dashboard">🏠 Dashboard</a>
+
+    ${navGroups.map(group => `
+      <div class="top-nav-group">
+        <button class="top-nav-group-btn">
+          ${group.icon} ${group.title} ▼
+        </button>
+        <div class="top-nav-dropdown">
+          ${group.items.map(i => `
+            <a href="#${i.view}" class="dropdown-item" data-view="${i.view}">
+              ${i.icon} ${i.label}
+            </a>
+          `).join('')}
         </div>
       </div>
-      
-      <div class="header-right">
-        <div class="quick-actions">
-          <div class="search-box">
-            <i class="search-icon">🔍</i>
-            <input type="text" class="search-input" placeholder="Search transactions...">
-          </div>
-          <div class="header-status">
-            <span id="connectionStatus" title="Online">🟢</span>
-          </div>
-          <div class="header-actions">
-            <button id="btnExport">Backup</button>
-            <button id="btnImport">Restore</button>
-          </div>
-        </div>
-      </div>
-    </header>
-    
-    <!-- Main Content Area -->
-    <main id="mainContent"></main>
-    
-    <!-- Bottom Navigation (Mobile Only) -->
-    <nav class="bottom-nav">
-      <!-- Bottom nav items will be populated by JavaScript -->
-    </nav>
+    `).join('')}
+  </nav>
+
+  <div class="top-right">
+    <button id="btnExport">Backup</button>
+    <button id="btnImport">Restore</button>
+  </div>
+</header>
+
+<main id="mainContent"></main>
+
   `;
 }
 

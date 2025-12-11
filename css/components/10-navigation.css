@@ -1,35 +1,98 @@
-/* -----------------------------
-   SIDEBAR LAYOUT
--------------------------------- */
-.sidebar {
-  width: 240px;
+/* ---------------------------
+   TOP NAVIGATION BAR
+---------------------------- */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
   background: #ffffff;
-  border-right: 1px solid var(--border-color);
-  position: fixed;
-  top: 70px; /* below your header */
-  bottom: 0;
-  left: 0;
-  padding: 1rem;
-  overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
-.sidebar-header {
+.top-left {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 1.5rem;
 }
 
-.sidebar-logo {
-  width: 36px;
-  height: 36px;
+.header-logo {
+  width: 32px;
+  height: 32px;
 }
 
-.sidebar-title {
-  font-size: 1.3rem;
-  font-weight: 700;
+.top-nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
+
+.top-nav-item {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+.top-nav-item.active {
+  background: #e5f2ff;
+  color: #0074d9;
+}
+
+/* GROUPED MENU */
+.top-nav-group {
+  position: relative;
+}
+
+.top-nav-group-btn {
+  background: none;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+}
+
+.top-nav-dropdown {
+  position: absolute;
+  top: 120%;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.5rem;
+  min-width: 180px;
+  box-shadow: rgba(0,0,0,0.1) 0 4px 12px;
+  display: none;
+  z-index: 2000;
+}
+
+.top-nav-group:hover .top-nav-dropdown {
+  display: block;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  color: #333;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background: #f0f0f0;
+}
+
+/* Right header buttons */
+.top-right button {
+  margin-left: 10px;
+  padding: 0.4rem 0.8rem;
+}
+
 
 /* -----------------------------
    MENU GROUPS
