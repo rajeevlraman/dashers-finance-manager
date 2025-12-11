@@ -129,6 +129,16 @@ export async function initDashboardUI() {
           </div>
         </div>
 
+
+                <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div id="welcomeGreeting" class="welcome-greeting"></div>
+          <div class="welcome-sub">
+            <span id="welcomeDate"></span>
+            <span id="welcomeWeather"></span>
+          </div>
+        </div>
+
         <!-- Filter Controls -->
         <div class="filter-bar">
           <select id="propertyFilter">
