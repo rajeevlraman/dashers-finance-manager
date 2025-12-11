@@ -142,14 +142,7 @@ function getTodayDate() {
         <div class="page-header">
           <h2>📊 Dashboard</h2>
           <div class="page-actions">
-            <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            <button id="exportDashboard" class="btn btn-outline">📊 Export Data</button>
-            <button id="liveRefresh" class="btn btn-outline" title="Live Refresh">🔄 Live Data</button>
-          </div>
-        </div>
-
-
-                <!-- Welcome Banner -->
+                          <!-- Welcome Banner -->
         <div class="welcome-banner">
           <div id="welcomeGreeting" class="welcome-greeting"></div>
           <div class="welcome-sub">
@@ -157,6 +150,14 @@ function getTodayDate() {
             <span id="welcomeWeather"></span>
           </div>
         </div>
+            <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <button id="exportDashboard" class="btn btn-outline">📊 Export Data</button>
+            <button id="liveRefresh" class="btn btn-outline" title="Live Refresh">🔄 Live Data</button>
+          </div>
+        </div>
+
+
+
 
         <!-- Filter Controls -->
         <div class="filter-bar">
