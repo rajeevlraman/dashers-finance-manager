@@ -70,6 +70,27 @@ function getTodayDate() {
     month: "long",
     day: "numeric"
   });
+  async function getWeather() {
+    try {
+      const response = await fetch(
+        "https://api.open-meteo.com/v1/forecast?latitude=-37.8136&longitude=144.9631&current_weather=true"
+      );
+      const data = await response.json();
+      const w = data.current_weather;
+
+      // Simple weather description for now
+      let desc = "Weather";
+      if (w.weathercode === 0) desc = "Clear";
+      else if (w.weathercode < 3) desc = "Partly Cloudy";
+      else desc = "Cloudy";
+
+      return `${w.temperature}°C • ${desc}`;
+    } catch (e) {
+      return "Weather unavailable";
+    }
+}
+
+
 }
 
 
@@ -417,7 +438,10 @@ function getTodayDate() {
     // Populate Welcome Banner
     document.getElementById("welcomeGreeting").textContent = getGreeting();
     document.getElementById("welcomeDate").textContent = getTodayDate();
-    document.getElementById("welcomeWeather").textContent = ""; // Weather later
+    // Weather (async)
+    getWeather().then(weather => {
+      document.getElementById("welcomeWeather").textContent = `• ${weather}`;
+    });
 
 
     setTimeout(() => mainContent.classList.remove('page-transition'), 400);
