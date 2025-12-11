@@ -351,7 +351,7 @@ async function initializeAppCore() {
     // Initialize UI
     // Only initialize UI *after login*
     //if (localStorage.getItem("loggedIn") === "true") {
-        initUI();
+    initUI();
   //  }
 
     
