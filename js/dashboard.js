@@ -70,6 +70,7 @@ function getTodayDate() {
     month: "long",
     day: "numeric"
   });
+}
   async function getWeather() {
     try {
       const response = await fetch(
@@ -91,7 +92,7 @@ function getTodayDate() {
 }
 
 
-}
+
 
 
   const mainContent = document.getElementById('mainContent');
