@@ -56,6 +56,8 @@ function buildNavigationHTML() {
     `;
 }
 
+initTopNavDropdowns();
+
 function initTopNavDropdowns() {
   const groups = document.querySelectorAll(".top-nav-group");
   let openDropdown = null;
@@ -94,7 +96,7 @@ function initTopNavDropdowns() {
   });
 }
 
-initTopNavDropdowns();
+
 
 
 
