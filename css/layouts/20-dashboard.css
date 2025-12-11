@@ -42,3 +42,33 @@
   color: var(--color-gray-500);
   margin-top: var(--space-2);
 }
+
+/*welcome banner*/
+/* =============================
+   DASHBOARD — WELCOME BANNER
+   ============================= */
+
+.welcome-banner {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  color: white;
+  padding: 18px 22px;
+  border-radius: 12px;
+  margin: 15px 0 25px 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+}
+
+.welcome-greeting {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.welcome-sub {
+  font-size: 0.95rem;
+  opacity: 0.92;
+}
+
+#welcomeWeather {
+  margin-left: 8px;
+  font-weight: 500;
+}
