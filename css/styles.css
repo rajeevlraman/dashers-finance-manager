@@ -8722,3 +8722,44 @@ th {
   margin-left: 8px;
   font-weight: 500;
 }
+/* ============================
+   CENTRAL CSS ENTRY POINT
+   ============================ */
+
+/* CORE (foundation) */
+@import url("./core/00-reset.css");
+@import url("./core/01-variables.css");
+@import url("./core/02-typography.css");
+@import url("./core/03-base.css");
+
+/* COMPONENTS */
+@import url("./components/10-auth.css");
+@import url("./components/10-navigation.css");
+@import url("./components/11-cards.css");
+@import url("./components/12-forms.css");
+@import url("./components/13-tables.css");
+@import url("./components/14-modals.css");
+@import url("./components/15-filters.css");
+@import url("./components/16-charts.css");
+@import url("./components/17-badges.css");
+@import url("./components/18-loaders.css");
+
+/* PAGE LAYOUTS */
+@import url("./layouts/20-dashboard.css");
+@import url("./layouts/21-transactions.css");
+@import url("./layouts/22-properties.css");
+@import url("./layouts/23-budgets.css");
+@import url("./layouts/24-reports.css");
+@import url("./layouts/25-accounts.css");
+@import url("./layouts/26-bills.css");
+@import url("./layouts/27-loans.css");
+@import url("./layouts/28-tenants.css");
+@import url("./layouts/29-maintenance.css");
+@import url("./layouts/30-settings.css");
+
+/* THEMES */
+@import url("./themes/40-light.css");
+@import url("./themes/41-dark.css");
+
+/* UTILITIES */
+@import url("./utilities/50-utilities.css");
