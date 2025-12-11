@@ -1,53 +1,43 @@
 :root {
     /* Core Colors */
-    --color-bg: #161616;
-    --color-surface: #1f1f1f;
-    --color-surface-light: #262626;
-    --color-border: #2d2d2d;
+    --color-bg: #f8f9fa;
+    --color-surface: #ffffff;
+    --color-surface-alt: #fafbfc;
+    --color-border: #e1e4e8;
 
-    --color-text: #e6e6e6;
-    --color-text-muted: #aaaaaa;
+    --color-text: #333;
+    --color-text-muted: #6c757d;
 
-    /* Accent */
-    --color-primary: #4da3ff;
-    --color-primary-hover: #6bb8ff;
-    --color-primary-glow: rgba(77, 163, 255, 0.4);
+    /* Card Headers */
+    --color-card-primary: #4da3ff;
+    --color-card-success: #4cd964;
+    --color-card-secondary: #6c757d;
+    --color-card-info: #17a2b8;
 
-    /* Status Colors */
-    --success: #2ecc71;
-    --danger: #e74c3c;
-    --warning: #f1c40f;
-
-    /* Radii */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-
-    /* Shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
-    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.45);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.55);
-    --shadow-glow: 0 0 12px var(--color-primary-glow);
+    /* Card Text */
+    --color-card-text: #fff;
 
     /* Spacing */
-    --space-2: 2px;
     --space-4: 4px;
     --space-8: 8px;
     --space-12: 12px;
     --space-16: 16px;
-    --space-20: 20px;
     --space-24: 24px;
     --space-32: 32px;
 
-    /* Font Sizes */
+    /* Radii */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+
+    /* Typography */
     --font-xs: 0.75rem;
     --font-sm: 0.875rem;
     --font-md: 1rem;
     --font-lg: 1.25rem;
     --font-xl: 1.5rem;
-    --font-xxl: 2rem;
 
-    /* Animation */
-    --transition: 0.25s ease;
+    /* Shadows */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --shadow-elevated: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
