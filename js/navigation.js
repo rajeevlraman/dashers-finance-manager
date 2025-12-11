@@ -56,6 +56,48 @@ function buildNavigationHTML() {
     `;
 }
 
+function initTopNavDropdowns() {
+  const groups = document.querySelectorAll(".top-nav-group");
+  let openDropdown = null;
+
+  groups.forEach(group => {
+    const btn = group.querySelector(".top-nav-group-btn");
+    const menu = group.querySelector(".top-nav-dropdown");
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      // If clicking the already open dropdown → close it
+      if (openDropdown === menu) {
+        menu.classList.remove("open");
+        openDropdown = null;
+        return;
+      }
+
+      // Close previously open dropdown
+      if (openDropdown) {
+        openDropdown.classList.remove("open");
+      }
+
+      // Open new dropdown
+      menu.classList.add("open");
+      openDropdown = menu;
+    });
+  });
+
+  // Clicking outside closes all dropdowns
+  document.addEventListener("click", () => {
+    if (openDropdown) {
+      openDropdown.classList.remove("open");
+      openDropdown = null;
+    }
+  });
+}
+
+initTopNavDropdowns();
+
+
+
 // Inject navigation after splash screen
 function injectNavigation() {
     const splash = document.getElementById("splashScreen");
