@@ -1,6 +1,6 @@
 /* Base styles - ensure proper layering */
 body {
-  background: linear-gradient(135deg, #a08333 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #242323 0%, #764ba2 100%);
   min-height: 100vh;
   color: var(--text-primary);
   position: relative;

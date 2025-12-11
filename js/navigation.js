@@ -1,61 +1,145 @@
-// navigation.js
-// -------------------------------
-// Clean Top Navigation Bar (Option A)
-// Works with ui.js loadView() routing
-// -------------------------------
+// ================================================================
+// navigation.js  —  CLEAN TOP NAVIGATION SYSTEM (FINAL)
+// ================================================================
 
 console.log("NAVIGATION: Script loaded");
 
-// Helper: Creates the navigation HTML
-function buildNavigationHTML() {
-    return `
-<nav class="top-nav">
-  <div class="nav-left">
-    <img src="./assets/icons/icon-152.png" class="nav-logo" />
-    <span class="nav-title">Budget Tracker</span>
-  </div>
 
-  <ul class="nav-menu">
+// ---------------------------------------------------------------
+// MENU GROUPS (TOP NAV STRUCTURE)
+// ---------------------------------------------------------------
+const navGroups = [
+  {
+    title: "Finance",
+    icon: "💰",
+    items: [
+      { icon: "💸", label: "Transactions", view: "transactions" },
+      { icon: "🎯", label: "Budgets", view: "budgets" },
+      { icon: "💳", label: "Accounts", view: "accounts" }
+    ]
+  },
+  {
+    title: "Properties",
+    icon: "🏠",
+    items: [
+      { icon: "🏠", label: "Properties", view: "properties" },
+      { icon: "👤", label: "Tenants", view: "tenants" },
+      { icon: "🧰", label: "Maintenance", view: "maintenance" }
+    ]
+  },
+  {
+    title: "System",
+    icon: "⚙️",
+    items: [
+      { icon: "⚙️", label: "Settings", view: "settings" },
+      { icon: "📘", label: "ATO Reports", view: "tax" },
+      { icon: "🧱", label: "Cost Base", view: "costbase" }
+    ]
+  }
+];
 
-    <li class="nav-group">
-      <span class="nav-group-title">Finance ▾</span>
-      <ul class="nav-dropdown">
-        <li><a data-view="dashboard">🏠 Dashboard</a></li>
-        <li><a data-view="transactions">💸 Transactions</a></li>
-        <li><a data-view="budgets">🎯 Budgets</a></li>
-        <li><a data-view="accounts">💳 Accounts</a></li>
-        <li><a data-view="categories">🗂️ Categories</a></li>
-        <li><a data-view="reports">📊 Reports</a></li>
-        <li><a data-view="bills">🧾 Bills</a></li>
-        <li><a data-view="calendar">📅 Calendar</a></li>
-        <li><a data-view="recurring">🔁 Recurring</a></li>
-        <li><a data-view="expenses">💸 Expenses</a></li>
-      </ul>
-    </li>
 
-    <li class="nav-group">
-      <span class="nav-group-title">Properties ▾</span>
-      <ul class="nav-dropdown">
-        <li><a data-view="properties">🏠 Properties</a></li>
-        <li><a data-view="tenants">👤 Tenants</a></li>
-        <li><a data-view="maintenance">🧰 Maintenance</a></li>
-        <li><a data-view="costbase">🧱 Cost Base</a></li>
-      </ul>
-    </li>
+// ---------------------------------------------------------------
+// INITIALIZER
+// ---------------------------------------------------------------
+export function initNavigation() {
+  console.log("NAVIGATION: initNavigation() running");
 
-    <li class="nav-group">
-      <span class="nav-group-title">System ▾</span>
-      <ul class="nav-dropdown">
-        <li><a data-view="settings">⚙️ Settings</a></li>
-        <li><a data-view="tax">📘 ATO Reports</a></li>
-      </ul>
-    </li>
-
-  </ul>
-</nav>
-    `;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupNavigation);
+  } else {
+    setupNavigation();
+  }
 }
 
+
+// ---------------------------------------------------------------
+// BUILD TOP NAV & INSERT INTO DOM
+// ---------------------------------------------------------------
+function setupNavigation() {
+
+  setTimeout(() => {
+    // Hide old header if exists
+    const oldHeader = document.querySelector(".app-header");
+    if (oldHeader) oldHeader.style.display = "none";
+
+    const appContainer = ensureAppContainer();
+    buildNavigationStructure(appContainer);
+    initTopNavDropdowns();
+    initNavClicks();
+
+    console.log("NAVIGATION: Ready");
+  }, 50);
+}
+
+
+// Ensure .app-container exists
+function ensureAppContainer() {
+  let appContainer = document.querySelector(".app-container");
+
+  if (!appContainer) {
+    appContainer = document.createElement("div");
+    appContainer.className = "app-container";
+
+    const mainContent = document.getElementById("mainContent");
+
+    if (mainContent && mainContent.parentNode) {
+      mainContent.parentNode.insertBefore(appContainer, mainContent);
+    } else {
+      document.body.prepend(appContainer);
+    }
+  }
+
+  return appContainer;
+}
+
+
+// ---------------------------------------------------------------
+// BUILD TOP NAV HTML
+// ---------------------------------------------------------------
+function buildNavigationStructure(container) {
+  container.innerHTML = `
+    <header class="top-header">
+      <div class="top-left">
+        <img src="assets/icons/icon-180.png" class="header-logo" />
+        <span class="app-title">Budget Tracker</span>
+      </div>
+
+      <nav class="top-nav">
+
+        <a href="#dashboard" class="top-nav-item" data-view="dashboard">
+          🏠 Dashboard
+        </a>
+
+        ${navGroups.map(group => `
+          <div class="top-nav-group">
+            <button class="top-nav-group-btn">
+              ${group.icon} ${group.title} ▼
+            </button>
+            <div class="top-nav-dropdown">
+              ${group.items.map(i => `
+                <a href="#${i.view}" class="dropdown-item" data-view="${i.view}">
+                  ${i.icon} ${i.label}
+                </a>
+              `).join("")}
+            </div>
+          </div>
+        `).join("")}
+
+      </nav>
+
+      <div class="top-right">
+        <button id="btnExport">Backup</button>
+        <button id="btnImport">Restore</button>
+      </div>
+    </header>
+  `;
+}
+
+
+// ---------------------------------------------------------------
+// DROPDOWN TOGGLE LOGIC (CLICK TO OPEN/CLOSE)
+// ---------------------------------------------------------------
 function initTopNavDropdowns() {
   const groups = document.querySelectorAll(".top-nav-group");
   let openDropdown = null;
@@ -67,25 +151,25 @@ function initTopNavDropdowns() {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
 
-      // If clicking the already open dropdown → close it
+      // toggle off if clicking same group
       if (openDropdown === menu) {
         menu.classList.remove("open");
         openDropdown = null;
         return;
       }
 
-      // Close previously open dropdown
+      // close a previously open dropdown
       if (openDropdown) {
         openDropdown.classList.remove("open");
       }
 
-      // Open new dropdown
+      // open new dropdown
       menu.classList.add("open");
       openDropdown = menu;
     });
   });
 
-  // Clicking outside closes all dropdowns
+  // clicking outside closes all dropdowns
   document.addEventListener("click", () => {
     if (openDropdown) {
       openDropdown.classList.remove("open");
@@ -94,58 +178,24 @@ function initTopNavDropdowns() {
   });
 }
 
-initTopNavDropdowns();
 
+// ---------------------------------------------------------------
+// CLICK HANDLING FOR NAVIGATION
+// ---------------------------------------------------------------
+function initNavClicks() {
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("[data-view]");
+    if (!link) return;
 
+    e.preventDefault();
+    const view = link.getAttribute("data-view");
 
-// Inject navigation after splash screen
-function injectNavigation() {
-    const splash = document.getElementById("splashScreen");
-    if (!splash) {
-        console.error("NAVIGATION ERROR: splashScreen not found");
-        return;
+    if (!view) return;
+
+    window.location.hash = view;
+
+    if (window.loadView) {
+      window.loadView(view);
     }
-
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = buildNavigationHTML();
-    splash.insertAdjacentElement("afterend", wrapper.firstElementChild);
-
-    setupDropdowns();
-    setupTopNavRouting();
-    console.log("NAVIGATION: Navigation injected");
+  });
 }
-
-// Handle dropdown toggle (desktop + mobile)
-function setupDropdowns() {
-    document.querySelectorAll(".nav-group-title").forEach(title => {
-        title.addEventListener("click", () => {
-            const parent = title.parentElement;
-            parent.classList.toggle("open");
-        });
-    });
-}
-
-// Route clicks to ui.js loadView()
-function setupTopNavRouting() {
-    document.querySelectorAll(".top-nav a[data-view]").forEach(link => {
-        link.addEventListener("click", (e) => {
-            e.preventDefault();
-            const view = link.getAttribute("data-view");
-
-            // highlight active
-            document.querySelectorAll(".top-nav a").forEach(a => 
-                a.classList.remove("active")
-            );
-            link.classList.add("active");
-
-            // change URL hash + load view
-            window.location.hash = view;
-            if (window.loadView) {
-                window.loadView(view);
-            }
-        });
-    });
-}
-
-// AUTO RUN
-document.addEventListener("DOMContentLoaded", injectNavigation);
