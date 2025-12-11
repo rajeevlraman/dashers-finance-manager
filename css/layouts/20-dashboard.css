@@ -1,88 +1,340 @@
-/* ===========================
-   DASHBOARD PAGE LAYOUT
-   =========================== */
+/* ============================================================================
+   DASHBOARD LAYOUT (20-dashboard.css)
+   Clean, modern, consistent with your design system
+   ============================================================================ */
 
+/* -----------------------------
+   PAGE WRAPPER + HEADER
+-------------------------------- */
 .page-container {
-  padding: 20px;
+  padding: 1.5rem;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
 .page-actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 1rem;
 }
 
-/* Expandable Sections */
-.expandable-section {
-  margin-bottom: 20px;
-  border-radius: 10px;
+/* -----------------------------
+   WELCOME BANNER
+-------------------------------- */
+.welcome-banner {
   background: var(--card-bg);
-  box-shadow: var(--shadow-md);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 220px;
+}
+
+.welcome-greeting {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.welcome-sub {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* -----------------------------
+   FILTER BAR
+-------------------------------- */
+.filter-bar {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-bar select,
+.filter-bar input[type="date"] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9rem;
+  min-width: 140px;
+}
+
+/* -----------------------------
+   EXPANDABLE SECTIONS
+-------------------------------- */
+.expandable-section {
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .section-header {
-  cursor: pointer;
+  padding: 1rem;
+  background: var(--bg-secondary);
   display: flex;
   justify-content: space-between;
-  padding: 14px 18px;
-  font-weight: bold;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.section-header:hover {
+  background: var(--bg-hover);
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.toggle-icon {
+  font-size: 0.9rem;
+  opacity: 0.6;
 }
 
 .section-content {
-  padding: 16px;
-  border-top: 1px solid var(--border-color);
+  padding: 1rem;
 }
 
-/* Activity List */
-.recent-activity {
+/* -----------------------------
+   COMPACT SUMMARY CARDS (Financial + Property)
+-------------------------------- */
+.compact-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.compact-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
+  align-items: flex-start;
+  border-left: 5px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* color classes match your design style */
+.compact-card.green { border-color: #10b981; }
+.compact-card.red { border-color: #ef4444; }
+.compact-card.blue { border-color: #3b82f6; }
+.compact-card.orange { border-color: #f97316; }
+.compact-card.teal { border-color: #14b8a6; }
+.compact-card.yellow { border-color: #eab308; }
+.compact-card.purple { border-color: #8b5cf6; }
+.compact-card.gold { border-color: #f59e0b; }
+
+.compact-icon {
+  font-size: 1.6rem;
+}
+
+.compact-content {
+  flex: 1;
+}
+
+.compact-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.compact-label {
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.compact-subtext {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* -----------------------------
+   BUDGET CARDS GRID
+-------------------------------- */
+.budgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.budget-progress {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.progress-bar {
+  background: var(--border-color);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #10b981;
+  transition: width 0.3s ease;
+}
+
+.progress-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.progress-status.on-track { color: #10b981; }
+.progress-status.over-budget { color: #ef4444; }
+
+/* -----------------------------
+   QUICK STATS (section-card)
+-------------------------------- */
+.section-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  align-items: center;
+  background: var(--card-bg);
+}
+
+.stat-item.positive { border-left: 4px solid #10b981; }
+.stat-item.negative { border-left: 4px solid #ef4444; }
+
+.stat-icon {
+  font-size: 1.4rem;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* -----------------------------
+   CHARTS SECTION
+-------------------------------- */
+.charts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+/* -----------------------------
+   RECENT ACTIVITY
+-------------------------------- */
+.recent-activity {
+  margin-top: 1rem;
 }
 
 .activity-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: var(--card-bg);
-  padding: 12px 15px;
-  border-radius: 10px;
-  box-shadow: var(--shadow-sm);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.activity-icon {
+  font-size: 1.3rem;
 }
 
 .activity-details {
   flex: 1;
-  margin-left: 12px;
+  margin-left: 1rem;
 }
 
-/* Welcome Banner */
-.welcome-banner {
-  background: linear-gradient(135deg, #2c3e50, #34495e);
-  color: white;
-  padding: 18px 22px;
-  border-radius: 12px;
-  margin-bottom: 15px;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
-}
-
-.welcome-greeting {
-  font-size: 1.6rem;
+.activity-amount.positive {
+  color: #10b981;
   font-weight: 600;
 }
 
-.welcome-sub {
-  opacity: 0.9;
-  font-size: 0.95rem;
-}
-
-#welcomeWeather {
-  margin-left: 6px;
+.activity-amount.negative {
+  color: #ef4444;
   font-weight: 600;
 }
+
+.empty-state {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* -----------------------------
+   RESPONSIVE
+-------------------------------- */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .page-actions {
+    flex-wrap: wrap;
+  }
+
+  .charts-container {
+    grid-template-columns: 1fr;
+  }
+}
+
