@@ -172,7 +172,7 @@ function getTodayDate() {
             <span id="welcomeWeather"></span>
           </div>
         </div>
-            <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          <!--  <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span> -->
             <button id="exportDashboard" class="btn btn-outline">📊 Export Data</button>
             <button id="liveRefresh" class="btn btn-outline" title="Live Refresh">🔄 Live Data</button>
           </div>
