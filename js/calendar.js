@@ -22,6 +22,54 @@ export class CalendarManager {
         ]);
     }
 
+highlightImportantDays() {
+    const today = new Date().toISOString().slice(0, 10);
+    const cells = document.querySelectorAll('.calendar-day');
+    
+    cells.forEach(cell => {
+        const dateStr = cell.getAttribute('data-date');
+        if (!dateStr) return;
+        
+        const dayBills = this.bills.filter(b => b.dueDate === dateStr);
+        const overdueBills = dayBills.filter(b => !b.paid && b.dueDate < today);
+        
+        if (overdueBills.length > 0) {
+            cell.classList.add('urgent');
+        }
+    });
+}
+
+    // Add a method to quickly add a bill from the calendar
+    addQuickBill(dateStr) {
+        const sidebar = document.getElementById('dayDetails');
+        sidebar.innerHTML = `
+            <div class="sidebar-header">
+                <h3>Add Bill for ${new Date(dateStr).toLocaleDateString()}</h3>
+                <button class="btn-close" id="closeAddBill">✕</button>
+            </div>
+            <div class="sidebar-content">
+                <form id="quickBillForm" class="quick-form">
+                    <div class="form-group">
+                        <label>Bill Name</label>
+                        <input type="text" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input type="number" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox"> Recurring Monthly
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Bill</button>
+                    </div>
+                </form>
+            </div>
+        `;
+}
+
     renderUI() {
         const mainContent = document.getElementById('mainContent');
         
@@ -239,6 +287,15 @@ export class CalendarManager {
             this.currentYear = today.getFullYear();
             this.currentMonth = today.getMonth();
             this.renderCalendar();
+        });
+
+                // Add this to the attachEventListeners method
+        document.addEventListener('dblclick', (e) => {
+            const dayCell = e.target.closest('.calendar-day');
+            if (dayCell) {
+                const dateStr = dayCell.getAttribute('data-date');
+                this.addQuickBill(dateStr);
+            }
         });
 
         // Day click events
