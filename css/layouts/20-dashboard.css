@@ -326,3 +326,66 @@
   box-shadow: var(--shadow-lg);
   cursor: pointer;
 }
+
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px;
+}
+
+.card {
+  background: var(--surface);
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 14px;
+  color: #fff;
+}
+
+.kpi-value { font-size: 24px; font-weight: 700; }
+.kpi-label { font-size: 14px; opacity: 0.9; }
+
+.kpi-card.green { background: #2ecc71; }
+.kpi-card.blue { background: #3498db; }
+.kpi-card.teal { background: #1abc9c; }
+.kpi-card.purple { background: #9b59b6; }
+
+.dashboard-charts {
+  display: grid;
+  gap: 20px;
+}
+
+.chart-card {
+  padding: 20px;
+}
+
+.chart-card.wide {
+  grid-column: 1 / -1;
+}
+
+.recent-section .activity-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
