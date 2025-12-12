@@ -699,9 +699,7 @@ function renderSourceDistribution(expenses) {
 // ============================================================================
 // 📊 Enhanced Charts
 // ============================================================================
-function renderEnhancedCharts(expenses, properties) {
-  renderCategoryChart(expenses);
-}
+
 
 function renderCategoryChart(expenses) {
   const ctx = document.getElementById('expenseChart').getContext('2d');
