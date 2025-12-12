@@ -1,13 +1,10 @@
-/* ==========================================================================
-   28-tenants.css  — Tenant overview, profiles, leases, rent status,
-   payment history, action buttons.
-   Extracted from full 8700-line CSS with NO styling changes.
-   ========================================================================== */
+/* ============================================================================
+   28-tenants.css — PAGE LAYOUT: TENANTS
+   ============================================================================ */
 
-
-/* ---------------------------------------------
-   PAGE WRAPPER
---------------------------------------------- */
+/* ---------------------------------------
+   PAGE CONTAINER
+---------------------------------------- */
 
 .tenants-container {
     max-width: 1400px;
@@ -15,276 +12,212 @@
     padding: 2rem;
 }
 
+/* ---------------------------------------
+   HEADER
+---------------------------------------- */
+
 .tenants-header {
     text-align: center;
     margin-bottom: 2rem;
 }
 
 .tenants-header h2 {
-    font-size: 2.2rem;
-    margin-bottom: 0.25rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
     color: var(--text-color);
 }
 
-.tenants-header p {
+.tenants-subtitle {
     color: var(--text-muted);
-    font-size: 1.05rem;
+    font-size: 1.1rem;
 }
 
+/* ---------------------------------------
+   CONTROLS
+---------------------------------------- */
 
-/* ---------------------------------------------
-   STATS OVERVIEW CARDS
---------------------------------------------- */
-
-.tenants-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.tenant-stat-card {
+.tenants-controls {
     background: var(--card-bg);
     padding: 1.5rem;
     border-radius: 12px;
+    margin-bottom: 2rem;
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     gap: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    align-items: flex-end;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-.tenant-stat-card.total { border-left: 4px solid #3498db; }
-.tenant-stat-card.active { border-left: 4px solid #27ae60; }
-.tenant-stat-card.expiring { border-left: 4px solid #f39c12; }
-.tenant-stat-card.vacated { border-left: 4px solid #e74c3c; }
-
-.tenant-stat-icon {
-    font-size: 2rem;
+.tenant-search-input {
+    flex: 1;
+    min-width: 250px;
 }
 
-.tenant-stat-content { flex: 1; }
-
-.tenant-stat-value {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text-color);
+.tenant-filter-select {
+    min-width: 180px;
 }
 
-.tenant-stat-label {
-    font-size: 0.9rem;
-    color: var(--text-muted);
+.add-tenant-btn {
+    background: var(--accent-color);
+    padding: 0.75rem 1.25rem;
+    color: white;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
 }
 
+.add-tenant-btn:hover {
+    filter: brightness(0.95);
+}
 
-/* ---------------------------------------------
-   TENANT GRID / CARDS
---------------------------------------------- */
+/* ---------------------------------------
+   GRID OF TENANT CARDS
+---------------------------------------- */
 
 .tenants-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
     gap: 1.5rem;
 }
 
+/* ---------------------------------------
+   TENANT CARD
+---------------------------------------- */
+
 .tenant-card {
-    background: var(--card-bg);
-    padding: 1.75rem;
+    background: white;
     border-radius: 12px;
-    border-left: 4px solid #bdc3c7;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
+    padding: 1.5rem;
+    border-left: 4px solid #3498db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.tenant-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-}
+.tenant-card.active { border-left-color: #27ae60; background: #f0fdf4; }
+.tenant-card.vacated { border-left-color: #e67e22; background: #fff7ed; }
+.tenant-card.problem { border-left-color: #e74c3c; background: #fef2f2; }
 
-.tenant-card.active { border-left-color: #27ae60; }
-.tenant-card.expiring { border-left-color: #f39c12; }
-.tenant-card.vacated { border-left-color: #e74c3c; }
-
-
-/* ---------------------------------------------
-   TENANT HEADER
---------------------------------------------- */
-
-.tenant-header {
+.tenant-card-header {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 1rem;
 }
 
 .tenant-name {
+    font-size: 1.25rem;
+    font-weight: 600;
     margin: 0;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--text-color);
+    color: #2c3e50;
 }
 
-.tenant-status {
+.tenant-meta {
     font-size: 0.85rem;
-    font-weight: 600;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    background: #e9ecef;
-    color: #34495e;
-    white-space: nowrap;
+    color: #7f8c8d;
+    display: flex;
+    gap: 1rem;
 }
 
-.tenant-status.active {
-    background: #e8f6ef;
-    color: #27ae60;
+/* ---------------------------------------
+   RENT & AMOUNTS
+---------------------------------------- */
+
+.tenant-amounts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
-.tenant-status.expiring {
-    background: #fff3cd;
-    color: #f39c12;
+.tenant-amount-box {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
 }
 
-.tenant-status.vacated {
-    background: #f8d7da;
-    color: #e74c3c;
+.tenant-amount-label {
+    font-size: 0.8rem;
+    color: #7f8c8d;
 }
 
+.tenant-amount-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+}
 
-/* ---------------------------------------------
-   LEASE DETAILS GRID
---------------------------------------------- */
+/* Green when paid, red if overdue */
+.tenant-amount-value.positive { color: #27ae60; }
+.tenant-amount-value.negative { color: #e74c3c; }
+
+/* ---------------------------------------
+   LEASE DETAILS
+---------------------------------------- */
 
 .tenant-details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
-    margin: 1rem 0;
+    margin-top: 1rem;
 }
 
-.tenant-detail {
+.tenant-detail-item {
     display: flex;
     flex-direction: column;
 }
 
 .tenant-detail-label {
     font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-bottom: 0.25rem;
+    color: #7f8c8d;
 }
 
 .tenant-detail-value {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text-color);
-}
-
-
-/* ---------------------------------------------
-   RENT & PAYMENT STATUS
---------------------------------------------- */
-
-.rent-status {
-    margin: 1rem 0;
-}
-
-.rent-status-badge {
-    display: inline-block;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
     font-weight: 600;
-    margin-right: 0.5rem;
+    color: #2c3e50;
 }
 
-.rent-status-badge.paid {
-    background: #d4edda;
-    color: #155724;
-}
-
-.rent-status-badge.overdue {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.rent-status-badge.pending {
-    background: #fff3cd;
-    color: #856404;
-}
-
-
-/* ---------------------------------------------
-   RECENT PAYMENTS
---------------------------------------------- */
-
-.rent-payments-section {
-    margin-top: 1.25rem;
-}
-
-.payment-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.payment-item:last-child {
-    border-bottom: none;
-}
-
-.payment-amount {
-    font-weight: 600;
-}
-
-.payment-amount.in { color: #27ae60; }
-.payment-amount.out { color: #e74c3c; }
-
-.payment-date {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-
-/* ---------------------------------------------
-   NOTES SECTION
---------------------------------------------- */
+/* ---------------------------------------
+   NOTES
+---------------------------------------- */
 
 .tenant-notes {
-    background: var(--bg-secondary);
+    background: #f8f9fa;
     padding: 1rem;
     border-radius: 8px;
     margin-top: 1rem;
-    color: var(--text-muted);
+}
+
+.tenant-notes p {
+    margin: 0;
+    color: #5a6c7d;
     line-height: 1.5;
 }
 
-
-/* ---------------------------------------------
+/* ---------------------------------------
    ACTION BUTTONS
---------------------------------------------- */
+---------------------------------------- */
 
-.tenant-actions {
+.tenant-card-actions {
     display: flex;
     gap: 0.75rem;
-    margin-top: 1.25rem;
+    margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #ecf0f1;
 }
 
 .tenant-btn {
     padding: 0.6rem 1rem;
-    border-radius: 6px;
     border: none;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
+    border-radius: 6px;
     font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
 .tenant-btn.edit {
     background: #3498db;
-    color: white;
-}
-
-.tenant-btn.message {
-    background: #9b59b6;
     color: white;
 }
 
@@ -295,54 +228,45 @@
 
 .tenant-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-
-/* ---------------------------------------------
-   EMPTY / LOADING STATES
---------------------------------------------- */
+/* ---------------------------------------
+   EMPTY STATE
+---------------------------------------- */
 
 .tenants-empty {
     text-align: center;
     padding: 3rem;
-    background: var(--card-bg);
+    background: white;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .tenants-empty-icon {
     font-size: 4rem;
-    opacity: 0.4;
+    opacity: 0.6;
+    margin-bottom: 1rem;
 }
 
-.tenants-loading {
-    text-align: center;
-    padding: 3rem;
-    color: var(--text-muted);
-}
-
-
-/* ---------------------------------------------
-   RESPONSIVE RULES
---------------------------------------------- */
+/* ---------------------------------------
+   RESPONSIVE DESIGN
+---------------------------------------- */
 
 @media (max-width: 768px) {
-
     .tenants-container {
         padding: 1rem;
-    }
-
-    .tenants-grid {
-        grid-template-columns: 1fr;
     }
 
     .tenant-details-grid {
         grid-template-columns: 1fr;
     }
 
-    .tenant-actions {
-        flex-direction: column;
-        align-items: stretch;
+    .tenant-amounts {
+        grid-template-columns: 1fr;
+    }
+
+    .tenants-grid {
+        grid-template-columns: 1fr;
     }
 }
