@@ -1,95 +1,219 @@
-/* Login Screen */
-.login-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: none; /* Hidden by default */
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--space-md);
+/* ============================================================================
+   FORM SYSTEM — Unified inputs, selects, textareas, labels, validation, layout
+   Extracted & cleaned from legacy 8740-line CSS.
+   ============================================================================ */
+
+/* --------------------------------------------
+   FORM GROUPING & LAYOUT
+   -------------------------------------------- */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
 }
 
-.login-screen.active {
-  display: flex;
+.form-row {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
 }
 
-.login-container {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: var(--radius-2xl);
-  padding: var(--space-2xl);
-  width: 100%;
-  max-width: 420px;
-  box-shadow: var(--shadow-xl);
-  animation: slideUp 0.5s ease-out;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.form-row > * {
+    flex: 1;
+    min-width: 180px;
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: var(--space-xl);
+/* --------------------------------------------
+   LABELS
+   -------------------------------------------- */
+.form-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-gray-700);
 }
 
-.login-logo {
-  margin-bottom: var(--space-lg);
+.form-help {
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
 }
 
-.login-logo img {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+/* --------------------------------------------
+   INPUT BASE STYLE
+   (applies to text, date, number, email, password)
+   -------------------------------------------- */
+.form-input,
+.form-select,
+textarea.form-input {
+    width: 100%;
+    padding: var(--space-3);
+    background: var(--input-bg, #ffffff);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+    font-family: inherit;
 }
 
-.login-title {
-  font-size: 2.25rem;
-  margin-bottom: var(--space-xs);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
+/* Focus behavior */
+.form-input:focus,
+.form-select:focus,
+textarea.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--ring-primary);
 }
 
-.login-subtitle {
-  color: var(--text-secondary);
-  margin-bottom: var(--space-sm);
-  font-size: 1rem;
+/* Disabled behavior */
+.form-input:disabled,
+.form-select:disabled,
+textarea.form-input:disabled {
+    background: var(--color-gray-100);
+    color: var(--color-gray-500);
+    cursor: not-allowed;
 }
 
-.version-badge {
-  display: inline-block;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-md);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+/* Read-only */
+.form-input[readonly] {
+    background: var(--color-gray-50);
+    opacity: 0.9;
 }
 
-.error-message {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-lg);
-  font-size: 0.875rem;
-  display: none;
+/* --------------------------------------------
+   SELECT DROPDOWN
+   -------------------------------------------- */
+.form-select {
+    appearance: none;
+    background-image: var(--select-arrow);
+    background-repeat: no-repeat;
+    background-size: 12px;
+    background-position: right 12px center;
+    cursor: pointer;
 }
 
-.error-message.show {
-  display: block;
-  animation: shake 0.5s ease;
+/* --------------------------------------------
+   TEXTAREA
+   -------------------------------------------- */
+textarea.form-input {
+    min-height: 100px;
+    resize: vertical;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+/* --------------------------------------------
+   VALIDATION STATES
+   -------------------------------------------- */
+.form-input.error,
+.form-select.error,
+textarea.form-input.error {
+    border-color: var(--color-danger);
+    background: #fff5f5;
+}
+
+.form-error-msg {
+    color: var(--color-danger);
+    font-size: 0.8rem;
+    margin-top: -4px;
+}
+
+/* --------------------------------------------
+   INLINE TAGS / BADGES FOR CONTEXT (property, source, metadata)
+   -------------------------------------------- */
+.form-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+/* Example extension: property tag */
+.form-tag.property {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* --------------------------------------------
+   SWITCHES, CHECKBOXES, RADIO
+   -------------------------------------------- */
+.form-switch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.form-checkbox,
+.form-radio {
+    accent-color: var(--color-primary);
+}
+
+/* --------------------------------------------
+   DATE RANGE / COMPACT INPUTS
+   -------------------------------------------- */
+.form-inline {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.form-inline .form-label {
+    margin-bottom: 0;
+}
+
+/* --------------------------------------------
+   FORM SECTIONS & HEADERS
+   (used in budgets, reports, settings, tax)
+   -------------------------------------------- */
+.form-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.form-section-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+}
+
+.form-note {
+    font-size: 0.85rem;
+    color: var(--color-gray-500);
+}
+
+/* --------------------------------------------
+   DARK MODE SUPPORT
+   -------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+    .form-input,
+    .form-select,
+    textarea.form-input {
+        background: var(--color-gray-800);
+        border-color: var(--color-gray-700);
+        color: var(--color-gray-100);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    textarea.form-input:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+    }
+
+    .form-label {
+        color: var(--color-gray-300);
+    }
+
+    .form-help {
+        color: var(--color-gray-500);
+    }
+
+    .form-input.error {
+        background: rgba(185, 28, 28, 0.2);
+    }
 }

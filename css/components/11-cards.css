@@ -1,106 +1,251 @@
-/* Cards from your original dashboard */
+/* ========================================================================
+   CARD SYSTEM — Unified styles for all cards across dashboard, expenses,
+   properties, loans, ATO, cost base, and reports.
+   This merges your old 8740-line scattered card rules into one system.
+   ======================================================================== */
+
+/* --------------------------------------------
+   BASE CARD STRUCTURE
+   -------------------------------------------- */
 .card {
-  background: var(--bg-card);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-card);
-  transition: all var(--transition-normal);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--card-bg, #ffffff);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-xl);
+/* Hover state (applies only to cards that are interactive) */
+.card.hoverable:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
+/* --------------------------------------------
+   CARD SECTIONS (optional internal layout)
+   -------------------------------------------- */
 .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
 }
 
 .card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
 }
 
 .card-subtitle {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin-top: var(--space-xs);
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
 }
 
-.card-content {
-  margin-bottom: var(--space-lg);
+.card-body {
+    padding-top: var(--space-2);
 }
 
 .card-footer {
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--border-medium);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-color);
 }
 
-/* Card variants */
-.card-stat {
-  text-align: center;
-  padding: var(--space-xl);
+/* --------------------------------------------
+   VARIANT: BORDERED LEFT (dashboard highlights)
+   -------------------------------------------- */
+.card.border-primary { border-left: 4px solid var(--color-primary); }
+.card.border-success { border-left: 4px solid var(--color-success); }
+.card.border-warning { border-left: 4px solid var(--color-warning); }
+.card.border-danger  { border-left: 4px solid var(--color-danger); }
+.card.border-info    { border-left: 4px solid var(--color-info); }
+
+/* Light tinted background version */
+.card.tinted-primary { background: var(--tint-primary); }
+.card.tinted-success { background: var(--tint-success); }
+.card.tinted-warning { background: var(--tint-warning); }
+.card.tinted-danger  { background: var(--tint-danger); }
+.card.tinted-info    { background: var(--tint-info); }
+
+/* --------------------------------------------
+   VARIANT: GRADIENT CARDS (ATO + Dashboard)
+   -------------------------------------------- */
+.card.gradient-blue {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+    border-left: 4px solid #2563eb;
 }
 
-.card-stat .card-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: var(--space-md) 0;
-  background: var(--primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.card.gradient-red {
+    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+    border-left: 4px solid #dc2626;
 }
 
-.card-stat .card-change {
-  font-size: 0.875rem;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-md);
-  display: inline-block;
+.card.gradient-green {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    border-left: 4px solid #059669;
 }
 
-.card-change.positive {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+.card.gradient-orange {
+    background: linear-gradient(135deg, #ffffff 0%, #fff7ed 100%);
+    border-left: 4px solid #f59e0b;
 }
 
-.card-change.negative {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+/* --------------------------------------------
+   VARIANT: MINI CARD (stats grid)
+   -------------------------------------------- */
+.card.stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
 }
 
-.card-chart {
-  padding: var(--space-lg);
-}
-
-.card-chart canvas {
-  width: 100% !important;
-  height: 200px !important;
-}
-
-/* Dashboard grid */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
-}
-
-@media (max-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .card-stat .card-value {
+.stat-icon {
     font-size: 2rem;
-  }
+    opacity: 0.8;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+}
+
+.stat-subtext {
+    font-size: 0.8rem;
+    color: var(--color-gray-400);
+    margin-top: 2px;
+}
+
+/* --------------------------------------------
+   VARIANT: EXPENSE & TRANSACTION CARDS
+   -------------------------------------------- */
+.card.expense {
+    border-left: 4px solid var(--color-gray-400);
+    background: #ffffff;
+}
+
+.card.expense.unpaid { border-left-color: #e74c3c; background: #fff5f5; }
+.card.expense.pending { border-left-color: #f39c12; background: #fffaf0; }
+.card.expense.paid { border-left-color: #27ae60; }
+.card.expense.reimbursed { border-left-color: #9b59b6; }
+
+.expense-meta {
+    display: flex;
+    gap: 1rem;
+    color: var(--color-gray-500);
+    font-size: 0.85rem;
+    margin-bottom: var(--space-2);
+}
+
+/* --------------------------------------------
+   VARIANT: PROPERTY & TENANT CARDS
+   -------------------------------------------- */
+.card.property {
+    border-left: 4px solid #1e40af;
+}
+
+.property-tag {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+/* --------------------------------------------
+   VARIANT: LOAN CARDS
+   -------------------------------------------- */
+.card.loan {
+    border-left: 4px solid var(--color-primary);
+}
+
+/* --------------------------------------------
+   VARIANT: TAX CARDS (ATO)
+   -------------------------------------------- */
+.card.tax {
+    border-left: 4px solid #2563eb;
+}
+
+.tax-date-card {
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid #2563eb;
+    background: var(--tint-primary);
+    margin-bottom: var(--space-2);
+}
+
+.tax-date-card.urgent {
+    border-left-color: #dc2626;
+    background: #fef2f2;
+}
+
+/* --------------------------------------------
+   VARIANT: COSTBASE CARDS
+   -------------------------------------------- */
+.card.costbase {
+    border-left: 4px solid #3498db;
+}
+
+.record-item {
+    background: #f8f9fa;
+    border-left: 4px solid #3498db;
+    border-radius: 10px;
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+    transition: all 0.2s ease;
+}
+
+.record-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* --------------------------------------------
+   EMPTY STATE CARDS
+   -------------------------------------------- */
+.card.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    opacity: 0.4;
+    margin-bottom: var(--space-3);
+}
+
+.empty-message {
+    font-size: 1rem;
+    color: var(--color-gray-600);
+}
+
+/* --------------------------------------------
+   DARK MODE SUPPORT
+   -------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: var(--color-gray-800);
+        border-color: var(--color-gray-700);
+    }
+
+    .record-item {
+        background: var(--color-gray-700);
+        border-color: #2563eb;
+    }
+
+    .empty-message {
+        color: var(--color-gray-300);
+    }
 }
