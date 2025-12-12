@@ -1,7 +1,5 @@
 /* ============================================================
-   DASHBOARD LAYOUT — MODERN STRUCTURED STYLE (Layout 3)
-   Grid-based, icon-accented, data coloured. Inspired by mobile
-   dashboard UIs (Figma style).
+   DASHBOARD LAYOUT — MODERN STRUCTURED STYLE (NO ROUNDED CORNERS)
    ============================================================ */
 
 /* --------------------------------------------
@@ -38,7 +36,7 @@
 .welcome-banner {
   background: var(--card-bg);
   padding: 18px 22px;
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: var(--shadow-sm);
   margin-bottom: 10px;
 }
@@ -61,7 +59,7 @@
 .filter-bar {
   background: var(--card-bg);
   padding: 16px;
-  border-radius: 14px;
+  border-radius: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
@@ -79,7 +77,7 @@
 .expandable-section {
   background: var(--card-bg);
   padding: 0;
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: var(--shadow-sm);
 }
 
@@ -108,7 +106,7 @@
 
 .compact-card {
   padding: 18px;
-  border-radius: 14px;
+  border-radius: 0;
   display: flex;
   gap: 12px;
   align-items: flex-start;
@@ -137,15 +135,15 @@
   margin-top: 2px;
 }
 
-/* Data-based colour tags */
-.green { background: #2ecc71; }
-.red { background: #e74c3c; }
-.blue { background: #3498db; }
+/* Colors */
+.green  { background: #2ecc71; }
+.red    { background: #e74c3c; }
+.blue   { background: #3498db; }
 .orange { background: #f39c12; }
 .purple { background: #9b59b6; }
 .yellow { background: #f1c40f; }
-.teal { background: #1abc9c; }
-.gold { background: #e6b800; }
+.teal   { background: #1abc9c; }
+.gold   { background: #e6b800; }
 
 /* --------------------------------------------
    PROPERTY SUMMARY CARDS
@@ -168,7 +166,7 @@
 .budget-progress {
   background: var(--card-bg);
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: var(--shadow-sm);
 }
 
@@ -184,7 +182,7 @@
   width: 100%;
   height: 8px;
   background: var(--bg-secondary);
-  border-radius: 4px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -215,7 +213,7 @@
 .stat-item {
   background: var(--card-bg);
   padding: 18px;
-  border-radius: 14px;
+  border-radius: 0;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -259,7 +257,7 @@
   background: var(--accent-color);
   color: white;
   padding: 4px 8px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 0.8rem;
 }
 
@@ -282,7 +280,7 @@
   align-items: center;
   padding: 14px;
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: var(--shadow-xs);
 }
 
@@ -318,7 +316,7 @@
 .fab-main {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--accent-color);
   color: white;
   font-size: 2rem;
@@ -326,4 +324,3 @@
   box-shadow: var(--shadow-lg);
   cursor: pointer;
 }
-
