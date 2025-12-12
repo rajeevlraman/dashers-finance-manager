@@ -272,3 +272,25 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+/* ============================================
+   Card Variants – Transactions
+   ============================================ */
+
+.card.transaction-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  gap: 1rem;
+}
+
+.card.transaction-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Card accents */
+.card.transaction-card.income { border-left: 4px solid #27ae60; }
+.card.transaction-card.expense { border-left: 4px solid #e74c3c; }
+.card.transaction-card.transfer { border-left: 4px solid #3498db; }
+.card.transaction-card.pending { border-left: 4px solid #f39c12; }
+.card.transaction-card.property { border-left: 4px solid #1e40af; }
