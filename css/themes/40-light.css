@@ -1,0 +1,97 @@
+/* ==========================================================================
+   40-light.css — Light Theme Variables & Overrides
+   ========================================================================== */
+
+:root {
+    /* Base colors */
+    --bg-color: #f5f7fa;
+    --surface-color: #ffffff;
+    --surface-contrast: #f9fafb;
+
+    /* Text */
+    --text-color: #1f2937;
+    --text-muted: #6b7280;
+    --text-inverse: #ffffff;
+
+    /* Borders */
+    --border-color: #e5e7eb;
+
+    /* Primary brand */
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --primary-light: #e8f4fd;
+
+    /* Accents */
+    --accent-green: #27ae60;
+    --accent-red: #e74c3c;
+    --accent-orange: #f39c12;
+    --accent-purple: #8e44ad;
+    --accent-teal: #1abc9c;
+    --accent-blue: #2980b9;
+
+    /* Cards */
+    --card-bg: #ffffff;
+    --card-shadow: 0 2px 10px rgba(0,0,0,0.08);
+
+    /* Inputs */
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+
+    /* Navigation */
+    --nav-bg: #ffffff;
+    --nav-text: #1f2937;
+    --nav-hover-bg: #f3f4f6;
+
+    /* Modals */
+    --modal-bg: #ffffff;
+
+    /* Tables */
+    --table-header-bg: #f9fafb;
+    --table-row-alt: #f8fafc;
+
+    /* Cards with color accents */
+    --card-green-bg: #e8f6ef;
+    --card-red-bg: #fdecea;
+    --card-orange-bg: #fff4e5;
+    --card-purple-bg: #f3e8ff;
+    --card-teal-bg: #e6fffa;
+
+    /* Badges */
+    --badge-success: #10b981;
+    --badge-warning: #f59e0b;
+    --badge-danger: #ef4444;
+
+    /* Shadow */
+    --shadow-elevated: 0 6px 18px rgba(0,0,0,.12);
+}
+
+/* Light theme overrides */
+
+body {
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.card,
+.section-card,
+.settings-section {
+    background: var(--surface-color);
+    box-shadow: var(--card-shadow);
+}
+
+input, select, textarea {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+}
+
+.modal-content {
+    background: var(--modal-bg);
+}
+
+table thead {
+    background: var(--table-header-bg);
+}
+
+table tr:nth-child(even) {
+    background: var(--table-row-alt);
+}
