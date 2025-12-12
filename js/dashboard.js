@@ -160,143 +160,280 @@ function getTodayDate() {
 
     // === Main HTML Layout ===
     mainContent.innerHTML = `
-    <div class="dashboard-wrapper">
-
-      <!-- Welcome / Greeting -->
-      <section class="welcome-section card">
-        <div class="welcome-left">
-          <h2 id="welcomeGreeting"></h2>
-          <p class="welcome-sub">
+      <div class="page-container">
+        <div class="page-header">
+          <h2>📊 Dashboard</h2>
+          <div class="page-actions">
+                          <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div id="welcomeGreeting" class="welcome-greeting"></div>
+          <div class="welcome-sub">
             <span id="welcomeDate"></span>
             <span id="welcomeWeather"></span>
-          </p>
+          </div>
         </div>
-        <div class="welcome-actions">
-          <button id="exportDashboard" class="btn btn-outline">📊 Export</button>
-          <button id="liveRefresh" class="btn btn-outline">🔄 Live</button>
+          <!--  <span class="dashboard-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span> -->
+            <button id="exportDashboard" class="btn btn-outline">📊 Export Data</button>
+            <button id="liveRefresh" class="btn btn-outline" title="Live Refresh">🔄 Live Data</button>
+          </div>
         </div>
-      </section>
 
-      <!-- Filters -->
-      <section class="dashboard-filters card">
-        <h3 class="section-title">Filters</h3>
-        <div class="filters-grid">
+
+
+
+        <!-- Filter Controls -->
+        <div class="filter-bar">
           <select id="propertyFilter">
             <option value="all">All Properties</option>
             ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
           </select>
-
+          
           <select id="categoryFilter">
             <option value="all">All Categories</option>
             ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
           </select>
-
-          <input type="date" id="dateFrom">
-          <input type="date" id="dateTo">
-
-          <button id="applyFilters" class="btn btn-primary">Apply</button>
+          
+          <input type="date" id="dateFrom" placeholder="From Date">
+          <input type="date" id="dateTo" placeholder="To Date">
+          
+          <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
           <button id="resetFilters" class="btn btn-secondary">Reset</button>
         </div>
-      </section>
 
-      <!-- KPI GRID -->
-      <section class="kpi-grid">
-        <div class="kpi-card green">
-          <div class="kpi-icon">💵</div>
-          <div>
-            <div class="kpi-value">$${safe(currentMonthBalance)}</div>
-            <div class="kpi-label">This Month</div>
-            <small>Income $${safe(currentMonthIncome)} | Expense $${safe(currentMonthExpenses)}</small>
+        <!-- Financial Health Summary -->
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>💰 Financial Health</h3>
+            <span class="toggle-icon">▼</span>
           </div>
-        </div>
+          <div class="section-content">
+            <div class="compact-summary-cards">
+              <div class="compact-card ${currentMonthBalance >= 0 ? 'green' : 'red'}">
+                <div class="compact-icon">💵</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(currentMonthBalance)}</div>
+                  <div class="compact-label">This Month</div>
+                  <div class="compact-subtext">Income: $${safe(currentMonthIncome)}</div>
+                  <div class="compact-subtext">Expenses: $${safe(currentMonthExpenses)}</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${totalNetWorth >= 0 ? 'blue' : 'orange'}">
+                <div class="compact-icon">🏦</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(totalNetWorth)}</div>
+                  <div class="compact-label">Net Worth</div>
+                  <div class="compact-subtext">Cash: $${safe(totalCashBalance)}</div>
+                  <div class="compact-subtext">Properties: $${safe(netPropertyWorth)}</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${budgetPerformance.overBudgetCount === 0 ? 'teal' : 'yellow'}">
+                <div class="compact-icon">🎯</div>
+                <div class="compact-content">
+                  <div class="compact-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</div>
+                  <div class="compact-label">On Track</div>
+                  <div class="compact-subtext">${budgetPerformance.overBudgetCount} over budget</div>
+                  <div class="compact-subtext">${budgetPerformance.totalBudgets} total budgets</div>
+                </div>
+              </div>
 
-        <div class="kpi-card blue">
-          <div class="kpi-icon">🏦</div>
-          <div>
-            <div class="kpi-value">$${safe(totalNetWorth)}</div>
-            <div class="kpi-label">Net Worth</div>
-            <small>Cash $${safe(totalCashBalance)} | Property $${safe(netPropertyWorth)}</small>
-          </div>
-        </div>
-
-        <div class="kpi-card teal">
-          <div class="kpi-icon">🎯</div>
-          <div>
-            <div class="kpi-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</div>
-            <div class="kpi-label">Budgets On Track</div>
-            <small>${budgetPerformance.overBudgetCount} over budget</small>
-          </div>
-        </div>
-
-        <div class="kpi-card purple">
-          <div class="kpi-icon">📈</div>
-          <div>
-            <div class="kpi-value">$${safe(totalRent)}</div>
-            <div class="kpi-label">Rent Income</div>
-            <small>${tenants.length} tenants, ${properties.length} properties</small>
-          </div>
-        </div>
-      </section>
-
-      <!-- Charts Section -->
-      <section class="dashboard-charts">
-        <div class="chart-card card">
-          <div class="chart-header">
-            <h4>📅 Monthly Overview</h4>
-            <select id="monthSelect">
-              ${uniqueMonths.map(m => `<option value="${m}" ${m === latestMonth ? 'selected' : ''}>${m}</option>`).join('')}
-            </select>
-          </div>
-          <canvas id="summaryChart"></canvas>
-        </div>
-
-        <div class="chart-card card">
-          <div class="chart-header">
-            <h4>📊 Expenses by Category</h4>
-            <span class="month-badge" id="selectedMonthDisplay">${latestMonth}</span>
-          </div>
-          <canvas id="expenseByCatChart"></canvas>
-        </div>
-
-        <div class="chart-card card wide">
-          <div class="chart-header">
-            <h4>📈 Trend</h4>
-            <button id="toggleTrend" class="btn btn-secondary">📉 Hide</button>
-          </div>
-          <canvas id="trendChart"></canvas>
-        </div>
-      </section>
-
-      <!-- Recent Activity -->
-      <section class="recent-section card">
-        <h3 class="section-title">📝 Recent Activity</h3>
-        ${getRecentActivity(transactions, bills, maintenance).slice(0, 5).map(item => `
-          <div class="activity-row">
-            <span class="activity-icon">${item.icon}</span>
-            <div class="activity-info">
-              <div>${item.description}</div>
-              <small>${item.date}</small>
+              <div class="compact-card purple">
+                <div class="compact-icon">📈</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(totalRent)}</div>
+                  <div class="compact-label">Monthly Rent</div>
+                  <div class="compact-subtext">From ${tenants.length} tenants</div>
+                  <div class="compact-subtext">${properties.length} properties</div>
+                </div>
+              </div>
             </div>
-            <span class="activity-amount ${item.amount < 0 ? 'negative' : 'positive'}">
-              ${item.amount < 0 ? '-' : '+'}$${Math.abs(item.amount).toFixed(2)}
-            </span>
           </div>
-        `).join('')}
-      </section>
+        </div>
 
-      <!-- FAB -->
+        <!-- Property Portfolio -->
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🏠 Property Portfolio</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="compact-summary-cards">
+              <div class="compact-card teal">
+                <div class="compact-icon">🏘️</div>
+                <div class="compact-content">
+                  <div class="compact-value">${properties.length}</div>
+                  <div class="compact-label">Properties</div>
+                  <div class="compact-subtext">Value: $${safe(totalValue)}</div>
+                </div>
+              </div>
+              
+              <div class="compact-card gold">
+                <div class="compact-icon">👥</div>
+                <div class="compact-content">
+                  <div class="compact-value">${tenants.length}</div>
+                  <div class="compact-label">Tenants</div>
+                  <div class="compact-subtext">Rent: $${safe(totalRent)}/mo</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${avgROI > 5 ? 'green' : 'orange'}">
+                <div class="compact-icon">📊</div>
+                <div class="compact-content">
+                  <div class="compact-value">${avgROI}%</div>
+                  <div class="compact-label">Avg ROI</div>
+                  <div class="compact-subtext">Property Returns</div>
+                </div>
+              </div>
+              
+              <div class="compact-card ${netPropertyWorth >= 0 ? 'blue' : 'red'}">
+                <div class="compact-icon">💎</div>
+                <div class="compact-content">
+                  <div class="compact-value">$${safe(netPropertyWorth)}</div>
+                  <div class="compact-label">Equity</div>
+                  <div class="compact-subtext">Loans: $${safe(totalLoan)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget Performance Section -->
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🎯 Budget Performance</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="budgets-grid">
+              ${budgets.map(budget => {
+                const spent = transactions
+                  .filter(t => t.categoryId === budget.categoryId && t.date?.startsWith(currentMonth))
+                  .reduce((sum, t) => sum + t.amount, 0);
+                const percentage = (spent / budget.amount) * 100;
+                
+                return `
+                  <div class="budget-progress">
+                    <div class="progress-header">
+                      <span>${budget.name}</span>
+                      <span>$${safe(spent)} / $${safe(budget.amount)}</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
+                    </div>
+                    <div class="progress-status ${spent > budget.amount ? 'over-budget' : 'on-track'}">
+                      ${spent > budget.amount ? '❌ Over Budget' : '✅ On Track'}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+              ${budgets.length === 0 ? '<p class="no-data">No budgets configured</p>' : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="section-card">
+          <h3>⚡ Quick Stats</h3>
+          <div class="stats-grid">
+            <div class="stat-item ${income >= expenses ? 'positive' : 'negative'}">
+              <span class="stat-icon">💰</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(income)}</span>
+                <span class="stat-label">Total Income</span>
+              </div>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">💸</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(expenses)}</span>
+                <span class="stat-label">Total Expenses</span>
+              </div>
+            </div>
+            <div class="stat-item positive">
+              <span class="stat-icon">💳</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(totalCashBalance)}</span>
+                <span class="stat-label">Cash Balance</span>
+              </div>
+            </div>
+            <div class="stat-item negative">
+              <span class="stat-icon">🏦</span>
+              <div class="stat-content">
+                <span class="stat-value">$${safe(totalCreditBalance)}</span>
+                <span class="stat-label">Credit Balance</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+          <div class="section-card">
+            <div class="chart-header">
+              <h4>📅 Monthly Overview</h4>
+              <select id="monthSelect" class="form-select">
+                ${uniqueMonths.map(m => `<option value="${m}" ${m === latestMonth ? 'selected' : ''}>${m}</option>`).join('')}
+              </select>
+            </div>
+            <canvas id="summaryChart" height="200"></canvas>
+          </div>
+
+          <div class="section-card">
+            <div class="chart-header">
+              <h4>📊 Expense Categories</h4>
+              <span id="selectedMonthDisplay" class="month-badge">${latestMonth}</span>
+            </div>
+            <canvas id="expenseByCatChart" height="220"></canvas>
+          </div>
+
+          <div class="section-card full-width">
+            <div class="chart-header">
+              <h4>📈 Income vs Expenses Trend</h4>
+              <button id="toggleTrend" class="btn btn-secondary">📉 Hide Chart</button>
+            </div>
+            <canvas id="trendChart" height="250"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="section-card">
+          <div class="transactions-header">
+            <h3>📝 Recent Activity</h3>
+            <span class="transactions-count">Last ${Math.min(getRecentActivity(transactions, bills, maintenance).length, 5)} activities</span>
+          </div>
+          <div class="recent-activity">
+            ${getRecentActivity(transactions, bills, maintenance).slice(0, 5).map(item => `
+              <div class="activity-item">
+                <span class="activity-icon">${item.icon}</span>
+                <div class="activity-details">
+                  <div class="activity-desc">${item.description}</div>
+                  <div class="activity-date">${item.date}</div>
+                </div>
+                <span class="activity-amount ${item.amount < 0 ? 'negative' : 'positive'}">
+                  ${item.amount < 0 ? '-' : '+'}$${Math.abs(item.amount).toFixed(2)}
+                </span>
+              </div>
+            `).join('')}
+            ${getRecentActivity(transactions, bills, maintenance).length === 0 ? `
+              <div class="empty-state">
+                <p>No recent activity found</p>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Action Button -->
       <div class="fab-container">
         <div class="fab-actions">
-          <button onclick="quickAction('expense')">💸 Expense</button>
-          <button onclick="quickAction('income')">💰 Income</button>
-          <button onclick="quickAction('property')">🏠 Property</button>
-          <button onclick="quickAction('bill')">🧾 Bill</button>
+          <button onclick="quickAction('expense')">💸 Add Expense</button>
+          <button onclick="quickAction('income')">💰 Add Income</button>
+          <button onclick="quickAction('property')">🏠 Add Property</button>
+          <button onclick="quickAction('bill')">🧾 Pay Bill</button>
         </div>
         <button class="fab-main">+</button>
       </div>
-
-    </div>
-
     `;
 
     // Populate Welcome Banner
@@ -798,4 +935,3 @@ export function cleanupDashboard() {
     autoRefreshInterval = null;
   }
 }
-
