@@ -1,335 +1,271 @@
-/* ============================================================
-   DASHBOARD LAYOUT — MODERN STRUCTURED STYLE (NO ROUNDED CORNERS)
-   ============================================================ */
+/* ============================================================================
+   DASHBOARD LAYOUT — Clean, modern, modular dashboard system
+   Inspired by premium mobile dashboard UI references
+   ============================================================================ */
 
 /* --------------------------------------------
-   GLOBAL LAYOUT SPACING
--------------------------------------------- */
-.page-container {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+   DASHBOARD CONTAINER
+   -------------------------------------------- */
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-4);
 }
 
-/* --------------------------------------------
-   PAGE HEADER
--------------------------------------------- */
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.page-header h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
+/* Standard spacing between sections */
+.dashboard-section {
+    margin-bottom: var(--space-4);
 }
 
 /* --------------------------------------------
-   WELCOME BANNER
--------------------------------------------- */
-.welcome-banner {
-  background: var(--card-bg);
-  padding: 18px 22px;
-  border-radius: 0;
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 10px;
+   SECTION HEADERS
+   -------------------------------------------- */
+.dashboard-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
 }
 
-.welcome-greeting {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.dashboard-section-header h3 {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    margin: 0;
+    font-weight: 700;
 }
 
-.welcome-sub {
-  margin-top: 4px;
-  font-size: 0.85rem;
-  opacity: 0.7;
-}
-
-/* --------------------------------------------
-   FILTER BAR
--------------------------------------------- */
-.filter-bar {
-  background: var(--card-bg);
-  padding: 16px;
-  border-radius: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  align-items: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.filter-bar .btn {
-  width: 100%;
+.dashboard-section-header .section-action {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-weight: 600;
 }
 
 /* --------------------------------------------
-   EXPANDABLE SECTIONS
--------------------------------------------- */
-.expandable-section {
-  background: var(--card-bg);
-  padding: 0;
-  border-radius: 0;
-  box-shadow: var(--shadow-sm);
+   METRIC CARDS GRID (Top summary cards)
+   -------------------------------------------- */
+.dashboard-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
 }
 
-.section-header {
-  padding: 16px 20px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  display: flex;
-  justify-content: space-between;
-  cursor: pointer;
+/* Individual Metric Card */
+.metric-card {
+    background: var(--card-bg);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    border-left: 4px solid transparent;
 }
 
-.section-content {
-  padding: 20px;
-  border-top: 1px solid rgba(0,0,0,0.05);
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-/* --------------------------------------------
-   KPI SUMMARY CARDS (Top Row)
--------------------------------------------- */
-.compact-summary-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 18px;
+/* Card accent color sets */
+.metric-income { border-left-color: #27ae60; }
+.metric-expense { border-left-color: #e74c3c; }
+.metric-cashflow { border-left-color: #3498db; }
+.metric-savings { border-left-color: #f39c12; }
+
+/* Metric card icon */
+.metric-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+    margin-bottom: var(--space-2);
 }
 
-.compact-card {
-  padding: 18px;
-  border-radius: 0;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  color: white;
-  box-shadow: var(--shadow-md);
+/* Metric Title */
+.metric-label {
+    color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
-.compact-icon {
-  font-size: 1.8rem;
+/* Big amount */
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-color);
 }
 
-.compact-content .compact-value {
-  font-size: 1.35rem;
-  font-weight: 700;
-}
-
-.compact-label {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  margin-top: 3px;
-}
-
-.compact-subtext {
-  font-size: 0.75rem;
-  opacity: 0.8;
-  margin-top: 2px;
-}
-
-/* Colors */
-.green  { background: #2ecc71; }
-.red    { background: #e74c3c; }
-.blue   { background: #3498db; }
-.orange { background: #f39c12; }
-.purple { background: #9b59b6; }
-.yellow { background: #f1c40f; }
-.teal   { background: #1abc9c; }
-.gold   { background: #e6b800; }
-
-/* --------------------------------------------
-   PROPERTY SUMMARY CARDS
--------------------------------------------- */
-.property-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 18px;
+/* Subtext like “+5% this month” */
+.metric-subtext {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
 /* --------------------------------------------
-   BUDGET PERFORMANCE (Progress Bars)
--------------------------------------------- */
-.budgets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
+   CATEGORY CARDS / QUICK ACTIONS
+   -------------------------------------------- */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-3);
 }
 
-.budget-progress {
-  background: var(--card-bg);
-  padding: 16px;
-  border-radius: 0;
-  box-shadow: var(--shadow-sm);
+.category-card {
+    background: var(--card-bg);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    cursor: pointer;
 }
 
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-  font-weight: 600;
+.category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--bg-secondary);
-  border-radius: 0;
-  overflow: hidden;
+.category-icon {
+    font-size: 1.8rem;
+    margin-bottom: var(--space-1);
 }
 
-.progress-fill {
-  height: 100%;
-  background: var(--accent-color);
-  transition: width 0.35s ease;
-}
-
-.on-track .progress-fill { background: #2ecc71; }
-.over-budget .progress-fill { background: #e74c3c; }
-
-.progress-status {
-  font-size: 0.8rem;
-  margin-top: 6px;
-  opacity: 0.7;
+.category-label {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
 /* --------------------------------------------
-   QUICK STATS GRID
--------------------------------------------- */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 18px;
+   FILTER BAR / CONTROLS
+   -------------------------------------------- */
+.dashboard-filter-bar {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    background: var(--card-bg);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
 }
 
-.stat-item {
-  background: var(--card-bg);
-  padding: 18px;
-  border-radius: 0;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.stat-icon {
-  font-size: 1.6rem;
-}
-
-.stat-value {
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-
-.stat-label {
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
-
-.stat-item.positive { border-left: 5px solid #2ecc71; }
-.stat-item.negative { border-left: 5px solid #e74c3c; }
-
-/* --------------------------------------------
-   CHART GRID
--------------------------------------------- */
-.charts-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 22px;
-}
-
-.chart-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.month-badge {
-  background: var(--accent-color);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 0;
-  font-size: 0.8rem;
-}
-
-.full-width {
-  grid-column: 1 / -1;
+.dashboard-filter-bar select,
+.dashboard-filter-bar input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
 }
 
 /* --------------------------------------------
-   RECENT ACTIVITY LIST
--------------------------------------------- */
-.recent-activity {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+   PROGRESS BARS — Used for budgets & summaries
+   -------------------------------------------- */
+.dashboard-progress {
+    background: var(--border-color);
+    height: 10px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: var(--space-2);
 }
 
-.activity-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px;
-  background: var(--card-bg);
-  border-radius: 0;
-  box-shadow: var(--shadow-xs);
+.dashboard-progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    width: 0%;
+    transition: width 0.4s ease;
 }
 
-.activity-icon {
-  font-size: 1.4rem;
-}
-
-.activity-desc {
-  font-weight: 600;
-}
-
-.activity-date {
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-.activity-amount {
-  font-weight: 700;
-}
-
-.activity-amount.negative { color: #e74c3c; }
-.activity-amount.positive { color: #2ecc71; }
+.dashboard-progress-fill.good { background: #27ae60; }
+.dashboard-progress-fill.warn { background: #f39c12; }
+.dashboard-progress-fill.bad  { background: #e74c3c; }
 
 /* --------------------------------------------
-   FAB (Floating Action Button)
--------------------------------------------- */
-.fab-container {
-  position: fixed;
-  bottom: 22px;
-  right: 22px;
+   LARGE PANELS (Charts, Trends, Insights)
+   -------------------------------------------- */
+.dashboard-panel {
+    background: var(--card-bg);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-4);
 }
 
-.fab-main {
-  width: 56px;
-  height: 56px;
-  border-radius: 0;
-  background: var(--accent-color);
-  color: white;
-  font-size: 2rem;
-  border: none;
-  box-shadow: var(--shadow-lg);
-  cursor: pointer;
+/* --------------------------------------------
+   DASHBOARD GRID (Charts + analytics sections)
+   -------------------------------------------- */
+.dashboard-grid-2col {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--space-4);
 }
 
-/* BUDGET PROGRESS BAR FIX */
-.budget-progress.on-track .progress-fill {
-  background: #2ecc71 !important;
+@media (max-width: 900px) {
+    .dashboard-grid-2col {
+        grid-template-columns: 1fr;
+    }
 }
 
-.budget-progress.over-budget .progress-fill {
-  background: #e74c3c !important;
+/* --------------------------------------------
+   CHART CONTAINERS
+   -------------------------------------------- */
+.chart-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+}
+
+.chart-container {
+    width: 100%;
+    height: 240px;
+    position: relative;
+}
+
+/* --------------------------------------------
+   EMPTY STATES
+   -------------------------------------------- */
+.dashboard-empty {
+    text-align: center;
+    padding: var(--space-5);
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.dashboard-empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+    margin-bottom: var(--space-2);
+}
+
+/* --------------------------------------------
+   DARK MODE SUPPORT
+   -------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+
+    .category-card,
+    .metric-card,
+    .dashboard-panel,
+    .dashboard-filter-bar,
+    .chart-card {
+        background: var(--color-gray-800);
+        border-color: var(--color-gray-700);
+        color: var(--color-gray-200);
+    }
+
+    .metric-label,
+    .metric-subtext,
+    .category-label {
+        color: var(--color-gray-300);
+    }
+
+    .dashboard-progress {
+        background: var(--color-gray-700);
+    }
+
+    .dashboard-empty {
+        background: var(--color-gray-800);
+    }
 }
