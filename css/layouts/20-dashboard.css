@@ -1,357 +1,328 @@
-/* =============================================================================
-   DASHBOARD MASTER LAYOUT — Formal Enterprise-Grade Look
-   ============================================================================= */
+/* ============================================================
+   DASHBOARD LAYOUT — MODERN STRUCTURED STYLE (Layout 3)
+   Grid-based, icon-accented, data coloured. Inspired by mobile
+   dashboard UIs (Figma style).
+   ============================================================ */
 
+/* --------------------------------------------
+   GLOBAL LAYOUT SPACING
+-------------------------------------------- */
 .page-container {
-  padding: var(--space-5);
-  max-width: 1600px;
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
 }
 
-/* -----------------------------------------------------------------------------
+/* --------------------------------------------
    PAGE HEADER
------------------------------------------------------------------------------ */
-
+-------------------------------------------- */
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-5);
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .page-header h2 {
-  font-size: 1.9rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--text-color);
 }
 
-/* -----------------------------------------------------------------------------
-   WELCOME BANNER — cleaner spacing
------------------------------------------------------------------------------ */
-
+/* --------------------------------------------
+   WELCOME BANNER
+-------------------------------------------- */
 .welcome-banner {
-  margin-top: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  padding: 18px 22px;
+  border-radius: 14px;
   box-shadow: var(--shadow-sm);
-  border-left: 6px solid var(--primary);
+  margin-bottom: 10px;
 }
 
 .welcome-greeting {
   font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--text-color);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .welcome-sub {
   margin-top: 4px;
-  font-size: 0.9rem;
-  color: var(--text-light);
-  display: flex;
-  gap: var(--space-4);
+  font-size: 0.85rem;
+  opacity: 0.7;
 }
 
-/* -----------------------------------------------------------------------------
-   FILTER BAR — visually elevated inside a card
------------------------------------------------------------------------------ */
-
+/* --------------------------------------------
+   FILTER BAR
+-------------------------------------------- */
 .filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  background: var(--bg-card);
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: center;
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-5);
 }
 
-.filter-bar select,
-.filter-bar input[type="date"] {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-light);
-  min-width: 180px;
-  background: white;
+.filter-bar .btn {
+  width: 100%;
 }
 
-/* Buttons inside filter card */
-.filter-bar .btn-primary,
-.filter-bar .btn-secondary {
-  padding: var(--space-2) var(--space-3);
-}
-
-/* -----------------------------------------------------------------------------
-   SECTION TITLES & SPACING
------------------------------------------------------------------------------ */
-
+/* --------------------------------------------
+   EXPANDABLE SECTIONS
+-------------------------------------------- */
 .expandable-section {
-  background: var(--bg-card);
-  margin-bottom: var(--space-5);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  padding: 0;
+  border-radius: 14px;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
 }
 
 .section-header {
+  padding: 16px 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
   display: flex;
   justify-content: space-between;
   cursor: pointer;
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.section-header h3 {
-  font-size: 1.3rem;
-  font-weight: 700;
 }
 
 .section-content {
-  padding-top: var(--space-4);
+  padding: 20px;
+  border-top: 1px solid rgba(0,0,0,0.05);
 }
 
-/* -----------------------------------------------------------------------------
-   SUMMARY CARDS – Formal finance layout
------------------------------------------------------------------------------ */
-
+/* --------------------------------------------
+   KPI SUMMARY CARDS (Top Row)
+-------------------------------------------- */
 .compact-summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
 }
 
 .compact-card {
+  padding: 18px;
+  border-radius: 14px;
   display: flex;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border-left: 6px solid transparent;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition-medium);
-}
-
-.compact-card:hover {
+  gap: 12px;
+  align-items: flex-start;
+  color: white;
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
 }
 
-/* Icon column */
 .compact-icon {
-  font-size: 2.2rem;
-  opacity: 0.8;
+  font-size: 1.8rem;
 }
 
-/* Text */
-.compact-value {
-  font-size: 1.8rem;
+.compact-content .compact-value {
+  font-size: 1.35rem;
   font-weight: 700;
 }
 
 .compact-label {
-  font-size: 1rem;
-  margin-bottom: 3px;
-  color: var(--text-muted);
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: 3px;
 }
 
-/* Financial subtext */
 .compact-subtext {
-  font-size: 0.85rem;
-  color: var(--text-light);
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
-/* Color theme extensions */
-.compact-card.green { background:#e9f7ec; border-left-color:#27ae60; }
-.compact-card.red { background:#fdecea; border-left-color:#e74c3c; }
-.compact-card.blue { background:#e8f4fc; border-left-color:#3498db; }
-.compact-card.orange { background:#fdf2e9; border-left-color:#e67e22; }
-.compact-card.teal { background:#e8f8f5; border-left-color:#1abc9c; }
-.compact-card.yellow { background:#fef9e7; border-left-color:#f1c40f; }
-.compact-card.purple { background:#f4ecf7; border-left-color:#9b59b6; }
-.compact-card.gold { background:#fff8e1; border-left-color:#f4b400; }
+/* Data-based colour tags */
+.green { background: #2ecc71; }
+.red { background: #e74c3c; }
+.blue { background: #3498db; }
+.orange { background: #f39c12; }
+.purple { background: #9b59b6; }
+.yellow { background: #f1c40f; }
+.teal { background: #1abc9c; }
+.gold { background: #e6b800; }
 
-/* -----------------------------------------------------------------------------
-   QUICK STATS — enterprise design
------------------------------------------------------------------------------ */
+/* --------------------------------------------
+   PROPERTY SUMMARY CARDS
+-------------------------------------------- */
+.property-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
 
-.stats-grid {
+/* --------------------------------------------
+   BUDGET PERFORMANCE (Progress Bars)
+-------------------------------------------- */
+.budgets-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-4);
-}
-
-.stat-item {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border-left: 6px solid transparent;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition-medium);
-}
-
-.stat-item:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.stat-value {
-  font-size: 1.7rem;
-  font-weight: 700;
-}
-
-/* -----------------------------------------------------------------------------
-   BUDGET PROGRESS PANEL — cleaner spacing
------------------------------------------------------------------------------ */
-
-.budgets-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  gap: 20px;
 }
 
 .budget-progress {
-  padding: var(--space-3);
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: 12px;
   box-shadow: var(--shadow-sm);
 }
 
-/* -----------------------------------------------------------------------------
-   CHARTS GRID — aligned like pro dashboards
------------------------------------------------------------------------------ */
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
 
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.35s ease;
+}
+
+.on-track .progress-fill { background: #2ecc71; }
+.over-budget .progress-fill { background: #e74c3c; }
+
+.progress-status {
+  font-size: 0.8rem;
+  margin-top: 6px;
+  opacity: 0.7;
+}
+
+/* --------------------------------------------
+   QUICK STATS GRID
+-------------------------------------------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
+
+.stat-item {
+  background: var(--card-bg);
+  padding: 18px;
+  border-radius: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-icon {
+  font-size: 1.6rem;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.stat-item.positive { border-left: 5px solid #2ecc71; }
+.stat-item.negative { border-left: 5px solid #e74c3c; }
+
+/* --------------------------------------------
+   CHART GRID
+-------------------------------------------- */
 .charts-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 22px;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.month-badge {
+  background: var(--accent-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
 }
 
 .full-width {
   grid-column: 1 / -1;
 }
 
-/* -----------------------------------------------------------------------------
-   RECENT ACTIVITY — cleaner spacing + alignment
------------------------------------------------------------------------------ */
-
+/* --------------------------------------------
+   RECENT ACTIVITY LIST
+-------------------------------------------- */
 .recent-activity {
-  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .activity-item {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--border-light);
+  align-items: center;
+  padding: 14px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-xs);
 }
 
-.activity-details {
-  flex: 1;
-  margin-left: var(--space-3);
+.activity-icon {
+  font-size: 1.4rem;
 }
 
 .activity-desc {
-  font-size: 1rem;
   font-weight: 600;
 }
 
 .activity-date {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  opacity: 0.7;
 }
 
 .activity-amount {
-  font-size: 1rem;
   font-weight: 700;
 }
 
-/* -----------------------------------------------------------------------------
-   FLOATING ACTION BUTTON — polished spacing
------------------------------------------------------------------------------ */
+.activity-amount.negative { color: #e74c3c; }
+.activity-amount.positive { color: #2ecc71; }
 
+/* --------------------------------------------
+   FAB (Floating Action Button)
+-------------------------------------------- */
 .fab-container {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: 22px;
+  right: 22px;
 }
 
-/* =============================================================================
-   BUDGET PERFORMANCE — PROGRESS BARS (Restored + Improved)
-   ============================================================================= */
-
-/* Each budget entry container */
-.budget-progress {
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition-fast);
-}
-
-.budget-progress:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-/* Header row inside each budget box */
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-/* The bar container */
-.progress-bar {
-  position: relative;
-  width: 100%;
-  height: 12px;
-  background: var(--border-light);
-  border-radius: 50px;
-  overflow: hidden;
-}
-
-/* Actual progress fill */
-.progress-fill {
-  height: 100%;
-  background: var(--primary);
-  border-radius: 50px;
-  transition: width 0.55s ease-out;
-}
-
-/* Over-budget styling (red fill) */
-.over-budget .progress-fill {
-  background: #e74c3c !important;
-}
-
-/* Status label under bar */
-.progress-status {
-  margin-top: var(--space-2);
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.progress-status.on-track {
-  color: var(--primary);
-}
-
-.progress-status.over-budget {
-  color: #e74c3c;
-}
-
-/* No budgets message */
-.no-data {
-  padding: var(--space-4);
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 1rem;
+.fab-main {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  font-size: 2rem;
+  border: none;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
 }

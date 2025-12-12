@@ -1,6 +1,6 @@
 /* Base styles - ensure proper layering */
 body {
-  background:  #2c2a2a;
+  background:  #ffffff;
   min-height: 100vh;
   color: var(--text-primary);
   position: relative;
