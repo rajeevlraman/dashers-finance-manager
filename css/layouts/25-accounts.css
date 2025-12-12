@@ -1,0 +1,288 @@
+/* ==========================================================================
+   25-accounts.css — ACCOUNTS PAGE (Bank cards, balances, details)
+   Extracted cleanly from full stylesheet. Original styling preserved.
+   ========================================================================== */
+
+
+/* ---------------------------------------------
+   PAGE WRAPPER
+--------------------------------------------- */
+
+.accounts-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.accounts-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.accounts-header h2 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.accounts-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+
+/* ---------------------------------------------
+   ACCOUNTS GRID
+--------------------------------------------- */
+
+.accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.account-card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 1.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 4px solid #3498db;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.account-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+.account-card.positive {
+    border-left-color: #27ae60;
+}
+
+.account-card.negative {
+    border-left-color: #e74c3c;
+}
+
+.account-card.neutral {
+    border-left-color: #9b59b6;
+}
+
+
+/* ---------------------------------------------
+   CARD CONTENT
+--------------------------------------------- */
+
+.account-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.account-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.account-type-badge {
+    padding: 0.35rem 0.75rem;
+    background: #ecf0f1;
+    color: #7f8c8d;
+    font-weight: 600;
+    border-radius: 20px;
+    font-size: 0.75rem;
+}
+
+.account-balance {
+    margin-bottom: 1rem;
+}
+
+.balance-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.balance-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.balance-positive {
+    color: #27ae60;
+}
+
+.balance-negative {
+    color: #e74c3c;
+}
+
+
+/* ---------------------------------------------
+   ACCOUNT METADATA
+--------------------------------------------- */
+
+.account-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.account-meta div {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.account-meta i {
+    opacity: 0.7;
+}
+
+
+/* ---------------------------------------------
+   ACTIONS
+--------------------------------------------- */
+
+.account-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.account-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.account-btn {
+    padding: 0.6rem 1.2rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.account-btn:hover {
+    background: #f0f4f8;
+    transform: translateY(-1px);
+}
+
+.account-btn.primary {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.account-btn.primary:hover {
+    background: #2e89c6;
+}
+
+
+/* ---------------------------------------------
+   ACCOUNT DETAILS SECTION (Below Cards)
+--------------------------------------------- */
+
+.account-details {
+    background: var(--card-bg);
+    padding: 1.75rem;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.details-header h3 {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--text-muted);
+}
+
+.detail-value {
+    font-weight: 600;
+}
+
+
+/* ---------------------------------------------
+   EMPTY STATE + LOADING
+--------------------------------------------- */
+
+.accounts-empty {
+    text-align: center;
+    padding: 3rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.accounts-empty .empty-icon {
+    font-size: 4rem;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.accounts-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+
+/* ---------------------------------------------
+   RESPONSIVE RULES
+--------------------------------------------- */
+
+@media (max-width: 768px) {
+
+    .accounts-container {
+        padding: 1rem;
+    }
+
+    .accounts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .account-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: start;
+    }
+
+    .account-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .account-buttons {
+        justify-content: space-between;
+        width: 100%;
+    }
+}

@@ -1,0 +1,349 @@
+/* ==========================================================================
+   26-bills.css — Bills, recurring bills, status cards, tables, filters
+   Extracted from 8700-line master without altering styling or logic.
+   ========================================================================== */
+
+
+/* ---------------------------------------------
+   PAGE WRAPPER
+--------------------------------------------- */
+
+.bills-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.bills-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.bills-header h2 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.bills-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+
+/* ---------------------------------------------
+   FILTER / CONTROL BAR
+--------------------------------------------- */
+
+.bills-controls {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bills-control-group {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.bills-filter-input,
+.bills-filter-select {
+    flex: 1;
+    min-width: 250px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--input-bg);
+}
+
+
+/* ---------------------------------------------
+   STAT CARDS (SUMMARY)
+--------------------------------------------- */
+
+.bills-stats {
+    margin-bottom: 2rem;
+}
+
+.bills-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.bill-stat-card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.bill-stat-card.total { border-left: 4px solid #3498db; }
+.bill-stat-card.paid { border-left: 4px solid #27ae60; }
+.bill-stat-card.due { border-left: 4px solid #f39c12; }
+.bill-stat-card.overdue { border-left: 4px solid #e74c3c; }
+
+.bill-stat-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+.bill-stat-content { flex: 1; }
+
+.bill-stat-value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.bill-stat-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+
+/* ---------------------------------------------
+   BILL GRID / BILL CARDS
+--------------------------------------------- */
+
+.bills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 1.5rem;
+}
+
+.bill-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #bdc3c7;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bill-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.bill-card.status-paid {
+    border-left-color: #27ae60;
+}
+
+.bill-card.status-due {
+    border-left-color: #f39c12;
+    background: #fff8e1;
+}
+
+.bill-card.status-overdue {
+    border-left-color: #e74c3c;
+    background: #ffefef;
+}
+
+.bill-card.status-recurring {
+    border-left-color: #9b59b6;
+}
+
+
+/* ---------------------------------------------
+   BILL HEADER
+--------------------------------------------- */
+
+.bill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.bill-title {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
+}
+
+.bill-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.bill-badge {
+    background: #ecf0f1;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.bill-badge.recurring {
+    background: #e8f4fd;
+    color: #3498db;
+}
+
+
+/* ---------------------------------------------
+   BILL AMOUNT / STATUS
+--------------------------------------------- */
+
+.bill-amount {
+    text-align: right;
+}
+
+.bill-amount-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.bill-status-text {
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.bill-status-text.paid { color: #27ae60; }
+.bill-status-text.due { color: #f39c12; }
+.bill-status-text.overdue { color: #e74c3c; }
+
+
+/* ---------------------------------------------
+   BILL DETAILS GRID
+--------------------------------------------- */
+
+.bill-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.bill-detail {
+    display: flex;
+    flex-direction: column;
+}
+
+.bill-detail-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.bill-detail-value {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+
+/* ---------------------------------------------
+   BILL NOTE / ATTACHMENTS
+--------------------------------------------- */
+
+.bill-notes {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    color: var(--text-muted);
+}
+
+
+/* ---------------------------------------------
+   BILL ACTION BUTTONS
+--------------------------------------------- */
+
+.bill-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.bill-btn {
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.bill-btn.pay {
+    background: #27ae60;
+    color: white;
+}
+
+.bill-btn.edit {
+    background: #3498db;
+    color: white;
+}
+
+.bill-btn.delete {
+    background: #e74c3c;
+    color: white;
+}
+
+.bill-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+}
+
+
+/* ---------------------------------------------
+   EMPTY + LOADING STATES
+--------------------------------------------- */
+
+.bills-empty {
+    background: var(--card-bg);
+    padding: 3rem;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bills-empty-icon {
+    font-size: 4rem;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.bills-loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+
+/* ---------------------------------------------
+   RESPONSIVE RULES
+--------------------------------------------- */
+
+@media (max-width: 768px) {
+
+    .bills-container {
+        padding: 1rem;
+    }
+
+    .bills-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bill-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bill-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
