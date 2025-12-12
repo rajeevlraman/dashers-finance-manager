@@ -1,194 +1,288 @@
 /* ============================================================================
-   TABLE SYSTEM — Clean, unified design for all tables across the application.
-   Extracted, merged, and reorganized from the full 8740-line stylesheet.
+   13-tables.css – TABLES (cleaned + consolidated from full 8700-line CSS)
    ============================================================================ */
 
-/* --------------------------------------------
-   TABLE WRAPPER
-   -------------------------------------------- */
-.table-container {
-    width: 100%;
-    overflow-x: auto;
-    background: var(--card-bg);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    padding: var(--space-2);
-    box-shadow: var(--shadow-sm);
-}
-
-/* Ensure perfect scrolling on iPad / mobile */
-.table-container::-webkit-scrollbar {
-    height: 8px;
-}
-.table-container::-webkit-scrollbar-thumb {
-    background: var(--color-gray-400);
-    border-radius: 8px;
-}
-
-/* --------------------------------------------
-   BASE TABLE STYLE
-   -------------------------------------------- */
+/* -----------------------------
+   BASE TABLE ELEMENTS
+------------------------------ */
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
-    color: var(--text-color);
 }
 
-/* --------------------------------------------
-   TABLE HEADER
-   -------------------------------------------- */
-th {
-    background: var(--bg-secondary);
-    color: var(--color-gray-700);
-    font-weight: 600;
-    padding: var(--space-3);
+th, td {
+    padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid var(--border-color);
-    white-space: nowrap;
-    position: sticky;
-    top: 0;
-    z-index: 5;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-color, #1f2937);
+    font-size: 0.9rem;
 }
 
-/* --------------------------------------------
-   TABLE BODY CELLS
-   -------------------------------------------- */
-td {
-    padding: var(--space-3);
-    border-bottom: 1px solid var(--border-color);
-    vertical-align: middle;
-    color: var(--text-color);
+th {
+    background: var(--bg-secondary, #f8fafc);
+    font-weight: 600;
 }
 
-/* Hover row behaviour */
-tbody tr:hover {
-    background: var(--hover-bg);
-    transition: background 0.15s ease;
-}
-
-/* Remove bottom border on last row */
-tbody tr:last-child td {
+tr:last-child td {
     border-bottom: none;
 }
 
-/* --------------------------------------------
-   ALIGNMENT HELPERS
-   -------------------------------------------- */
-.text-left   { text-align: left; }
-.text-right  { text-align: right; }
-.text-center { text-align: center; }
-
-/* --------------------------------------------
-   STATUS BADGES INSIDE TABLES
-   -------------------------------------------- */
-.table-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
+/* Income / Expense colour coding */
+.amount.income {
+    color: #27ae60;
     font-weight: 600;
-    color: white;
 }
 
-.table-badge.success { background: #27ae60; }
-.table-badge.warning { background: #f39c12; }
-.table-badge.danger  { background: #e74c3c; }
-.table-badge.info    { background: #3498db; }
-
-/* Property-linked badges */
-.table-badge.property {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-/* --------------------------------------------
-   AMOUNT STYLING
-   -------------------------------------------- */
-.amount {
+.amount.expense {
+    color: #e74c3c;
     font-weight: 600;
-    white-space: nowrap;
 }
 
-.amount.income  { color: #27ae60; }
-.amount.expense { color: #e74c3c; }
-.amount.neutral { color: var(--color-gray-700); }
-
-/* --------------------------------------------
-   EXPANDED ROWS (Transactions, Expense details)
-   -------------------------------------------- */
-.table-row-expanded {
-    background: var(--bg-secondary);
-    padding: var(--space-3);
-    border-left: 3px solid var(--color-primary);
-}
-
-/* --------------------------------------------
-   IMPORT MODAL — PREVIEW TABLE OVERRIDES
-   -------------------------------------------- */
+/* -----------------------------
+   TABLE WRAPPERS
+------------------------------ */
+.table-container,
 .preview-table-container {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+/* Used in Reports & Analysis */
+.analysis-table .table-container {
+    margin-top: 2rem;
+}
+
+/* -----------------------------
+   PREVIEW TABLE (Import Modal)
+------------------------------ */
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .preview-table th {
-    background: var(--bg-secondary);
+    background: #f9fafb;
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
     font-weight: 600;
+    position: sticky;
+    top: 0;
 }
 
 .preview-table td {
-    padding: var(--space-3);
-    border-bottom: 1px solid var(--border-color);
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #4b5563;
 }
 
 .preview-table tr:last-child td {
     border-bottom: none;
 }
 
-/* --------------------------------------------
-   STRIPED TABLE OPTION
-   -------------------------------------------- */
-.table-striped tbody tr:nth-child(odd) {
-    background: var(--bg-secondary);
+/* Preview Stats */
+.preview-stats {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
 }
 
-/* --------------------------------------------
-   COMPACT TABLE OPTION
-   -------------------------------------------- */
-.table-compact th,
-.table-compact td {
-    padding: var(--space-2);
-    font-size: 0.85rem;
+.preview-stats p {
+    margin: 4px 0;
+    color: #0369a1;
+    font-weight: 500;
 }
 
-/* --------------------------------------------
-   DARK MODE SUPPORT
-   -------------------------------------------- */
-@media (prefers-color-scheme: dark) {
+/* -----------------------------
+   REPORTS PAGE TABLES
+------------------------------ */
+.analysis-table {
+    margin-top: 2rem;
+}
 
-    .table-container {
-        background: var(--color-gray-800);
-        border-color: var(--color-gray-700);
-    }
+.analysis-table th {
+    background: var(--bg-secondary, #f1f5f9);
+}
 
-    th {
-        background: var(--color-gray-900);
-        border-color: var(--color-gray-700);
-        color: var(--color-gray-200);
-    }
+.analysis-table td {
+    background: var(--card-bg, white);
+}
 
-    td {
-        border-color: var(--color-gray-700);
-        color: var(--color-gray-200);
-    }
+/* Trend colours */
+.stat-trend.positive { color: #27ae60; }
+.stat-trend.negative { color: #e74c3c; }
 
-    tbody tr:hover {
-        background: rgba(255,255,255,0.05);
-    }
+/* -----------------------------
+   COSTBASE TRACKER TABLES
+------------------------------ */
+.tax-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+}
 
+.tax-row.total {
+    border-bottom: 2px solid #3498db;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.tax-row.gain {
+    border-top: 2px solid #eee;
+    margin-top: 8px;
+    padding-top: 12px;
+}
+
+.tax-row.discount {
+    color: #27ae60;
+}
+
+.tax-row.taxable {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* -----------------------------
+   TAX COMPLIANCE: Calculation Table
+------------------------------ */
+.calculation {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.calculation div {
+    display: flex;
+    justify-content: space-between;
+}
+
+.calculation .total {
+    border-top: 2px solid #3498db;
+    padding-top: 8px;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+/* -----------------------------
+   RECORDS LIST WITH TABLE STYLE FEEL
+------------------------------ */
+.records-list .record-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-left: 4px solid #3498db;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.record-item.capital { border-left-color: #3498db; }
+.record-item.expense { border-left-color: #27ae60; }
+
+.record-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.record-main {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+}
+
+.record-details {
+    flex: 1;
+}
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.record-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.record-amount {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.record-amount.capital { color: #3498db; }
+.record-amount.expense { color: #27ae60; }
+
+.record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.record-type,
+.record-classification,
+.record-property,
+.record-date,
+.record-ato {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.record-classification.capital {
+    background: #d4edda;
+    color: #155724;
+}
+
+.record-classification.expense {
+    background: #cce5ff;
+    color: #004085;
+}
+
+/* -----------------------------
+   EMPTY STATES
+------------------------------ */
+.empty-state,
+.error-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--card-bg, white);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: var(--text-muted, #6b7280);
+}
+
+.empty-icon,
+.error-icon {
+    font-size: 4rem;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+/* -----------------------------
+   RESPONSIVE TABLE BEHAVIOUR
+------------------------------ */
+@media (max-width: 768px) {
+    .table-container,
     .preview-table-container {
-        border-color: var(--color-gray-700);
+        overflow-x: auto;
+    }
+
+    .record-item {
+        flex-direction: column;
+        gap: 15px;
     }
 }
