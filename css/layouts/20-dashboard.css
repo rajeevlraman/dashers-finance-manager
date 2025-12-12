@@ -280,3 +280,78 @@
   bottom: 30px;
   right: 30px;
 }
+
+/* =============================================================================
+   BUDGET PERFORMANCE — PROGRESS BARS (Restored + Improved)
+   ============================================================================= */
+
+/* Each budget entry container */
+.budget-progress {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.budget-progress:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Header row inside each budget box */
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+/* The bar container */
+.progress-bar {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  background: var(--border-light);
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+/* Actual progress fill */
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 50px;
+  transition: width 0.55s ease-out;
+}
+
+/* Over-budget styling (red fill) */
+.over-budget .progress-fill {
+  background: #e74c3c !important;
+}
+
+/* Status label under bar */
+.progress-status {
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.progress-status.on-track {
+  color: var(--primary);
+}
+
+.progress-status.over-budget {
+  color: #e74c3c;
+}
+
+/* No budgets message */
+.no-data {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
