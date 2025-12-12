@@ -1,84 +1,47 @@
-/* =======================================================================
-   Cards & Dashboard Boxes (cards.css)
-   ======================================================================= */
+/* ===========================================
+   CARDS / PANELS / DASHBOARD SECTIONS
+   =========================================== */
 
-/* Generic Card Component */
-.card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    padding: var(--space-16);
-    color: var(--color-text);
+.card,
+.section-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  margin-bottom: var(--space-4);
 }
 
-/* Card Header (if used) */
-.card-header {
-    font-size: var(--font-lg);
-    font-weight: 600;
-    margin-bottom: var(--space-12);
-    color: var(--color-text);
+.card-header,
+.section-header {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
 }
 
-/* =======================================================================
-   Dashboard Boxes (Income, Expense, Budget, Extra, Property)
-   ======================================================================= */
-
-.box {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-md);
-    display: flex;
-    flex-direction: column;
+.card-title {
+  font-size: var(--text-md);
+  font-weight: 600;
 }
 
-/* Header strip */
-.box-header {
-    padding: var(--space-12) var(--space-16);
-    font-weight: 600;
-    font-size: var(--font-md);
-    color: var(--box-header-text);
+.card-value {
+  font-size: var(--text-xl);
+  font-weight: 700;
 }
 
-/* Body area */
-.box-body {
-    padding: var(--space-16);
-    background: var(--color-surface-light);
-    color: var(--color-text);
+.card-grid {
+  display: grid;
+  gap: var(--space-4);
 }
 
-/* Colour Variants */
-.box-income .box-header {
-    background: var(--box-income);
+@media (min-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.box-expense .box-header {
-    background: var(--box-expense);
-}
-
-.box-budget .box-header {
-    background: var(--box-budget);
-}
-
-.box-extra .box-header {
-    background: var(--box-extra); /* Brown */
-}
-
-.box-property .box-header {
-    background: var(--box-property);
-}
-
-/* Stat Values */
-.box-value {
-    font-size: var(--font-xl);
-    font-weight: 700;
-    margin-bottom: var(--space-8);
-}
-
-/* Stat Labels */
-.box-label {
-    font-size: var(--font-sm);
-    color: var(--color-text-muted);
+@media (min-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
