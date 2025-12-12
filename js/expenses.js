@@ -254,23 +254,80 @@ export async function initExpensesUI() {
 // ============================================================================
 // 📈 Enhanced Charts - 4 Chart Layout
 // ============================================================================
+// ============================================================================
+// 📈 Enhanced Charts with Memory Management
+// ============================================================================
+
+// Store chart instances globally for cleanup
+window.expenseCharts = {};
+
+function destroyAllCharts() {
+  Object.values(window.expenseCharts).forEach(chart => {
+    if (chart && typeof chart.destroy === 'function') {
+      chart.destroy();
+    }
+  });
+  window.expenseCharts = {};
+}
 
 function renderEnhancedCharts(expenses, properties) {
+  // Destroy existing charts first
+  destroyAllCharts();
+  
+  // Render new charts
   renderCategoryChart(expenses);
   renderSourceChart(expenses);
   renderMonthlyTrendChart(expenses);
   renderPropertyChart(expenses, properties);
 }
 
+function renderCategoryChart(expenses) {
+  const ctx = document.getElementById('expenseChart')?.getContext('2d');
+  if (!ctx) return;
+  
+  const chartType = document.getElementById('chartType')?.value || 'pie';
+  const categories = {};
+  expenses.forEach(e => {
+    categories[e.category] = (categories[e.category] || 0) + (e.amount || 0);
+  });
+
+  const labels = Object.keys(categories).map(l => l.substring(0, 10));
+  const data = Object.values(categories);
+  const backgroundColors = Object.keys(categories).map(cat => EXPENSE_CATEGORIES[cat]?.color || '#6B7280');
+
+  // Destroy existing chart
+  if (window.expenseCharts.category) {
+    window.expenseCharts.category.destroy();
+  }
+
+  window.expenseCharts.category = new Chart(ctx, {
+    type: chartType,
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: backgroundColors,
+        borderColor: '#ffffff',
+        borderWidth: 1
+      }]
+    },
+    options: getCompactChartOptions('Expenses by Category')
+  });
+}
+
 function renderSourceChart(expenses) {
-  const ctx = document.getElementById('sourceChart').getContext('2d');
+  const ctx = document.getElementById('sourceChart')?.getContext('2d');
+  if (!ctx) return;
   
   const fromTransactions = expenses.filter(e => e.source === 'transaction').length;
   const directEntries = expenses.filter(e => e.source === 'expense').length;
-  
-  if (window.sourceChartInstance) window.sourceChartInstance.destroy();
-  
-  window.sourceChartInstance = new Chart(ctx, {
+
+  // Destroy existing chart
+  if (window.expenseCharts.source) {
+    window.expenseCharts.source.destroy();
+  }
+
+  window.expenseCharts.source = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Transactions', 'Direct'],
@@ -290,7 +347,8 @@ function renderSourceChart(expenses) {
           labels: { 
             usePointStyle: true,
             font: { size: 10 },
-            padding: 15
+            padding: 10,
+            boxWidth: 8
           }
         },
         tooltip: {
@@ -304,174 +362,198 @@ function renderSourceChart(expenses) {
           }
         }
       },
-      cutout: '60%'
+      cutout: '65%'
     }
   });
 }
 
 function renderMonthlyTrendChart(expenses) {
-  const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+  const ctx = document.getElementById('monthlyTrendChart')?.getContext('2d');
+  if (!ctx) return;
   
-  // Group expenses by month
+  // Group expenses by month (last 4 months only)
   const monthlyData = {};
-  expenses.forEach(e => {
-    const month = e.date.substring(0, 7); // YYYY-MM
-    monthlyData[month] = (monthlyData[month] || 0) + e.amount;
-  });
-  
-  // Get last 6 months
-  const months = [];
-  const amounts = [];
   const now = new Date();
+  const monthLabels = [];
   
-  for (let i = 5; i >= 0; i--) {
+  // Prepare last 4 months
+  for (let i = 3; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthStr = date.toISOString().substring(0, 7);
-    months.push(date.toLocaleDateString('en-AU', { month: 'short' }));
-    amounts.push(monthlyData[monthStr] || 0);
+    monthLabels.push(date.toLocaleDateString('en-AU', { month: 'short' }));
+    monthlyData[monthStr] = 0;
   }
   
-  if (window.monthlyTrendChartInstance) window.monthlyTrendChartInstance.destroy();
-  
-  window.monthlyTrendChartInstance = new Chart(ctx, {
+  // Fill with data
+  expenses.forEach(e => {
+    const month = e.date.substring(0, 7);
+    if (monthlyData[month] !== undefined) {
+      monthlyData[month] += e.amount;
+    }
+  });
+
+  // Destroy existing chart
+  if (window.expenseCharts.trend) {
+    window.expenseCharts.trend.destroy();
+  }
+
+  window.expenseCharts.trend = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: months,
+      labels: monthLabels,
       datasets: [{
         label: 'Expenses',
-        data: amounts,
+        data: Object.values(monthlyData),
         borderColor: '#8B5CF6',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+        backgroundColor: 'rgba(139, 92, 246, 0.05)',
         borderWidth: 2,
         fill: true,
-        tension: 0.3
+        tension: 0.2
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          bodyFont: { size: 11 },
-          callbacks: {
-            label: (context) => formatCurrency(context.raw)
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            font: { size: 9 },
-            callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
-          },
-          grid: { display: false }
-        },
-        x: {
-          ticks: { font: { size: 9 } },
-          grid: { display: false }
-        }
-      }
-    }
+    options: getLineChartOptions('Monthly Trend')
   });
 }
 
-    function renderPropertyChart(expenses, properties) {
-      const ctx = document.getElementById('propertyChart').getContext('2d');
-      
-      // Group expenses by property
-      const propertyData = {};
-      expenses.forEach(e => {
-        const property = properties.find(p => p.id === e.propertyId);
-        const propName = property ? property.name.substring(0, 12) : 'General';
-        propertyData[propName] = (propertyData[propName] || 0) + e.amount;
-      });
-      
-      const propNames = Object.keys(propertyData);
-      const propAmounts = Object.values(propertyData);
-      
-      if (window.propertyChartInstance) window.propertyChartInstance.destroy();
-      
-      window.propertyChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: propNames,
-          datasets: [{
-            data: propAmounts,
-            backgroundColor: [
-              '#3B82F6', '#10B981', '#F59E0B', '#EC4899', 
-              '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'
-            ].slice(0, propNames.length),
-            borderColor: '#ffffff',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              bodyFont: { size: 11 },
-              callbacks: {
-                label: (context) => formatCurrency(context.raw)
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                font: { size: 9 },
-                callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
-              },
-              grid: { display: false }
-            },
-            x: {
-              ticks: { 
-                font: { size: 9 },
-                maxRotation: 45
-              },
-              grid: { display: false }
-            }
+function renderPropertyChart(expenses, properties) {
+  const ctx = document.getElementById('propertyChart')?.getContext('2d');
+  if (!ctx) return;
+  
+  // Group expenses by property (top 5 only)
+  const propertyData = {};
+  expenses.forEach(e => {
+    const property = properties.find(p => p.id === e.propertyId);
+    const propName = property ? property.name : 'General';
+    propertyData[propName] = (propertyData[propName] || 0) + e.amount;
+  });
+  
+  // Sort and get top 5
+  const sortedProps = Object.entries(propertyData)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5);
+  
+  const propNames = sortedProps.map(([name]) => name.substring(0, 8));
+  const propAmounts = sortedProps.map(([,amount]) => amount);
+
+  // Destroy existing chart
+  if (window.expenseCharts.property) {
+    window.expenseCharts.property.destroy();
+  }
+
+  window.expenseCharts.property = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: propNames,
+      datasets: [{
+        data: propAmounts,
+        backgroundColor: '#3B82F6',
+        borderColor: '#2563EB',
+        borderWidth: 1
+      }]
+    },
+    options: getBarChartOptions('By Property')
+  });
+}
+
+// Helper functions for chart options
+function getCompactChartOptions(title) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { 
+        position: 'bottom',
+        labels: { 
+          usePointStyle: true,
+          font: { size: 9 },
+          padding: 8,
+          boxWidth: 8
+        }
+      },
+      tooltip: {
+        bodyFont: { size: 10 },
+        callbacks: {
+          label: (context) => {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+            return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
           }
         }
-      });
+      }
+    },
+    scales: {
+      y: {
+        display: false,
+        beginAtZero: true
+      },
+      x: {
+        display: false
+      }
     }
+  };
+}
 
+function getLineChartOptions(title) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        bodyFont: { size: 10 },
+        callbacks: {
+          label: (context) => formatCurrency(context.raw)
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          font: { size: 8 },
+          callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+        },
+        grid: { display: false }
+      },
+      x: {
+        ticks: { font: { size: 8 } },
+        grid: { display: false }
+      }
+    }
+  };
+}
 
-// ============================================================================
-// 🎛️ Setup Event Listeners
-// ============================================================================
-function setupEventListeners() {
-  document.getElementById('btnNewExpense').addEventListener('click', () => openExpenseForm());
-  document.getElementById('btnQuickExpense').addEventListener('click', () => openQuickExpenseForm());
-  document.getElementById('btnExportExpenses').addEventListener('click', exportExpenses);
-  document.getElementById('btnApplyFilters').addEventListener('click', refreshExpensesDashboard);
-  document.getElementById('btnResetFilters').addEventListener('click', resetFilters);
-  document.getElementById('btnBulkActions').addEventListener('click', showBulkActions);
-  document.getElementById('btnSyncExpenses').addEventListener('click', syncFromTransactions);
-  document.getElementById('btnDismissSync').addEventListener('click', () => {
-    document.getElementById('syncStatusBanner').style.display = 'none';
-  });
-  
-  document.getElementById('filterPeriod').addEventListener('change', function() {
-    document.getElementById('customDateRange').style.display = 
-      this.value === 'custom' ? 'grid' : 'none';
-  });
-  
-  document.getElementById('chartType').addEventListener('change', refreshExpensesDashboard);
-  
-  // Source filter buttons
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      document.getElementById('filterSource').value = this.dataset.source;
-      refreshExpensesDashboard();
-    });
-  });
+function getBarChartOptions(title) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        bodyFont: { size: 10 },
+        callbacks: {
+          label: (context) => formatCurrency(context.raw)
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          font: { size: 8 },
+          callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+        },
+        grid: { display: false }
+      },
+      x: {
+        ticks: { 
+          font: { size: 8 },
+          maxRotation: 45
+        },
+        grid: { display: false }
+      }
+    }
+  };
 }
 
 // ============================================================================
