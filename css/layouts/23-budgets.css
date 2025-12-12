@@ -1,10 +1,10 @@
 /* =====================================================
-   BUDGETS PAGE — Modern Card-Based Design
-   Mirrors dashboard layout & visual hierarchy
+   BUDGETS PAGE — Square-Edge Professional Design
+   NO BORDER RADIUS ANYWHERE
 ===================================================== */
 
 /* ---------------------------------
-   Page header & controls
+   Page Header
 --------------------------------- */
 .budgets-header {
     display: flex;
@@ -27,13 +27,13 @@
 
 #budgetViewMode {
     padding: 6px 12px;
-    border-radius: 6px;
     background: var(--surface-elevated);
     border: 1px solid var(--border-light);
+    border-radius: 0;
 }
 
 /* ---------------------------------
-   Summary Cards (top row)
+   Summary Cards — Square
 --------------------------------- */
 .summary-cards {
     display: grid;
@@ -45,11 +45,10 @@
 .summary-cards .card {
     background: var(--surface-card);
     padding: 18px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
-    color: var(--text-primary);
-    border-left: 6px solid transparent;
-    transition: 0.2s ease;
+    border-radius: 0;
+    box-shadow: var(--shadow-sm);
+    border-left: 5px solid transparent;
+    transition: 0.15s ease;
 }
 
 .summary-cards .card h3 {
@@ -59,53 +58,53 @@
 }
 
 .summary-cards .card p {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 700;
     margin: 0;
 }
 
-/* Coloured accents */
+/* Coloured left borders */
 .summary-cards .green { border-left-color: #27ae60; }
-.summary-cards .red   { border-left-color: #e74c3c; }
-.summary-cards .blue  { border-left-color: #2980b9; }
-.summary-cards .teal  { border-left-color: #16a085; }
+.summary-cards .red   { border-left-color: #c0392b; }
+.summary-cards .blue  { border-left-color: #2471a3; }
+.summary-cards .teal  { border-left-color: #148f77; }
 
 /* ---------------------------------
-   Section Headers (Income / Expense)
+   Income / Expense Section Headers
 --------------------------------- */
 .budgets-section-header {
     margin: 22px 0 10px;
-    padding: 6px 0;
-    font-size: 1.1rem;
+    padding: 8px 0;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--text-primary);
-    border-bottom: 2px solid var(--border-light);
+    border-bottom: 3px solid var(--border-light);
 }
 
 /* ---------------------------------
-   Budget Cards (list items)
+   Budget Cards — Square Sharp Panels
 --------------------------------- */
 .budget-card {
     background: var(--surface-card);
     padding: 18px;
-    border-radius: 14px;
+    border-radius: 0;
+    border-left: 5px solid var(--border-light);
     box-shadow: var(--shadow-sm);
     margin-bottom: 16px;
     transition: 0.2s ease;
-    border-left: 6px solid var(--border-light);
 }
 
 .budget-card:hover {
     box-shadow: var(--shadow-md);
 }
 
-/* Row 1 layout */
 .budget-card-row1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+/* Left cluster */
 .budget-left {
     display: flex;
     align-items: center;
@@ -119,7 +118,6 @@
 .category-name {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--text-primary);
 }
 
 .budget-values {
@@ -127,7 +125,7 @@
     color: var(--text-secondary);
 }
 
-/* Action buttons */
+/* Edit/Delete buttons */
 .budget-actions {
     display: flex;
     gap: 10px;
@@ -136,29 +134,28 @@
 .action-btn {
     background: var(--surface-elevated);
     border: 1px solid var(--border-light);
-    padding: 5px 10px;
-    border-radius: 6px;
+    padding: 6px 10px;
     cursor: pointer;
-    transition: 0.15s;
+    border-radius: 0;
+    transition: 0.1s;
 }
 
 .action-btn:hover {
     background: var(--surface-hover);
 }
 
-/* Row 2 layout */
+/* ---------------------------------
+   Progress Bar — Square Edges
+--------------------------------- */
 .budget-card-row2 {
     margin-top: 14px;
 }
 
-/* ---------------------------------
-   Progress Bar
---------------------------------- */
 .sub-progress-bar-container {
     width: 100%;
-    height: 10px;
+    height: 12px;
     background: var(--border-light);
-    border-radius: 10px;
+    border-radius: 0;
     overflow: hidden;
     margin-bottom: 6px;
 }
@@ -166,22 +163,22 @@
 .sub-progress-bar {
     height: 100%;
     background: var(--accent-primary);
-    border-radius: 10px 0 0 10px;
+    border-radius: 0;
     transition: width 0.3s ease;
 }
 
 /* ---------------------------------
-   Status Text
+   Status Line
 --------------------------------- */
 .budget-status {
     font-size: 0.85rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .status-over {
-    color: #e74c3c;
+    color: #c0392b;
     font-weight: 700;
 }
 
@@ -191,18 +188,18 @@
 }
 
 /* ---------------------------------
-   Editor Form
+   Editor Form (Square Layout)
 --------------------------------- */
 .budget-editor {
     background: var(--surface-elevated);
-    padding: 18px;
-    border-radius: 12px;
+    padding: 20px;
+    border-radius: 0;
     box-shadow: var(--shadow-md);
     margin-bottom: 20px;
 }
 
 .budget-form-card h3 {
-    margin-bottom: 12px;
+    margin-bottom: 15px;
     font-size: 1.2rem;
 }
 
@@ -216,12 +213,17 @@
 .form-group label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-secondary);
 }
 
 .form-actions {
     display: flex;
-    gap: 14px;
     justify-content: flex-end;
+    gap: 14px;
+}
+
+.icon-input input,
+.form-select,
+.form-input {
+    border-radius: 0 !important;
 }
 
