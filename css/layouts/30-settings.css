@@ -1,294 +1,232 @@
-/* ==========================================================================
-   30-settings.css — Application settings, themes, backup/restore, API keys.
-   Extracted from full 8700-line stylesheet with original styling preserved.
-   ========================================================================== */
+/* ============================================================================
+   30-settings.css — PAGE LAYOUT: SETTINGS
+   ============================================================================ */
 
-
-/* ---------------------------------------------
-   SETTINGS PAGE WRAPPER
---------------------------------------------- */
+/* ---------------------------------------
+   CONTAINER
+---------------------------------------- */
 
 .settings-container {
+    padding: 20px;
     max-width: 900px;
     margin: 0 auto;
-    padding: 2rem;
 }
 
-.settings-title {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    color: var(--text-color);
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
 }
 
-.settings-description {
-    color: var(--text-muted);
-    margin-bottom: 2rem;
+.settings-header small {
+    font-size: 0.875rem;
+    color: #666;
 }
 
-
-/* ---------------------------------------------
-   SETTINGS SECTIONS
---------------------------------------------- */
+/* ---------------------------------------
+   SECTIONS
+---------------------------------------- */
 
 .settings-section {
     background: white;
     border-radius: 12px;
-    padding: 1.5rem 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
 .settings-section h3 {
-    margin: 0 0 1rem 0;
+    margin-top: 0;
+    margin-bottom: 15px;
     font-size: 1.25rem;
-    color: var(--text-color);
+    color: #2c3e50;
+    font-weight: 600;
 }
 
 .settings-section small {
+    color: #777;
+    font-size: 0.875rem;
+}
+
+/* ---------------------------------------
+   FORM ELEMENTS
+---------------------------------------- */
+
+.settings-group {
+    margin-bottom: 20px;
+}
+
+.settings-group label {
     display: block;
-    margin-top: -0.5rem;
-    margin-bottom: 1rem;
-    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #34495e;
 }
 
-
-/* ---------------------------------------------
-   FORM GROUPS
---------------------------------------------- */
-
-.settings-form-group {
-    margin-bottom: 1.25rem;
-}
-
-.settings-form-group label {
-    display: block;
-    font-size: 0.9rem;
-    color: #374151;
-    margin-bottom: 0.35rem;
-}
-
-.settings-form-group input,
-.settings-form-group select {
+.settings-input,
+.settings-select {
     width: 100%;
-    padding: 0.65rem;
-    border-radius: 8px;
+    padding: 10px;
     border: 1px solid #d1d5db;
+    border-radius: 8px;
     font-size: 1rem;
+    transition: border-color 0.2s ease;
 }
 
-.settings-form-group textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    font-size: 1rem;
-    resize: vertical;
+.settings-input:focus,
+.settings-select:focus {
+    border-color: #3498db;
+    outline: none;
 }
 
+/* ---------------------------------------
+   SWITCH / TOGGLE
+---------------------------------------- */
 
-/* ---------------------------------------------
-   SWITCH / TOGGLE CONTROLS
---------------------------------------------- */
+.settings-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
 
-.settings-toggle {
+.settings-toggle-label {
+    font-size: 1rem;
+    color: #333;
+}
+
+.settings-toggle-note {
+    font-size: 0.875rem;
+    color: #777;
+    margin-top: 4px;
+}
+
+/* ---------------------------------------
+   ACTION BUTTONS
+---------------------------------------- */
+
+.settings-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.settings-save-btn {
+    background: #3498db;
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.settings-save-btn:hover {
+    background: #2980b9;
+}
+
+.settings-reset-btn {
+    background: #e5e7eb;
+    border: none;
+    color: #333;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.settings-reset-btn:hover {
+    background: #d1d5db;
+}
+
+/* ---------------------------------------
+   PROFILE SECTION
+---------------------------------------- */
+
+.settings-profile {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 20px;
 }
 
-.settings-toggle input[type="checkbox"] {
-    width: 40px;
-    height: 20px;
-    appearance: none;
-    background: #d1d5db;
-    border-radius: 999px;
-    position: relative;
-    cursor: pointer;
-    transition: all .2s ease;
-}
-
-.settings-toggle input[type="checkbox"]::before {
-    content: '';
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    background: white;
-    border-radius: 50%;
-    top: 1px;
-    left: 1px;
-    transition: all .25s ease;
-}
-
-.settings-toggle input[type="checkbox"]:checked {
-    background: #3b82f6;
-}
-
-.settings-toggle input[type="checkbox"]:checked::before {
-    transform: translateX(20px);
-}
-
-
-/* ---------------------------------------------
-   THEME SELECTOR
---------------------------------------------- */
-
-.theme-selector {
-    display: flex;
-    gap: 1rem;
-    margin: 1rem 0;
-}
-
-.theme-option {
-    flex: 1;
-    padding: 1rem;
-    border-radius: 10px;
-    border: 2px solid transparent;
-    background: #f9fafb;
-    text-align: center;
-    cursor: pointer;
-    transition: .2s;
-}
-
-.theme-option:hover {
-    border-color: #60a5fa;
-}
-
-.theme-option.active {
-    border-color: #2563eb;
-    background: #eff6ff;
-}
-
-.theme-swatch {
-    width: 100%;
-    height: 40px;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-}
-
-
-/* ---------------------------------------------
-   BACKUP & RESTORE
---------------------------------------------- */
-
-.backup-section .backup-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.25rem;
-}
-
-.backup-card {
-    background: #f9fafb;
-    border-radius: 10px;
-    padding: 1rem 1.5rem;
-    border-left: 4px solid #3498db;
-    margin-bottom: 1rem;
-}
-
-.backup-card p {
-    margin: 0.25rem 0;
-    color: #4b5563;
-}
-
-
-/* ---------------------------------------------
-   DANGER ZONE
---------------------------------------------- */
-
-.danger-zone {
-    background: #fff5f5;
-    border: 1px solid #fecaca;
-    padding: 1.5rem 2rem;
+.settings-profile-avatar {
+    width: 70px;
+    height: 70px;
     border-radius: 12px;
-    margin-top: 2rem;
+    background: #f1f5f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    color: #3498db;
+    border: 2px solid #e5e7eb;
 }
 
-.danger-zone h3 {
-    color: #b91c1c;
+.settings-profile-info {
+    flex: 1;
 }
 
-.danger-zone p {
-    color: #7f1d1d;
-    margin-bottom: 1rem;
+.settings-profile-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2c3e50;
 }
 
-.btn-danger {
-    background: #dc2626;
+.settings-profile-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* ---------------------------------------
+   DANGER ZONE
+---------------------------------------- */
+
+.settings-danger {
+    background: #fff5f5;
+    border-left: 4px solid #e74c3c;
+}
+
+.settings-danger h3 {
+    color: #c0392b;
+}
+
+.settings-delete-btn {
+    background: #e74c3c;
     color: white;
-    padding: .65rem 1rem;
+    padding: 10px 18px;
     border-radius: 8px;
     border: none;
-    font-size: .9rem;
+    font-size: 1rem;
     cursor: pointer;
+    transition: background 0.2s ease;
 }
 
-.btn-danger:hover {
-    background: #b91c1c;
+.settings-delete-btn:hover {
+    background: #c0392b;
 }
 
-
-/* ---------------------------------------------
-   API KEYS & INTEGRATIONS
---------------------------------------------- */
-
-.api-key-box {
-    background: #f1f5f9;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-family: monospace;
-    letter-spacing: 0.5px;
-    color: #475569;
-    margin-top: 0.5rem;
-    word-break: break-all;
-}
-
-.api-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.integration-status {
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-
-/* ---------------------------------------------
-   DEVELOPER MODE BLOCK
---------------------------------------------- */
-
-.devmode-section {
-    background: #f3f4f6;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    border-left: 4px solid #6366f1;
-}
-
-.devmode-section p {
-    color: #4b5563;
-}
-
-
-/* ---------------------------------------------
-   RESPONSIVE ADJUSTMENTS
---------------------------------------------- */
+/* ---------------------------------------
+   RESPONSIVE
+---------------------------------------- */
 
 @media (max-width: 768px) {
     .settings-container {
-        padding: 1rem;
+        padding: 15px;
     }
 
-    .backup-section .backup-actions {
+    .settings-profile {
         flex-direction: column;
+        text-align: center;
     }
 
-    .api-actions {
+    .settings-actions {
         flex-direction: column;
-    }
-
-    .theme-selector {
-        flex-direction: column;
+        align-items: stretch;
     }
 }
