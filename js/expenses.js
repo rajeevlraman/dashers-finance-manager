@@ -281,39 +281,6 @@ function renderEnhancedCharts(expenses, properties) {
   renderPropertyChart(expenses, properties);
 }
 
-function renderCategoryChart(expenses) {
-  const ctx = document.getElementById('expenseChart')?.getContext('2d');
-  if (!ctx) return;
-  
-  const chartType = document.getElementById('chartType')?.value || 'pie';
-  const categories = {};
-  expenses.forEach(e => {
-    categories[e.category] = (categories[e.category] || 0) + (e.amount || 0);
-  });
-
-  const labels = Object.keys(categories).map(l => l.substring(0, 10));
-  const data = Object.values(categories);
-  const backgroundColors = Object.keys(categories).map(cat => EXPENSE_CATEGORIES[cat]?.color || '#6B7280');
-
-  // Destroy existing chart
-  if (window.expenseCharts.category) {
-    window.expenseCharts.category.destroy();
-  }
-
-  window.expenseCharts.category = new Chart(ctx, {
-    type: chartType,
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: backgroundColors,
-        borderColor: '#ffffff',
-        borderWidth: 1
-      }]
-    },
-    options: getCompactChartOptions('Expenses by Category')
-  });
-}
 
 function renderSourceChart(expenses) {
   const ctx = document.getElementById('sourceChart')?.getContext('2d');
