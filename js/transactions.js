@@ -589,25 +589,26 @@ function renderTransactionCard(tx, categories, accounts, properties) {
   `;
 }
 
-    <div class="card transaction-card expense">
-      <div class="txn-left">
-        <div class="txn-icon">💸</div>
+  <div class="card transaction-card expense">
+    <div class="txn-left">
+      <div class="txn-icon">💸</div>
 
-        <div class="txn-info">
-          <div class="txn-title">Woolworths</div>
-          <div class="txn-meta">
-            <span>12 Sep 2025</span>
-            <span>Groceries</span>
-            <span class="txn-tag">IP1</span>
-          </div>
+      <div class="txn-info">
+        <div class="txn-title">Woolworths</div>
+        <div class="txn-meta">
+          <span>12 Sep 2025</span>
+          <span>Groceries</span>
+          <span class="txn-tag">IP1</span>
         </div>
       </div>
-
-      <div class="txn-right">
-        <div class="txn-amount">-$86.40</div>
-        <button class="txn-actions">⋮</button>
-      </div>
     </div>
+
+    <div class="txn-right">
+      <div class="txn-amount">-$86.40</div>
+      <button class="txn-actions">⋮</button>
+    </div>
+  </div>
+
 
 
 
