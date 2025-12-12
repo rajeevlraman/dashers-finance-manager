@@ -324,3 +324,12 @@
   box-shadow: var(--shadow-lg);
   cursor: pointer;
 }
+
+/* BUDGET PROGRESS BAR FIX */
+.budget-progress.on-track .progress-fill {
+  background: #2ecc71 !important;
+}
+
+.budget-progress.over-budget .progress-fill {
+  background: #e74c3c !important;
+}
