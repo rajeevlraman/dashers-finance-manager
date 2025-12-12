@@ -1,18 +1,22 @@
-/* Clean top navigation bar */
+/* ================================
+   TOP NAVIGATION BAR
+   ================================ */
+
 .top-nav {
   width: 100%;
-  background: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  background: var(--card-bg, #ffffff);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 18px;
+  justify-content: space-between;
+  padding: 6px 14px;
   position: sticky;
   top: 0;
   z-index: 9999;
+  font-family: inherit;
 }
 
-/* Left logo + title */
+/* Left title group */
 .nav-left {
   display: flex;
   align-items: center;
@@ -20,79 +24,90 @@
 }
 
 .nav-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
 }
 
 .nav-title {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-/* Menu container */
+/* ===== NAV MENU ===== */
 .nav-menu {
-  list-style: none;
   display: flex;
-  gap: 20px;
   align-items: center;
+  gap: 18px;
+  list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* Group titles */
+/* Each dropdown group */
 .nav-group {
   position: relative;
+  cursor: pointer;
 }
 
 .nav-group-title {
-  cursor: pointer;
-  font-weight: 600;
-  padding: 5px 2px;
+  font-size: 15px;
+  font-weight: 500;
   user-select: none;
+  padding: 6px;
+  border-radius: 4px;
 }
 
-/* Dropdown */
+.nav-group-title:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+/* ===== DROPDOWN ===== */
 .nav-dropdown {
   position: absolute;
   top: 32px;
   left: 0;
-  background: white;
-  padding: 8px 0;
+  min-width: 200px;
+  background: var(--card-bg, #fff);
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   list-style: none;
-  border: 1px solid #ccc;
+  padding: 6px 0;
+  margin: 0;
   border-radius: 6px;
-  min-width: 180px;
   display: none;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+  z-index: 9999;
 }
 
 .nav-group.open .nav-dropdown {
   display: block;
 }
 
+/* Dropdown links */
 .nav-dropdown li {
-  padding: 6px 14px;
+  padding: 0;
+  margin: 0;
 }
 
-.nav-dropdown li:hover {
-  background: #f3f3f3;
-}
-
-/* Links */
 .nav-dropdown a {
+  display: block;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text, #333);
   text-decoration: none;
-  color: #333;
+}
+
+.nav-dropdown a:hover {
+  background: rgba(0,0,0,0.07);
 }
 
 .nav-dropdown a.active {
-  font-weight: 700;
-  color: #0077cc;
+  background: rgba(0, 102, 255, 0.15);
+  font-weight: 600;
 }
 
-/* Mobile */
+/* MOBILE RULE: Hide full menu */
 @media (max-width: 768px) {
-  .nav-menu {
+  .top-nav {
     display: none;
   }
 }

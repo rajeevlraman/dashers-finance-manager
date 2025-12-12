@@ -1,17 +1,16 @@
 // navigation.js
-// -------------------------------
-// Clean Top Navigation Bar (Option A)
-// Works with ui.js loadView() routing
-// -------------------------------
+// Clean Final Version — matches your HTML & ui.js
 
 console.log("NAVIGATION: Script loaded");
 
-// Helper: Creates the navigation HTML
+// ------------------------------------------
+// Build HTML
+// ------------------------------------------
 function buildNavigationHTML() {
-    return `
+  return `
 <nav class="top-nav">
   <div class="nav-left">
-    <img src="./assets/icons/icon-152.png" class="nav-logo" />
+    <img src="./assets/icons/icon-152.png" class="nav-logo">
     <span class="nav-title">Budget Tracker</span>
   </div>
 
@@ -53,101 +52,84 @@ function buildNavigationHTML() {
 
   </ul>
 </nav>
-    `;
+  `;
 }
 
-initTopNavDropdowns();
+// ------------------------------------------
+// Inject navigation bar
+// ------------------------------------------
+function injectNavigation() {
+  const splash = document.getElementById("splashScreen");
+  if (!splash) {
+    console.error("NAV ERROR: splashScreen not found");
+    return;
+  }
 
-function initTopNavDropdowns() {
-  const groups = document.querySelectorAll(".top-nav-group");
-  let openDropdown = null;
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = buildNavigationHTML();
+  splash.insertAdjacentElement("afterend", wrapper.firstElementChild);
+
+  initDropdowns();
+  initRouting();
+
+  console.log("NAVIGATION: Navigation injected");
+}
+
+// ------------------------------------------
+// Dropdown functionality
+// ------------------------------------------
+function initDropdowns() {
+  const groups = document.querySelectorAll(".nav-group");
+  let openGroup = null;
 
   groups.forEach(group => {
-    const btn = group.querySelector(".top-nav-group-btn");
-    const menu = group.querySelector(".top-nav-dropdown");
+    const title = group.querySelector(".nav-group-title");
 
-    btn.addEventListener("click", (e) => {
+    title.addEventListener("click", e => {
       e.stopPropagation();
 
-      // If clicking the already open dropdown → close it
-      if (openDropdown === menu) {
-        menu.classList.remove("open");
-        openDropdown = null;
-        return;
-      }
+      const isOpen = group.classList.contains("open");
 
-      // Close previously open dropdown
-      if (openDropdown) {
-        openDropdown.classList.remove("open");
-      }
+      document.querySelectorAll(".nav-group.open")
+        .forEach(g => g.classList.remove("open"));
 
-      // Open new dropdown
-      menu.classList.add("open");
-      openDropdown = menu;
+      if (!isOpen) {
+        group.classList.add("open");
+        openGroup = group;
+      }
     });
   });
 
-  // Clicking outside closes all dropdowns
+  // Close on outside click
   document.addEventListener("click", () => {
-    if (openDropdown) {
-      openDropdown.classList.remove("open");
-      openDropdown = null;
-    }
+    document.querySelectorAll(".nav-group.open")
+      .forEach(g => g.classList.remove("open"));
   });
 }
 
+// ------------------------------------------
+// Routing to ui.js loadView()
+// ------------------------------------------
+function initRouting() {
+  document.querySelectorAll(".top-nav a[data-view]").forEach(link => {
+    link.addEventListener("click", e => {
+      e.preventDefault();
 
+      const view = link.dataset.view;
 
+      document.querySelectorAll(".top-nav a").forEach(a =>
+        a.classList.remove("active")
+      );
+      link.classList.add("active");
 
+      window.location.hash = view;
 
-// Inject navigation after splash screen
-function injectNavigation() {
-    const splash = document.getElementById("splashScreen");
-    if (!splash) {
-        console.error("NAVIGATION ERROR: splashScreen not found");
-        return;
-    }
-
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = buildNavigationHTML();
-    splash.insertAdjacentElement("afterend", wrapper.firstElementChild);
-
-    setupDropdowns();
-    setupTopNavRouting();
-    console.log("NAVIGATION: Navigation injected");
-}
-
-// Handle dropdown toggle (desktop + mobile)
-function setupDropdowns() {
-    document.querySelectorAll(".nav-group-title").forEach(title => {
-        title.addEventListener("click", () => {
-            const parent = title.parentElement;
-            parent.classList.toggle("open");
-        });
+      if (window.loadView) {
+        window.loadView(view);
+      }
     });
+  });
 }
 
-// Route clicks to ui.js loadView()
-function setupTopNavRouting() {
-    document.querySelectorAll(".top-nav a[data-view]").forEach(link => {
-        link.addEventListener("click", (e) => {
-            e.preventDefault();
-            const view = link.getAttribute("data-view");
-
-            // highlight active
-            document.querySelectorAll(".top-nav a").forEach(a => 
-                a.classList.remove("active")
-            );
-            link.classList.add("active");
-
-            // change URL hash + load view
-            window.location.hash = view;
-            if (window.loadView) {
-                window.loadView(view);
-            }
-        });
-    });
-}
-
-// AUTO RUN
+// Auto-init
 document.addEventListener("DOMContentLoaded", injectNavigation);
