@@ -1,5 +1,5 @@
 /* ============================================================================
-   Floating Action Button (FAB)
+   19-fab.css — Floating Action Button Component
    ============================================================================ */
 
 .fab-container {
@@ -9,13 +9,13 @@
     z-index: 1000;
 }
 
-/* Main FAB Button */
+/* Main floating button */
 .fab-main {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: var(--accent-color, #2563eb);
-    color: #fff;
+    background: #2563eb;
+    color: white;
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
@@ -27,7 +27,7 @@
     transform: scale(1.1);
 }
 
-/* FAB Action Buttons */
+/* Sub-action buttons */
 .fab-actions {
     position: absolute;
     bottom: 70px;
@@ -41,25 +41,34 @@
     display: flex;
 }
 
+/* Individual action buttons */
 .fab-actions button {
     padding: 0.75rem 1rem;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    background: white;
+    border: 1px solid #d1d5db;
     border-radius: 25px;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     white-space: nowrap;
     transition: background-color 0.2s;
     font-size: 0.9rem;
-    color: var(--text-color);
 }
 
 .fab-actions button:hover {
-    background: var(--bg-secondary);
+    background: #f3f4f6;
 }
 
-/* Live Refresh Indicator */
+/* Live refresh indicator */
 #liveRefresh.active {
     background: #10b981;
     color: white;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+
+    .fab-actions {
+        right: auto;
+        left: 0;
+    }
 }
