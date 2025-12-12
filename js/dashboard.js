@@ -228,20 +228,15 @@ function getTodayDate() {
                 </div>
               </div>
               
-              <div class="budget-progress ${spent > budget.amount ? 'over-budget' : 'on-track'}">
-                  <div class="progress-header">
-                    <span>${budget.name}</span>
-                    <span>$${safe(spent)} / $${safe(budget.amount)}</span>
-                  </div>
-
-                  <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
-                  </div>
-
-                  <div class="progress-status">
-                    ${spent > budget.amount ? '❌ Over Budget' : '✅ On Track'}
-                  </div>
+              <div class="compact-card ${budgetPerformance.overBudgetCount === 0 ? 'teal' : 'yellow'}">
+                <div class="compact-icon">🎯</div>
+                <div class="compact-content">
+                  <div class="compact-value">${budgetPerformance.onTrackCount}/${budgetPerformance.totalBudgets}</div>
+                  <div class="compact-label">On Track</div>
+                  <div class="compact-subtext">${budgetPerformance.overBudgetCount} over budget</div>
+                  <div class="compact-subtext">${budgetPerformance.totalBudgets} total budgets</div>
                 </div>
+              </div>
 
               <div class="compact-card purple">
                 <div class="compact-icon">📈</div>
@@ -317,20 +312,23 @@ function getTodayDate() {
                   .reduce((sum, t) => sum + t.amount, 0);
                 const percentage = (spent / budget.amount) * 100;
                 
-                return `
-                  <div class="budget-progress">
-                    <div class="progress-header">
-                      <span>${budget.name}</span>
-                      <span>$${safe(spent)} / $${safe(budget.amount)}</span>
-                    </div>
-                    <div class="progress-bar">
-                      <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
-                    </div>
-                    <div class="progress-status ${spent > budget.amount ? 'over-budget' : 'on-track'}">
-                      ${spent > budget.amount ? '❌ Over Budget' : '✅ On Track'}
-                    </div>
+                              return `
+                <div class="budget-progress ${spent > budget.amount ? 'over-budget' : 'on-track'}">
+                  <div class="progress-header">
+                    <span>${budget.name}</span>
+                    <span>$${safe(spent)} / $${safe(budget.amount)}</span>
                   </div>
-                `;
+
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%"></div>
+                  </div>
+
+                  <div class="progress-status">
+                    ${spent > budget.amount ? '❌ Over Budget' : '✅ On Track'}
+                  </div>
+                </div>
+              `;
+
               }).join('')}
               ${budgets.length === 0 ? '<p class="no-data">No budgets configured</p>' : ''}
             </div>
