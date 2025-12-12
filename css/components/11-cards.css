@@ -1,84 +1,106 @@
-/* =======================================================================
-   Cards & Dashboard Boxes (cards.css)
-   ======================================================================= */
-
-/* Generic Card Component */
+/* Cards from your original dashboard */
 .card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    padding: var(--space-16);
-    color: var(--color-text);
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Card Header (if used) */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+}
+
 .card-header {
-    font-size: var(--font-lg);
-    font-weight: 600;
-    margin-bottom: var(--space-12);
-    color: var(--color-text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
 }
 
-/* =======================================================================
-   Dashboard Boxes (Income, Expense, Budget, Extra, Property)
-   ======================================================================= */
-
-.box {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-md);
-    display: flex;
-    flex-direction: column;
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-/* Header strip */
-.box-header {
-    padding: var(--space-12) var(--space-16);
-    font-weight: 600;
-    font-size: var(--font-md);
-    color: var(--box-header-text);
+.card-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-top: var(--space-xs);
 }
 
-/* Body area */
-.box-body {
-    padding: var(--space-16);
-    background: var(--color-surface-light);
-    color: var(--color-text);
+.card-content {
+  margin-bottom: var(--space-lg);
 }
 
-/* Colour Variants */
-.box-income .box-header {
-    background: var(--box-income);
+.card-footer {
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-medium);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.box-expense .box-header {
-    background: var(--box-expense);
+/* Card variants */
+.card-stat {
+  text-align: center;
+  padding: var(--space-xl);
 }
 
-.box-budget .box-header {
-    background: var(--box-budget);
+.card-stat .card-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: var(--space-md) 0;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.box-extra .box-header {
-    background: var(--box-extra); /* Brown */
+.card-stat .card-change {
+  font-size: 0.875rem;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  display: inline-block;
 }
 
-.box-property .box-header {
-    background: var(--box-property);
+.card-change.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
-/* Stat Values */
-.box-value {
-    font-size: var(--font-xl);
-    font-weight: 700;
-    margin-bottom: var(--space-8);
+.card-change.negative {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
-/* Stat Labels */
-.box-label {
-    font-size: var(--font-sm);
-    color: var(--color-text-muted);
+.card-chart {
+  padding: var(--space-lg);
+}
+
+.card-chart canvas {
+  width: 100% !important;
+  height: 200px !important;
+}
+
+/* Dashboard grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .card-stat .card-value {
+    font-size: 2rem;
+  }
 }
