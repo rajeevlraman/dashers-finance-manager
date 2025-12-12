@@ -1,269 +1,100 @@
-/* ============================================================================
-   41-dark.css — THEME: DARK MODE
-   ============================================================================ */
+/* ==========================================================================
+   41-dark.css — Dark Theme Variables & Overrides
+   ========================================================================== */
 
-:root {
-    /* ------------------------------------------------------------
-       CORE DARK PALETTE
-       ------------------------------------------------------------ */
-    --bg-color: #0f172a;        /* Deep navy */
-    --bg-alt: #1e293b;          /* Card background */
-    --bg-secondary: #334155;
+[data-theme="dark"] {
+    /* Base */
+    --bg-color: #0d1117;
+    --surface-color: #161b22;
+    --surface-contrast: #1f2937;
 
-    --text-color: #e2e8f0;
-    --text-muted: #94a3b8;
+    /* Text */
+    --text-color: #e5e7eb;
+    --text-muted: #9ca3af;
+    --text-inverse: #ffffff;
 
-    --card-bg: #1e293b;
-    --card-border: #334155;
+    /* Borders */
+    --border-color: #374151;
 
-    --border-color: #475569;
-    --input-border: #475569;
+    /* Primary */
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-light: rgba(59,130,246,0.15);
 
-    --link-color: #3b82f6;
-    --link-hover: #60a5fa;
+    /* Accents */
+    --accent-green: #22c55e;
+    --accent-red: #ef4444;
+    --accent-orange: #f97316;
+    --accent-purple: #a855f7;
+    --accent-teal: #2dd4bf;
+    --accent-blue: #60a5fa;
 
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --info: #3b82f6;
-    --purple: #a855f7;
+    /* Cards */
+    --card-bg: #161b22;
+    --card-shadow: 0 2px 10px rgba(0,0,0,0.4);
 
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-    --shadow-md: 0 2px 6px rgba(0,0,0,0.45);
-    --shadow-lg: 0 6px 20px rgba(0,0,0,0.5);
+    /* Inputs */
+    --input-bg: #0d1117;
+    --input-border: #374151;
 
-    --border-radius: 10px;
-    --border-radius-lg: 14px;
+    /* Navigation */
+    --nav-bg: #161b22;
+    --nav-text: #e5e7eb;
+    --nav-hover-bg: #1f2937;
 
-    --transition-fast: 0.15s ease;
-    --transition: 0.25s ease;
+    /* Modals */
+    --modal-bg: #1f2937;
 
-    /* ------------------------------------------------------------
-       FORM FIELDS
-       ------------------------------------------------------------ */
-    --input-bg: #334155;
-    --input-text: #f1f5f9;
-    --input-placeholder: #64748b;
-    --input-focus: rgba(59,130,246,0.25);
-
-    /* ------------------------------------------------------------
-       TABLES
-       ------------------------------------------------------------ */
+    /* Tables */
     --table-header-bg: #1e293b;
-    --table-row-hover: rgba(255,255,255,0.05);
+    --table-row-alt: #111827;
 
-    /* ------------------------------------------------------------
-       MODALS
-       ------------------------------------------------------------ */
-    --modal-bg: #1e293b;
-    --modal-overlay: rgba(0,0,0,0.7);
+    /* Colored cards */
+    --card-green-bg: #064e3b;
+    --card-red-bg: #7f1d1d;
+    --card-orange-bg: #7c2d12;
+    --card-purple-bg: #4c1d95;
+    --card-teal-bg: #134e4a;
 
-    /* ------------------------------------------------------------
-       BADGES
-       ------------------------------------------------------------ */
-    --badge-bg: #334155;
-    --badge-text: #cbd5e1;
+    /* Badges */
+    --badge-success: #22c55e;
+    --badge-warning: #fbbf24;
+    --badge-danger: #ef4444;
 
-    --badge-success-bg: #064e3b;
-    --badge-success-text: #a7f3d0;
-
-    --badge-warning-bg: #78350f;
-    --badge-warning-text: #fcd34d;
-
-    --badge-danger-bg: #7f1d1d;
-    --badge-danger-text: #fecaca;
-
-    --badge-info-bg: #1e3a8a;
-    --badge-info-text: #bfdbfe;
-
-    /* ------------------------------------------------------------
-       STATUS COLORS (Bills, Calendar, Records)
-       ------------------------------------------------------------ */
-    --status-paid: #10b981;
-    --status-due: #f59e0b;
-    --status-overdue: #ef4444;
-    --status-upcoming: #3b82f6;
-
-    --calendar-today-bg: rgba(59,130,246,0.15);
-    --calendar-overdue-bg: rgba(239,68,68,0.15);
-    --calendar-due-bg: rgba(245,158,11,0.15);
-    --calendar-paid-bg: rgba(16,185,129,0.15);
+    /* Shadows */
+    --shadow-elevated: 0 6px 18px rgba(0,0,0,.55);
 }
 
-/* ============================================================================
-   GLOBAL DARK UI OVERRIDES
-   ============================================================================ */
+/* Dark Theme Overrides */
 
-body {
+[data-theme="dark"] body {
     background: var(--bg-color);
     color: var(--text-color);
 }
 
-/* ------------------------------------------------------------
-   CARD ELEMENTS
-   ------------------------------------------------------------ */
-.card,
-.stat-card,
-.property-card,
-.tenant-card,
-.maintenance-card,
-.records-section,
-.tax-summary,
-.guidelines,
-.calculation-example {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-    color: var(--text-color);
-    box-shadow: var(--shadow-sm);
+[data-theme="dark"] .card,
+[data-theme="dark"] .section-card,
+[data-theme="dark"] .settings-section {
+    background: var(--surface-color);
+    box-shadow: var(--card-shadow);
 }
 
-/* ------------------------------------------------------------
-   BUTTONS
-   ------------------------------------------------------------ */
-button,
-.btn,
-.btn-action {
-    color: var(--text-color);
-    transition: var(--transition);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #1e40af, #3730a3);
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
-}
-
-.btn-secondary {
-    background: var(--bg-secondary);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-}
-
-.btn-danger {
-    background: var(--danger);
-    color: #fff;
-}
-
-.btn-warning {
-    background: var(--warning);
-    color: #000;
-}
-
-/* ------------------------------------------------------------
-   FORM ELEMENTS
-   ------------------------------------------------------------ */
-input,
-select,
-textarea {
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
     background: var(--input-bg);
-    color: var(--input-text);
-    border: 1px solid var(--input-border);
-}
-
-input::placeholder,
-textarea::placeholder {
-    color: var(--input-placeholder);
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-    outline: none;
-    border-color: var(--info);
-    box-shadow: 0 0 0 3px var(--input-focus);
-}
-
-/* ------------------------------------------------------------
-   TABLES
-   ------------------------------------------------------------ */
-table th {
-    background: var(--table-header-bg);
+    border-color: var(--input-border);
     color: var(--text-color);
 }
 
-table tr:hover {
-    background: var(--table-row-hover);
-}
-
-/* ------------------------------------------------------------
-   MODALS
-   ------------------------------------------------------------ */
-.modal-content {
+[data-theme="dark"] .modal-content {
     background: var(--modal-bg);
-    color: var(--text-color);
 }
 
-.modal-overlay {
-    background: var(--modal-overlay);
+[data-theme="dark"] table thead {
+    background: var(--table-header-bg);
 }
 
-/* ------------------------------------------------------------
-   BADGES / STATUS LABELS
-   ------------------------------------------------------------ */
-.status-badge {
-    background: var(--badge-bg);
-    color: var(--badge-text);
-}
-
-.status-badge.success,
-.status-pid,
-.status-paid {
-    background: var(--badge-success-bg);
-    color: var(--badge-success-text);
-}
-
-.status-badge.warning {
-    background: var(--badge-warning-bg);
-    color: var(--badge-warning-text);
-}
-
-.status-badge.danger,
-.status-overdue {
-    background: var(--badge-danger-bg);
-    color: var(--badge-danger-text);
-}
-
-.status-badge.info,
-.status-upcoming {
-    background: var(--badge-info-bg);
-    color: var(--badge-info-text);
-}
-
-/* Calendar states */
-.calendar-day.today { background: var(--calendar-today-bg) !important; }
-.calendar-day.overdue { background: var(--calendar-overdue-bg) !important; }
-.calendar-day.due { background: var(--calendar-due-bg) !important; }
-.calendar-day.paid { background: var(--calendar-paid-bg) !important; }
-
-/* ------------------------------------------------------------
-   SPECIAL COMPONENT OVERRIDES
-   ------------------------------------------------------------ */
-
-/* Splash Screen */
-.splash-screen {
-    background: linear-gradient(135deg, #1e3a8a, #4338ca);
-}
-
-/* Cards hover effect */
-.property-card:hover,
-.tenant-card:hover,
-.maintenance-card:hover {
-    box-shadow: var(--shadow-md);
-}
-
-/* Costbase record items */
-.record-item {
-    background: #1e293b;
-    border-color: #3b82f6;
-}
-
-.record-item.expense { border-color: #10b981; }
-
-/* ATO theme specifics */
-.ato-badge {
-    background: linear-gradient(135deg, #1e40af, #3730a3);
-    color: #fff;
+[data-theme="dark"] table tr:nth-child(even) {
+    background: var(--table-row-alt);
 }

@@ -1,97 +1,71 @@
-/* ============================================================================
-   40-light.css — THEME: LIGHT MODE
-   ============================================================================ */
+/* ==========================================================================
+   40-light.css — Light Theme Variables & Overrides
+   ========================================================================== */
 
 :root {
-    /* ------------------------------------------------------------
-       CORE THEME COLOURS
-       ------------------------------------------------------------ */
+    /* Base colors */
     --bg-color: #f5f7fa;
-    --bg-alt: #ffffff;
+    --surface-color: #ffffff;
+    --surface-contrast: #f9fafb;
 
-    --text-color: #2c3e50;
-    --text-muted: #7f8c8d;
+    /* Text */
+    --text-color: #1f2937;
+    --text-muted: #6b7280;
+    --text-inverse: #ffffff;
 
+    /* Borders */
+    --border-color: #e5e7eb;
+
+    /* Primary brand */
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --primary-light: #e8f4fd;
+
+    /* Accents */
+    --accent-green: #27ae60;
+    --accent-red: #e74c3c;
+    --accent-orange: #f39c12;
+    --accent-purple: #8e44ad;
+    --accent-teal: #1abc9c;
+    --accent-blue: #2980b9;
+
+    /* Cards */
     --card-bg: #ffffff;
-    --card-border: #e5e7eb;
+    --card-shadow: 0 2px 10px rgba(0,0,0,0.08);
 
-    --border-color: #e0e0e0;
+    /* Inputs */
+    --input-bg: #ffffff;
     --input-border: #d1d5db;
 
-    --link-color: #3498db;
-    --link-hover: #2980b9;
+    /* Navigation */
+    --nav-bg: #ffffff;
+    --nav-text: #1f2937;
+    --nav-hover-bg: #f3f4f6;
 
-    --success: #27ae60;
-    --warning: #f39c12;
-    --danger: #e74c3c;
-    --info: #3498db;
-    --purple: #9b59b6;
-
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-    --shadow-md: 0 2px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 6px 20px rgba(0,0,0,0.12);
-
-    --border-radius: 10px;
-    --border-radius-lg: 14px;
-
-    --transition-fast: 0.15s ease;
-    --transition: 0.25s ease;
-
-    /* ------------------------------------------------------------
-       INPUTS & FORMS
-       ------------------------------------------------------------ */
-    --input-bg: #ffffff;
-    --input-text: #2c3e50;
-    --input-placeholder: #9ca3af;
-    --input-focus: #3498db33;
-
-    /* ------------------------------------------------------------
-       TABLES
-       ------------------------------------------------------------ */
-    --table-header-bg: #f3f4f6;
-    --table-row-hover: #f8fafc;
-
-    /* ------------------------------------------------------------
-       MODALS
-       ------------------------------------------------------------ */
+    /* Modals */
     --modal-bg: #ffffff;
-    --modal-overlay: rgba(0,0,0,0.5);
 
-    /* ------------------------------------------------------------
-       BADGES
-       ------------------------------------------------------------ */
-    --badge-bg: #e5e7eb;
-    --badge-text: #374151;
+    /* Tables */
+    --table-header-bg: #f9fafb;
+    --table-row-alt: #f8fafc;
 
-    --badge-success-bg: #d4edda;
-    --badge-success-text: #155724;
+    /* Cards with color accents */
+    --card-green-bg: #e8f6ef;
+    --card-red-bg: #fdecea;
+    --card-orange-bg: #fff4e5;
+    --card-purple-bg: #f3e8ff;
+    --card-teal-bg: #e6fffa;
 
-    --badge-warning-bg: #fff3cd;
-    --badge-warning-text: #856404;
+    /* Badges */
+    --badge-success: #10b981;
+    --badge-warning: #f59e0b;
+    --badge-danger: #ef4444;
 
-    --badge-danger-bg: #f8d7da;
-    --badge-danger-text: #721c24;
-
-    --badge-info-bg: #e3f2fd;
-    --badge-info-text: #0d47a1;
-
-    /* ------------------------------------------------------------
-       STATUS COLOURS (Bills, Transactions, Calendar)
-       ------------------------------------------------------------ */
-    --status-paid: #27ae60;
-    --status-due: #f39c12;
-    --status-overdue: #e74c3c;
-    --status-upcoming: #3498db;
-
-    --calendar-today-bg: #e8f4fd;
-    --calendar-overdue-bg: #ffeaea;
-    --calendar-due-bg: #fff3cd;
-    --calendar-paid-bg: #e8f6ef;
+    /* Shadow */
+    --shadow-elevated: 0 6px 18px rgba(0,0,0,.12);
 }
 
-/* ============================================================================
-   GLOBAL LIGHT UI OVERRIDES
-   ============================================================================ */
+/* Light theme overrides */
 
 body {
     background: var(--bg-color);
@@ -99,101 +73,25 @@ body {
 }
 
 .card,
-.stat-card,
-.properties-container .property-card,
-.tenant-card,
-.maintenance-card,
-.records-section,
-.tax-summary,
-.guidelines,
-.calculation-example {
-    background: var(--card-bg);
-    box-shadow: var(--shadow-sm);
-    border-radius: var(--border-radius-lg);
+.section-card,
+.settings-section {
+    background: var(--surface-color);
+    box-shadow: var(--card-shadow);
 }
 
-/* Buttons */
-button,
-.btn,
-.btn-action {
-    transition: var(--transition);
-}
-
-/* Inputs */
-input,
-select,
-textarea {
+input, select, textarea {
     background: var(--input-bg);
-    color: var(--input-text);
-    border: 1px solid var(--input-border);
+    border-color: var(--input-border);
 }
 
-/* Tables */
-table th {
-    background: var(--table-header-bg);
-}
-
-table tr:hover {
-    background: var(--table-row-hover);
-}
-
-/* Modals */
 .modal-content {
     background: var(--modal-bg);
 }
 
-.modal-overlay {
-    background: var(--modal-overlay);
+table thead {
+    background: var(--table-header-bg);
 }
 
-/* Badges */
-.status-badge {
-    background: var(--badge-bg);
-    color: var(--badge-text);
-}
-
-.status-badge.paid {
-    background: var(--badge-success-bg);
-    color: var(--badge-success-text);
-}
-
-.status-badge.overdue {
-    background: var(--badge-danger-bg);
-    color: var(--badge-danger-text);
-}
-
-.status-badge.due-today,
-.status-badge.due-soon {
-    background: var(--badge-warning-bg);
-    color: var(--badge-warning-text);
-}
-
-.status-badge.upcoming {
-    background: var(--badge-info-bg);
-    color: var(--badge-info-text);
-}
-
-/* Calendar colours */
-.calendar-day.today {
-    background: var(--calendar-today-bg) !important;
-}
-
-.calendar-day.overdue {
-    background: var(--calendar-overdue-bg) !important;
-}
-
-.calendar-day.due {
-    background: var(--calendar-due-bg) !important;
-}
-
-.calendar-day.paid {
-    background: var(--calendar-paid-bg) !important;
-}
-
-/* Specific page adjustments */
-.properties-card,
-.maintenance-card,
-.tenant-card:hover,
-.property-card:hover {
-    box-shadow: var(--shadow-md);
+table tr:nth-child(even) {
+    background: var(--table-row-alt);
 }
