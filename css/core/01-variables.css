@@ -51,3 +51,15 @@
     /* Animation */
     --transition: 0.25s ease;
 }
+
+:root {
+    /* Dashboard Box Colours */
+    --box-income: #4da3ff;
+    --box-expense: #ff6b6b;
+    --box-budget: #4cd964;
+    --box-extra: #a66bff;
+    --box-property: #17a2b8;
+
+    /* Text for coloured headers */
+    --box-header-text: #ffffff;
+}
