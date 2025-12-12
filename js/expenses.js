@@ -22,12 +22,23 @@ const EXPENSE_CATEGORIES = {
   'Other': { type: 'other', deductible: true, color: '#6B7280' }
 };
 
+// Store chart instances for cleanup
+let chartInstances = {
+  expenseChart: null,
+  sourceChart: null,
+  monthlyTrendChart: null,
+  propertyChart: null
+};
+
 // ============================================================================
 // 🏗️ Initialize Enhanced Expenses UI
 // ============================================================================
 export async function initExpensesUI() {
   console.log('💸 Enhanced Expense Manager initialized');
   const main = document.getElementById('mainContent');
+  
+  // Clean up old charts before creating new UI
+  destroyAllCharts();
 
   main.innerHTML = `
     <div class="page-header">
@@ -158,49 +169,46 @@ export async function initExpensesUI() {
       </div>
     </div>
 
-    <!-- Charts Section -->
-<div class="charts-container">
-  <div class="chart-card">
-    <div class="chart-header">
-      <h3>📊 Expenses by Category</h3>
-      <select id="chartType" class="form-select">
-        <option value="pie">Pie</option>
-        <option value="bar">Bar</option>
-        <option value="line">Trend</option>
-      </select>
-    </div>
-    <canvas id="expenseChart" height="200"></canvas>
-  </div>
-  
-  <div class="chart-card">
-    <div class="chart-header">
-      <h3>📊 Expense Sources</h3>
-      <button id="btnToggleSource" class="btn btn-outline">Details</button>
-    </div>
-    <canvas id="sourceChart" height="200"></canvas>
-  </div>
-  
-  <div class="chart-card">
-    <div class="chart-header">
-      <h3>📈 Monthly Trend</h3>
-    </div>
-    <canvas id="monthlyTrendChart" height="200"></canvas>
-  </div>
-  
-  <div class="chart-card">
-    <div class="chart-header">
-      <h3>🏠 By Property</h3>
-    </div>
-    <canvas id="propertyChart" height="200"></canvas>
-  </div>
-</div>
+    <!-- Charts Section - 4 Compact Charts -->
+    <div class="charts-container">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>📊 By Category</h3>
+          <select id="chartType" class="form-select">
+            <option value="pie">Pie</option>
+            <option value="bar">Bar</option>
+          </select>
+        </div>
+        <div class="chart-container">
+          <canvas id="expenseChart"></canvas>
+        </div>
+      </div>
       
       <div class="chart-card">
         <div class="chart-header">
-          <h3>📊 Expenses by Source</h3>
-          <button id="btnToggleSource" class="btn btn-outline">Show Details</button>
+          <h3>📊 Sources</h3>
         </div>
-        <canvas id="sourceChart" height="300"></canvas>
+        <div class="chart-container">
+          <canvas id="sourceChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>📈 Monthly</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="monthlyTrendChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>🏠 By Property</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="propertyChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -252,216 +260,350 @@ export async function initExpensesUI() {
 }
 
 // ============================================================================
-// 📈 Enhanced Charts - 4 Chart Layout
+// 📈 Enhanced Charts - 4 Chart Layout with Memory Management
 // ============================================================================
 
-function renderEnhancedCharts(expenses, properties) {
-  renderCategoryChart(expenses);
-  renderSourceChart(expenses);
-  renderMonthlyTrendChart(expenses);
-  renderPropertyChart(expenses, properties);
-}
-
-function renderSourceChart(expenses) {
-  const ctx = document.getElementById('sourceChart').getContext('2d');
-  
-  const fromTransactions = expenses.filter(e => e.source === 'transaction').length;
-  const directEntries = expenses.filter(e => e.source === 'expense').length;
-  
-  if (window.sourceChartInstance) window.sourceChartInstance.destroy();
-  
-  window.sourceChartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Transactions', 'Direct'],
-      datasets: [{
-        data: [fromTransactions, directEntries],
-        backgroundColor: ['#3B82F6', '#10B981'],
-        borderColor: ['#2563EB', '#059669'],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { 
-          position: 'bottom',
-          labels: { 
-            usePointStyle: true,
-            font: { size: 10 },
-            padding: 15
-          }
-        },
-        tooltip: {
-          bodyFont: { size: 11 },
-          callbacks: {
-            label: (context) => {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
-              return `${context.label}: ${context.raw} (${percentage}%)`;
-            }
-          }
-        }
-      },
-      cutout: '60%'
-    }
-  });
-}
-
-function renderMonthlyTrendChart(expenses) {
-  const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
-  
-  // Group expenses by month
-  const monthlyData = {};
-  expenses.forEach(e => {
-    const month = e.date.substring(0, 7); // YYYY-MM
-    monthlyData[month] = (monthlyData[month] || 0) + e.amount;
-  });
-  
-  // Get last 6 months
-  const months = [];
-  const amounts = [];
-  const now = new Date();
-  
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthStr = date.toISOString().substring(0, 7);
-    months.push(date.toLocaleDateString('en-AU', { month: 'short' }));
-    amounts.push(monthlyData[monthStr] || 0);
-  }
-  
-  if (window.monthlyTrendChartInstance) window.monthlyTrendChartInstance.destroy();
-  
-  window.monthlyTrendChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: months,
-      datasets: [{
-        label: 'Expenses',
-        data: amounts,
-        borderColor: '#8B5CF6',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          bodyFont: { size: 11 },
-          callbacks: {
-            label: (context) => formatCurrency(context.raw)
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            font: { size: 9 },
-            callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
-          },
-          grid: { display: false }
-        },
-        x: {
-          ticks: { font: { size: 9 } },
-          grid: { display: false }
-        }
+function destroyAllCharts() {
+  Object.values(chartInstances).forEach(chart => {
+    if (chart && typeof chart.destroy === 'function') {
+      try {
+        chart.destroy();
+      } catch (e) {
+        console.warn('Error destroying chart:', e);
       }
     }
   });
+  chartInstances = {
+    expenseChart: null,
+    sourceChart: null,
+    monthlyTrendChart: null,
+    propertyChart: null
+  };
 }
 
-    function renderPropertyChart(expenses, properties) {
-      const ctx = document.getElementById('propertyChart').getContext('2d');
-      
-      // Group expenses by property
-      const propertyData = {};
-      expenses.forEach(e => {
-        const property = properties.find(p => p.id === e.propertyId);
-        const propName = property ? property.name.substring(0, 12) : 'General';
-        propertyData[propName] = (propertyData[propName] || 0) + e.amount;
-      });
-      
-      const propNames = Object.keys(propertyData);
-      const propAmounts = Object.values(propertyData);
-      
-      if (window.propertyChartInstance) window.propertyChartInstance.destroy();
-      
-      window.propertyChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: propNames,
-          datasets: [{
-            data: propAmounts,
-            backgroundColor: [
-              '#3B82F6', '#10B981', '#F59E0B', '#EC4899', 
-              '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'
-            ].slice(0, propNames.length),
-            borderColor: '#ffffff',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              bodyFont: { size: 11 },
-              callbacks: {
-                label: (context) => formatCurrency(context.raw)
-              }
+function renderEnhancedCharts(expenses, properties) {
+  try {
+    renderCategoryChart(expenses);
+    renderSourceChart(expenses);
+    renderMonthlyTrendChart(expenses);
+    renderPropertyChart(expenses, properties);
+  } catch (error) {
+    console.error('Error rendering charts:', error);
+  }
+}
+
+function renderSourceChart(expenses) {
+  try {
+    const ctx = document.getElementById('sourceChart')?.getContext('2d');
+    if (!ctx) return;
+    
+    const fromTransactions = expenses.filter(e => e.source === 'transaction').length;
+    const directEntries = expenses.filter(e => e.source === 'expense').length;
+    
+    // Destroy existing chart
+    if (chartInstances.sourceChart) {
+      chartInstances.sourceChart.destroy();
+    }
+    
+    chartInstances.sourceChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Transactions', 'Direct'],
+        datasets: [{
+          data: [fromTransactions, directEntries],
+          backgroundColor: ['#3B82F6', '#10B981'],
+          borderColor: ['#2563EB', '#059669'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { 
+            position: 'bottom',
+            labels: { 
+              usePointStyle: true,
+              font: { size: 9 },
+              padding: 8
             }
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                font: { size: 9 },
-                callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
-              },
-              grid: { display: false }
-            },
-            x: {
-              ticks: { 
-                font: { size: 9 },
-                maxRotation: 45
-              },
-              grid: { display: false }
+          tooltip: {
+            bodyFont: { size: 10 },
+            callbacks: {
+              label: (context) => {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                return `${context.label}: ${context.raw} (${percentage}%)`;
+              }
             }
           }
-        }
-      });
-    }
+        },
+        cutout: '65%'
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering source chart:', error);
+  }
+}
 
+function renderMonthlyTrendChart(expenses) {
+  try {
+    const ctx = document.getElementById('monthlyTrendChart')?.getContext('2d');
+    if (!ctx) return;
+    
+    // Group expenses by month (last 4 months only)
+    const monthlyData = {};
+    const now = new Date();
+    const monthLabels = [];
+    
+    // Prepare last 4 months
+    for (let i = 3; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStr = date.toISOString().substring(0, 7);
+      monthLabels.push(date.toLocaleDateString('en-AU', { month: 'short' }));
+      monthlyData[monthStr] = 0;
+    }
+    
+    // Fill with data
+    expenses.forEach(e => {
+      const month = e.date.substring(0, 7);
+      if (monthlyData[month] !== undefined) {
+        monthlyData[month] += e.amount;
+      }
+    });
+
+    // Destroy existing chart
+    if (chartInstances.monthlyTrendChart) {
+      chartInstances.monthlyTrendChart.destroy();
+    }
+    
+    chartInstances.monthlyTrendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: monthLabels,
+        datasets: [{
+          label: 'Expenses',
+          data: Object.values(monthlyData),
+          borderColor: '#8B5CF6',
+          backgroundColor: 'rgba(139, 92, 246, 0.05)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            bodyFont: { size: 10 },
+            callbacks: {
+              label: (context) => formatCurrency(context.raw)
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { size: 8 },
+              callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+            },
+            grid: { display: false }
+          },
+          x: {
+            ticks: { font: { size: 8 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering trend chart:', error);
+  }
+}
+
+function renderPropertyChart(expenses, properties) {
+  try {
+    const ctx = document.getElementById('propertyChart')?.getContext('2d');
+    if (!ctx) return;
+    
+    // Group expenses by property (top 5 only)
+    const propertyData = {};
+    expenses.forEach(e => {
+      const property = properties.find(p => p.id === e.propertyId);
+      const propName = property ? property.name : 'General';
+      propertyData[propName] = (propertyData[propName] || 0) + e.amount;
+    });
+    
+    // Sort and get top 5
+    const sortedProps = Object.entries(propertyData)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5);
+    
+    const propNames = sortedProps.map(([name]) => name.substring(0, 8));
+    const propAmounts = sortedProps.map(([,amount]) => amount);
+
+    // Destroy existing chart
+    if (chartInstances.propertyChart) {
+      chartInstances.propertyChart.destroy();
+    }
+    
+    chartInstances.propertyChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: propNames,
+        datasets: [{
+          data: propAmounts,
+          backgroundColor: '#3B82F6',
+          borderColor: '#2563EB',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            bodyFont: { size: 10 },
+            callbacks: {
+              label: (context) => formatCurrency(context.raw)
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { size: 8 },
+              callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+            },
+            grid: { display: false }
+          },
+          x: {
+            ticks: { 
+              font: { size: 8 },
+              maxRotation: 45
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering property chart:', error);
+  }
+}
+
+function renderCategoryChart(expenses) {
+  try {
+    const ctx = document.getElementById('expenseChart')?.getContext('2d');
+    if (!ctx) return;
+    
+    const chartType = document.getElementById('chartType')?.value || 'pie';
+    
+    const categories = {};
+    expenses.forEach(e => {
+      categories[e.category] = (categories[e.category] || 0) + (e.amount || 0);
+    });
+
+    const labels = Object.keys(categories).map(l => l.substring(0, 10));
+    const data = Object.values(categories);
+    const backgroundColors = Object.keys(categories).map(cat => EXPENSE_CATEGORIES[cat]?.color || '#6B7280');
+
+    // Destroy existing chart
+    if (chartInstances.expenseChart) {
+      chartInstances.expenseChart.destroy();
+    }
+    
+    chartInstances.expenseChart = new Chart(ctx, {
+      type: chartType,
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: backgroundColors,
+          borderColor: '#ffffff',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { 
+            position: 'bottom',
+            labels: { 
+              usePointStyle: true,
+              font: { size: 9 },
+              padding: 8,
+              boxWidth: 8
+            }
+          },
+          tooltip: {
+            bodyFont: { size: 10 },
+            callbacks: {
+              label: (context) => {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
+              }
+            }
+          }
+        },
+        scales: chartType === 'bar' ? {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { size: 8 },
+              callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+            },
+            grid: { display: false }
+          },
+          x: {
+            ticks: { font: { size: 8 } },
+            grid: { display: false }
+          }
+        } : undefined
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering category chart:', error);
+  }
+}
 
 // ============================================================================
 // 🎛️ Setup Event Listeners
 // ============================================================================
 function setupEventListeners() {
-  document.getElementById('btnNewExpense').addEventListener('click', () => openExpenseForm());
-  document.getElementById('btnQuickExpense').addEventListener('click', () => openQuickExpenseForm());
-  document.getElementById('btnExportExpenses').addEventListener('click', exportExpenses);
-  document.getElementById('btnApplyFilters').addEventListener('click', refreshExpensesDashboard);
-  document.getElementById('btnResetFilters').addEventListener('click', resetFilters);
-  document.getElementById('btnBulkActions').addEventListener('click', showBulkActions);
-  document.getElementById('btnSyncExpenses').addEventListener('click', syncFromTransactions);
-  document.getElementById('btnDismissSync').addEventListener('click', () => {
+  // Clean up old listeners first
+  const oldMain = document.getElementById('mainContent');
+  const newMain = oldMain.cloneNode(true);
+  oldMain.parentNode.replaceChild(newMain, oldMain);
+  
+  // Setup new listeners
+  document.getElementById('btnNewExpense')?.addEventListener('click', () => openExpenseForm());
+  document.getElementById('btnQuickExpense')?.addEventListener('click', () => openQuickExpenseForm());
+  document.getElementById('btnExportExpenses')?.addEventListener('click', exportExpenses);
+  document.getElementById('btnApplyFilters')?.addEventListener('click', refreshExpensesDashboard);
+  document.getElementById('btnResetFilters')?.addEventListener('click', resetFilters);
+  document.getElementById('btnBulkActions')?.addEventListener('click', showBulkActions);
+  document.getElementById('btnSyncExpenses')?.addEventListener('click', syncFromTransactions);
+  document.getElementById('btnDismissSync')?.addEventListener('click', () => {
     document.getElementById('syncStatusBanner').style.display = 'none';
   });
   
-  document.getElementById('filterPeriod').addEventListener('change', function() {
+  document.getElementById('filterPeriod')?.addEventListener('change', function() {
     document.getElementById('customDateRange').style.display = 
       this.value === 'custom' ? 'grid' : 'none';
   });
   
-  document.getElementById('chartType').addEventListener('change', refreshExpensesDashboard);
+  document.getElementById('chartType')?.addEventListener('change', () => {
+    refreshExpensesDashboard();
+  });
   
   // Source filter buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -478,42 +620,66 @@ function setupEventListeners() {
 // 🧩 Enhanced Filter Population
 // ============================================================================
 async function populateFilters() {
-  const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
-  const propertySelect = document.getElementById('filterProperty');
-  propertySelect.innerHTML =
-    `<option value="">All Properties</option>` +
-    properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  try {
+    const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
+    const propertySelect = document.getElementById('filterProperty');
+    if (propertySelect) {
+      propertySelect.innerHTML =
+        `<option value="">All Properties</option>` +
+        properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
 
-  // Set default period to current financial year
-  const now = new Date();
-  const currentFY = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
-  document.getElementById('filterPeriod').value = 'year';
+    // Set default period to current financial year
+    document.getElementById('filterPeriod').value = 'year';
+  } catch (error) {
+    console.error('Error populating filters:', error);
+  }
 }
 
 // ============================================================================
 // 🔁 Enhanced Dashboard Refresh
 // ============================================================================
 async function refreshExpensesDashboard() {
-  const allExpenses = await getAllPropertyExpenses();
-  const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
-  const budgets = await getAllItems(STORE_NAMES.budgets).catch(() => []);
+  try {
+    // Clean up old charts first
+    destroyAllCharts();
+    
+    const allExpenses = await getAllPropertyExpenses();
+    const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
+    const budgets = await getAllItems(STORE_NAMES.budgets).catch(() => []);
 
-  const filteredExpenses = applyFilters(allExpenses);
-  renderEnhancedSummary(filteredExpenses, allExpenses, budgets);
-  renderEnhancedCharts(filteredExpenses, properties);
-  renderEnhancedExpenseList(filteredExpenses, properties);
-  renderSourceDistribution(allExpenses);
+    const filteredExpenses = applyFilters(allExpenses);
+    
+    // Update UI elements
+    renderEnhancedSummary(filteredExpenses, allExpenses, budgets);
+    renderEnhancedExpenseList(filteredExpenses, properties);
+    
+    // Update source distribution numbers
+    const fromTransactions = allExpenses.filter(e => e.source === 'transaction').length;
+    const directEntries = allExpenses.filter(e => e.source === 'expense').length;
+    document.getElementById('fromTransactions').textContent = fromTransactions;
+    document.getElementById('directEntries').textContent = directEntries;
+    
+    // Render charts with small delay to ensure DOM is ready
+    setTimeout(() => {
+      renderEnhancedCharts(filteredExpenses, properties);
+    }, 50);
+    
+  } catch (error) {
+    console.error('❌ Error refreshing dashboard:', error);
+    showNotification('Error loading expenses dashboard', 'error');
+  }
 }
 
 // ============================================================================
 // 🔍 Apply Enhanced Filters
 // ============================================================================
 function applyFilters(expenses) {
-  const filterProperty = document.getElementById('filterProperty').value;
-  const filterCategory = document.getElementById('filterCategory').value;
-  const filterPeriod = document.getElementById('filterPeriod').value;
-  const filterStatus = document.getElementById('filterStatus').value;
-  const filterSource = document.getElementById('filterSource').value;
+  const filterProperty = document.getElementById('filterProperty')?.value || '';
+  const filterCategory = document.getElementById('filterCategory')?.value || '';
+  const filterPeriod = document.getElementById('filterPeriod')?.value || 'all';
+  const filterStatus = document.getElementById('filterStatus')?.value || '';
+  const filterSource = document.getElementById('filterSource')?.value || '';
   
   let filtered = [...expenses];
   
@@ -549,8 +715,8 @@ function applyFilters(expenses) {
       });
       break;
     case 'custom':
-      const from = document.getElementById('filterDateFrom').value;
-      const to = document.getElementById('filterDateTo').value;
+      const from = document.getElementById('filterDateFrom')?.value;
+      const to = document.getElementById('filterDateTo')?.value;
       if (from) filtered = filtered.filter(e => e.date >= from);
       if (to) filtered = filtered.filter(e => e.date <= to);
       break;
@@ -622,30 +788,34 @@ async function getAllPropertyExpenses() {
 // 💰 Enhanced Summary Dashboard
 // ============================================================================
 function renderEnhancedSummary(filteredExpenses, allExpenses, budgets) {
-  const total = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const unpaid = filteredExpenses.filter(e => e.status === 'Unpaid').length;
-  const taxDeductible = filteredExpenses
-    .filter(e => EXPENSE_CATEGORIES[e.category]?.deductible)
-    .reduce((sum, e) => sum + (e.amount || 0), 0);
-  
-  // Calculate average monthly
-  const monthlyExpenses = calculateMonthlyAverage(allExpenses);
-  
-  // Calculate trend (compared to previous period)
-  const trend = calculateExpenseTrend(allExpenses);
-  
-  document.getElementById('totalExpenses').textContent = formatCurrency(total);
-  document.getElementById('avgMonthly').textContent = formatCurrency(monthlyExpenses);
-  document.getElementById('unpaidCount').textContent = unpaid;
-  document.getElementById('taxDeductions').textContent = formatCurrency(taxDeductible);
-  
-  const trendElement = document.getElementById('expenseTrend');
-  if (trend > 0) {
-    trendElement.innerHTML = `<span style="color: #ef4444">↑ ${trend}% from last period</span>`;
-  } else if (trend < 0) {
-    trendElement.innerHTML = `<span style="color: #10b981">↓ ${Math.abs(trend)}% from last period</span>`;
-  } else {
-    trendElement.innerHTML = `<span style="color: #6b7280">No change</span>`;
+  try {
+    const total = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const unpaid = filteredExpenses.filter(e => e.status === 'Unpaid').length;
+    const taxDeductible = filteredExpenses
+      .filter(e => EXPENSE_CATEGORIES[e.category]?.deductible)
+      .reduce((sum, e) => sum + (e.amount || 0), 0);
+    
+    // Calculate average monthly
+    const monthlyExpenses = calculateMonthlyAverage(allExpenses);
+    
+    // Calculate trend (compared to previous period)
+    const trend = calculateExpenseTrend(allExpenses);
+    
+    document.getElementById('totalExpenses').textContent = formatCurrency(total);
+    document.getElementById('avgMonthly').textContent = formatCurrency(monthlyExpenses);
+    document.getElementById('unpaidCount').textContent = unpaid;
+    document.getElementById('taxDeductions').textContent = formatCurrency(taxDeductible);
+    
+    const trendElement = document.getElementById('expenseTrend');
+    if (trend > 0) {
+      trendElement.innerHTML = `<span style="color: #ef4444">↑ ${trend}% from last period</span>`;
+    } else if (trend < 0) {
+      trendElement.innerHTML = `<span style="color: #10b981">↓ ${Math.abs(trend)}% from last period</span>`;
+    } else {
+      trendElement.innerHTML = `<span style="color: #6b7280">No change</span>`;
+    }
+  } catch (error) {
+    console.error('Error rendering summary:', error);
   }
 }
 
@@ -658,221 +828,118 @@ function renderSourceDistribution(expenses) {
   
   document.getElementById('fromTransactions').textContent = fromTransactions;
   document.getElementById('directEntries').textContent = directEntries;
-  
-  // Update source chart
-  const ctx = document.getElementById('sourceChart').getContext('2d');
-  
-  if (window.sourceChartInstance) window.sourceChartInstance.destroy();
-  
-  window.sourceChartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['From Transactions', 'Direct Entries'],
-      datasets: [{
-        data: [fromTransactions, directEntries],
-        backgroundColor: ['#3B82F6', '#10B981'],
-        borderColor: ['#2563EB', '#059669'],
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { 
-          position: 'bottom',
-          labels: { usePointStyle: true }
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
-              return `${context.label}: ${context.raw} expenses (${percentage}%)`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
-
-// ============================================================================
-// 📊 Enhanced Charts
-// ============================================================================
-
-
-function renderCategoryChart(expenses) {
-  const ctx = document.getElementById('expenseChart').getContext('2d');
-  const chartType = document.getElementById('chartType').value;
-  
-  const categories = {};
-  expenses.forEach(e => {
-    categories[e.category] = (categories[e.category] || 0) + (e.amount || 0);
-  });
-
-  const labels = Object.keys(categories).map(l => l.substring(0, 10));
-  const data = Object.values(categories);
-  const backgroundColors = Object.keys(categories).map(cat => EXPENSE_CATEGORIES[cat]?.color || '#6B7280');
-
-  if (window.expenseChartInstance) window.expenseChartInstance.destroy();
-  
-  window.expenseChartInstance = new Chart(ctx, {
-    type: chartType,
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: backgroundColors,
-        borderColor: '#ffffff',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { 
-          position: 'bottom',
-          labels: { 
-            usePointStyle: true,
-            font: { size: 10 },
-            padding: 15,
-            boxWidth: 10
-          }
-        },
-        tooltip: {
-          bodyFont: { size: 11 },
-          callbacks: {
-            label: (context) => {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
-              return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
-            }
-          }
-        }
-      },
-      scales: chartType === 'bar' ? {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            font: { size: 9 },
-            callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
-          },
-          grid: { display: false }
-        },
-        x: {
-          ticks: { font: { size: 9 } },
-          grid: { display: false }
-        }
-      } : undefined
-    }
-  });
 }
 
 // ============================================================================
 // 🧾 Enhanced Expense List with Source Indicators
 // ============================================================================
 function renderEnhancedExpenseList(expenses, properties) {
-  const list = document.getElementById('expensesList');
-  const count = document.getElementById('expenseCount');
+  try {
+    const list = document.getElementById('expensesList');
+    const count = document.getElementById('expenseCount');
 
-  count.textContent = `${expenses.length} expense${expenses.length !== 1 ? 's' : ''}`;
+    if (!list || !count) return;
 
-  if (!expenses.length) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">💸</div>
-        <h3>No property expenses found</h3>
-        <p>Try adjusting your filters or add property expenses via Transactions page</p>
-        <div class="empty-actions">
-          <button class="btn btn-primary" onclick="window.loadView('transactions')">
-            ➕ Add via Transactions
-          </button>
-          <button class="btn btn-outline" onclick="syncFromTransactions()">
-            🔄 Sync Existing
-          </button>
+    count.textContent = `${expenses.length} expense${expenses.length !== 1 ? 's' : ''}`;
+
+    if (!expenses.length) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">💸</div>
+          <h3>No property expenses found</h3>
+          <p>Try adjusting your filters or add property expenses via Transactions page</p>
+          <div class="empty-actions">
+            <button class="btn btn-primary" onclick="window.loadView('transactions')">
+              ➕ Add via Transactions
+            </button>
+            <button class="btn btn-outline" onclick="syncFromTransactions()">
+              🔄 Sync Existing
+            </button>
+          </div>
         </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = `
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Property</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Source</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${expenses.map(expense => {
+              const property = properties.find(p => p.id === expense.propertyId);
+              const categoryInfo = EXPENSE_CATEGORIES[expense.category];
+              const isFromTransaction = expense.source === 'transaction';
+              
+              return `
+                <tr class="expense-row ${expense.status === 'Unpaid' ? 'unpaid' : ''}">
+                  <td>
+                    <div class="expense-description">
+                      <strong>${expense.description || 'Unnamed Expense'}</strong>
+                      ${expense.receiptUrl ? '<span class="receipt-badge">📎</span>' : ''}
+                    </div>
+                  </td>
+                  <td>${property ? property.name : 'General'}</td>
+                  <td>
+                    <span class="category-tag" style="background: ${categoryInfo?.color || '#6B7280'}22; color: ${categoryInfo?.color || '#6B7280'};">
+                      ${expense.category}
+                    </span>
+                  </td>
+                  <td class="amount-cell">${formatCurrency(expense.amount)}</td>
+                  <td>${new Date(expense.date).toLocaleDateString('en-AU')}</td>
+                  <td>
+                    <span class="status-badge status-${expense.status?.toLowerCase()}">
+                      ${expense.status}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="source-badge ${isFromTransaction ? 'source-transaction' : 'source-direct'}">
+                      ${isFromTransaction ? '📊 Transaction' : '💸 Direct'}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      ${isFromTransaction ? `
+                        <button class="btn-icon" onclick="viewTransaction('${expense.transactionId}')" title="View Transaction">
+                          👁️
+                        </button>
+                        <button class="btn-icon" disabled title="Edit in Transactions page">
+                          ✏️
+                        </button>
+                      ` : `
+                        <button class="btn-icon" onclick="openExpenseForm('${expense.id}')" title="Edit">
+                          ✏️
+                        </button>
+                        <button class="btn-icon" onclick="duplicateExpense('${expense.id}')" title="Duplicate">
+                          📋
+                        </button>
+                        <button class="btn-icon btn-danger" onclick="confirmDeleteExpense('${expense.id}')" title="Delete">
+                          🗑️
+                        </button>
+                      `}
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     `;
-    return;
+  } catch (error) {
+    console.error('Error rendering expense list:', error);
   }
-
-  list.innerHTML = `
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Property</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Source</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${expenses.map(expense => {
-            const property = properties.find(p => p.id === expense.propertyId);
-            const categoryInfo = EXPENSE_CATEGORIES[expense.category];
-            const isFromTransaction = expense.source === 'transaction';
-            
-            return `
-              <tr class="expense-row ${expense.status === 'Unpaid' ? 'unpaid' : ''}">
-                <td>
-                  <div class="expense-description">
-                    <strong>${expense.description || 'Unnamed Expense'}</strong>
-                    ${expense.receiptUrl ? '<span class="receipt-badge">📎</span>' : ''}
-                  </div>
-                </td>
-                <td>${property ? property.name : 'General'}</td>
-                <td>
-                  <span class="category-tag" style="background: ${categoryInfo?.color || '#6B7280'}22; color: ${categoryInfo?.color || '#6B7280'};">
-                    ${expense.category}
-                  </span>
-                </td>
-                <td class="amount-cell">${formatCurrency(expense.amount)}</td>
-                <td>${new Date(expense.date).toLocaleDateString('en-AU')}</td>
-                <td>
-                  <span class="status-badge status-${expense.status?.toLowerCase()}">
-                    ${expense.status}
-                  </span>
-                </td>
-                <td>
-                  <span class="source-badge ${isFromTransaction ? 'source-transaction' : 'source-direct'}">
-                    ${isFromTransaction ? '📊 Transaction' : '💸 Direct'}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    ${isFromTransaction ? `
-                      <button class="btn-icon" onclick="viewTransaction('${expense.transactionId}')" title="View Transaction">
-                        👁️
-                      </button>
-                      <button class="btn-icon" disabled title="Edit in Transactions page">
-                        ✏️
-                      </button>
-                    ` : `
-                      <button class="btn-icon" onclick="openExpenseForm('${expense.id}')" title="Edit">
-                        ✏️
-                      </button>
-                      <button class="btn-icon" onclick="duplicateExpense('${expense.id}')" title="Duplicate">
-                        📋
-                      </button>
-                      <button class="btn-icon btn-danger" onclick="confirmDeleteExpense('${expense.id}')" title="Delete">
-                        🗑️
-                      </button>
-                    `}
-                  </div>
-                </td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
 }
 
 // ============================================================================
@@ -926,7 +993,6 @@ function viewTransaction(transactionId) {
   // Store the transaction ID to scroll to it
   setTimeout(() => {
     localStorage.setItem('highlightTransactionId', transactionId);
-    // The transactions page should check for this and scroll to it
   }, 500);
 }
 
@@ -934,149 +1000,154 @@ function viewTransaction(transactionId) {
 // ➕ Enhanced Expense Form (Direct Entry)
 // ============================================================================
 async function openExpenseForm(id = null) {
-  const main = document.getElementById('mainContent');
-  const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
-  const existingExpenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
-  const expense = id ? existingExpenses.find(e => e.id === id) : {
-    id: null,
-    propertyId: '',
-    category: 'Other',
-    description: '',
-    amount: 0,
-    date: new Date().toISOString().split('T')[0],
-    recurring: false,
-    frequency: 'monthly',
-    status: 'Unpaid',
-    receiptUrl: '',
-    notes: ''
-  };
+  try {
+    const main = document.getElementById('mainContent');
+    const properties = await getAllItems(STORE_NAMES.properties || 'properties').catch(() => []);
+    const existingExpenses = await getAllItems(STORE_NAMES.expenses || 'expenses').catch(() => []);
+    const expense = id ? existingExpenses.find(e => e.id === id) : {
+      id: null,
+      propertyId: '',
+      category: 'Other',
+      description: '',
+      amount: 0,
+      date: new Date().toISOString().split('T')[0],
+      recurring: false,
+      frequency: 'monthly',
+      status: 'Unpaid',
+      receiptUrl: '',
+      notes: ''
+    };
 
-  // Don't allow editing of transaction-based expenses
-  if (expense.source === 'transaction') {
-    alert('This expense came from a transaction. Please edit it in the Transactions page.');
-    return;
-  }
+    // Don't allow editing of transaction-based expenses
+    if (expense.source === 'transaction') {
+      alert('This expense came from a transaction. Please edit it in the Transactions page.');
+      return;
+    }
 
-  main.innerHTML = `
-    <div class="form-container">
-      <div class="form-header">
-        <h2>${id ? 'Edit Expense' : 'Add Direct Expense'}</h2>
-        <div class="form-subheader">
-          <span class="form-note">💡 Note: Direct expenses don't create transactions automatically</span>
-          <button class="btn btn-outline" onclick="initExpensesUI()">← Back to Expenses</button>
-        </div>
-      </div>
-      
-      <form id="expenseForm" class="styled-form">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Description *</label>
-            <input type="text" name="description" value="${expense.description || ''}" 
-                   class="form-input" placeholder="What was this expense for?" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Property</label>
-            <select name="propertyId" class="form-select">
-              <option value="">General (No Property)</option>
-              ${properties.map(p => 
-                `<option value="${p.id}" ${p.id === expense.propertyId ? 'selected' : ''}>
-                  ${p.name}
-                </option>`
-              ).join('')}
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Category *</label>
-            <select name="category" class="form-select" required>
-              ${Object.keys(EXPENSE_CATEGORIES).map(cat => 
-                `<option value="${cat}" ${expense.category === cat ? 'selected' : ''}
-                 style="color: ${EXPENSE_CATEGORIES[cat].color}">
-                  ${cat} ${EXPENSE_CATEGORIES[cat].deductible ? '✓' : '✗'}
-                </option>`
-              ).join('')}
-            </select>
-            <div class="form-hint" id="categoryHint"></div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Amount (AUD) *</label>
-            <input type="number" step="0.01" name="amount" value="${expense.amount}" 
-                   class="form-input" placeholder="0.00" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Date *</label>
-            <input type="date" name="date" value="${expense.date}" class="form-input" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Status</label>
-            <select name="status" class="form-select">
-              <option value="Paid" ${expense.status === 'Paid' ? 'selected' : ''}>Paid</option>
-              <option value="Unpaid" ${expense.status === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
-              <option value="Reimbursed" ${expense.status === 'Reimbursed' ? 'selected' : ''}>Reimbursed</option>
-            </select>
+    main.innerHTML = `
+      <div class="form-container">
+        <div class="form-header">
+          <h2>${id ? 'Edit Expense' : 'Add Direct Expense'}</h2>
+          <div class="form-subheader">
+            <span class="form-note">💡 Note: Direct expenses don't create transactions automatically</span>
+            <button class="btn btn-outline" onclick="initExpensesUI()">← Back to Expenses</button>
           </div>
         </div>
         
-        <div class="form-section">
-          <h3>Additional Details</h3>
-          
-          <div class="form-group">
-            <label class="form-label">Receipt URL (optional)</label>
-            <input type="url" name="receiptUrl" value="${expense.receiptUrl || ''}" 
-                   class="form-input" placeholder="https://...">
+        <form id="expenseForm" class="styled-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Description *</label>
+              <input type="text" name="description" value="${expense.description || ''}" 
+                     class="form-input" placeholder="What was this expense for?" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Property</label>
+              <select name="propertyId" class="form-select">
+                <option value="">General (No Property)</option>
+                ${properties.map(p => 
+                  `<option value="${p.id}" ${p.id === expense.propertyId ? 'selected' : ''}>
+                    ${p.name}
+                  </option>`
+                ).join('')}
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select name="category" class="form-select" required>
+                ${Object.keys(EXPENSE_CATEGORIES).map(cat => 
+                  `<option value="${cat}" ${expense.category === cat ? 'selected' : ''}
+                   style="color: ${EXPENSE_CATEGORIES[cat].color}">
+                    ${cat} ${EXPENSE_CATEGORIES[cat].deductible ? '✓' : '✗'}
+                  </option>`
+                ).join('')}
+              </select>
+              <div class="form-hint" id="categoryHint"></div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Amount (AUD) *</label>
+              <input type="number" step="0.01" name="amount" value="${expense.amount}" 
+                     class="form-input" placeholder="0.00" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Date *</label>
+              <input type="date" name="date" value="${expense.date}" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select name="status" class="form-select">
+                <option value="Paid" ${expense.status === 'Paid' ? 'selected' : ''}>Paid</option>
+                <option value="Unpaid" ${expense.status === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
+                <option value="Reimbursed" ${expense.status === 'Reimbursed' ? 'selected' : ''}>Reimbursed</option>
+              </select>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label class="form-label">Notes</label>
-            <textarea name="notes" class="form-input" rows="3" 
-                      placeholder="Any additional notes about this expense">${expense.notes || ''}</textarea>
+          <div class="form-section">
+            <h3>Additional Details</h3>
+            
+            <div class="form-group">
+              <label class="form-label">Receipt URL (optional)</label>
+              <input type="url" name="receiptUrl" value="${expense.receiptUrl || ''}" 
+                     class="form-input" placeholder="https://...">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea name="notes" class="form-input" rows="3" 
+                        placeholder="Any additional notes about this expense">${expense.notes || ''}</textarea>
+            </div>
           </div>
-        </div>
-        
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary btn-lg">
-            💾 ${id ? 'Update Expense' : 'Add Expense'}
-          </button>
-          <button type="button" class="btn btn-outline" onclick="initExpensesUI()">
-            Cancel
-          </button>
-          ${id ? `
-            <button type="button" class="btn btn-warning" onclick="duplicateExpense('${expense.id}')">
-              📋 Duplicate
+          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">
+              💾 ${id ? 'Update Expense' : 'Add Expense'}
             </button>
-          ` : ''}
-        </div>
-      </form>
-    </div>
-  `;
+            <button type="button" class="btn btn-outline" onclick="initExpensesUI()">
+              Cancel
+            </button>
+            ${id ? `
+              <button type="button" class="btn btn-warning" onclick="duplicateExpense('${expense.id}')">
+                📋 Duplicate
+              </button>
+            ` : ''}
+          </div>
+        </form>
+      </div>
+    `;
 
-  // Add category hint
-  const categorySelect = document.querySelector('[name="category"]');
-  if (categorySelect) {
-    categorySelect.addEventListener('change', function() {
-      const category = EXPENSE_CATEGORIES[this.value];
-      const hint = document.getElementById('categoryHint');
-      if (category) {
-        hint.innerHTML = `
-          <span style="color: ${category.color}">
-            ${category.type} expense • 
-            ${category.deductible ? 'Tax deductible ✓' : 'Not tax deductible ✗'}
-          </span>
-        `;
-      }
+    // Add category hint
+    const categorySelect = document.querySelector('[name="category"]');
+    if (categorySelect) {
+      categorySelect.addEventListener('change', function() {
+        const category = EXPENSE_CATEGORIES[this.value];
+        const hint = document.getElementById('categoryHint');
+        if (category) {
+          hint.innerHTML = `
+            <span style="color: ${category.color}">
+              ${category.type} expense • 
+              ${category.deductible ? 'Tax deductible ✓' : 'Not tax deductible ✗'}
+            </span>
+          `;
+        }
+      });
+      // Trigger change event to show initial hint
+      categorySelect.dispatchEvent(new Event('change'));
+    }
+
+    document.getElementById('expenseForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      await saveExpense(expense, new FormData(e.target));
     });
-    // Trigger change event to show initial hint
-    categorySelect.dispatchEvent(new Event('change'));
+  } catch (error) {
+    console.error('Error opening expense form:', error);
+    alert('Error loading expense form');
   }
-
-  document.getElementById('expenseForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    await saveExpense(expense, new FormData(e.target));
-  });
 }
 
 // ============================================================================
