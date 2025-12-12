@@ -23,6 +23,7 @@ function buildNavigationHTML() {
         <li><a data-view="transactions">💸 Transactions</a></li>
         <li><a data-view="budgets">🎯 Budgets</a></li>
         <li><a data-view="accounts">💳 Accounts</a></li>
+        <li><a data-view="loans">💳 Loans</a></li>
         <li><a data-view="categories">🗂️ Categories</a></li>
         <li><a data-view="reports">📊 Reports</a></li>
         <li><a data-view="bills">🧾 Bills</a></li>
