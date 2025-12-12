@@ -1,100 +1,223 @@
-/* Base styles - ensure proper layering */
-body {
-  background:  #ffffff;
-  min-height: 100vh;
-  color: var(--text-primary);
-  position: relative;
+/* ============================================================
+   BASE STYLES — Foundation for the entire UI
+   Sets global rules, resets, accessibility standards,
+   modern spacing, and default interaction behavior.
+   ============================================================ */
+
+/* --------------------------------------------
+   GLOBAL BOX MODEL & RESET
+   -------------------------------------------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
-/* Main app container - hidden initially */
-.app-container {
-  display: none;
-  min-height: 100vh;
-}
-
-.app-container.active {
-  display: block;
-}
-
-/* Content area */
-.main-content {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.main-content.loaded {
-  opacity: 1;
-}
-
-/* Splash fade-out animation */
-#splashScreen {
-    opacity: 1;
-    transition: opacity 0.6s ease;
-}
-
-#splashScreen.fade-out {
-    opacity: 0;
-}
-
-/* Glassmorphism login screen */
-.login-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
+html, body {
+    padding: 0;
+    margin: 0;
     width: 100%;
     height: 100%;
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    background: rgba(255, 255, 255, 0.10);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
 }
 
-.login-form {
-    background: rgba(255, 255, 255, 0.18);
-    border-radius: 18px;
-    padding: 35px;
-    width: 100%;
-    max-width: 380px;
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+/* --------------------------------------------
+   BODY LAYOUT
+   -------------------------------------------- */
+body {
+    background: var(--color-gray-50);
+    color: var(--color-gray-800);
+    font-family: var(--font-family-base);
+    line-height: 1.55;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
-.login-form input {
-    padding: 14px;
-    border-radius: 10px;
-    border: none;
-    outline: none;
-    font-size: 15px;
-    background: rgba(255, 255, 255, 0.35);
+/* --------------------------------------------
+   LINKS
+   -------------------------------------------- */
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
 }
 
-.login-form button {
-    padding: 14px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #348feb, #6cc1ff);
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
+a:hover {
+    color: var(--color-primary-dark);
+}
+
+/* --------------------------------------------
+   IMAGES / MEDIA
+   -------------------------------------------- */
+img, svg, canvas, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* --------------------------------------------
+   LISTS
+   -------------------------------------------- */
+ul, ol {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+li {
+    margin-bottom: 0.3rem;
+}
+
+/* --------------------------------------------
+   BUTTON RESET
+   -------------------------------------------- */
+button {
+    font-family: inherit;
     cursor: pointer;
-    transition: 0.3s;
+    border: none;
+    background: none;
+    padding: 0;
 }
 
-.login-form button:hover {
-    opacity: 0.9;
+/* --------------------------------------------
+   INPUT RESET
+   -------------------------------------------- */
+input,
+select,
+textarea {
+    font-family: inherit;
+    font-size: inherit;
 }
 
-/* Error message */
-.login-form #loginError {
-    color: #ff6b6b;
-    font-size: 14px;
-    text-align: center;
+textarea {
+    resize: vertical;
+}
+
+/* --------------------------------------------
+   GLOBAL WRAPPER CONTAINER
+   -------------------------------------------- */
+.container {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: var(--space-4);
+}
+
+/* --------------------------------------------
+   CARD BASE (inherited by all card components)
+   -------------------------------------------- */
+.card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+/* --------------------------------------------
+   PANEL / SECTION WRAPPERS
+   -------------------------------------------- */
+.section {
+    margin-bottom: var(--space-6);
+}
+
+.section-header {
+    margin-bottom: var(--space-3);
+}
+
+/* --------------------------------------------
+   GLOBAL TRANSITIONS
+   -------------------------------------------- */
+* {
+    transition: background-color 0.2s ease,
+                color 0.2s ease,
+                border-color 0.2s ease;
+}
+
+/* --------------------------------------------
+   CUSTOM SCROLLBAR (WebKit)
+   -------------------------------------------- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+}
+
+/* --------------------------------------------
+   SELECTION COLOR
+   -------------------------------------------- */
+::selection {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* --------------------------------------------
+   HORIZONTAL RULES
+   -------------------------------------------- */
+hr {
+    border: none;
+    border-bottom: 1px solid var(--color-gray-200);
+    margin: var(--space-4) 0;
+}
+
+/* --------------------------------------------
+   UTILITY CLASSES (simple global helpers)
+   -------------------------------------------- */
+.hidden { display: none !important; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-center { align-items: center; justify-content: center; }
+
+.grid { display: grid; }
+
+.text-center { text-align: center; }
+
+.w-full { width: 100%; }
+
+/* --------------------------------------------
+   DARK MODE SUPPORT
+   -------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: var(--color-gray-900);
+        color: var(--color-gray-100);
+    }
+
+    .card {
+        background: var(--color-gray-800);
+        border-color: var(--color-gray-700);
+    }
+
+    hr {
+        border-color: var(--color-gray-700);
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--color-gray-800);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--color-gray-600);
+    }
+}
+
+/* --------------------------------------------
+   MOBILE RESPONSIVENESS
+   -------------------------------------------- */
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-3);
+    }
 }
