@@ -1,0 +1,89 @@
+/* Add to your main styles.css or create an animations.css file */
+
+/* Loading states */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Slide in animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.recurring-row {
+    animation: slideInUp 0.4s ease forwards;
+}
+
+/* Staggered animation for list items */
+.recurring-list .recurring-row:nth-child(1) { animation-delay: 0.1s; }
+.recurring-list .recurring-row:nth-child(2) { animation-delay: 0.2s; }
+.recurring-list .recurring-row:nth-child(3) { animation-delay: 0.3s; }
+.recurring-list .recurring-row:nth-child(4) { animation-delay: 0.4s; }
+.recurring-list .recurring-row:nth-child(5) { animation-delay: 0.5s; }
+
+/* Status indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-inactive {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-due-soon {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Badge styling */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
