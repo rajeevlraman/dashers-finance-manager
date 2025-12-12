@@ -1,85 +1,163 @@
-/* Wrapper for all pages */
-.page-wrapper {
-  padding: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
+/* ========================================================================== */
+/* 03-base.css — GLOBAL FOUNDATION ONLY                                       */
+/* Minimal base extracted from your full 8,700-line stylesheet                */
+/* ========================================================================== */
+
+
+/* ------------------------------ Root Spacing ------------------------------ */
+:root {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
+
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
 }
 
-/* Page section titles */
-.section-title {
-  font-size: 1.4rem;
+
+/* ------------------------------- Base Body -------------------------------- */
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font-family: var(--font-primary, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                   Roboto, Oxygen, Ubuntu, Cantarell, sans-serif);
+  color: var(--text-color);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+
+/* ------------------------------ Headings ---------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 0.5rem 0;
   font-weight: 600;
-  margin-bottom: 1rem;
+  color: var(--text-color);
 }
 
-/* Card container baseline */
-.card {
-  background: var(--card-bg);
-  padding: 1.25rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+
+/* ------------------------------- Links ------------------------------------ */
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+
+/* ------------------------------ Buttons Base ------------------------------ */
+button,
+.btn {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+button:disabled,
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* ------------------------------ Inputs Base ------------------------------- */
+input,
+select,
+textarea {
+  font-family: inherit;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
-  transition: 0.2s ease;
+  padding: 0.6rem 0.75rem;
+  background: var(--input-bg);
+  color: var(--text-color);
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+
+/* ------------------------------- Cards Base ------------------------------- */
+.card {
+  background: var(--card-bg, white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1rem;
 }
 
 .card:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* Basic grid */
-.grid {
-  display: grid;
-  gap: 1rem;
+
+/* ------------------------------- Tables Base ------------------------------ */
+table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.grid-2 {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+th, td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.grid-3 {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+
+/* ----------------------------- Utility Spacing ---------------------------- */
+.text-center { text-align: center; }
+.text-right  { text-align: right;  }
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+
+.p-1  { padding: 0.5rem; }
+.p-2  { padding: 1rem; }
+.p-3  { padding: 1.5rem; }
+
+
+/* --------------------------- Containers Base ------------------------------ */
+.container,
+.page-container,
+.settings-container,
+.reports-container,
+.tax-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
 }
 
-/* Buttons */
-.btn {
-  padding: 0.65rem 1.2rem;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: 0.2s ease;
+
+/* ------------------------------ Responsive ------------------------------- */
+@media (max-width: 768px) {
+  .container,
+  .page-container,
+  .settings-container,
+  .reports-container,
+  .tax-container {
+    padding: 1rem;
+  }
 }
 
-.btn-primary {
-  background: var(--accent-color);
-  color: white;
-}
 
-.btn-primary:hover {
-  background: var(--accent-light);
-}
-
-.btn-secondary {
-  background: var(--border-color);
-  color: var(--text-color);
-}
-
-/* Progress Bar */
-.progress-bar {
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--accent-color);
-  transition: width 0.3s ease;
-}
-
-/* Status Colors */
-.status-good { color: var(--success); font-weight: 600; }
-.status-warning { color: var(--warning); font-weight: 600; }
-.status-bad { color: var(--danger); font-weight: 600; }
+/* ========================================================================== */
+/* END OF BASE                                                               */
+/* ========================================================================== */

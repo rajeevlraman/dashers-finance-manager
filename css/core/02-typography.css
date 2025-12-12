@@ -1,29 +1,215 @@
-body {
-  font-family: var(--font-primary);
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--text-color);
+/* ============================================
+   02-TYPOGRAPHY.CSS
+   Global Text System & Font Rules
+   ============================================ */
+
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+    color: var(--text-color);
+    font-size: 16px;
+    line-height: 1.5;
 }
 
-h1, h2, h3, h4 {
-  font-weight: 600;
-  color: var(--text-color);
+/* --------------------------------------------
+   HEADINGS
+   -------------------------------------------- */
+h1 {
+    font-size: var(--font-3xl);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-color);
 }
 
-h1 { font-size: 2rem; }
-h2 { font-size: 1.75rem; }
-h3 { font-size: 1.25rem; }
-h4 { font-size: 1rem; }
+h2 {
+    font-size: var(--font-2xl);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-color);
+}
 
+h3 {
+    font-size: var(--font-xl);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+h4 {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+h5 {
+    font-size: var(--font-md);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+h6 {
+    font-size: var(--font-sm);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+/* --------------------------------------------
+   BODY TEXT
+   -------------------------------------------- */
 p {
-  margin-bottom: 0.75rem;
+    margin: 0 0 1rem 0;
+    color: var(--text-color);
 }
 
 small {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+    font-size: var(--font-xs);
+    color: var(--text-muted);
 }
 
-.text-muted {
-  color: var(--text-muted);
+/* --------------------------------------------
+   MUTED / SECONDARY TEXT
+   -------------------------------------------- */
+.text-muted,
+.stat-subtext,
+.form-note {
+    color: var(--text-muted);
+}
+
+.text-light {
+    opacity: 0.8;
+}
+
+/* --------------------------------------------
+   LABELS & FORM TEXT
+   -------------------------------------------- */
+label,
+.form-label {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: var(--font-sm);
+}
+
+/* Sub-label (gray small text) */
+.sub-label,
+.detail-label,
+.stat-label,
+.context-label {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------
+   STAT TEXT (Extracted from your dashboard/reports)
+   -------------------------------------------- */
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.stat-value.positive { color: var(--success-color); }
+.stat-value.negative { color: var(--danger-color); }
+.stat-value.warning  { color: var(--warning-color); }
+
+.stat-trend {
+    font-size: var(--font-xs);
+    font-weight: 600;
+}
+
+.stat-trend.positive { color: var(--success-color); }
+.stat-trend.negative { color: var(--danger-color); }
+
+/* --------------------------------------------
+   HEADERS FOR PAGES (Dashboard, Reports, Tax)
+   -------------------------------------------- */
+
+/* Dashboard Header */
+.dashboard-header h2 {
+    font-size: var(--font-2xl);
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.dashboard-header small {
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+}
+
+/* Reports Header */
+.reports-header h2 {
+    font-size: var(--font-2xl);
+    font-weight: 700;
+}
+
+.reports-subtitle {
+    font-size: var(--font-md);
+    color: var(--text-muted);
+}
+
+/* Tax Header */
+.tax-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+}
+
+.tax-header p {
+    font-size: 1.125rem;
+    opacity: 0.9;
+}
+
+/* Settings Page Typography */
+.settings-header h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.settings-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------
+   TABLE & LIST TEXT
+   -------------------------------------------- */
+th {
+    font-weight: 600;
+    font-size: var(--font-sm);
+}
+
+td {
+    font-size: var(--font-sm);
+}
+
+/* --------------------------------------------
+   UTILITY TEXT CLASSES
+   -------------------------------------------- */
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+.text-bold   { font-weight: 700; }
+.text-medium { font-weight: 600; }
+
+.mt-1 { margin-top: var(--space-2); }
+.mt-2 { margin-top: var(--space-4); }
+.mb-1 { margin-bottom: var(--space-2); }
+.mb-2 { margin-bottom: var(--space-4); }
+
+/* --------------------------------------------
+   DARK MODE ADJUSTMENTS
+   -------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+    h1, h2, h3, h4, h5, h6,
+    p,
+    th, td,
+    .stat-value {
+        color: var(--text-color);
+    }
+
+    small,
+    .text-muted,
+    .stat-label,
+    .form-note {
+        color: var(--text-muted);
+    }
 }
