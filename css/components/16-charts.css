@@ -1,0 +1,141 @@
+/* ============================================================================
+   16-charts.css – CHART COMPONENTS
+   ============================================================================ */
+
+/* ---------------------------------------
+   STANDARD CHART CONTAINER (Dashboard)
+---------------------------------------- */
+
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* This version appears in dashboard older block, keep both */
+.charts-container .section-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ---------------------------------------
+   CHART HEADERS
+---------------------------------------- */
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chart-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+.month-badge {
+    padding: 0.25rem 0.5rem;
+    background: #eef2ff;
+    color: #4f46e5;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* ---------------------------------------
+   FULL-WIDTH CHART CARD
+---------------------------------------- */
+
+.section-card.full-width {
+    grid-column: 1 / -1;
+}
+
+/* ---------------------------------------
+   EXPENSE / REPORTS CHART SECTION
+---------------------------------------- */
+
+.chart-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+/* Charts inside analysis/reporting area */
+.analysis-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.analysis-charts .chart-container {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+/* ---------------------------------------
+   CANVAS RESPONSIVENESS
+---------------------------------------- */
+
+canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* ---------------------------------------
+   TAX COMPLIANCE CHARTS (Reuse)
+---------------------------------------- */
+
+.progress-bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.75rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+    transition: width 0.3s ease;
+}
+
+.progress-fill.warning {
+    background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+}
+
+.progress-fill.success {
+    background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+}
+
+/* ---------------------------------------
+   RESPONSIVE BEHAVIOUR
+---------------------------------------- */
+
+@media (max-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+
+    .analysis-charts {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .chart-section {
+        padding: 1rem;
+    }
+}
