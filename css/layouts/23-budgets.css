@@ -2,6 +2,18 @@
    BUDGETS PAGE — Square-Edge Professional Design
    NO BORDER RADIUS ANYWHERE
 ===================================================== */
+/* --------------------------------------------
+   GLOBAL LAYOUT SPACING
+-------------------------------------------- */
+.page-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
 
 /* ---------------------------------
    Page Header
