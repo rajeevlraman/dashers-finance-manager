@@ -1,0 +1,245 @@
+/* ============================================================
+   TRANSACTIONS PAGE — Modern Unified Layout
+   Matching dashboard structure, spacing, and aesthetics.
+   No rounded corners (consistent with your preference).
+   ============================================================ */
+
+/* Page container spacing is inherited from core layout */
+
+/* --------------------------------------------
+   PAGE HEADER
+-------------------------------------------- */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.page-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.page-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* --------------------------------------------
+   SUMMARY CARDS
+-------------------------------------------- */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+}
+
+.summary-card {
+  background: var(--card-bg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.summary-value {
+  margin-top: 6px;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.summary-value.positive { color: var(--green); }
+.summary-value.negative { color: var(--red); }
+
+/* --------------------------------------------
+   QUICK ACTION BUTTONS
+-------------------------------------------- */
+.quick-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.quick-action-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: var(--accent-color);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  box-shadow: var(--shadow-xs);
+}
+
+.quick-action-btn:hover {
+  opacity: 0.9;
+}
+
+/* --------------------------------------------
+   TRANSACTION FORMS
+-------------------------------------------- */
+.section-card {
+  background: var(--card-bg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  margin-top: 14px;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.form-control {
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.form-actions {
+  margin-top: 16px;
+  text-align: right;
+}
+
+.btn-close {
+  background: transparent;
+  border: 0;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+/* --------------------------------------------
+   PROPERTY EXPENSE SECTION
+-------------------------------------------- */
+#propertyExpenseSection {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.property-tag {
+  background: var(--accent-color);
+  padding: 3px 6px;
+  font-size: 0.75rem;
+  color: white;
+}
+
+/* --------------------------------------------
+   TRANSACTIONS LIST
+-------------------------------------------- */
+.transaction-day-group {
+  margin-bottom: 20px;
+}
+
+.transaction-date-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 4px;
+  font-weight: 600;
+  opacity: 0.8;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.transaction-date-header .positive { color: var(--green); }
+.transaction-date-header .negative { color: var(--red); }
+
+/* --------------------------------------------
+   TRANSACTION CARD
+-------------------------------------------- */
+.transaction-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--card-bg);
+  padding: 14px;
+  margin-top: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-xs);
+}
+
+.transaction-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+}
+
+.transaction-icon {
+  font-size: 1.6rem;
+}
+
+.transaction-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.transaction-title {
+  font-weight: 600;
+}
+
+.transaction-meta {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  display: flex;
+  gap: 6px;
+}
+
+.transaction-description {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.transaction-amount {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.transaction-amount.positive { color: var(--green); }
+.transaction-amount.negative { color: var(--red); }
+
+.transaction-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.transaction-actions button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+.transaction-actions button:hover {
+  opacity: 1;
+}
+
+/* --------------------------------------------
+   EMPTY STATE
+-------------------------------------------- */
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  opacity: 0.6;
+  font-size: 0.95rem;
+}
