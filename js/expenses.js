@@ -159,18 +159,41 @@ export async function initExpensesUI() {
     </div>
 
     <!-- Charts Section -->
-    <div class="charts-container">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>📊 Expenses by Category</h3>
-          <select id="chartType" class="form-select">
-            <option value="pie">Pie Chart</option>
-            <option value="bar">Bar Chart</option>
-            <option value="line">Trend Line</option>
-          </select>
-        </div>
-        <canvas id="expenseChart" height="300"></canvas>
-      </div>
+<div class="charts-container">
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3>📊 Expenses by Category</h3>
+      <select id="chartType" class="form-select">
+        <option value="pie">Pie</option>
+        <option value="bar">Bar</option>
+        <option value="line">Trend</option>
+      </select>
+    </div>
+    <canvas id="expenseChart" height="200"></canvas>
+  </div>
+  
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3>📊 Expense Sources</h3>
+      <button id="btnToggleSource" class="btn btn-outline">Details</button>
+    </div>
+    <canvas id="sourceChart" height="200"></canvas>
+  </div>
+  
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3>📈 Monthly Trend</h3>
+    </div>
+    <canvas id="monthlyTrendChart" height="200"></canvas>
+  </div>
+  
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3>🏠 By Property</h3>
+    </div>
+    <canvas id="propertyChart" height="200"></canvas>
+  </div>
+</div>
       
       <div class="chart-card">
         <div class="chart-header">
@@ -227,6 +250,196 @@ export async function initExpensesUI() {
   await populateFilters();
   await refreshExpensesDashboard();
 }
+
+// ============================================================================
+// 📈 Enhanced Charts - 4 Chart Layout
+// ============================================================================
+
+function renderEnhancedCharts(expenses, properties) {
+  renderCategoryChart(expenses);
+  renderSourceChart(expenses);
+  renderMonthlyTrendChart(expenses);
+  renderPropertyChart(expenses, properties);
+}
+
+function renderSourceChart(expenses) {
+  const ctx = document.getElementById('sourceChart').getContext('2d');
+  
+  const fromTransactions = expenses.filter(e => e.source === 'transaction').length;
+  const directEntries = expenses.filter(e => e.source === 'expense').length;
+  
+  if (window.sourceChartInstance) window.sourceChartInstance.destroy();
+  
+  window.sourceChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Transactions', 'Direct'],
+      datasets: [{
+        data: [fromTransactions, directEntries],
+        backgroundColor: ['#3B82F6', '#10B981'],
+        borderColor: ['#2563EB', '#059669'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { 
+          position: 'bottom',
+          labels: { 
+            usePointStyle: true,
+            font: { size: 10 },
+            padding: 15
+          }
+        },
+        tooltip: {
+          bodyFont: { size: 11 },
+          callbacks: {
+            label: (context) => {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+              return `${context.label}: ${context.raw} (${percentage}%)`;
+            }
+          }
+        }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+function renderMonthlyTrendChart(expenses) {
+  const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+  
+  // Group expenses by month
+  const monthlyData = {};
+  expenses.forEach(e => {
+    const month = e.date.substring(0, 7); // YYYY-MM
+    monthlyData[month] = (monthlyData[month] || 0) + e.amount;
+  });
+  
+  // Get last 6 months
+  const months = [];
+  const amounts = [];
+  const now = new Date();
+  
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthStr = date.toISOString().substring(0, 7);
+    months.push(date.toLocaleDateString('en-AU', { month: 'short' }));
+    amounts.push(monthlyData[monthStr] || 0);
+  }
+  
+  if (window.monthlyTrendChartInstance) window.monthlyTrendChartInstance.destroy();
+  
+  window.monthlyTrendChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Expenses',
+        data: amounts,
+        borderColor: '#8B5CF6',
+        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          bodyFont: { size: 11 },
+          callbacks: {
+            label: (context) => formatCurrency(context.raw)
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            font: { size: 9 },
+            callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+          },
+          grid: { display: false }
+        },
+        x: {
+          ticks: { font: { size: 9 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+    function renderPropertyChart(expenses, properties) {
+      const ctx = document.getElementById('propertyChart').getContext('2d');
+      
+      // Group expenses by property
+      const propertyData = {};
+      expenses.forEach(e => {
+        const property = properties.find(p => p.id === e.propertyId);
+        const propName = property ? property.name.substring(0, 12) : 'General';
+        propertyData[propName] = (propertyData[propName] || 0) + e.amount;
+      });
+      
+      const propNames = Object.keys(propertyData);
+      const propAmounts = Object.values(propertyData);
+      
+      if (window.propertyChartInstance) window.propertyChartInstance.destroy();
+      
+      window.propertyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: propNames,
+          datasets: [{
+            data: propAmounts,
+            backgroundColor: [
+              '#3B82F6', '#10B981', '#F59E0B', '#EC4899', 
+              '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'
+            ].slice(0, propNames.length),
+            borderColor: '#ffffff',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              bodyFont: { size: 11 },
+              callbacks: {
+                label: (context) => formatCurrency(context.raw)
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: { size: 9 },
+                callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+              },
+              grid: { display: false }
+            },
+            x: {
+              ticks: { 
+                font: { size: 9 },
+                maxRotation: 45
+              },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
 
 // ============================================================================
 // 🎛️ Setup Event Listeners
@@ -499,9 +712,9 @@ function renderCategoryChart(expenses) {
     categories[e.category] = (categories[e.category] || 0) + (e.amount || 0);
   });
 
-  const labels = Object.keys(categories);
+  const labels = Object.keys(categories).map(l => l.substring(0, 10));
   const data = Object.values(categories);
-  const backgroundColors = labels.map(cat => EXPENSE_CATEGORIES[cat]?.color || '#6B7280');
+  const backgroundColors = Object.keys(categories).map(cat => EXPENSE_CATEGORIES[cat]?.color || '#6B7280');
 
   if (window.expenseChartInstance) window.expenseChartInstance.destroy();
   
@@ -512,18 +725,25 @@ function renderCategoryChart(expenses) {
       datasets: [{
         data,
         backgroundColor: backgroundColors,
-        borderColor: backgroundColors.map(color => color.replace('0.6', '1')),
-        borderWidth: 2
+        borderColor: '#ffffff',
+        borderWidth: 1
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { 
           position: 'bottom',
-          labels: { usePointStyle: true }
+          labels: { 
+            usePointStyle: true,
+            font: { size: 10 },
+            padding: 15,
+            boxWidth: 10
+          }
         },
         tooltip: {
+          bodyFont: { size: 11 },
           callbacks: {
             label: (context) => {
               const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -537,8 +757,14 @@ function renderCategoryChart(expenses) {
         y: {
           beginAtZero: true,
           ticks: {
-            callback: (value) => formatCurrency(value)
-          }
+            font: { size: 9 },
+            callback: (value) => value > 1000 ? `$${(value/1000).toFixed(0)}k` : `$${value}`
+          },
+          grid: { display: false }
+        },
+        x: {
+          ticks: { font: { size: 9 } },
+          grid: { display: false }
         }
       } : undefined
     }
