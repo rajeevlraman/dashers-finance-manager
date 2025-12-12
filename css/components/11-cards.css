@@ -1,251 +1,274 @@
-/* ==========================================================================
-   11-cards.css — UNIVERSAL CARD COMPONENT
-   Extracted from 8700-line stylesheet
-   ========================================================================== */
+/* ============================================================================
+   11-cards.css – CARD COMPONENTS (cleaned + consolidated)
+   ============================================================================ */
 
-/* Base Card */
+/* Generic Card Base */
 .card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s ease-in-out;
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease-in-out;
 }
 
 .card:hover {
-  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-  transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
 }
 
-/* Card Variants */
+/* Highlight Variants */
 .card.highlight {
-  border-left: 4px solid #2563eb;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+    border-left: 4px solid #2563eb;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
 }
 
 .card.warning {
-  border-left: 4px solid #dc2626;
-  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+    border-left: 4px solid #dc2626;
+    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 }
 
 .card.success {
-  border-left: 4px solid #059669;
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    border-left: 4px solid #059669;
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
 }
 
-.card.info {
-  border-left: 4px solid #3498db;
-  background: #e8f4fd;
-}
-
-/* -------------------------------------------
-   DASHBOARD STAT CARDS
-------------------------------------------- */
+/* Stat Cards (Dashboard, Reports, Expenses, Cost Base) */
 .stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
 }
 
-/* Different types */
-.stat-card.total { border-left: 4px solid #3498db; }
-.stat-card.paid { border-left: 4px solid #27ae60; }
-.stat-card.pending { border-left: 4px solid #f39c12; }
-.stat-card.average { border-left: 4px solid #9b59b6; }
+.stat-card.total       { border-left-color: #3498db; }
+.stat-card.paid        { border-left-color: #27ae60; }
+.stat-card.pending     { border-left-color: #f39c12; }
+.stat-card.average     { border-left-color: #9b59b6; }
+.stat-card.total-income     { border-left-color: #27ae60; }
+.stat-card.total-expenses   { border-left-color: #e74c3c; }
+.stat-card.net-cashflow     { border-left-color: #3498db; }
+.stat-card.savings-rate     { border-left-color: #f39c12; }
+.stat-card.avg-monthly      { border-left-color: #9b59b6; }
+.stat-card.largest-expense  { border-left-color: #e67e22; }
 
-.stat-card.total-income { border-left: 4px solid #27ae60; }
-.stat-card.total-expenses { border-left: 4px solid #e74c3c; }
-.stat-card.net-cashflow { border-left: 4px solid #3498db; }
-.stat-card.savings-rate { border-left: 4px solid #f39c12; }
-.stat-card.largest-expense { border-left: 4px solid #e67e22; }
-
-/* Internals */
+/* Icon inside cards */
 .stat-icon {
-  font-size: 2rem;
-  opacity: 0.8;
+    font-size: 2rem;
+    opacity: 0.8;
 }
 
+/* Text content */
 .stat-content { flex: 1; }
 
 .stat-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--text-color);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2c3e50;
 }
 
 .stat-value.positive { color: #27ae60; }
 .stat-value.negative { color: #e74c3c; }
-.stat-value.warning { color: #f39c12; }
+.stat-value.warning  { color: #f39c12; }
 
 .stat-label {
-  color: #7f8c8d;
-  font-size: 0.9rem;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: .25rem;
 }
 
 .stat-subtext {
-  font-size: 0.8rem;
-  color: #95a5a6;
-  margin-top: 0.25rem;
+    font-size: .8rem;
+    color: #95a5a6;
+    margin-top: .25rem;
 }
 
-/* -------------------------------------------
-   EXPENSE CARDS (transactions + expenses)
-------------------------------------------- */
-.expense-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border-left: 4px solid #bdc3c7;
+/* Budget Progress Card */
+.budget-progress {
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
 }
 
-.expense-card.status-unpaid { border-left-color: #e74c3c; background: #fff5f5; }
-.expense-card.status-pending { border-left-color: #f39c12; background: #fffbf0; }
-.expense-card.status-paid { border-left-color: #27ae60; }
-.expense-card.status-reimbursed { border-left-color: #9b59b6; }
-
-.expense-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: .5rem;
 }
 
-.expense-title {
-  margin: 0 0 0.5rem 0;
-  color: #2c3e50;
-  font-size: 1.1rem;
+.progress-bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: .5rem;
 }
 
-.expense-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.85rem;
-  color: #7f8c8d;
+.progress-fill {
+    height: 100%;
+    background: #10b981;
+    transition: width .3s ease;
 }
 
-.expense-amount {
-  text-align: right;
+.progress-fill.warning {
+    background: #f59e0b;
 }
 
-.amount-value {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #2c3e50;
+.progress-fill.danger {
+    background: #ef4444;
 }
 
-.status-badge {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  white-space: nowrap;
+.progress-status.on-track {
+    color: #10b981;
+    font-weight: 600;
 }
 
-/* -------------------------------------------
-   INFO CARDS (blue gradient)
-------------------------------------------- */
+.progress-status.over-budget {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* Section Cards (filters, expandable sections, info blocks) */
+.expandable-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem;
+    background: #f8fafc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background .2s;
+}
+
+.section-header:hover {
+    background: #f1f5f9;
+}
+
+.section-content {
+    padding: 1rem;
+}
+
+/* Info Cards */
 .info-card {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 2px solid #bae6fd;
-  border-radius: 12px;
-  padding: 1.5rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #bae6fd;
+    border-radius: 12px;
+    padding: 1.25rem;
 }
 
 .info-header {
-  border-bottom: 1px solid #7dd3fc;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
+    border-bottom: 1px solid #7dd3fc;
+    padding-bottom: .75rem;
+    margin-bottom: 1rem;
 }
 
 .info-content ul {
-  margin: 0.5rem 0;
-  padding-left: 1.25rem;
+    padding-left: 1.25rem;
 }
 
-/* -------------------------------------------
-   PROPERTY CARDS (small)
-------------------------------------------- */
-.property-card {
-  padding: 1rem;
-  border-radius: 12px;
-  background: white;
-  border-left: 4px solid #3498db;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.info-content li {
+    margin-bottom: .25rem;
+    color: #0369a1;
 }
 
-/* -------------------------------------------
-   COSTBASE CARDS + TAX SUMMARY
-------------------------------------------- */
-.stat-card.primary { border-left-color: #3498db; background: #e8f4fd; }
-.stat-card.warning { border-left-color: #f39c12; background: #fff3cd; }
-.stat-card.info { border-left-color: #9b59b6; background: #f5eef9; }
-.stat-card.success { border-left-color: #27ae60; background: #e8f6ef; }
-
-/* Tax summary card */
-.tax-summary {
-  background: white;
-  border-radius: 12px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+/* Expense Cards */
+.expense-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #bdc3c7;
 }
 
-/* -------------------------------------------
-   RECORD CARDS (capital vs expense)
-------------------------------------------- */
+.expense-card.status-unpaid    { border-left-color: #e74c3c; background: #fff5f5; }
+.expense-card.status-pending   { border-left-color: #f39c12; background: #fffbf0; }
+.expense-card.status-paid      { border-left-color: #27ae60; }
+.expense-card.status-reimbursed{ border-left-color: #9b59b6; }
+
+.expense-card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.expense-title {
+    margin: 0 0 .5rem 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+.expense-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: .85rem;
+    color: #7f8c8d;
+}
+
+.expense-amount {
+    text-align: right;
+}
+
+.amount-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.status-badge {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    padding: .25rem .75rem;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Record Items (Cost Base) */
 .record-item {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  border-left: 4px solid #3498db;
-  transition: all 0.3s ease;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid #3498db;
+    display: flex;
+    justify-content: space-between;
+    transition: all .3s ease;
 }
 
-.record-item.capital { border-left-color: #3498db; }
 .record-item.expense { border-left-color: #27ae60; }
 
 .record-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.record-icon { font-size: 24px; }
-
-.record-title { font-size: 16px; font-weight: 600; }
-
-/* -------------------------------------------
-   TAX DATE CARDS
-------------------------------------------- */
-.tax-date-card {
-  background: white;
-  padding: 1.25rem;
-  border-radius: 12px;
-  border-left: 4px solid #2563eb;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  margin-bottom: 0.75rem;
+/* Misc Cards */
+.empty-state {
+    text-align: center;
+    background: white;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.tax-date-card:hover {
-  transform: translateX(4px);
+.error-state {
+    text-align: center;
+    background: white;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.tax-date-card.urgent {
-  border-left-color: #dc2626;
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-}
-
-.tax-date-card.upcoming {
-  border-left-color: #f59e0b;
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-}
