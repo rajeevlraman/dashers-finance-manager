@@ -1,122 +1,30 @@
-/* ================================================
-   CORE VARIABLES — GLOBAL DESIGN TOKENS
-   Used by all components, layouts, themes
-   ================================================ */
-
 :root {
-    /* --------------------------------------------
-       COLOR PALETTE (Base)
-       -------------------------------------------- */
-    --color-white: #ffffff;
-    --color-black: #000000;
+  /* Typography */
+  --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
-    --color-gray-50: #f9fafb;
-    --color-gray-100: #f3f4f6;
-    --color-gray-200: #e5e7eb;
-    --color-gray-300: #d1d5db;
-    --color-gray-400: #9ca3af;
-    --color-gray-500: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-700: #374151;
-    --color-gray-800: #1f2937;
-    --color-gray-900: #111827;
+  /* Text Colors */
+  --text-color: #1f2937;
+  --text-muted: #6b7280;
 
-    /* Brand / Accent */
-    --color-primary: #3498db;
-    --color-primary-light: #e8f4fd;
+  /* UI Colors */
+  --app-bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+  --input-bg: #ffffff;
 
-    --color-secondary: #9b59b6;
-    --color-secondary-light: #f5eef9;
+  /* Accent Colors */
+  --accent-color: #2563eb;
+  --accent-light: #3b82f6;
 
-    --color-success: #27ae60;
-    --color-success-light: #e8f6ef;
+  /* Semantic Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 
-    --color-warning: #f39c12;
-    --color-warning-light: #fff3cd;
-
-    --color-danger: #e74c3c;
-    --color-danger-light: #fdecea;
-
-    --color-info: #3b82f6;
-    --color-info-light: #dbeafe;
-
-    /* Dashboard Card Colors */
-    --card-green: #27ae60;
-    --card-red: #e74c3c;
-    --card-blue: #3498db;
-    --card-teal: #1abc9c;
-
-    /* --------------------------------------------
-       RADII SCALE (reduced — OPTION C)
-       -------------------------------------------- */
-    --radius-none: 0;
-    --radius-sm: 2px;
-    --radius-md: 4px;   /* Default */
-    --radius-lg: 6px;
-    --radius-xl: 10px;
-
-    /* --------------------------------------------
-       SHADOWS
-       -------------------------------------------- */
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-    --shadow-md: 0 2px 8px rgba(0,0,0,0.12);
-    --shadow-lg: 0 4px 15px rgba(0,0,0,0.16);
-
-    /* --------------------------------------------
-       SPACING (REM units)
-       -------------------------------------------- */
-    --space-0: 0;
-    --space-1: 0.25rem;
-    --space-2: 0.5rem;
-    --space-3: 0.75rem;
-    --space-4: 1rem;
-    --space-5: 1.25rem;
-    --space-6: 1.5rem;
-    --space-8: 2rem;
-    --space-10: 2.5rem;
-    --space-12: 3rem;
-
-    /* --------------------------------------------
-       TYPOGRAPHY SCALE
-       -------------------------------------------- */
-    --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-
-    --font-size-xs: 0.75rem;
-    --font-size-sm: 0.875rem;
-    --font-size-md: 1rem;
-    --font-size-lg: 1.125rem;
-    --font-size-xl: 1.25rem;
-    --font-size-2xl: 1.5rem;
-    --font-size-3xl: 2rem;
-
-    --font-weight-light: 300;
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
-
-    /* --------------------------------------------
-       TRANSITIONS
-       -------------------------------------------- */
-    --transition-fast: 0.15s ease;
-    --transition-medium: 0.25s ease;
-    --transition-slow: 0.4s ease;
-
-    /* --------------------------------------------
-       BREAKPOINTS
-       -------------------------------------------- */
-    --bp-mobile: 480px;
-    --bp-tablet: 768px;
-    --bp-laptop: 1024px;
-    --bp-desktop: 1280px;
-
-    /* --------------------------------------------
-       Z-INDEX LAYERS
-       -------------------------------------------- */
-    --z-base: 1;
-    --z-dropdown: 100;
-    --z-header: 200;
-    --z-overlay: 900;
-    --z-modal: 1000;
-    --z-splash: 9999;
+  /* Spacing */
+  --radius: 12px;
+  --radius-sm: 6px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 2px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
 }

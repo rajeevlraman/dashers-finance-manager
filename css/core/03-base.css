@@ -1,223 +1,85 @@
-/* ============================================================
-   BASE STYLES — Foundation for the entire UI
-   Sets global rules, resets, accessibility standards,
-   modern spacing, and default interaction behavior.
-   ============================================================ */
-
-/* --------------------------------------------
-   GLOBAL BOX MODEL & RESET
-   -------------------------------------------- */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
+/* Wrapper for all pages */
+.page-wrapper {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-html, body {
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: 100%;
+/* Page section titles */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
-/* --------------------------------------------
-   BODY LAYOUT
-   -------------------------------------------- */
-body {
-    background: var(--color-gray-50);
-    color: var(--color-gray-800);
-    font-family: var(--font-family-base);
-    line-height: 1.55;
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-}
-
-/* --------------------------------------------
-   LINKS
-   -------------------------------------------- */
-a {
-    color: var(--color-primary);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-a:hover {
-    color: var(--color-primary-dark);
-}
-
-/* --------------------------------------------
-   IMAGES / MEDIA
-   -------------------------------------------- */
-img, svg, canvas, video {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
-
-/* --------------------------------------------
-   LISTS
-   -------------------------------------------- */
-ul, ol {
-    margin: 0;
-    padding-left: 1.25rem;
-}
-
-li {
-    margin-bottom: 0.3rem;
-}
-
-/* --------------------------------------------
-   BUTTON RESET
-   -------------------------------------------- */
-button {
-    font-family: inherit;
-    cursor: pointer;
-    border: none;
-    background: none;
-    padding: 0;
-}
-
-/* --------------------------------------------
-   INPUT RESET
-   -------------------------------------------- */
-input,
-select,
-textarea {
-    font-family: inherit;
-    font-size: inherit;
-}
-
-textarea {
-    resize: vertical;
-}
-
-/* --------------------------------------------
-   GLOBAL WRAPPER CONTAINER
-   -------------------------------------------- */
-.container {
-    width: 100%;
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: var(--space-4);
-}
-
-/* --------------------------------------------
-   CARD BASE (inherited by all card components)
-   -------------------------------------------- */
+/* Card container baseline */
 .card {
-    background: var(--card-bg, white);
-    border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: 0.2s ease;
 }
 
-/* --------------------------------------------
-   PANEL / SECTION WRAPPERS
-   -------------------------------------------- */
-.section {
-    margin-bottom: var(--space-6);
+.card:hover {
+  box-shadow: var(--shadow-md);
 }
 
-.section-header {
-    margin-bottom: var(--space-3);
+/* Basic grid */
+.grid {
+  display: grid;
+  gap: 1rem;
 }
 
-/* --------------------------------------------
-   GLOBAL TRANSITIONS
-   -------------------------------------------- */
-* {
-    transition: background-color 0.2s ease,
-                color 0.2s ease,
-                border-color 0.2s ease;
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
-/* --------------------------------------------
-   CUSTOM SCROLLBAR (WebKit)
-   -------------------------------------------- */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
-::-webkit-scrollbar-track {
-    background: var(--color-gray-100);
+/* Buttons */
+.btn {
+  padding: 0.65rem 1.2rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: 0.2s ease;
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--color-gray-400);
-    border-radius: 10px;
+.btn-primary {
+  background: var(--accent-color);
+  color: white;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--color-gray-500);
+.btn-primary:hover {
+  background: var(--accent-light);
 }
 
-/* --------------------------------------------
-   SELECTION COLOR
-   -------------------------------------------- */
-::selection {
-    background: var(--color-primary);
-    color: white;
+.btn-secondary {
+  background: var(--border-color);
+  color: var(--text-color);
 }
 
-/* --------------------------------------------
-   HORIZONTAL RULES
-   -------------------------------------------- */
-hr {
-    border: none;
-    border-bottom: 1px solid var(--color-gray-200);
-    margin: var(--space-4) 0;
+/* Progress Bar */
+.progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-/* --------------------------------------------
-   UTILITY CLASSES (simple global helpers)
-   -------------------------------------------- */
-.hidden { display: none !important; }
-
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.flex-center { align-items: center; justify-content: center; }
-
-.grid { display: grid; }
-
-.text-center { text-align: center; }
-
-.w-full { width: 100%; }
-
-/* --------------------------------------------
-   DARK MODE SUPPORT
-   -------------------------------------------- */
-@media (prefers-color-scheme: dark) {
-    body {
-        background: var(--color-gray-900);
-        color: var(--color-gray-100);
-    }
-
-    .card {
-        background: var(--color-gray-800);
-        border-color: var(--color-gray-700);
-    }
-
-    hr {
-        border-color: var(--color-gray-700);
-    }
-
-    ::-webkit-scrollbar-track {
-        background: var(--color-gray-800);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: var(--color-gray-600);
-    }
+.progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.3s ease;
 }
 
-/* --------------------------------------------
-   MOBILE RESPONSIVENESS
-   -------------------------------------------- */
-@media (max-width: 768px) {
-    .container {
-        padding: var(--space-3);
-    }
-}
+/* Status Colors */
+.status-good { color: var(--success); font-weight: 600; }
+.status-warning { color: var(--warning); font-weight: 600; }
+.status-bad { color: var(--danger); font-weight: 600; }

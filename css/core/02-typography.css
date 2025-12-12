@@ -1,172 +1,29 @@
-/* ============================================================
-   TYPOGRAPHY SYSTEM — Modern, Flat, Minimal (Option A)
-   Designed for dashboards, analytics, finance apps
-   ============================================================ */
-
-html {
-    font-size: 16px;
-}
-
 body {
-    font-family: var(--font-family-base);
-    font-size: var(--font-size-md);
-    color: var(--color-gray-800);
-    background: var(--color-gray-50);
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+  font-family: var(--font-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-color);
 }
 
-/* --------------------------------------------
-   HEADINGS — clean, bold, no decorative spacing
-   -------------------------------------------- */
-h1, h2, h3, h4, h5, h6 {
-    margin: 0 0 var(--space-3) 0;
-    font-weight: var(--font-weight-semibold);
-    line-height: 1.25;
-    color: var(--color-gray-900);
+h1, h2, h3, h4 {
+  font-weight: 600;
+  color: var(--text-color);
 }
 
-h1 {
-    font-size: var(--font-size-3xl);
-}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.25rem; }
+h4 { font-size: 1rem; }
 
-h2 {
-    font-size: var(--font-size-2xl);
-}
-
-h3 {
-    font-size: var(--font-size-xl);
-}
-
-h4 {
-    font-size: var(--font-size-lg);
-}
-
-h5 {
-    font-size: var(--font-size-md);
-}
-
-h6 {
-    font-size: var(--font-size-sm);
-}
-
-/* --------------------------------------------
-   PARAGRAPHS
-   -------------------------------------------- */
 p {
-    margin: 0 0 var(--space-3);
-    font-size: var(--font-size-md);
-    color: var(--color-gray-700);
+  margin-bottom: 0.75rem;
 }
 
-/* --------------------------------------------
-   SMALL TEXT
-   -------------------------------------------- */
 small {
-    font-size: var(--font-size-xs);
-    color: var(--color-gray-500);
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
-/* --------------------------------------------
-   LABEL TEXT (forms, filters)
-   -------------------------------------------- */
-.label,
-.form-label {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-gray-700);
-    margin-bottom: var(--space-1);
-}
-
-/* --------------------------------------------
-   SECTION TITLES (dashboard panels)
-   -------------------------------------------- */
-.section-title,
-.page-title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-gray-900);
-    margin-bottom: var(--space-4);
-}
-
-/* --------------------------------------------
-   CARD TITLES (clean, compact)
-   -------------------------------------------- */
-.card-title {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-gray-800);
-    margin-bottom: var(--space-2);
-}
-
-/* --------------------------------------------
-   METRIC NUMBER (dashboard stats)
-   -------------------------------------------- */
-.metric-value,
-.stat-value {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-gray-900);
-    line-height: 1.1;
-}
-
-.metric-label,
-.stat-label {
-    font-size: var(--font-size-sm);
-    color: var(--color-gray-500);
-}
-
-/* --------------------------------------------
-   TABLE HEADERS
-   -------------------------------------------- */
-table thead th {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-gray-700);
-    text-transform: none;
-}
-
-/* --------------------------------------------
-   NAVIGATION
-   -------------------------------------------- */
-.nav-item,
-.menu-link {
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-gray-700);
-}
-
-.nav-item.active,
-.menu-link.active {
-    color: var(--color-primary);
-    font-weight: var(--font-weight-semibold);
-}
-
-/* --------------------------------------------
-   BUTTON TEXT
-   -------------------------------------------- */
-.btn {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-}
-
-/* --------------------------------------------
-   BADGE / TAG TEXT
-   -------------------------------------------- */
-.badge,
-.tag {
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-}
-
-/* --------------------------------------------
-   RESPONSIVE TYPOGRAPHY
-   -------------------------------------------- */
-@media (max-width: 768px) {
-    h1 { font-size: 1.75rem; }
-    h2 { font-size: 1.4rem; }
-    h3 { font-size: 1.2rem; }
-    .metric-value,
-    .stat-value { font-size: var(--font-size-lg); }
+.text-muted {
+  color: var(--text-muted);
 }

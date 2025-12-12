@@ -1,103 +1,28 @@
-/* ============================================================================
-    Compact App Header
-   ============================================================================ */
-
-.app-header {
-  height: 48px;
-  padding: 0 1rem;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-/* Left section */
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.app-header h1 {
-  font-size: 1rem;
+/* 00-reset.css – Core Reset */
+* {
   margin: 0;
   padding: 0;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  box-sizing: border-box;
 }
 
-.app-header h1 small {
-  font-size: 0.7rem;
-  font-weight: normal;
-  color: var(--text-muted);
+html, body {
+  height: 100%;
+  font-family: var(--font-primary);
+  background: var(--app-bg);
+  color: var(--text-color);
 }
 
-/* Connection status (dot) */
-.status-indicator {
-  font-size: 0.9rem;
-}
-
-/* Right section */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.header-btn {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 6px 10px;
-  border-radius: 6px;
+button {
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
+  border: none;
+  background: none;
 }
 
-.header-btn:hover {
-  background: var(--bg-hover);
+img {
+  max-width: 100%;
+  display: block;
 }
 
-/* Branch Indicator */
-.branch-banner {
-  display: none; /* shown by JS */
-  background: #f39c12;
-  color: white;
-  text-align: center;
-  padding: 4px 0;
-  font-weight: bold;
-  position: fixed;
-  top: 48px; /* BELOW HEADER */
-  left: 0;
-  right: 0;
-  z-index: 1100;
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-
-  .app-header {
-    height: 44px;
-    padding: 0 0.5rem;
-  }
-
-  .app-header h1 {
-    font-size: 0.9rem;
-  }
-
-  .app-header h1 small {
-    display: none;
-  }
-
-  .header-right .header-btn {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-  }
+ul, li {
+  list-style: none;
 }
