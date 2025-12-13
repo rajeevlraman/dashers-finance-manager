@@ -148,6 +148,7 @@ function injectNavigation() {
 }
 
 // Initialize Navigation
+// Initialize Navigation - FIXED with proper menu closing
 function initNavigation() {
   const navbar = document.querySelector(".navbar");
   const navItems = document.querySelectorAll(".nav-item");
@@ -165,6 +166,13 @@ function initNavigation() {
   
   // Set initial indicator position
   updateActiveItem();
+  
+  // Function to close more menu
+  function closeMoreMenuFunc() {
+    moreMenu.classList.remove('active');
+    moreOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
   
   // Handle main nav item clicks
   navItems.forEach((item, index) => {
@@ -186,11 +194,14 @@ function initNavigation() {
         if (window.innerWidth <= 768) {
           navbar.classList.remove("mobile-open");
         }
+        
+        // Also close more menu if it's open
+        closeMoreMenuFunc();
       }
     });
   });
   
-  // Handle more menu item clicks
+  // Handle more menu item clicks - FIXED
   moreItems.forEach(item => {
     item.addEventListener("click", (e) => {
       e.preventDefault();
@@ -207,29 +218,32 @@ function initNavigation() {
         navigateToView(view);
       }
       
-      // Close more menu
-      moreMenu.classList.remove('active');
-      moreOverlay.classList.remove('active');
-      document.body.style.overflow = '';
+      // Close more menu - THIS IS THE FIX
+      closeMoreMenuFunc();
+      
+      // Also close mobile menu if open
+      if (window.innerWidth <= 768) {
+        navbar.classList.remove("mobile-open");
+      }
     });
   });
   
-  // Close more menu
+  // Close more menu with close button
   if (closeMoreMenu) {
-    closeMoreMenu.addEventListener('click', () => {
-      moreMenu.classList.remove('active');
-      moreOverlay.classList.remove('active');
-      document.body.style.overflow = '';
-    });
+    closeMoreMenu.addEventListener('click', closeMoreMenuFunc);
   }
   
+  // Close more menu with overlay click
   if (moreOverlay) {
-    moreOverlay.addEventListener('click', () => {
-      moreMenu.classList.remove('active');
-      moreOverlay.classList.remove('active');
-      document.body.style.overflow = '';
-    });
+    moreOverlay.addEventListener('click', closeMoreMenuFunc);
   }
+  
+  // Close more menu with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && moreMenu.classList.contains('active')) {
+      closeMoreMenuFunc();
+    }
+  });
   
   // Mobile toggle
   if (mobileToggle) {
@@ -246,7 +260,14 @@ function initNavigation() {
   });
   
   // Handle window resize
-  window.addEventListener("resize", updateActiveItem);
+  window.addEventListener("resize", () => {
+    updateActiveItem();
+    
+    // Close more menu on mobile when resizing to desktop
+    if (window.innerWidth > 768 && moreMenu.classList.contains('active')) {
+      closeMoreMenuFunc();
+    }
+  });
   
   // Handle hash changes (browser back/forward)
   window.addEventListener('hashchange', () => {
@@ -261,7 +282,7 @@ function initNavigation() {
     }
   });
   
-  console.log("NAVIGATION: Navigation initialized");
+  console.log("NAVIGATION: Navigation initialized with fixed menu closing");
 }
 
 // Navigate to view
