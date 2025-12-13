@@ -1,5 +1,28 @@
+
 {
+  "name": "property-finance-manager",
+  "version": "2.0.0",
+  "description": "Property Finance Management Dashboard v2.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "finance",
+    "property",
+    "dashboard",
+    "management"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
+    "express": "^4.18.2",
+    "chart.js": "^4.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
     "dexie": "^4.2.1",
     "tree": "^0.1.3"
   }
