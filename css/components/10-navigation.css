@@ -1,4 +1,17 @@
-/* Modern Sidebar Navigation Styles */
+/* ============================================================================
+   MODERN SIDEBAR NAVIGATION - CRITICAL STYLES
+   ============================================================================ */
+
+/* Reset any conflicting styles first */
+.modern-sidebar,
+.hamburger-menu,
+.sidebar-overlay {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Modern Sidebar Base Styles */
 .modern-sidebar {
   position: fixed;
   top: 0;
@@ -7,26 +20,28 @@
   height: 100vh;
   background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
   box-shadow: 5px 0 25px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10000 !important; /* Higher z-index to appear above everything */
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   overflow-x: hidden;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .modern-sidebar.sidebar-open {
-  left: 0;
+  left: 0 !important;
   box-shadow: 10px 0 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Sidebar Header */
 .sidebar-header {
-  padding: 25px 20px;
+  padding: 20px;
   display: flex;
   align-items: center;
   gap: 15px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.2);
-  position: relative;
 }
 
 .sidebar-logo {
@@ -34,13 +49,15 @@
   height: 40px;
   border-radius: 10px;
   object-fit: cover;
+  display: block !important;
 }
 
 .sidebar-title {
   color: white;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
   flex: 1;
+  display: block !important;
 }
 
 .close-sidebar {
@@ -67,6 +84,7 @@
 .sidebar-menu {
   padding: 20px 0;
   list-style: none;
+  margin: 0;
 }
 
 .menu-section {
@@ -93,20 +111,19 @@
   font-size: 1.2rem;
   width: 24px;
   text-align: center;
+  display: block !important;
 }
 
 .menu-title {
   flex: 1;
   font-size: 0.95rem;
+  display: block !important;
 }
 
 .menu-chevron {
   font-size: 0.8rem;
   transition: transform 0.3s ease;
-}
-
-.menu-section.active .menu-chevron {
-  transform: rotate(180deg);
+  display: block !important;
 }
 
 /* Sub Menu */
@@ -116,55 +133,53 @@
   overflow: hidden;
   transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .menu-section.active .sub-menu {
   max-height: 500px;
 }
 
+/* Menu Items */
 .menu-item {
-  display: flex;
+  display: flex !important;
   align-items: center;
   gap: 15px;
-  padding: 12px 20px 12px 55px;
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  font-size: 0.9rem;
+  padding: 12px 20px 12px 55px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-decoration: none !important;
+  font-size: 0.9rem !important;
   transition: all 0.2s ease;
-  position: relative;
   cursor: pointer;
+  background: transparent !important;
+  border: none !important;
+  width: 100% !important;
+  text-align: left !important;
+  position: relative;
 }
 
 .menu-item:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.05);
-  padding-left: 60px;
+  color: white !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding-left: 60px !important;
 }
 
 .menu-item.active {
-  color: white;
-  background: rgba(59, 130, 246, 0.1);
+  color: white !important;
+  background: rgba(59, 130, 246, 0.1) !important;
 }
 
 .item-icon {
   font-size: 1.1rem;
   width: 24px;
   text-align: center;
+  display: block !important;
 }
 
 .item-text {
   flex: 1;
-}
-
-/* Active Highlight Animation */
-.active-highlight {
-  position: absolute;
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3));
-  border-radius: 8px;
-  z-index: -1;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  display: block !important;
 }
 
 /* Hamburger Menu */
@@ -172,7 +187,7 @@
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 999;
+  z-index: 10001 !important;
   display: none;
 }
 
@@ -189,6 +204,8 @@
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 10002;
 }
 
 .hamburger-icon:hover {
@@ -202,10 +219,7 @@
   background: white;
   border-radius: 1px;
   transition: all 0.3s ease;
-}
-
-.hamburger-icon:hover span {
-  background: #f0f9ff;
+  display: block !important;
 }
 
 /* Overlay for Mobile */
@@ -216,7 +230,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 9999 !important;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
@@ -231,33 +245,20 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .modern-sidebar {
-    left: -320px;
+    left: -320px !important;
     width: 280px;
   }
   
   .modern-sidebar.sidebar-open {
-    left: 0;
+    left: 0 !important;
   }
   
   .hamburger-menu {
-    display: block;
+    display: block !important;
   }
   
   .close-sidebar {
-    display: flex;
-  }
-  
-  /* Animate hamburger to X when sidebar is open */
-  .sidebar-open ~ .hamburger-menu .hamburger-icon span:nth-child(1) {
-    transform: rotate(45deg) translate(6px, 6px);
-  }
-  
-  .sidebar-open ~ .hamburger-menu .hamburger-icon span:nth-child(2) {
-    opacity: 0;
-  }
-  
-  .sidebar-open ~ .hamburger-menu .hamburger-icon span:nth-child(3) {
-    transform: rotate(-45deg) translate(6px, -6px);
+    display: flex !important;
   }
 }
 
@@ -271,34 +272,50 @@
   }
   
   .close-sidebar {
-    display: none;
+    display: none !important;
   }
   
   .hamburger-menu {
-    display: none;
+    display: none !important;
   }
   
   /* Adjust main content to account for sidebar */
   main, #mainContent {
-    margin-left: 280px;
+    margin-left: 280px !important;
     transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: calc(100% - 280px) !important;
   }
 }
 
-/* Scrollbar Styling */
-.modern-sidebar::-webkit-scrollbar {
-  width: 6px;
+/* Force display important rules to override any other CSS */
+.modern-sidebar,
+.hamburger-menu,
+.sidebar-overlay,
+.sidebar-header,
+.sidebar-logo,
+.sidebar-title,
+.menu-header,
+.menu-icon,
+.menu-title,
+.menu-chevron,
+.menu-item,
+.item-icon,
+.item-text,
+.hamburger-icon span {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-.modern-sidebar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.modern-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-.modern-sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+/* Debug border to see if sidebar is rendering */
+.modern-sidebar::before {
+  content: 'SIDEBAR RENDERED';
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: red;
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  z-index: 100000;
 }

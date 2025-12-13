@@ -278,5 +278,38 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!--<script type="module" src="./js/ui.js"></script>-->
+
+<script>
+// Debug script to check if navigation is loading
+console.log('🔍 Debug: Checking if navigation.js loaded...');
+
+// Check if navigation elements exist after a delay
+setTimeout(() => {
+  console.log('🔍 Debug: Checking DOM after 2 seconds...');
+  
+  const sidebar = document.querySelector('.modern-sidebar');
+  const hamburger = document.querySelector('.hamburger-menu');
+  
+  console.log('Sidebar found:', !!sidebar);
+  console.log('Hamburger found:', !!hamburger);
+  
+  if (sidebar) {
+    console.log('Sidebar styles:', window.getComputedStyle(sidebar));
+    console.log('Sidebar HTML:', sidebar.outerHTML.substring(0, 200) + '...');
+  }
+  
+  // Force sidebar to be visible for testing
+  if (sidebar) {
+    console.log('🔍 Forcing sidebar to be visible for testing...');
+    sidebar.style.left = '0';
+    sidebar.style.zIndex = '100000';
+    sidebar.style.backgroundColor = 'red';
+    sidebar.style.color = 'white';
+    sidebar.style.padding = '20px';
+    sidebar.innerHTML = '<h2>SIDEBAR IS LOADING</h2><p>If you can see this, JavaScript is working but CSS might have issues.</p>';
+  }
+}, 2000);
+</script>
+
 </body>
 </html>
