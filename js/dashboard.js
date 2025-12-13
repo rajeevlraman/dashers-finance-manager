@@ -749,8 +749,82 @@ function getTodayDate() {
         const fabActions = document.querySelector('.fab-actions');
         fabActions.classList.toggle('show');
         this.textContent = fabActions.classList.contains('show') ? '×' : '+';
+        // Add/remove backdrop for better UX
+        let backdrop = document.querySelector('.fab-backdrop');
+        if (fabActions.classList.contains('show')) {
+          if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'fab-backdrop';
+            fabMain.parentElement.insertBefore(backdrop, fabMain);
+          }
+          backdrop.classList.add('active');
+          
+          // Click outside to close
+          backdrop.addEventListener('click', () => {
+            fabMain.classList.remove('active');
+            fabActions.classList.remove('show');
+            backdrop.classList.remove('active');
+          });
+        } else if (backdrop) {
+          backdrop.classList.remove('active');
+        }
       });
     }
+
+    // Make quickAction globally available with proper implementations
+    window.quickAction = function(action) {
+      console.log(`Quick action triggered: ${action}`);
+      
+      const actions = {
+        expense: () => {
+          // Show expense modal
+          console.log('Opening expense form...');
+          alert('Add Expense form would open here');
+          // window.showAddTransactionModal?.('expense');
+        },
+        income: () => {
+          // Show income modal
+          console.log('Opening income form...');
+          alert('Add Income form would open here');
+          // window.showAddTransactionModal?.('income');
+        },
+        property: () => {
+          // Show property modal
+          console.log('Opening property form...');
+          alert('Add Property form would open here');
+          // window.showAddPropertyModal?.();
+        },
+        bill: () => {
+          // Show bill modal
+          console.log('Opening bill form...');
+          alert('Pay Bill form would open here');
+          // window.showAddBillModal?.();
+        }
+      };
+      
+      if (actions[action]) {
+        actions[action]();
+        
+        // Close FAB after action
+        const fabMain = document.getElementById('fabMain');
+        const fabActions = document.querySelector('.fab-actions');
+        const backdrop = document.querySelector('.fab-backdrop');
+        
+        if (fabMain) fabMain.classList.remove('active');
+        if (fabActions) fabActions.classList.remove('show');
+        if (backdrop) backdrop.classList.remove('active');
+      }
+    };
+
+        // Also attach event listeners to buttons directly as fallback
+    document.querySelectorAll('.fab-actions button').forEach(button => {
+      button.addEventListener('click', function() {
+        const action = this.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+        if (action) {
+          window.quickAction(action);
+        }
+      });
+    });
 
     // Existing Event Listeners
     const monthSelect = document.getElementById('monthSelect');
