@@ -247,59 +247,13 @@ function setupEventListeners(categories, accounts, properties) {
   }
 
 // Export button
-// Replace your export button event listener with this:
 const btnExportTx = document.getElementById('btnExportTx');
 if (btnExportTx) {
   btnExportTx.addEventListener('click', () => {
-    if (confirm('Export all transactions to CSV file?')) {
-      handleExport();
-    }
+     if (confirm('Export all transactions to CSV file?')) {
+    setupExportFunctionality();
+     }
   });
-}
-
-// Then add this function:
-async function handleExport() {
-  try {
-    // Show loading
-    const btn = document.getElementById('btnExportTx');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '📤 Exporting...';
-    btn.disabled = true;
-    
-    // Get transactions
-    const transactions = currentTransactions;
-    
-    if (!transactions.length) {
-      alert('No transactions to export!');
-      return;
-    }
-    
-    // Simple CSV export
-    const csv = convertToCSV(transactions);
-    
-    // Create download
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    
-    a.href = url;
-    a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    
-    URL.revokeObjectURL(url);
-    
-    // Show success message
-    alert(`✅ Exported ${transactions.length} transactions successfully!`);
-    
-  } catch (error) {
-    console.error('Export failed:', error);
-    alert('❌ Export failed. Please try again.');
-  } finally {
-    // Reset button
-    const btn = document.getElementById('btnExportTx');
-    btn.innerHTML = '📤 Export';
-    btn.disabled = false;
-  }
 }
 
   // Clear filters
