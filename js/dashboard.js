@@ -24,53 +24,22 @@ window.toggleSection = function(header) {
 };
 
 window.quickAction = function(action) {
-  console.log(`Quick action triggered: ${action}`);
+  console.log(`Quick action: ${action}`);
   
-  // Define the modal opening functions
-  const actions = {
-    expense: () => {
-      console.log('Opening expense modal...');
-      // If showAddTransactionModal exists, use it
-      if (window.showAddTransactionModal) {
-        window.showAddTransactionModal('expense');
-      } else {
-        // Fallback: create a simple modal
-        createSimpleModal('Add Expense', 'expense-form-placeholder');
-      }
-    },
-    income: () => {
-      console.log('Opening income modal...');
-      if (window.showAddTransactionModal) {
-        window.showAddTransactionModal('income');
-      } else {
-        createSimpleModal('Add Income', 'income-form-placeholder');
-      }
-    },
-    property: () => {
-      console.log('Opening property modal...');
-      if (window.showAddPropertyModal) {
-        window.showAddPropertyModal();
-      } else {
-        createSimpleModal('Add Property', 'property-form-placeholder');
-      }
-    },
-    bill: () => {
-      console.log('Opening bill modal...');
-      if (window.showAddBillModal) {
-        window.showAddBillModal();
-      } else {
-        createSimpleModal('Pay Bill', 'bill-form-placeholder');
-      }
-    }
+   const actions = {
+    expense: () => window.showAddTransactionModal?.('expense'),
+    income: () => window.showAddTransactionModal?.('income'),
+    property: () => window.showAddPropertyModal?.(),
+    bill: () => window.showAddBillModal?.()
   };
   
   if (actions[action]) {
     actions[action]();
-    
-    // Close FAB using the new closeFAB() function
+    // Close FAB
     closeFAB();
   }
 };
+
 window.showDrillDownModal = function(label, data) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
