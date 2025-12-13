@@ -24,38 +24,53 @@ window.toggleSection = function(header) {
 };
 
 window.quickAction = function(action) {
-  console.log(`Quick action: ${action}`);
+  console.log(`Quick action triggered: ${action}`);
   
+  // Define the modal opening functions
   const actions = {
     expense: () => {
-      // Add your expense modal code here
-      console.log('Opening expense form');
-      alert('Expense form would open here');
+      console.log('Opening expense modal...');
+      // If showAddTransactionModal exists, use it
+      if (window.showAddTransactionModal) {
+        window.showAddTransactionModal('expense');
+      } else {
+        // Fallback: create a simple modal
+        createSimpleModal('Add Expense', 'expense-form-placeholder');
+      }
     },
     income: () => {
-      // Add your income modal code here
-      console.log('Opening income form');
-      alert('Income form would open here');
+      console.log('Opening income modal...');
+      if (window.showAddTransactionModal) {
+        window.showAddTransactionModal('income');
+      } else {
+        createSimpleModal('Add Income', 'income-form-placeholder');
+      }
     },
     property: () => {
-      // Add your property modal code here
-      console.log('Opening property form');
-      alert('Property form would open here');
+      console.log('Opening property modal...');
+      if (window.showAddPropertyModal) {
+        window.showAddPropertyModal();
+      } else {
+        createSimpleModal('Add Property', 'property-form-placeholder');
+      }
     },
     bill: () => {
-      // Add your bill modal code here
-      console.log('Opening bill form');
-      alert('Bill form would open here');
+      console.log('Opening bill modal...');
+      if (window.showAddBillModal) {
+        window.showAddBillModal();
+      } else {
+        createSimpleModal('Pay Bill', 'bill-form-placeholder');
+      }
     }
   };
   
   if (actions[action]) {
     actions[action]();
-    // Close FAB
+    
+    // Close FAB using the new closeFAB() function
     closeFAB();
   }
 };
-
 window.showDrillDownModal = function(label, data) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
