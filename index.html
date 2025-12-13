@@ -89,7 +89,7 @@
 
  
   <!-- PWA Installation Banner -->
-  <div id="installBanner" class="install-banner hidden">
+  <div id="installBanner" class="install-banner" style="display: none;">
     <div class="install-banner-content">
       <span class="install-icon">📱</span>
       <div class="install-text">
@@ -146,8 +146,11 @@
     function showInstallBanner() {
         const banner = document.getElementById('installBanner');
         if (banner && deferredPrompt) {
-            banner.classList.remove('hidden');
-            banner.classList.add('show');
+            banner.style.display = 'block';
+            // Small delay for animation
+            setTimeout(() => {
+                banner.classList.add('show');
+            }, 10);
             console.log('📱 Showing install banner');
         }
     }
@@ -156,10 +159,11 @@
         const banner = document.getElementById('installBanner');
         if (banner) {
             banner.classList.remove('show');
-            banner.classList.add('hidden');
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 400); // Match CSS transition duration
         }
     }
-
     document.addEventListener('DOMContentLoaded', function() {
         // Install button handler
         const installBtn = document.getElementById('installBtn');

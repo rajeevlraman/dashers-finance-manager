@@ -14,6 +14,34 @@ import { APP_VERSION } from './version.js';
 console.log("🚀 Budget Tracker v" + APP_VERSION + " | Property & Finance Manager");
 
 
+// Add at the top of app.js after imports:
+let userHasInteracted = false;
+
+document.addEventListener('click', () => {
+    if (!userHasInteracted) {
+        userHasInteracted = true;
+        console.log('👤 User interaction detected');
+        window.userHasInteracted = true;
+    }
+}, { once: true });
+
+// Also update initializeAppCore() to delay storage request:
+async function initializeAppCore() {
+    console.log('🚀 Starting core app initialization...');
+    
+    // Initialize UI
+    initUI();
+    
+    // Run automation
+    await processRecurringTransactions();
+    await processDueBills();
+    
+    // DON'T request storage here - it's now done after user interaction
+    // await requestPersistentStorage(); // Remove or comment this line
+    
+    console.log('✅ Core app initialization completed');
+}
+
 // Optional check: warn if not HTTPS (affects PWA install prompt)
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
     console.warn('⚠️ PWA install prompt might not work when not served over HTTPS');
@@ -23,24 +51,37 @@ if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
 // Persistent Storage Request
 // --------------------------
 async function requestPersistentStorage() {
+    // Only request after user has interacted with the app
+    if (!window.userHasInteracted) {
+        console.log('⏳ Waiting for user interaction before requesting storage...');
+        return false;
+    }
+    
     if (navigator.storage && navigator.storage.persist) {
         try {
-            const isPersisted = await navigator.storage.persisted();
-            if (!isPersisted) {
-                const granted = await navigator.storage.persist();
-                if (granted) {
-                    console.log("✅ Persistent storage granted");
-                } else {
-                    console.warn("⚠️ Persistent storage not granted");
-                }
-            } else {
+            // Check if already persisted first
+            const isAlreadyPersisted = await navigator.storage.persisted();
+            if (isAlreadyPersisted) {
                 console.log("🔒 Already using persistent storage");
+                return true;
+            }
+            
+            // Only now request persistence
+            const granted = await navigator.storage.persist();
+            if (granted) {
+                console.log("✅ Persistent storage granted");
+                return true;
+            } else {
+                console.log("ℹ️ Persistent storage not granted - using standard storage");
+                return false;
             }
         } catch (err) {
             console.error("❌ Error requesting persistent storage:", err);
+            return false;
         }
     } else {
-        console.log("❌ Persistent storage API not supported");
+        console.log("ℹ️ Persistent storage API not supported");
+        return false;
     }
 }
 
