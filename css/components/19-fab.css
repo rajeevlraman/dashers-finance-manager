@@ -164,3 +164,25 @@
   opacity: 1;
   pointer-events: auto;
 }
+.fab-text {
+  display: inline-block;
+}
+
+/* On mobile, hide text on small screens */
+@media (max-width: 480px) {
+  .fab-text {
+    display: none;
+  }
+  
+  .fab-actions button {
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+    padding: 0;
+  }
+  
+  .fab-actions button .fab-icon {
+    margin: 0;
+    font-size: 20px;
+  }
+}
