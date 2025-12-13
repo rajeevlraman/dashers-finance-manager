@@ -1,6 +1,10 @@
+// ============================================================================
+// 🎯 ENHANCED BUDGETS MODULE
+// ============================================================================
+
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 
-// --- HELPER FUNCTION ---
+// --- ENHANCED HELPER FUNCTIONS ---
 function getPeriodStartDate(viewMode) {
     const now = new Date();
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -22,452 +26,639 @@ function getPeriodStartDate(viewMode) {
         case 'yearly':
             date.setMonth(0, 1);
             break;
+        default:
+            date.setDate(1);
     }
     date.setHours(0, 0, 0, 0);
     return date;
 }
 
+function getPeriodEndDate(viewMode) {
+    const start = getPeriodStartDate(viewMode);
+    const end = new Date(start);
+    
+    switch (viewMode) {
+        case 'weekly':
+            end.setDate(start.getDate() + 6);
+            break;
+        case 'fortnightly':
+            end.setDate(start.getDate() + 13);
+            break;
+        case 'monthly':
+            end.setMonth(start.getMonth() + 1);
+            end.setDate(0);
+            break;
+        case 'quarterly':
+            end.setMonth(start.getMonth() + 3);
+            end.setDate(0);
+            break;
+        case 'yearly':
+            end.setFullYear(start.getFullYear() + 1);
+            end.setDate(0);
+            break;
+    }
+    end.setHours(23, 59, 59, 999);
+    return end;
+}
+
+// --- CONVERSION FACTORS ---
+const FREQUENCY_CONVERSION = {
+    weekly: {
+        weekly: 1,
+        fortnightly: 2,
+        monthly: 4.33,
+        quarterly: 13,
+        yearly: 52
+    },
+    fortnightly: {
+        weekly: 0.5,
+        fortnightly: 1,
+        monthly: 2.17,
+        quarterly: 6.5,
+        yearly: 26
+    },
+    monthly: {
+        weekly: 1/4.33,
+        fortnightly: 1/2.17,
+        monthly: 1,
+        quarterly: 3,
+        yearly: 12
+    },
+    quarterly: {
+        weekly: 1/13,
+        fortnightly: 1/6.5,
+        monthly: 1/3,
+        quarterly: 1,
+        yearly: 4
+    },
+    yearly: {
+        weekly: 1/52,
+        fortnightly: 1/26,
+        monthly: 1/12,
+        quarterly: 1/4,
+        yearly: 1
+    }
+};
+
+function convertAmount(amount, fromFreq, toFreq) {
+    if (!FREQUENCY_CONVERSION[fromFreq] || !FREQUENCY_CONVERSION[fromFreq][toFreq]) {
+        console.warn(`Cannot convert from ${fromFreq} to ${toFreq}`);
+        return amount;
+    }
+    return amount * FREQUENCY_CONVERSION[fromFreq][toFreq];
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'AUD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(amount);
+}
+
+function guessCategoryIcon(name = '') {
+    const iconMap = {
+        food: '🍽️', groceries: '🛒', utilities: '💡', rent: '🏠',
+        transport: '🚗', travel: '✈️', entertainment: '🎬',
+        savings: '💰', salary: '💵', health: '⚕️', shopping: '🛍️',
+        pets: '🐾', kids: '🧒', gifts: '🎁', income: '💰',
+        business: '💼', government: '🏛️', investment: '📈',
+        rental: '🏠', tax: '📝', mortgage: '🏦', loan: '💰',
+        insurance: '🛡️', education: '🎓', clothing: '👕',
+        dining: '🍴', coffee: '☕', fitness: '💪', mobile: '📱',
+        internet: '🌐', tv: '📺', music: '🎵', streaming: '🎥',
+        gas: '⛽', parking: '🅿️', maintenance: '🔧'
+    };
+    
+    const key = Object.keys(iconMap).find(k => name?.toLowerCase().includes(k));
+    return iconMap[key] || '💼';
+}
+
+// --- MAIN UI INITIALIZATION ---
 export async function initBudgetsUI() {
-    console.log("✅ initBudgetsUI running…");
+    console.log("🎯 Initializing Budgets UI...");
     const mainContent = document.getElementById('mainContent');
     if (!mainContent) {
         console.error("No #mainContent element found");
         return;
     }
 
+    // Add loading state
+    mainContent.classList.add('budget-loading');
+
     const currentViewMode = document.getElementById('budgetViewMode')?.value || 'monthly';
 
     mainContent.innerHTML = `
-        <div class="budgets-header">
-            <h2>🎯 Budgets</h2>
-            <div class="budgets-controls">
-                <div class="view-mode">
-                    <label class="form-label">View As:</label>
-                    <select id="budgetViewMode" class="form-select">
-                        <option value="weekly"${currentViewMode === 'weekly' ? ' selected' : ''}>Weekly</option>
-                        <option value="fortnightly"${currentViewMode === 'fortnightly' ? ' selected' : ''}>Fortnightly</option>
-                        <option value="monthly"${currentViewMode === 'monthly' ? ' selected' : ''}>Monthly</option>
-                        <option value="quarterly"${currentViewMode === 'quarterly' ? ' selected' : ''}>Quarterly</option>
-                        <option value="yearly"${currentViewMode === 'yearly' ? ' selected' : ''}>Yearly</option>
-                    </select>
+        <div class="budgets-container">
+            <div class="budgets-header">
+                <h2>🎯 Budgets Dashboard</h2>
+                <div class="budgets-controls">
+                    <div class="view-mode">
+                        <label class="form-label">View Period</label>
+                        <select id="budgetViewMode" class="form-select">
+                            <option value="weekly"${currentViewMode === 'weekly' ? ' selected' : ''}>📅 Weekly</option>
+                            <option value="fortnightly"${currentViewMode === 'fortnightly' ? ' selected' : ''}>📅 Fortnightly</option>
+                            <option value="monthly"${currentViewMode === 'monthly' ? ' selected' : ''}>📅 Monthly</option>
+                            <option value="quarterly"${currentViewMode === 'quarterly' ? ' selected' : ''}>📅 Quarterly</option>
+                            <option value="yearly"${currentViewMode === 'yearly' ? ' selected' : ''}>📅 Yearly</option>
+                        </select>
+                    </div>
+                    <button id="addBudgetBtn" class="btn btn-primary">
+                        ➕ Add Budget
+                    </button>
                 </div>
-                <button id="addBudgetBtn" class="btn-primary">➕ Add Budget</button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="card green">
+                    <h3>Budgeted Income</h3>
+                    <p id="totalIncome">${formatCurrency(0)}</p>
+                </div>
+                <div class="card red">
+                    <h3>Budgeted Expenses</h3>
+                    <p id="totalExpenses">${formatCurrency(0)}</p>
+                </div>
+                <div class="card blue">
+                    <h3>Budget Surplus</h3>
+                    <p id="totalBudget">${formatCurrency(0)}</p>
+                </div>
+                <div class="card teal">
+                    <h3>Actual Balance</h3>
+                    <p id="totalBalance">${formatCurrency(0)}</p>
+                </div>
+            </div>
+
+            <!-- Period Info -->
+            <div class="period-info">
+                <p>Viewing: <strong id="periodRange">Current Month</strong></p>
+            </div>
+
+            <!-- Budgets Container -->
+            <div id="budgetContainer" class="budgets-list"></div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="quick-action-btn" id="quickAddIncome">
+                    <span class="icon">💰</span>
+                    <span class="label">Add Income</span>
+                </div>
+                <div class="quick-action-btn" id="quickAddExpense">
+                    <span class="icon">💸</span>
+                    <span class="label">Add Expense</span>
+                </div>
+                <div class="quick-action-btn" id="quickDuplicate">
+                    <span class="icon">📋</span>
+                    <span class="label">Duplicate Budgets</span>
+                </div>
             </div>
         </div>
-
-        <div class="summary-cards">
-            <div class="card green"><h3>Budget Income</h3><p id="totalIncome">$0.00</p></div>
-            <div class="card red"><h3>Budget Expenses</h3><p id="totalExpenses">$0.00</p></div>
-            <div class="card blue"><h3>Budget Surplus</h3><p id="totalBudget">$0.00</p></div>
-            <div class="card teal"><h3>Actual Balance</h3><p id="totalBalance">$0.00</p></div>
-        </div>
-
-        <div id="budgetContainer" class="budgets-container"></div>
     `;
 
+    // Remove loading state
+    mainContent.classList.remove('budget-loading');
+
+    // Setup event listeners
+    setupEventListeners(currentViewMode);
+
+    // Load and render budgets
+    await loadAndRenderBudgets(currentViewMode);
+}
+
+// --- EVENT LISTENERS SETUP ---
+function setupEventListeners(viewMode) {
+    // View mode change
     const viewModeSelect = document.getElementById('budgetViewMode');
-    viewModeSelect.addEventListener('change', () => {
-        console.log('Global view mode changed to:', viewModeSelect.value);
-        initBudgetsUI(); 
+    if (viewModeSelect) {
+        viewModeSelect.addEventListener('change', async () => {
+            await loadAndRenderBudgets(viewModeSelect.value);
+        });
+    }
+
+    // Add budget button
+    const addBudgetBtn = document.getElementById('addBudgetBtn');
+    if (addBudgetBtn) {
+        addBudgetBtn.addEventListener('click', () => {
+            showBudgetEditor(null, viewMode);
+        });
+    }
+
+    // Quick actions
+    document.getElementById('quickAddIncome')?.addEventListener('click', () => {
+        showQuickAddForm('income', viewMode);
     });
 
-    const viewMode = viewModeSelect.value;
-    console.log('Rendering budgets in view mode:', viewMode);
+    document.getElementById('quickAddExpense')?.addEventListener('click', () => {
+        showQuickAddForm('expense', viewMode);
+    });
 
-    const [budgets, transactions, categories] = await Promise.all([
-        getAllItems(STORE_NAMES.budgets),
-        getAllItems(STORE_NAMES.transactions),
-        getAllItems(STORE_NAMES.categories)
-    ]);
+    document.getElementById('quickDuplicate')?.addEventListener('click', () => {
+        duplicateBudgets(viewMode);
+    });
+}
 
+// --- LOAD AND RENDER BUDGETS ---
+async function loadAndRenderBudgets(viewMode) {
+    try {
+        const [budgets, transactions, categories, accounts] = await Promise.all([
+            getAllItems(STORE_NAMES.budgets),
+            getAllItems(STORE_NAMES.transactions),
+            getAllItems(STORE_NAMES.categories),
+            getAllItems(STORE_NAMES.accounts)
+        ]);
+
+        // Update period range display
+        const periodStart = getPeriodStartDate(viewMode);
+        const periodEnd = getPeriodEndDate(viewMode);
+        const periodRange = document.getElementById('periodRange');
+        if (periodRange) {
+            periodRange.textContent = `${periodStart.toLocaleDateString()} - ${periodEnd.toLocaleDateString()}`;
+        }
+
+        renderBudgets(budgets, transactions, categories, accounts, viewMode);
+    } catch (error) {
+        console.error('Error loading budgets:', error);
+        showError('Failed to load budgets. Please try again.');
+    }
+}
+
+// --- RENDER BUDGETS ---
+function renderBudgets(budgets, transactions, categories, accounts, viewMode) {
     const container = document.getElementById('budgetContainer');
+    if (!container) return;
+
+    // Clear container
     container.innerHTML = '';
 
-    // Get income categories dynamically from your categories data
-    const incomeCategories = categories.filter(cat => 
-        cat.type === 'income' || 
-        cat.name?.toLowerCase().includes('salary') || 
-        cat.name?.toLowerCase().includes('income')
-    ).map(cat => cat.id);
+    if (budgets.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No Budgets Yet</h3>
+                <p>Start by creating your first budget to track your finances.</p>
+                <button id="createFirstBudget" class="btn btn-primary">
+                    Create Your First Budget
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('createFirstBudget')?.addEventListener('click', () => {
+            showBudgetEditor(null, viewMode);
+        });
+        return;
+    }
 
-    const expenseCategories = categories.filter(cat => 
-        cat.type === 'expense' || 
-        !incomeCategories.includes(cat.id)
-    ).map(cat => cat.id);
-
-    console.log('Income categories:', incomeCategories);
-    console.log('Expense categories:', expenseCategories);
-
-    // Calculate totals with frequency conversion
+    // Calculate totals
+    const periodStart = getPeriodStartDate(viewMode);
+    const periodStartISO = periodStart.toISOString();
+    
     let totalIncome = 0;
     let totalExpenses = 0;
-
+    
     budgets.forEach(budget => {
-        const normalizedAmount = convertAmount(
-            budget.amount || 0, 
-            budget.frequency || 'monthly', 
-            viewMode
-        );
-
-        if (incomeCategories.includes(budget.categoryId)) {
-            totalIncome += normalizedAmount;
-        } else if (expenseCategories.includes(budget.categoryId)) {
-            totalExpenses += normalizedAmount;
+        const cat = categories.find(c => c.id === budget.categoryId);
+        if (cat?.type === 'income') {
+            totalIncome += convertAmount(budget.amount || 0, budget.frequency || 'monthly', viewMode);
+        } else {
+            totalExpenses += convertAmount(budget.amount || 0, budget.frequency || 'monthly', viewMode);
         }
     });
 
     const budgetSurplus = totalIncome - totalExpenses;
     
-    // Calculate actual balance from transactions in current period
-    const periodStartDate = getPeriodStartDate(viewMode);
-    const periodStartISO = periodStartDate.toISOString();
-    
+    // Calculate actuals
     const actualIncome = transactions
         .filter(t => t.type === 'income' && t.date >= periodStartISO)
         .reduce((sum, t) => sum + t.amount, 0);
-        
+    
     const actualExpenses = transactions
         .filter(t => t.type === 'expense' && t.date >= periodStartISO)
         .reduce((sum, t) => sum + t.amount, 0);
-        
+    
     const actualBalance = actualIncome - actualExpenses;
 
-    // Update the totals on the UI
-    document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
-    document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
-    document.getElementById('totalBudget').textContent = `$${budgetSurplus.toFixed(2)}`;
-    document.getElementById('totalBudget').className = budgetSurplus >= 0 ? 'positive' : 'negative';
-    document.getElementById('totalBalance').textContent = `$${actualBalance.toFixed(2)}`;
-    document.getElementById('totalBalance').className = actualBalance >= 0 ? 'positive' : 'negative';
+    // Update summary cards
+    updateSummaryCards(totalIncome, totalExpenses, budgetSurplus, actualBalance);
 
-    if (budgets.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <p>No budgets yet. Click "Add Budget" to create one.</p>
-            </div>
-        `;
-    } else {
-        // Separate income and expense budgets
-        const incomeBudgets = budgets.filter(budget => incomeCategories.includes(budget.categoryId));
-        const expenseBudgets = budgets.filter(budget => expenseCategories.includes(budget.categoryId));
+    // Separate income and expense budgets
+    const incomeBudgets = budgets.filter(budget => {
+        const cat = categories.find(c => c.id === budget.categoryId);
+        return cat?.type === 'income';
+    });
 
-        // Add income section header if there are income budgets
-        if (incomeBudgets.length > 0) {
-            const incomeHeader = document.createElement('div');
-            incomeHeader.className = 'budgets-section-header';
-            incomeHeader.innerHTML = `<h3>💰 Income Budgets</h3>`;
-            container.appendChild(incomeHeader);
-        }
+    const expenseBudgets = budgets.filter(budget => {
+        const cat = categories.find(c => c.id === budget.categoryId);
+        return cat?.type !== 'income';
+    });
 
-        // Render income budgets first
+    // Render income section
+    if (incomeBudgets.length > 0) {
+        const incomeHeader = document.createElement('div');
+        incomeHeader.className = 'budgets-section-header';
+        incomeHeader.innerHTML = `<h3>💰 Income Budgets</h3>`;
+        container.appendChild(incomeHeader);
+
         incomeBudgets.forEach(budget => {
-            renderBudgetCard(budget, categories, transactions, incomeCategories, periodStartISO, viewMode, container);
-        });
-
-        // Add expense section header if there are expense budgets
-        if (expenseBudgets.length > 0) {
-            const expenseHeader = document.createElement('div');
-            expenseHeader.className = 'budgets-section-header';
-            expenseHeader.innerHTML = `<h3>💸 Expense Budgets</h3>`;
-            container.appendChild(expenseHeader);
-        }
-
-        // Render expense budgets after income
-        expenseBudgets.forEach(budget => {
-            renderBudgetCard(budget, categories, transactions, incomeCategories, periodStartISO, viewMode, container);
+            container.appendChild(createBudgetCard(budget, categories, transactions, periodStartISO, viewMode));
         });
     }
 
-    document.getElementById('addBudgetBtn').addEventListener('click', () => {
-        showInlineEditor(null, categories);
-    });
+    // Render expense section
+    if (expenseBudgets.length > 0) {
+        const expenseHeader = document.createElement('div');
+        expenseHeader.className = 'budgets-section-header';
+        expenseHeader.innerHTML = `<h3>💸 Expense Budgets</h3>`;
+        container.appendChild(expenseHeader);
+
+        expenseBudgets.forEach(budget => {
+            container.appendChild(createBudgetCard(budget, categories, transactions, periodStartISO, viewMode));
+        });
+    }
 }
 
-function renderBudgetCard(budget, categories, transactions, incomeCategories, periodStartISO, viewMode, container) {
+// --- CREATE BUDGET CARD ---
+function createBudgetCard(budget, categories, transactions, periodStartISO, viewMode) {
     const cat = categories.find(c => c.id === budget.categoryId);
     const icon = budget.icon || guessCategoryIcon(cat?.name);
-    const goal = budget.amount || 0;
-
-    // Filter transactions to current period AND category
+    const isIncome = cat?.type === 'income';
+    
+    // Calculate normalized amounts
+    const normalizedGoal = convertAmount(budget.amount || 0, budget.frequency || 'monthly', viewMode);
+    
     const spentInPeriod = transactions
         .filter(t => {
-            // For income budgets, track income transactions; for expense budgets, track expense transactions
-            const isCorrectType = incomeCategories.includes(budget.categoryId) 
-                ? t.type === 'income' 
-                : t.type === 'expense';
-            
+            const isCorrectType = isIncome ? t.type === 'income' : t.type === 'expense';
             return isCorrectType && 
                    t.categoryId === budget.categoryId &&
                    t.date >= periodStartISO;
         })
         .reduce((sum, t) => sum + t.amount, 0);
 
-    // Normalize both goal and spent to current view mode
-    const normalizedGoal = convertAmount(goal, budget.frequency || 'monthly', viewMode);
-    const normalizedSpent = spentInPeriod; 
+    const remaining = Math.max(normalizedGoal - spentInPeriod, 0);
+    const percent = normalizedGoal > 0 ? Math.min((spentInPeriod / normalizedGoal) * 100, 100) : 0;
     
-    // For income budgets, we want to track how much we've earned vs goal
-    // For expense budgets, we track how much we've spent vs goal
-    const remaining = incomeCategories.includes(budget.categoryId) 
-        ? Math.max(normalizedGoal - normalizedSpent, 0)
-        : Math.max(normalizedGoal - normalizedSpent, 0);
-    
-    const percent = normalizedGoal > 0 ? Math.min((normalizedSpent / normalizedGoal) * 100, 100) : 0;
-    const isOverBudget = incomeCategories.includes(budget.categoryId) 
-        ? normalizedSpent < normalizedGoal // For income, we're "over" if we earned less than goal
-        : normalizedSpent > normalizedGoal; // For expenses, we're over if we spent more than goal
+    const isOverBudget = isIncome ? 
+        spentInPeriod < normalizedGoal : 
+        spentInPeriod > normalizedGoal;
 
-    const budgetCard = document.createElement('div');
-    budgetCard.className = `budget-card ${isOverBudget ? 'over-budget' : ''} ${incomeCategories.includes(budget.categoryId) ? 'income-budget' : 'expense-budget'}`;
-    budgetCard.setAttribute('data-id', budget.id); // Add data-id for finding the card later
-    budgetCard.innerHTML = `
+    // Create card element
+    const card = document.createElement('div');
+    card.className = `budget-card ${isOverBudget ? 'over-budget' : ''} ${isIncome ? 'income-budget' : 'expense-budget'}`;
+    card.dataset.id = budget.id;
+
+    card.innerHTML = `
         <div class="budget-card-row1">
             <div class="budget-left">
                 <span class="category-icon">${icon}</span>
-                <span class="category-name">${cat?.name || 'Unknown'}</span>
-
-                <span class="budget-values">
-                    $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} 
-                    · ${percent.toFixed(0)}%
-                </span>
+                <div>
+                    <div class="category-name">${cat?.name || 'Unknown Category'}</div>
+                    <small style="color: var(--text-muted);">${budget.frequency || 'monthly'} budget</small>
+                </div>
+                <div class="budget-values">
+                    ${formatCurrency(spentInPeriod)} / ${formatCurrency(normalizedGoal)}
+                    <span style="color: var(--${percent > 100 ? 'danger' : 'success'});">
+                        · ${percent.toFixed(0)}%
+                    </span>
+                </div>
             </div>
-
             <div class="budget-actions">
-                <button class="action-btn edit-btn" data-id="${budget.id}" title="Edit">✏️</button>
-                <button class="action-btn delete-btn" data-id="${budget.id}" title="Delete">🗑️</button>
+                <button class="action-btn edit-btn" data-action="edit" data-id="${budget.id}" title="Edit Budget">
+                    ✏️
+                </button>
+                <button class="action-btn delete-btn" data-action="delete" data-id="${budget.id}" title="Delete Budget">
+                    🗑️
+                </button>
             </div>
         </div>
-
         <div class="budget-card-row2">
             <div class="sub-progress-bar-container">
-                <div class="sub-progress-bar" style="width:${percent}%"></div>
+                <div class="sub-progress-bar" style="width: ${percent}%"></div>
             </div>
-
             <div class="budget-status">
-                $${remaining.toFixed(2)} ${incomeCategories.includes(budget.categoryId) ? 'to earn' : 'remaining'} — 
-                ${isOverBudget 
-                    ? '<span class="status-over">⚠️ ' + (incomeCategories.includes(budget.categoryId) ? 'Behind' : 'Over') + '</span>' 
-                    : '<span class="status-good">On Track</span>'
+                ${isIncome ? 'Earned' : 'Spent'} ${formatCurrency(spentInPeriod)} of ${formatCurrency(normalizedGoal)}
+                · ${formatCurrency(remaining)} ${isIncome ? 'to earn' : 'remaining'}
+                · ${isOverBudget ? 
+                    `<span class="status-over">⚠️ ${isIncome ? 'Behind target' : 'Over budget'}</span>` : 
+                    `<span class="status-good">✅ On track</span>`
                 }
             </div>
         </div>
     `;
 
-    budgetCard.querySelector('.delete-btn').addEventListener('click', async () => {
+    // Add event listeners
+    card.querySelector('.edit-btn').addEventListener('click', () => {
+        showBudgetEditor(budget, viewMode);
+    });
+
+    card.querySelector('.delete-btn').addEventListener('click', async () => {
         if (confirm(`Delete budget for "${cat?.name}"?`)) {
             await deleteItem(STORE_NAMES.budgets, budget.id);
-            initBudgetsUI();
+            await loadAndRenderBudgets(viewMode);
         }
     });
 
-    budgetCard.querySelector('.edit-btn').addEventListener('click', () => {
-        showInlineEditor(budget, categories, true); // Pass true to scroll to form
-    });
-
-    container.appendChild(budgetCard);
+    return card;
 }
 
-function showInlineEditor(existing, categories, scrollToForm = true) {
-    const container = document.getElementById('budgetContainer');
-    container.querySelectorAll('.budget-editor').forEach(el => el.remove());
+// --- UPDATE SUMMARY CARDS ---
+function updateSummaryCards(income, expenses, surplus, actual) {
+    const elements = {
+        totalIncome: document.getElementById('totalIncome'),
+        totalExpenses: document.getElementById('totalExpenses'),
+        totalBudget: document.getElementById('totalBudget'),
+        totalBalance: document.getElementById('totalBalance')
+    };
 
+    if (elements.totalIncome) elements.totalIncome.textContent = formatCurrency(income);
+    if (elements.totalExpenses) elements.totalExpenses.textContent = formatCurrency(expenses);
+    if (elements.totalBudget) {
+        elements.totalBudget.textContent = formatCurrency(surplus);
+        elements.totalBudget.style.color = surplus >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+    if (elements.totalBalance) {
+        elements.totalBalance.textContent = formatCurrency(actual);
+        elements.totalBalance.style.color = actual >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+}
+
+// --- SHOW BUDGET EDITOR ---
+async function showBudgetEditor(existingBudget, viewMode) {
+    const categories = await getAllItems(STORE_NAMES.categories);
+    const container = document.getElementById('budgetContainer');
+    
+    // Remove any existing editor
+    container.querySelectorAll('.budget-editor').forEach(el => el.remove());
+    
     const form = document.createElement('div');
     form.className = 'budget-editor';
     form.innerHTML = `
         <div class="budget-form-card">
-            <h3>${existing ? 'Edit Budget' : 'Add New Budget'}</h3>
+            <h3>${existingBudget ? '✏️ Edit Budget' : '➕ Add New Budget'}</h3>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Icon:</label>
+                    <label>Icon</label>
                     <div class="icon-input">
-                        <input type="text" id="iconInput" value="${existing?.icon || ''}" placeholder="💡" maxlength="2">
+                        <input type="text" id="budgetIcon" 
+                               value="${existingBudget?.icon || ''}" 
+                               placeholder="💰" maxlength="2">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Category:</label>
-                    <select id="categoryInput" class="form-select">
+                    <label>Category</label>
+                    <select id="budgetCategory" class="form-select" required>
                         <option value="">-- Select Category --</option>
-                        ${categories.map(c => {
-                            const icon = c.icon || guessCategoryIcon(c.name || '');
-                            const type = c.type === 'income' ? '💰 Income' : '💸 Expense';
-                            return `<option value="${c.id}" ${c.id === existing?.categoryId ? 'selected' : ''}>${icon} ${c.name} (${type})</option>`;
-                        }).join('')}
+                        ${categories.map(cat => `
+                            <option value="${cat.id}" 
+                                    data-type="${cat.type}"
+                                    ${existingBudget?.categoryId === cat.id ? 'selected' : ''}>
+                                ${cat.icon || guessCategoryIcon(cat.name)} ${cat.name}
+                                <span class="category-badge ${cat.type}">${cat.type}</span>
+                            </option>
+                        `).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Goal Amount:</label>
-                    <input type="number" id="goalInput" class="form-input" placeholder="0.00" value="${existing?.amount || ''}" min="0" step="0.01">
+                    <label>Goal Amount</label>
+                    <input type="number" id="budgetAmount" 
+                           class="form-input" 
+                           value="${existingBudget?.amount || ''}" 
+                           placeholder="0.00" 
+                           min="0" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label>Frequency:</label>
-                    <select id="frequencyInput" class="form-select">
-                        <option value="weekly"${existing?.frequency==='weekly'?' selected':''}>Weekly</option>
-                        <option value="fortnightly"${existing?.frequency==='fortnightly'?' selected':''}>Fortnightly</option>
-                        <option value="monthly"${existing?.frequency==='monthly'?' selected':''}>Monthly</option>
-                        <option value="quarterly"${existing?.frequency==='quarterly'?' selected':''}>Quarterly</option>
-                        <option value="yearly"${existing?.frequency==='yearly'?' selected':''}>Yearly</option>
+                    <label>Frequency</label>
+                    <select id="budgetFrequency" class="form-select" required>
+                        <option value="weekly" ${existingBudget?.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
+                        <option value="fortnightly" ${existingBudget?.frequency === 'fortnightly' ? 'selected' : ''}>Fortnightly</option>
+                        <option value="monthly" ${existingBudget?.frequency === 'monthly' || !existingBudget ? 'selected' : ''}>Monthly</option>
+                        <option value="quarterly" ${existingBudget?.frequency === 'quarterly' ? 'selected' : ''}>Quarterly</option>
+                        <option value="yearly" ${existingBudget?.frequency === 'yearly' ? 'selected' : ''}>Yearly</option>
                     </select>
                 </div>
-                <div class="form-actions">
-                    <button id="saveBudgetBtn" class="btn-primary">💾 Save</button>
-                    <button id="cancelBudgetBtn" class="btn-secondary">Cancel</button>
-                </div>
+            </div>
+            <div class="form-actions">
+                <button id="saveBudget" class="btn btn-primary">
+                    💾 Save Budget
+                </button>
+                <button id="cancelBudget" class="btn btn-secondary">
+                    Cancel
+                </button>
             </div>
         </div>
     `;
 
-    // Insert form at the right position
-    if (existing) {
-        // Find the budget card being edited and insert form after it
-        const budgetCard = container.querySelector(`.budget-card[data-id="${existing.id}"]`);
+    // Insert form
+    if (existingBudget) {
+        const budgetCard = container.querySelector(`.budget-card[data-id="${existingBudget.id}"]`);
         if (budgetCard) {
             budgetCard.insertAdjacentElement('afterend', form);
         } else {
             container.prepend(form);
         }
     } else {
-        // For new budgets, insert at the top
         container.prepend(form);
     }
 
-    // Scroll to form if requested
-    if (scrollToForm) {
-        setTimeout(() => {
-            form.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }, 100);
-    }
+    // Scroll to form
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    const catInput = document.getElementById('categoryInput');
-    const iconInput = document.getElementById('iconInput');
-    catInput.addEventListener('change', () => {
-        if (!iconInput.value.trim()) {
-            const selected = categories.find(c => c.id === catInput.value);
-            iconInput.value = selected?.icon || guessCategoryIcon(selected?.name);
+    // Add auto-icon selection
+    const categorySelect = document.getElementById('budgetCategory');
+    const iconInput = document.getElementById('budgetIcon');
+    
+    categorySelect.addEventListener('change', () => {
+        const selectedOption = categorySelect.selectedOptions[0];
+        if (selectedOption && !iconInput.value.trim()) {
+            const cat = categories.find(c => c.id === categorySelect.value);
+            iconInput.value = cat?.icon || guessCategoryIcon(cat?.name);
         }
     });
 
-    document.getElementById('saveBudgetBtn').addEventListener('click', async () => {
-        const categoryId = document.getElementById('categoryInput').value;
-        const amount = parseFloat(document.getElementById('goalInput').value);
-        const icon = document.getElementById('iconInput').value || '💰';
-        const frequency = document.getElementById('frequencyInput').value;
-
-        if (!categoryId || isNaN(amount)) {
-            alert('Please select a category and enter a goal amount.');
-            return;
-        }
-
-        const existingBudgets = await getAllItems(STORE_NAMES.budgets);
-        const duplicate = existingBudgets.some(budget => 
-            budget.categoryId === categoryId && 
-            budget.frequency === frequency &&
-            budget.id !== existing?.id
-        );
-
-        if (duplicate) {
-            alert('A budget for this category and frequency already exists!');
-            return;
-        }
-
-        const safeId = existing?.id || generateId();
-
-        const budgetData = {
-            id: safeId,
-            categoryId,
-            amount,
-            icon,
-            frequency,
-            createdAt: existing?.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        try {
-            if (existing) {
-                await updateItem(STORE_NAMES.budgets, budgetData);
-            } else {
-                await addItem(STORE_NAMES.budgets, budgetData);
-            }
-            console.log('✅ Budget saved successfully', budgetData);
-            initBudgetsUI();
-        } catch (err) {
-            console.error('❌ Error saving budget:', err);
-            alert('Error saving budget: ' + err.message);
-        }
+    // Save button
+    document.getElementById('saveBudget').addEventListener('click', async () => {
+        await saveBudget(existingBudget, viewMode);
     });
 
-    document.getElementById('cancelBudgetBtn').addEventListener('click', () => {
+    // Cancel button
+    document.getElementById('cancelBudget').addEventListener('click', () => {
         form.remove();
     });
 }
 
-function convertAmount(amount, fromFreq, toFreq) {
-    const multipliers = {
-        weekly: { 
-            weekly: 1,     
-            fortnightly: 2,   
-            monthly: 4.33,     
-            quarterly: 13,    
-            yearly: 52 
-        },
-        fortnightly: { 
-            weekly: 0.5,     
-            fortnightly: 1,     
-            monthly: 2.17,  
-            quarterly: 6.5,   
-            yearly: 26 
-        },
-        monthly: { 
-            weekly: 1/4.33,  
-            fortnightly: 1/2.17,  
-            monthly: 1,       
-            quarterly: 3,    
-            yearly: 12 
-        },
-        quarterly: { 
-            weekly: 1/13,    
-            fortnightly: 1/6.5,   
-            monthly: 1/3,       
-            quarterly: 1,      
-            yearly: 4 
-        }, 
-        yearly: { 
-            weekly: 1/52,    
-            fortnightly: 1/26,    
-            monthly: 1/12,      
-            quarterly: 1/4,      
-            yearly: 1 
-        }
+// --- SAVE BUDGET ---
+async function saveBudget(existingBudget, viewMode) {
+    const categoryId = document.getElementById('budgetCategory').value;
+    const amount = parseFloat(document.getElementById('budgetAmount').value);
+    const icon = document.getElementById('budgetIcon').value.trim() || '💰';
+    const frequency = document.getElementById('budgetFrequency').value;
+
+    if (!categoryId || isNaN(amount) || amount <= 0) {
+        alert('Please select a category and enter a valid goal amount.');
+        return;
+    }
+
+    const budgetData = {
+        id: existingBudget?.id || generateId(),
+        categoryId,
+        amount,
+        icon,
+        frequency,
+        createdAt: existingBudget?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
-    
-    const map = multipliers[fromFreq];
-    
-    if (!map) {
-        console.warn('Unknown fromFreq:', fromFreq, '– using no conversion');
-        return amount;
+
+    try {
+        if (existingBudget) {
+            await updateItem(STORE_NAMES.budgets, budgetData);
+        } else {
+            await addItem(STORE_NAMES.budgets, budgetData);
+        }
+        
+        await loadAndRenderBudgets(viewMode);
+    } catch (error) {
+        console.error('Error saving budget:', error);
+        alert('Failed to save budget. Please try again.');
     }
-    
-    const factor = map[toFreq];
-    
-    if (factor === undefined) {
-        console.warn('Cannot convert from', fromFreq, 'to', toFreq, '– using no conversion');
-        return amount;
-    }
-    
-    return amount * factor; 
 }
 
-function guessCategoryIcon(name = '') {
-    const map = {
-        food: '🍽️', groceries: '🛒', utilities: '💡', rent: '🏠',
-        transport: '🚗', travel: '✈️', entertainment: '🎬',
-        savings: '💰', salary: '💵', health: '⚕️', shopping: '🛍️',
-        pets: '🐾', kids: '🧒', gifts: '🎁', income: '💰',
-        business: '💼', government: '🏛️', investment: '📈',
-        rental: '🏠', tax: '📝'
-    };
-    const key = Object.keys(map).find(k => name?.toLowerCase().includes(k));
-    return map[key] || '💼';
+// --- QUICK ADD FORM ---
+function showQuickAddForm(type, viewMode) {
+    alert(`Quick ${type} budget form coming soon!`);
+    // You can implement a simplified form here
+}
+
+// --- DUPLICATE BUDGETS ---
+async function duplicateBudgets(viewMode) {
+    if (!confirm('Duplicate all budgets for next period?')) return;
+    
+    const budgets = await getAllItems(STORE_NAMES.budgets);
+    
+    for (const budget of budgets) {
+        const newBudget = {
+            ...budget,
+            id: generateId(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        await addItem(STORE_NAMES.budgets, newBudget);
+    }
+    
+    alert(`Duplicated ${budgets.length} budgets for next period.`);
+    await loadAndRenderBudgets(viewMode);
+}
+
+// --- ERROR HANDLING ---
+function showError(message) {
+    const container = document.getElementById('budgetContainer');
+    if (container) {
+        container.innerHTML = `
+            <div class="empty-state" style="border-color: var(--danger);">
+                <h3>⚠️ Error</h3>
+                <p>${message}</p>
+                <button onclick="location.reload()" class="btn btn-secondary">
+                    Retry
+                </button>
+            </div>
+        `;
+    }
 }
