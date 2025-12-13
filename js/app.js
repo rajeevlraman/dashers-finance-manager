@@ -24,9 +24,7 @@ document.addEventListener('click', () => {
         window.userHasInteracted = true;
     }
 }, { once: true });
-
-// Also update initializeAppCore() to delay storage request:
-async function initializeAppCore() {
+appcoreasync function initializeAppCore() {
     console.log('🚀 Starting core app initialization...');
     
     // Initialize UI
@@ -364,40 +362,6 @@ function updateConnectionIcon() {
 // --------------------------
 // Enhanced App Initialization
 // --------------------------
-async function initializeAppCore() {
-    console.log('🚀 Starting core app initialization...');
-    
-    // Layout detection
-/*
-    applyLayoutChanges(mode => {
-        console.log(`📱 Layout changed → ${mode}`);
-        if (mode === LayoutModes.MOBILE) {
-            document.body.classList.add('is-mobile');
-            document.body.classList.remove('is-desktop');
-            initDashboardMobileV2UI();
-        } else {
-            document.body.classList.add('is-desktop');
-            document.body.classList.remove('is-mobile');
-            initDashboardDesktopUI();
-        }
-    });
-*/    
-    // Initialize UI
-    // Only initialize UI *after login*
-    //if (localStorage.getItem("loggedIn") === "true") {
-    initUI();
-  //  }
-
-    
-    // Run automation
-    await processRecurringTransactions();
-    await processDueBills();
-    
-    // Request persistent storage
-    await requestPersistentStorage();
-    
-    console.log('✅ Core app initialization completed');
-}
 
 // ============================================================================
 // --------------------------
