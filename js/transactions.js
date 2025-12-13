@@ -246,6 +246,14 @@ function setupEventListeners(categories, accounts, properties) {
     });
   }
 
+// Export button
+const btnExportTx = document.getElementById('btnExportTx');
+if (btnExportTx) {
+  btnExportTx.addEventListener('click', () => {
+    setupExportFunctionality();
+  });
+}
+
   // Clear filters
   const clearFilters = document.getElementById('clearFilters');
   if (clearFilters) {
@@ -1111,6 +1119,210 @@ function getCategoryDisplayName(tx, categories) {
   return 'Uncategorized';
 }
 
+// ============================================================================
+//  EXPORT FUNCTIONALITY
+// ============================================================================
+
+async function setupExportFunctionality() {
+  const exportBtn = document.getElementById('btnExportTx');
+  
+  if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
+      try {
+        // Show loading state
+        exportBtn.innerHTML = '📤 Exporting...';
+        exportBtn.disabled = true;
+        
+        // Get current filtered transactions
+        let transactions = [...currentTransactions];
+        
+        // Apply current filters
+        if (Object.keys(currentFilter).length > 0) {
+          transactions = applyFiltersToArray(transactions);
+        }
+        
+        if (transactions.length === 0) {
+          alert('No transactions to export!');
+          return;
+        }
+        
+        // Prepare data for export
+        const exportData = await prepareExportData(transactions);
+        
+        // Create and download CSV
+        downloadCSV(exportData, 'transactions_export');
+        
+        // Show success message
+        showNotification(`✅ Exported ${transactions.length} transactions successfully!`, 'success');
+        
+      } catch (error) {
+        console.error('[TX] Export failed:', error);
+        showNotification('❌ Export failed. Please try again.', 'error');
+      } finally {
+        // Reset button
+        exportBtn.innerHTML = '📤 Export';
+        exportBtn.disabled = false;
+      }
+    });
+  }
+}
+
+// Apply filters to array (same logic as applyFilters)
+function applyFiltersToArray(transactions) {
+  let filtered = [...transactions];
+  
+  if (currentFilter.type) {
+    filtered = filtered.filter(t => {
+      const type = t.amount > 0 ? 'income' : 'expense';
+      return type === currentFilter.type;
+    });
+  }
+  
+  if (currentFilter.accountId) {
+    filtered = filtered.filter(t => t.accountId === currentFilter.accountId);
+  }
+  
+  if (currentFilter.mainCategory) {
+    const mainCategoryId = currentFilter.mainCategory;
+    filtered = filtered.filter(t => {
+      const category = currentCategories.find(c => c.id === t.categoryId);
+      if (!category) return false;
+      
+      if (category.parentId) {
+        return category.parentId === mainCategoryId;
+      } else {
+        return category.id === mainCategoryId;
+      }
+    });
+  }
+  
+  if (currentFilter.subCategory) {
+    filtered = filtered.filter(t => t.categoryId === currentFilter.subCategory);
+  }
+  
+  if (currentFilter.startDate) {
+    filtered = filtered.filter(t => t.date >= currentFilter.startDate);
+  }
+  
+  if (currentFilter.endDate) {
+    filtered = filtered.filter(t => t.date <= currentFilter.endDate);
+  }
+  
+  return filtered;
+}
+
+// Prepare data for export
+async function prepareExportData(transactions) {
+  const accounts = await getAllItems(STORE_NAMES.accounts);
+  const categories = await getAllItems(STORE_NAMES.categories);
+  const properties = await getAllItems(STORE_NAMES.properties).catch(() => []);
+  
+  return transactions.map(tx => {
+    const account = accounts.find(a => a.id === tx.accountId);
+    const category = categories.find(c => c.id === tx.categoryId);
+    const property = properties.find(p => p.id === tx.propertyId);
+    
+    // Get full category name
+    let categoryName = 'Uncategorized';
+    if (category) {
+      if (category.parentId) {
+        const parent = categories.find(c => c.id === category.parentId);
+        categoryName = parent ? `${parent.name} > ${category.name}` : category.name;
+      } else {
+        categoryName = category.name;
+      }
+    }
+    
+    return {
+      'Date': tx.date,
+      'Type': tx.amount > 0 ? 'Income' : 'Expense',
+      'Amount': Math.abs(tx.amount).toFixed(2),
+      'Account': account?.name || 'Unknown',
+      'Description': tx.description || '',
+      'Category': categoryName,
+      'Bank Category': tx.bankCategory || '',
+      'Property': property?.name || '',
+      'Property Expense': tx.isPropertyExpense ? 'Yes' : 'No',
+      'Expense Category': tx.expenseCategory || '',
+      'Status': tx.expenseStatus || 'Paid',
+      'Receipt URL': tx.receiptUrl || '',
+      'Notes': tx.notes || '',
+      'Transaction ID': tx.id,
+      'Created': tx.createdAt || '',
+      'Updated': tx.updatedAt || ''
+    };
+  });
+}
+
+// Download as CSV
+function downloadCSV(data, filename) {
+  if (!data.length) return;
+  
+  // Get headers from first object
+  const headers = Object.keys(data[0]);
+  
+  // Create CSV content
+  const csvContent = [
+    headers.join(','), // Header row
+    ...data.map(row => 
+      headers.map(header => {
+        const cell = row[header];
+        // Escape commas and quotes
+        return typeof cell === 'string' 
+          ? `"${cell.replace(/"/g, '""')}"`
+          : cell;
+      }).join(',')
+    )
+  ].join('\n');
+  
+  // Create blob and download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Clean up
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+  // Remove existing notifications
+  const existing = document.querySelector('.tx-notification');
+  if (existing) existing.remove();
+  
+  // Create notification
+  const notification = document.createElement('div');
+  notification.className = `tx-notification ${type}`;
+  notification.innerHTML = `
+    <div class="notification-content">
+      <span class="notification-message">${message}</span>
+      <button class="notification-close">✕</button>
+    </div>
+  `;
+  
+  // Add to page
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 300);
+  }, 5000);
+  
+  // Close button
+  notification.querySelector('.notification-close').addEventListener('click', () => {
+    notification.remove();
+  });
+}
+
 function formatDate(date) {
   try {
     const d = new Date(date);
@@ -1125,193 +1337,3 @@ function formatDate(date) {
   }
 }
 
-// ============================================================================
-// Additional CSS for Inline Editing and Sync
-// ============================================================================
-const inlineEditCSS = `
-  .transaction-card.editing {
-    border: 2px solid #3b82f6;
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  }
-  
-  .transaction-card.add-new {
-    border: 2px dashed #10b981;
-    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  }
-  
-  .edit-form-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #e5e7eb;
-  }
-  
-  .edit-form-header h4 {
-    margin: 0;
-    color: #1f2937;
-    font-size: 1.2rem;
-  }
-  
-  .property-expense-section {
-    margin-top: 20px;
-    padding: 15px;
-    background: #f8fafc;
-    border-radius: 10px;
-    border-left: 4px solid #8b5cf6;
-  }
-  
-  .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    font-weight: 500;
-    color: #4b5563;
-  }
-  
-  .checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-  
-  .bank-tag, .property-tag, .synced-tag {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .bank-tag {
-    background: #dbeafe;
-    color: #1e40af;
-  }
-  
-  .property-tag {
-    background: #ddd6fe;
-    color: #5b21b6;
-  }
-  
-  .synced-tag {
-    background: #d1fae5;
-    color: #065f46;
-  }
-  
-  .expense-category {
-    margin-top: 8px;
-    padding: 6px 12px;
-    background: #f3f4f6;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    color: #4b5563;
-    display: inline-block;
-  }
-  
-  .sync-status {
-    margin: 20px 0;
-    padding: 15px 20px;
-    border-radius: 12px;
-    display: none;
-  }
-  
-  .sync-status.loading {
-    background: #fef3c7;
-    border: 2px solid #f59e0b;
-    color: #92400e;
-  }
-  
-  .sync-status.success {
-    background: #d1fae5;
-    border: 2px solid #10b981;
-    color: #065f46;
-  }
-  
-  .sync-status.error {
-    background: #fee2e2;
-    border: 2px solid #ef4444;
-    color: #991b1b;
-  }
-  
-  .sync-message {
-    font-weight: 500;
-    margin-bottom: 8px;
-  }
-  
-  .sync-progress {
-    height: 6px;
-    background: rgba(0,0,0,0.1);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  
-  .sync-progress::after {
-    content: '';
-    display: block;
-    height: 100%;
-    background: #3b82f6;
-    width: 0%;
-    animation: progress 2s ease-in-out infinite;
-  }
-  
-  @keyframes progress {
-    0% { width: 0%; }
-    50% { width: 100%; }
-    100% { width: 0%; }
-  }
-  
-  .action-btn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
-  .action-btn.edit-btn {
-    background: #3b82f6;
-    color: white;
-  }
-  
-  .action-btn.edit-btn:hover {
-    background: #2563eb;
-    transform: translateY(-2px);
-  }
-  
-  .action-btn.delete-btn {
-    background: #f3f4f6;
-    color: #6b7280;
-  }
-  
-  .action-btn.delete-btn:hover {
-    background: #ef4444;
-    color: white;
-    transform: translateY(-2px);
-  }
-  
-  .btn-warning {
-    background: #f59e0b;
-    color: white;
-  }
-  
-  .btn-warning:hover {
-    background: #d97706;
-    transform: translateY(-2px);
-  }
-`;
-
-// Inject the CSS
-if (!document.querySelector('#inline-edit-css')) {
-  const style = document.createElement('style');
-  style.id = 'inline-edit-css';
-  style.textContent = inlineEditCSS;
-  document.head.appendChild(style);
-}
