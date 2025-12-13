@@ -201,3 +201,91 @@
     animation: spin 1s ease-in-out infinite;
     margin-top: 30px;
 }
+
+/* Install Banner Styles */
+.install-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  max-width: 500px;
+  width: 90%;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e5e7eb;
+  display: none;
+}
+
+.install-banner.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  display: block;
+}
+
+.install-banner.hidden {
+  display: none !important;
+}
+
+.install-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.install-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.install-text {
+  flex: 1;
+}
+
+.install-text strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+  color: #1f2937;
+}
+
+.install-text p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.install-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.install-actions .button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.install-actions .button:not(.red) {
+  background: linear-gradient(135deg, #3498db, #2c3e50);
+  color: white;
+}
+
+.install-actions .button.red {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.install-actions .button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
