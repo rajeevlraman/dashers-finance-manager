@@ -246,7 +246,7 @@ function setupEventListeners(categories, accounts, properties) {
     });
   }
 
-  /*
+  
 
 // Export button
 const btnExportTx = document.getElementById('btnExportTx');
@@ -257,7 +257,7 @@ if (btnExportTx) {
      }
   });
 }
-*/
+
 
   // Clear filters
   const clearFilters = document.getElementById('clearFilters');
@@ -1132,7 +1132,8 @@ async function setupExportFunctionality() {
   const exportBtn = document.getElementById('btnExportTx');
   
   if (exportBtn) {
-    exportBtn.addEventListener('click', async () => {
+    exportBtn.addEventListener('click', async () => 
+      {
       try {
         // Show loading state
         exportBtn.innerHTML = '📤 Exporting...';
