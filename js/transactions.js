@@ -64,6 +64,7 @@ export async function initTransactionsUI() {
           <button class="btn btn-secondary" id="btnFilterTx">🔍 Filter</button>
           <button class="btn btn-secondary" id="btnExportTx">📤 Export</button>
           <button class="btn btn-success" id="btnImportTx">📁 Import</button>
+          <button class="btn btn-warning" id="btnSyncPropertyExpenses">🏠 Sync Property Expenses</button>
         </div>
       </div>
 
@@ -85,6 +86,12 @@ export async function initTransactionsUI() {
           <div class="summary-label">This Month</div>
           <div class="summary-value ${thisMonthTotal >= 0 ? 'positive' : 'negative'}">$${Math.abs(thisMonthTotal).toFixed(2)}</div>
         </div>
+      </div>
+
+      <!-- Sync Status -->
+      <div id="syncStatus" style="display: none;" class="sync-status">
+        <div class="sync-message"></div>
+        <div class="sync-progress"></div>
       </div>
 
       <!-- Quick Actions -->
@@ -177,6 +184,14 @@ export async function initTransactionsUI() {
       });
     }
   }, 200);
+
+  // Sync button
+  const syncBtn = document.getElementById('btnSyncPropertyExpenses');
+  if (syncBtn) {
+    syncBtn.addEventListener('click', async () => {
+      await syncAllPropertyExpenses();
+    });
+  }
 
   setTimeout(() => mainContent.classList.remove("page-transition"), 300);
 }
@@ -448,6 +463,9 @@ function renderTransactionCard(tx, categories, accounts, properties) {
   const displayCategory = getCategoryDisplayName(tx, categories);
   const categoryIcon = category?.icon || (isIncome ? '💰' : '💸');
 
+  // Check if already synced to expenses
+  const isSynced = tx.isPropertyExpense && tx.propertyId;
+
   return `
     <div class="transaction-card ${isIncome ? "income" : "expense"}" data-id="${tx.id}">
       <div class="transaction-main">
@@ -459,7 +477,9 @@ function renderTransactionCard(tx, categories, accounts, properties) {
             <span>${account?.name || 'Unknown Account'}</span>
             ${property ? `<span class="property-tag">🏠 ${property.name}</span>` : ''}
             ${tx.bankCategory ? `<span class="bank-tag">🏦 ${tx.bankCategory}</span>` : ''}
+            ${isSynced ? `<span class="synced-tag">✅ Synced</span>` : ''}
           </div>
+          ${tx.expenseCategory ? `<div class="expense-category">📁 ${tx.expenseCategory}</div>` : ''}
         </div>
         <div class="transaction-amount ${isIncome ? "positive" : "negative"}">
           ${isIncome ? "+" : "-"}$${Math.abs(tx.amount).toFixed(2)}
@@ -540,13 +560,13 @@ function renderEditForm(tx, categories, accounts, properties) {
           </select>
         </div>
         
-        ${tx.isPropertyExpense || tx.propertyId ? `
-          <div class="property-expense-section">
-            <div class="form-row">
-              <label class="checkbox-label">
-                <input type="checkbox" name="isPropertyExpense" checked> Property Expense
-              </label>
-            </div>
+        <div class="property-expense-section">
+          <div class="form-row">
+            <label class="checkbox-label">
+              <input type="checkbox" name="isPropertyExpense" ${tx.isPropertyExpense ? 'checked' : ''}> Property Expense
+            </label>
+          </div>
+          <div id="propertyExpenseFields" style="${tx.isPropertyExpense ? 'display: block;' : 'display: none;'}">
             <div class="form-row">
               <select name="propertyId" class="form-control">
                 <option value="">Select Property</option>
@@ -556,11 +576,24 @@ function renderEditForm(tx, categories, accounts, properties) {
                   </option>
                 `).join('')}
               </select>
-              <input type="text" name="expenseCategory" class="form-control" 
-                     value="${tx.expenseCategory || ''}" placeholder="Expense Category">
+              <select name="expenseCategory" class="form-control">
+                <option value="">Expense Category</option>
+                <option value="Mortgage" ${tx.expenseCategory === 'Mortgage' ? 'selected' : ''}>Mortgage</option>
+                <option value="Rates" ${tx.expenseCategory === 'Rates' ? 'selected' : ''}>Rates</option>
+                <option value="Insurance" ${tx.expenseCategory === 'Insurance' ? 'selected' : ''}>Insurance</option>
+                <option value="Repairs" ${tx.expenseCategory === 'Repairs' ? 'selected' : ''}>Repairs</option>
+                <option value="Maintenance" ${tx.expenseCategory === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+                <option value="Utilities" ${tx.expenseCategory === 'Utilities' ? 'selected' : ''}>Utilities</option>
+                <option value="Other" ${tx.expenseCategory === 'Other' ? 'selected' : ''}>Other</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <input type="text" name="receiptUrl" class="form-control" 
+                     value="${tx.receiptUrl || ''}" placeholder="Receipt URL">
+              <textarea name="notes" class="form-control" placeholder="Notes" rows="2">${tx.notes || ''}</textarea>
             </div>
           </div>
-        ` : ''}
+        </div>
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary save-edit">💾 Save</button>
@@ -622,6 +655,36 @@ function showInlineTransactionForm(prefill, categories, accounts, properties) {
           </select>
         </div>
         
+        <div class="property-expense-section">
+          <div class="form-row">
+            <label class="checkbox-label">
+              <input type="checkbox" name="isPropertyExpense"> Property Expense
+            </label>
+          </div>
+          <div id="addPropertyExpenseFields" style="display: none;">
+            <div class="form-row">
+              <select name="propertyId" class="form-control">
+                <option value="">Select Property</option>
+                ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+              </select>
+              <select name="expenseCategory" class="form-control">
+                <option value="">Expense Category</option>
+                <option value="Mortgage">Mortgage</option>
+                <option value="Rates">Rates</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Repairs">Repairs</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <input type="text" name="receiptUrl" class="form-control" placeholder="Receipt URL">
+              <textarea name="notes" class="form-control" placeholder="Notes" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">💾 Save Transaction</button>
           <button type="button" class="btn btn-secondary cancel-add">Cancel</button>
@@ -641,7 +704,7 @@ function showInlineTransactionForm(prefill, categories, accounts, properties) {
     }
     
     // Setup event listeners for the new form
-    setupAddFormListeners(categories);
+    setupAddFormListeners(categories, properties);
   }
 }
 
@@ -727,6 +790,17 @@ function setupEditFormListeners() {
     });
   });
 
+  // Property expense toggle
+  document.querySelectorAll('input[name="isPropertyExpense"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const form = this.closest('form');
+      const propertyFields = form.querySelector('#propertyExpenseFields');
+      if (propertyFields) {
+        propertyFields.style.display = this.checked ? 'block' : 'none';
+      }
+    });
+  });
+
   // Edit form submission
   document.querySelectorAll('.edit-transaction-form').forEach(form => {
     form.addEventListener('submit', async (e) => {
@@ -741,6 +815,7 @@ function setupEditFormListeners() {
       const subCategory = formData.get('subCategory');
       const mainCategory = formData.get('mainCategory');
       const categoryId = subCategory || mainCategory;
+      const isPropertyExpense = formData.get('isPropertyExpense') === 'on';
       
       const updatedTx = {
         ...originalTx,
@@ -752,14 +827,21 @@ function setupEditFormListeners() {
         accountId: formData.get('accountId'),
         description: formData.get('description') || '',
         categoryId: categoryId,
-        isPropertyExpense: formData.get('isPropertyExpense') === 'on',
-        propertyId: formData.get('propertyId') || null,
-        expenseCategory: formData.get('expenseCategory') || null,
+        isPropertyExpense: isPropertyExpense,
+        propertyId: isPropertyExpense ? formData.get('propertyId') : null,
+        expenseCategory: isPropertyExpense ? formData.get('expenseCategory') : null,
+        receiptUrl: isPropertyExpense ? formData.get('receiptUrl') : null,
+        notes: isPropertyExpense ? formData.get('notes') : null,
         updatedAt: new Date().toISOString()
       };
 
       try {
         await updateItem(STORE_NAMES.transactions, updatedTx);
+        
+        // Sync to expenses if it's a property expense
+        if (isPropertyExpense && updatedTx.propertyId) {
+          await syncToExpenses(updatedTx);
+        }
         
         // Refresh the UI
         await initTransactionsUI();
@@ -774,7 +856,7 @@ function setupEditFormListeners() {
 // ============================================================================
 // Setup Add Form Listeners
 // ============================================================================
-function setupAddFormListeners(categories) {
+function setupAddFormListeners(categories, properties) {
   // Cancel add button
   document.querySelectorAll('.cancel-add').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -802,6 +884,17 @@ function setupAddFormListeners(categories) {
     });
   });
 
+  // Property expense toggle in add form
+  document.querySelectorAll('input[name="isPropertyExpense"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const form = this.closest('form');
+      const propertyFields = form.querySelector('#addPropertyExpenseFields');
+      if (propertyFields) {
+        propertyFields.style.display = this.checked ? 'block' : 'none';
+      }
+    });
+  });
+
   // Add form submission
   document.querySelectorAll('.add-transaction-form').forEach(form => {
     form.addEventListener('submit', async (e) => {
@@ -811,6 +904,7 @@ function setupAddFormListeners(categories) {
       const subCategory = formData.get('subCategory');
       const mainCategory = formData.get('mainCategory');
       const categoryId = subCategory || mainCategory;
+      const isPropertyExpense = formData.get('isPropertyExpense') === 'on';
       
       const newTx = {
         id: generateId(),
@@ -822,12 +916,22 @@ function setupAddFormListeners(categories) {
         accountId: formData.get('accountId'),
         description: formData.get('description') || '',
         categoryId: categoryId,
+        isPropertyExpense: isPropertyExpense,
+        propertyId: isPropertyExpense ? formData.get('propertyId') : null,
+        expenseCategory: isPropertyExpense ? formData.get('expenseCategory') : null,
+        receiptUrl: isPropertyExpense ? formData.get('receiptUrl') : null,
+        notes: isPropertyExpense ? formData.get('notes') : null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
       try {
         await addItem(STORE_NAMES.transactions, newTx);
+        
+        // Sync to expenses if it's a property expense
+        if (isPropertyExpense && newTx.propertyId) {
+          await syncToExpenses(newTx);
+        }
         
         // Refresh the UI
         await initTransactionsUI();
@@ -837,6 +941,153 @@ function setupAddFormListeners(categories) {
       }
     });
   });
+}
+
+// ============================================================================
+// SYNC FUNCTIONS
+// ============================================================================
+
+// 🏠 SYNC: Push Property-Related Transactions → Expenses Store
+async function syncToExpenses(transaction) {
+  try {
+    const expenses = await getAllItems(STORE_NAMES.expenses).catch(() => []);
+
+    const existingExpense = expenses.find(e => e.transactionId === transaction.id);
+
+    const expenseData = {
+      id: existingExpense ? existingExpense.id : generateId(),
+      transactionId: transaction.id,
+      propertyId: transaction.propertyId || "",
+      category: transaction.expenseCategory || "Other",
+      description: transaction.description || "Property Expense",
+      amount: Math.abs(transaction.amount),
+      date: transaction.date,
+      status: "Paid",
+      receiptUrl: transaction.receiptUrl || "",
+      notes: transaction.notes || "",
+      taxDeductible: true,
+      recurring: false,
+      frequency: "monthly",
+      nextDue: transaction.date,
+      createdAt: existingExpense ? existingExpense.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (existingExpense) {
+      await updateItem(STORE_NAMES.expenses, expenseData);
+    } else {
+      await addItem(STORE_NAMES.expenses, expenseData);
+    }
+
+    console.log(`✅ Synced transaction ${transaction.id} to expenses`);
+    return expenseData;
+  } catch (err) {
+    console.error("❌ syncToExpenses() failed:", err);
+    throw err;
+  }
+}
+
+// 🔄 SYNC ALL: Ensure all property expenses appear in Expenses page
+export async function syncAllPropertyExpenses() {
+  try {
+    showSyncStatus("🔄 Syncing property expenses...", "loading");
+    
+    const [transactions, expenses] = await Promise.all([
+      getAllItems(STORE_NAMES.transactions),
+      getAllItems(STORE_NAMES.expenses).catch(() => [])
+    ]);
+
+    // Look for transactions marked as property expense
+    const propertyTransactions = transactions.filter(
+      t => t.type === "expense" && t.isPropertyExpense && t.propertyId
+    );
+
+    // Filter out ones already synced
+    const unsynced = propertyTransactions.filter(
+      t => !expenses.find(e => e.transactionId === t.id)
+    );
+
+    if (unsynced.length === 0) {
+      showSyncStatus("✅ All property expenses are already synced!", "success");
+      setTimeout(() => hideSyncStatus(), 3000);
+      return {
+        synced: 0,
+        total: 0,
+        message: "All property expenses are already synced!"
+      };
+    }
+
+    showSyncStatus(`📊 Found ${unsynced.length} unsynced property expenses...`, "loading");
+
+    let syncedCount = 0;
+    let errors = [];
+
+    for (const tx of unsynced) {
+      try {
+        await syncToExpenses(tx);
+        syncedCount++;
+        
+        // Update progress
+        const progress = Math.round((syncedCount / unsynced.length) * 100);
+        showSyncStatus(`🔄 Syncing ${syncedCount}/${unsynced.length} (${progress}%)...`, "loading");
+      } catch (syncErr) {
+        console.error(`❌ Failed to sync transaction ${tx.id}`, syncErr);
+        errors.push(tx.id);
+      }
+    }
+
+    const result = {
+      synced: syncedCount,
+      total: unsynced.length,
+      errors: errors.length,
+      message: errors.length > 0 
+        ? `Synced ${syncedCount} new property expenses. ${errors.length} failed.`
+        : `✅ Successfully synced ${syncedCount} property expenses!`
+    };
+
+    showSyncStatus(result.message, errors.length > 0 ? "error" : "success");
+    
+    // Refresh UI after sync
+    setTimeout(async () => {
+      hideSyncStatus();
+      await initTransactionsUI();
+    }, 3000);
+
+    return result;
+
+  } catch (err) {
+    console.error("❌ syncAllPropertyExpenses() error:", err);
+    showSyncStatus("❌ Sync failed due to an unexpected error", "error");
+    setTimeout(() => hideSyncStatus(), 3000);
+    
+    return {
+      synced: 0,
+      total: 0,
+      errors: 1,
+      message: "Sync failed due to an unexpected error."
+    };
+  }
+}
+
+// ============================================================================
+// Sync Status UI Functions
+// ============================================================================
+function showSyncStatus(message, type = "loading") {
+  const statusEl = document.getElementById('syncStatus');
+  const messageEl = statusEl?.querySelector('.sync-message');
+  
+  if (statusEl && messageEl) {
+    statusEl.style.display = 'block';
+    messageEl.textContent = message;
+    statusEl.className = `sync-status ${type}`;
+  }
+}
+
+function hideSyncStatus() {
+  const statusEl = document.getElementById('syncStatus');
+  if (statusEl) {
+    statusEl.style.display = 'none';
+  }
 }
 
 // ============================================================================
@@ -875,7 +1126,7 @@ function formatDate(date) {
 }
 
 // ============================================================================
-// Additional CSS for Inline Editing
+// Additional CSS for Inline Editing and Sync
 // ============================================================================
 const inlineEditCSS = `
   .transaction-card.editing {
@@ -926,9 +1177,7 @@ const inlineEditCSS = `
     cursor: pointer;
   }
   
-  .bank-tag {
-    background: #dbeafe;
-    color: #1e40af;
+  .bank-tag, .property-tag, .synced-tag {
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -936,6 +1185,83 @@ const inlineEditCSS = `
     display: inline-flex;
     align-items: center;
     gap: 4px;
+  }
+  
+  .bank-tag {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  
+  .property-tag {
+    background: #ddd6fe;
+    color: #5b21b6;
+  }
+  
+  .synced-tag {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .expense-category {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #4b5563;
+    display: inline-block;
+  }
+  
+  .sync-status {
+    margin: 20px 0;
+    padding: 15px 20px;
+    border-radius: 12px;
+    display: none;
+  }
+  
+  .sync-status.loading {
+    background: #fef3c7;
+    border: 2px solid #f59e0b;
+    color: #92400e;
+  }
+  
+  .sync-status.success {
+    background: #d1fae5;
+    border: 2px solid #10b981;
+    color: #065f46;
+  }
+  
+  .sync-status.error {
+    background: #fee2e2;
+    border: 2px solid #ef4444;
+    color: #991b1b;
+  }
+  
+  .sync-message {
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  
+  .sync-progress {
+    height: 6px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  
+  .sync-progress::after {
+    content: '';
+    display: block;
+    height: 100%;
+    background: #3b82f6;
+    width: 0%;
+    animation: progress 2s ease-in-out infinite;
+  }
+  
+  @keyframes progress {
+    0% { width: 0%; }
+    50% { width: 100%; }
+    100% { width: 0%; }
   }
   
   .action-btn {
@@ -968,6 +1294,16 @@ const inlineEditCSS = `
   .action-btn.delete-btn:hover {
     background: #ef4444;
     color: white;
+    transform: translateY(-2px);
+  }
+  
+  .btn-warning {
+    background: #f59e0b;
+    color: white;
+  }
+  
+  .btn-warning:hover {
+    background: #d97706;
     transform: translateY(-2px);
   }
 `;
