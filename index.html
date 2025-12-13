@@ -64,7 +64,7 @@
   <div id="splashScreen">
     <div class="splash-inner">
       <img src="assets/icons/icon-192.png" alt="Logo">
-      <h1>Budget Tracker V2.0</h1>
+      <h1>Budget Tracker</h1>
       <div class="spinner"></div>
     </div>
   </div>
@@ -109,100 +109,121 @@
   </div>
 
   <script>
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isAndroid = /Android/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
     console.log('📱 Device Detection:', {
-      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
-      isSafari, 
-      isAndroid,
-      userAgent: navigator.userAgent
+        isIOS: isIOS,
+        isSafari: isSafari, 
+        isAndroid: isAndroid,
+        userAgent: navigator.userAgent
     });
 
     // ✅ Register service worker (path relative to <base>)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
-        .then((reg) => {
-          console.log('✅ SW registered:', reg.scope);
-        })
-        .catch((err) => console.error('❌ SW registration failed:', err));
+        navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
+            .then((reg) => {
+                console.log('✅ SW registered:', reg.scope);
+            })
+            .catch((err) => console.error('❌ SW registration failed:', err));
     }
 
-    // Android install prompt (only for Android)
-    if (isAndroid) {
-      window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('✅ Android: PWA installable');
+    // Universal PWA install handler
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('📱 PWA install available');
         e.preventDefault();
-        window.deferredPrompt = e;
+        deferredPrompt = e;
+        
+        // Show install banner after 3 seconds
         setTimeout(() => {
-          const banner = document.getElementById('installBanner');
-          if (banner) banner.classList.remove('hidden');
-        }, 2000);
-      });
+            showInstallBanner();
+        }, 3000);
+    });
+
+    function showInstallBanner() {
+        const banner = document.getElementById('installBanner');
+        if (banner && deferredPrompt) {
+            banner.classList.remove('hidden');
+            banner.classList.add('show');
+            console.log('📱 Showing install banner');
+        }
     }
 
-    function showIOSInstallGuide() {
-      const guide = document.getElementById('iosInstallGuide');
-      if (guide && !localStorage.getItem('iosGuideDismissed')) {
-        console.log('📱 Showing iOS install guide');
-        guide.classList.add('show');
-      }
-    }
-    function hideIOSInstallGuide() {
-      const guide = document.getElementById('iosInstallGuide');
-      if (guide) {
-        guide.classList.remove('show');
-        localStorage.setItem('iosGuideDismissed', 'true');
-        console.log('📱 iOS install guide dismissed');
-      }
+    function hideInstallBanner() {
+        const banner = document.getElementById('installBanner');
+        if (banner) {
+            banner.classList.remove('show');
+            banner.classList.add('hidden');
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      const closeBtn = document.getElementById('closeIosGuide');
-      if (closeBtn) closeBtn.addEventListener('click', hideIOSInstallGuide);
+        // Install button handler
+        const installBtn = document.getElementById('installBtn');
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) {
+                    console.warn('⚠️ No install prompt available');
+                    hideInstallBanner();
+                    return;
+                }
+                
+                deferredPrompt.prompt();
+                const choice = await deferredPrompt.userChoice;
+                console.log('👍 User choice:', choice.outcome);
+                
+                deferredPrompt = null;
+                hideInstallBanner();
+            });
+        }
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      if (isIOS) {
-        let guideShown = false;
-        const showGuideOnInteraction = function() {
-          if (!guideShown) {
-            setTimeout(showIOSInstallGuide, 1000);
-            guideShown = true;
-          }
-        };
-        document.addEventListener('touchstart', showGuideOnInteraction, { once: true, passive: true });
-        document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
-      }
+        // Dismiss button handler
+        const installDismiss = document.getElementById('installDismiss');
+        if (installDismiss) {
+            installDismiss.addEventListener('click', () => {
+                console.log('🚫 User dismissed install banner');
+                hideInstallBanner();
+                // Don't show again for 7 days
+                localStorage.setItem('installBannerDismissed', Date.now());
+            });
+        }
 
-      const installBtn = document.getElementById('installBtn');
-      if (installBtn && isAndroid) {
-        installBtn.addEventListener('click', async () => {
-          if (!window.deferredPrompt) return;
-          window.deferredPrompt.prompt();
-          await window.deferredPrompt.userChoice;
-          window.deferredPrompt = null;
-          document.getElementById('installBanner').classList.add('hidden');
-        });
-      }
-
-      const installDismiss = document.getElementById('installDismiss');
-      if (installDismiss) {
-        installDismiss.addEventListener('click', () => {
-          const banner = document.getElementById('installBanner');
-          if (banner) banner.classList.add('hidden');
-        });
-      }
+        // iOS-specific: Show install guide
+        if (isIOS) {
+            setTimeout(() => {
+                const guideDismissed = localStorage.getItem('iosGuideDismissed');
+                if (!guideDismissed) {
+                    showIOSInstallGuide();
+                }
+            }, 5000);
+        }
     });
 
-    if (isAndroid) {
-      setTimeout(() => {
-        if (!window.deferredPrompt) {
-          console.log('❌ Android: beforeinstallprompt never fired');
+    // iOS install guide functions
+    function showIOSInstallGuide() {
+        const guide = document.getElementById('iosInstallGuide');
+        if (guide) {
+            guide.classList.add('show');
         }
-      }, 5000);
     }
-  </script>
 
+    function hideIOSInstallGuide() {
+        const guide = document.getElementById('iosInstallGuide');
+        if (guide) {
+            guide.classList.remove('show');
+            localStorage.setItem('iosGuideDismissed', 'true');
+        }
+    }
+
+    // Close button for iOS guide
+    const closeBtn = document.getElementById('closeIosGuide');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideIOSInstallGuide);
+    }
+</script>
   <!-- iOS Installation Guide -->
   <div id="iosInstallGuide" class="ios-install-guide">
     <div class="ios-install-content">

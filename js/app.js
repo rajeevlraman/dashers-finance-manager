@@ -11,7 +11,7 @@ import { processRecurringTransactions, processDueBills } from './recurringJob.js
 import { applyLayoutChanges, LayoutModes } from './layoutManager.js';
 //version import 
 import { APP_VERSION } from './version.js';
-console.log("🚀 Dashers Finance - Version", APP_VERSION);
+console.log("🚀 Budget Tracker v" + APP_VERSION + " | Property & Finance Manager");
 
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)
@@ -63,14 +63,7 @@ function hideInstallBanner() {
     }
 }
 
-// Listen for the beforeinstallprompt event
-window.addEventListener('beforeinstallprompt', (e) => {
-    console.log("📥 beforeinstallprompt fired!"); 
-    e.preventDefault();
-    deferredPrompt = e;
-    console.log('📥 beforeinstallprompt event captured');
-    showInstallBanner();
-});
+
 
 // --------------------------
 // Development Branch Indicator Logic
