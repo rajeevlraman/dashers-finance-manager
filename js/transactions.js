@@ -1,23 +1,18 @@
 import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId } from './db.js';
-// Remove this import if it's causing issues
-// import { PROPERTY_EXPENSE_CATEGORIES } from './propertyExpenseCategories.js';
-import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 import { initImportModal } from './import/modal.js';
-import { saveImportedTransactions } from './import/saver.js';
-import { parseCSVFile, parseStatementText } from './import/parser.js';
 
 // ============================================================================
-//  Transactions UI Initialization (FIXED VERSION)
+//  GLOBAL STATE
 // ============================================================================
+let currentTransactions = [];
+let currentCategories = [];
+let currentAccounts = [];
+let currentProperties = [];
+let currentFilter = {};
 
-// Define property expense categories locally if import fails
-const PROPERTY_EXPENSE_CATEGORIES = [
-  "Mortgage", "Rates", "Insurance", "Repairs", "Maintenance",
-  "Utilities", "Strata Fees", "Property Management", "Advertising",
-  "Legal Fees", "Council Rates", "Water Rates", "Gardening",
-  "Cleaning", "Security", "Other"
-];
-
+// ============================================================================
+//  Transactions UI Initialization
+// ============================================================================
 export async function initTransactionsUI() {
   console.log("[TX] initTransactionsUI() starting…");
 
@@ -29,6 +24,7 @@ export async function initTransactionsUI() {
   
   mainContent.classList.add('page-transition');
 
+  // Load all data
   const [categories, accounts, transactions, properties] = await Promise.all([
     getAllItems(STORE_NAMES.categories),
     getAllItems(STORE_NAMES.accounts),
@@ -36,13 +32,18 @@ export async function initTransactionsUI() {
     getAllItems(STORE_NAMES.properties).catch(() => [])
   ]);
 
+  // Store in global state
+  currentTransactions = transactions;
+  currentCategories = categories;
+  currentAccounts = accounts;
+  currentProperties = properties;
+
   const mainCats = categories.filter(c => !c.parentId);
-  const subCats = categories.filter(c => c.parentId);
   const today = new Date().toISOString().split("T")[0];
 
   // Summary calculations
   const totalIncome = transactions.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
-  const totalExpenses = transactions.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = transactions.filter(t => t.type === "expense").reduce((s, t) => s + Math.abs(t.amount), 0);
   const netFlow = totalIncome - totalExpenses;
 
   const thisMonth = new Date().toISOString().slice(0, 7);
@@ -51,7 +52,7 @@ export async function initTransactionsUI() {
     .reduce((s, t) => s + (t.amount || 0), 0);
 
   // ========================================================================
-  // HTML Rendering (COMPLETE with all required elements)
+  // HTML Rendering
   // ========================================================================
   mainContent.innerHTML = `
     <div class="page-container">
@@ -96,79 +97,10 @@ export async function initTransactionsUI() {
         <button class="quick-action-btn" data-amount="-200">➖ $200</button>
       </div>
 
-      <!-- Transaction Form -->
-      <div id="addTxForm" style="display: none;" class="section-card">
-        <div class="form-header">
-          <h3>Add Transaction</h3>
-          <button id="closeAddForm" class="btn-close">✕</button>
-        </div>
-        <form id="txForm">
-          <div class="form-row">
-            <select name="type" id="txType" class="form-control" onchange="togglePropertyExpenseFields()">
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
-            <input type="number" name="amount" class="form-control" placeholder="Amount" step="0.01" required>
-            <input type="date" name="date" class="form-control" value="${today}" required>
-            <select name="accountId" class="form-control" required>
-              <option value="">Select Account</option>
-              ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
-            </select>
-          </div>
-          <div class="form-row">
-            <input type="text" name="description" class="form-control" placeholder="Description">
-          </div>
-          <div class="form-row">
-            <select id="mainCategory" name="mainCategory" class="form-control" required>
-              <option value="">Select Category</option>
-              ${mainCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-            </select>
-            <select id="subCategory" name="subCategory" class="form-control">
-              <option value="">-- None --</option>
-            </select>
-          </div>
-          
-          <!-- Property Expense Section -->
-          <div id="propertyExpenseSection" style="display: none;">
-            <div class="form-row">
-              <label class="checkbox-label">
-                <input type="checkbox" id="isPropertyExpense" onchange="togglePropertyExpenseCheckbox()">
-                Property Expense
-              </label>
-            </div>
-            <div id="propertyExpenseFields" style="display: none;">
-              <div class="form-row">
-                <select name="propertyId" class="form-control">
-                  <option value="">Select Property</option>
-                  ${properties.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                </select>
-                <select name="expenseCategory" class="form-control">
-                  <option value="">Expense Category</option>
-                  ${PROPERTY_EXPENSE_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
-                </select>
-                <select name="expenseStatus" class="form-control">
-                  <option value="Paid">Paid</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Due">Due</option>
-                </select>
-              </div>
-              <div class="form-row">
-                <input type="text" name="receiptUrl" class="form-control" placeholder="Receipt URL">
-                <textarea name="expenseNotes" class="form-control" placeholder="Notes" rows="2"></textarea>
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Save Transaction</button>
-          </div>
-        </form>
-      </div>
-
       <!-- Filter Form -->
       <div id="filterTxForm" style="display: none;" class="section-card">
         <div class="form-header">
-          <h3>Filter Transactions</h3>
+          <h3>🔍 Filter Transactions</h3>
           <button id="closeFilterForm" class="btn-close">✕</button>
         </div>
         <form id="filterForm">
@@ -184,11 +116,11 @@ export async function initTransactionsUI() {
             </select>
           </div>
           <div class="form-row">
-            <select name="mainCategory" class="form-control">
+            <select name="mainCategory" id="filterMainCategory" class="form-control">
               <option value="">All Categories</option>
               ${mainCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
             </select>
-            <select name="subCategory" class="form-control">
+            <select name="subCategory" id="filterSubCategory" class="form-control">
               <option value="">All Subcategories</option>
             </select>
           </div>
@@ -214,6 +146,8 @@ export async function initTransactionsUI() {
               <option value="date-asc">Oldest</option>
               <option value="amount-desc">Highest Amount</option>
               <option value="amount-asc">Lowest Amount</option>
+              <option value="category-asc">Category A-Z</option>
+              <option value="category-desc">Category Z-A</option>
             </select>
           </div>
         </div>
@@ -223,657 +157,825 @@ export async function initTransactionsUI() {
     </div>
   `;
 
-  console.log("[TX] HTML rendered, scheduling import modal init…");
+  // ========================================================================
+  // Setup Event Listeners
+  // ========================================================================
+  setupEventListeners(categories, accounts, properties);
+  renderTransactionList(transactions, categories, accounts, properties);
 
-  // ========================================================================
-  // ✔ FIX: Initialize Import Modal
-  // ========================================================================
+  // Initialize import modal
   setTimeout(() => {
-    console.log("[IMPORT] initImportModal() invoked AFTER render");
-    
-    // Check if button exists before initializing
     const importBtn = document.getElementById("btnImportTx");
     if (importBtn) {
       initImportModal({
         accounts,
         categories,
         onImported: async (savedCount) => {
-          console.log("[IMPORT] Refreshing transactions after import, saved:", savedCount);
-          await initTransactionsUI(); // reload transactions UI
+          console.log("[TX] Import complete, refreshing...");
+          await initTransactionsUI();
         }
       });
-    } else {
-      console.warn("[IMPORT] btnImportTx not found in DOM");
     }
-  }, 100);
+  }, 200);
 
-  // ========================================================================
-  // UI + Event setup (WITH SAFETY CHECKS)
-  // ========================================================================
-  setupCategoryLinking(categories, subCats);
-  setupFormHandlers(categories, accounts, properties);
-  renderTransactions(transactions, categories, accounts, properties);
+  setTimeout(() => mainContent.classList.remove("page-transition"), 300);
+}
 
-  // SAFE event listener attachment
-  safeAddEventListener("btnAddTx", "click", toggleAddForm);
-  safeAddEventListener("btnFilterTx", "click", toggleFilterForm);
-  safeAddEventListener("closeAddForm", "click", hideForms);
-  safeAddEventListener("closeFilterForm", "click", hideForms);
-  safeAddEventListener("clearFilters", "click", clearFilterForm);
-  
-  const sortSelect = document.getElementById("sortTransactions");
+// ============================================================================
+// Setup Event Listeners
+// ============================================================================
+function setupEventListeners(categories, accounts, properties) {
+  // Add transaction button
+  const btnAddTx = document.getElementById('btnAddTx');
+  if (btnAddTx) {
+    btnAddTx.addEventListener('click', () => {
+      showInlineTransactionForm(null, categories, accounts, properties);
+    });
+  }
+
+  // Filter button
+  const btnFilterTx = document.getElementById('btnFilterTx');
+  if (btnFilterTx) {
+    btnFilterTx.addEventListener('click', () => {
+      const filterForm = document.getElementById('filterTxForm');
+      if (filterForm) {
+        filterForm.style.display = filterForm.style.display === 'none' ? 'block' : 'none';
+      }
+    });
+  }
+
+  // Close filter form
+  const closeFilterForm = document.getElementById('closeFilterForm');
+  if (closeFilterForm) {
+    closeFilterForm.addEventListener('click', () => {
+      const filterForm = document.getElementById('filterTxForm');
+      if (filterForm) filterForm.style.display = 'none';
+    });
+  }
+
+  // Filter form submission
+  const filterForm = document.getElementById('filterForm');
+  if (filterForm) {
+    filterForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(filterForm);
+      currentFilter = {
+        type: formData.get('type') || null,
+        accountId: formData.get('accountId') || null,
+        mainCategory: formData.get('mainCategory') || null,
+        subCategory: formData.get('subCategory') || null,
+        startDate: formData.get('startDate') || null,
+        endDate: formData.get('endDate') || null
+      };
+      applyFilters();
+    });
+  }
+
+  // Clear filters
+  const clearFilters = document.getElementById('clearFilters');
+  if (clearFilters) {
+    clearFilters.addEventListener('click', () => {
+      currentFilter = {};
+      if (filterForm) filterForm.reset();
+      renderTransactionList(currentTransactions, currentCategories, currentAccounts, currentProperties);
+    });
+  }
+
+  // Sort transactions
+  const sortSelect = document.getElementById('sortTransactions');
   if (sortSelect) {
-    sortSelect.addEventListener("change", () => {
-      renderTransactions(transactions, categories, accounts, properties);
+    sortSelect.addEventListener('change', () => {
+      renderTransactionList(currentTransactions, currentCategories, currentAccounts, currentProperties);
     });
   }
 
   // Quick action buttons
-  document.querySelectorAll(".quick-action-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      toggleAddForm();
-      const amountInput = document.querySelector("#txForm [name='amount']");
-      const typeSelect = document.querySelector("#txForm [name='type']");
-      if (amountInput && typeSelect) {
-        amountInput.value = Math.abs(btn.dataset.amount);
-        typeSelect.value = btn.dataset.amount > 0 ? "income" : "expense";
-        togglePropertyExpenseFields();
-      }
-    });
-  });
-
-  // Initialize property expense toggle
-  togglePropertyExpenseFields();
-
-  setTimeout(() => mainContent.classList.remove("page-transition"), 300);
-
-  // ========================================================================
-// ✔ FIX: Initialize Import Modal
-// ========================================================================
-// In transactions.js, replace the setTimeout section with this:
-
-// ========================================================================
-// Initialize Import Modal
-// ========================================================================
-setTimeout(() => {
-  console.log("[TX] Setting up import functionality...");
-  
-  const importBtn = document.getElementById("btnImportTx");
-  if (importBtn) {
-    console.log("[TX] Found import button");
-    
-    // Remove any existing event listeners by cloning
-    const newBtn = importBtn.cloneNode(true);
-    importBtn.parentNode.replaceChild(newBtn, importBtn);
-    
-    try {
-      // Initialize the modal
-      initImportModal({
-        accounts,
-        categories,
-        onImported: async (savedCount) => {
-          console.log("[TX] Import complete, refreshing UI...");
-          await initTransactionsUI(); // Refresh the view
-        }
-      });
-      console.log("[TX] Import modal initialized successfully");
-    } catch (error) {
-      console.error("[TX] Failed to initialize import modal:", error);
+  document.querySelectorAll('.quick-action-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const amount = parseFloat(btn.dataset.amount);
+      const isIncome = amount > 0;
       
-      // Fallback simple handler
-      newBtn.addEventListener("click", () => {
-        alert("Import feature is currently unavailable. Please check console for errors.");
-      });
-    }
-  } else {
-    console.error("[TX] Import button not found!");
-  }
-}, 200);
-}
-
-// ============================================================================
-// Helper: Safe Event Listener
-// ============================================================================
-function safeAddEventListener(id, event, handler) {
-  const element = document.getElementById(id);
-  if (element) {
-    element.addEventListener(event, handler);
-  } else {
-    console.warn(`[TX] Element #${id} not found for event ${event}`);
-  }
-}
-
-// ============================================================================
-// Category Linking (FIXED)
-// ============================================================================
-function setupCategoryLinking(categories, subCats) {
-  const mainSelect = document.getElementById("mainCategory");
-  const subSelect = document.getElementById("subCategory");
-  const filterMain = document.querySelector("#filterForm [name='mainCategory']");
-  const filterSub = document.querySelector("#filterForm [name='subCategory']");
-
-  // 🔥 FIXED: Added comprehensive safety checks
-  const missingElements = [];
-  if (!mainSelect) missingElements.push("mainCategory");
-  if (!subSelect) missingElements.push("subCategory");
-  if (!filterMain) missingElements.push("filterForm [name='mainCategory']");
-  if (!filterSub) missingElements.push("filterForm [name='subCategory']");
-
-  if (missingElements.length > 0) {
-    console.warn("[TX] Category linking skipped — missing elements:", missingElements);
-    return;
-  }
-
-  function updateSubs(source, target) {
-    const parentId = source.value;
-    const subs = subCats.filter(s => s.parentId === parentId);
-    target.innerHTML =
-      `<option value="">-- None --</option>` +
-      subs.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
-  }
-
-  mainSelect.addEventListener("change", () => updateSubs(mainSelect, subSelect));
-  filterMain.addEventListener("change", () => updateSubs(filterMain, filterSub));
-
-  // Initial update
-  updateSubs(mainSelect, subSelect);
-  updateSubs(filterMain, filterSub);
-
-  console.log("[TX] Category linking initialized successfully");
-}
-
-//fix for editing-
-function rebuildSubcategoriesForEdit(mainCategoryId, subCats) {
-  const subSelect = document.getElementById("subCategory");
-  if (!subSelect) return;
-
-  const subs = subCats.filter(s => s.parentId === mainCategoryId);
-
-  subSelect.innerHTML =
-    `<option value="">-- None --</option>` +
-    subs.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
-}
-
-
-
-// ============================================================================
-// Form Handlers (FIXED with safety checks)
-// ============================================================================
-function setupFormHandlers(categories, accounts, properties) {
-  const txForm = document.getElementById("txForm");
-  const filterForm = document.getElementById("filterForm");
-
-  if (!txForm) {
-    console.warn("[TX] Transaction form not found");
-    return;
-  }
-
-  txForm.addEventListener("submit", async e => {
-    e.preventDefault();
-
-    const mainCat = document.getElementById("mainCategory");
-    const subCat = document.getElementById("subCategory");
-    const chosenCategory = subCat.value || mainCat.value;
-
-    const tx = {
-      id: txForm.dataset.id || generateId(),
-      type: txForm.type.value,
-      amount: (txForm.type.value === "expense" ? -1 : 1) * parseFloat(txForm.amount.value),
-      date: txForm.date.value,
-      accountId: txForm.accountId.value,
-      description: txForm.description.value || "",
-      categoryId: chosenCategory,
-      createdAt: txForm.dataset.id ? undefined : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    // Property Expense
-    const isProp = document.getElementById("isPropertyExpense").checked;
-    tx.isPropertyExpense = isProp;
-    if (isProp) {
-      tx.propertyId = txForm.propertyId.value;
-      tx.expenseCategory = txForm.expenseCategory.value;
-      tx.expenseStatus = txForm.expenseStatus.value;
-      tx.receiptUrl = txForm.receiptUrl.value;
-      tx.notes = txForm.expenseNotes.value;
-    }
-
-    try {
-      if (txForm.dataset.id) {
-        await updateItem(STORE_NAMES.transactions, tx);
-      } else {
-        await addItem(STORE_NAMES.transactions, tx);
-      }
-
-      // Sync property expenses if needed
-      if (isProp) {
-        await syncToExpenses(tx);
-      }
-
-      hideForms();
-      initTransactionsUI();
-    } catch (error) {
-      console.error("[TX] Failed to save transaction:", error);
-      alert("Failed to save transaction. Please try again.");
-    }
+      showInlineTransactionForm({
+        amount: Math.abs(amount),
+        type: isIncome ? 'income' : 'expense',
+        date: new Date().toISOString().split('T')[0]
+      }, categories, accounts, properties);
+    });
   });
 
-  if (filterForm) {
-    filterForm.addEventListener("submit", e => {
-      e.preventDefault();
-      // Apply filters logic here
-      console.log("Filter form submitted");
+  // Category linking for filters
+  setupCategoryLinking(categories);
+}
+
+// ============================================================================
+// Category Linking
+// ============================================================================
+function setupCategoryLinking(categories) {
+  const mainSelect = document.getElementById('filterMainCategory');
+  const subSelect = document.getElementById('filterSubCategory');
+
+  if (mainSelect && subSelect) {
+    const subCats = categories.filter(c => c.parentId);
+    
+    mainSelect.addEventListener('change', () => {
+      const parentId = mainSelect.value;
+      const subs = subCats.filter(s => s.parentId === parentId);
+      
+      subSelect.innerHTML = `
+        <option value="">All Subcategories</option>
+        ${subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+      `;
     });
   }
 }
 
 // ============================================================================
-// Transactions Renderer
+// Apply Filters
 // ============================================================================
-function renderTransactions(transactions, categories, accounts, properties) {
-  const list = document.getElementById("txList");
-  if (!list) {
-    console.warn("[TX] txList element not found");
+function applyFilters() {
+  let filtered = [...currentTransactions];
+
+  if (currentFilter.type) {
+    filtered = filtered.filter(t => {
+      const type = t.amount > 0 ? 'income' : 'expense';
+      return type === currentFilter.type;
+    });
+  }
+
+  if (currentFilter.accountId) {
+    filtered = filtered.filter(t => t.accountId === currentFilter.accountId);
+  }
+
+  if (currentFilter.mainCategory) {
+    const mainCategoryId = currentFilter.mainCategory;
+    filtered = filtered.filter(t => {
+      const category = currentCategories.find(c => c.id === t.categoryId);
+      if (!category) return false;
+      
+      if (category.parentId) {
+        // It's a subcategory, check parent
+        return category.parentId === mainCategoryId;
+      } else {
+        // It's a main category
+        return category.id === mainCategoryId;
+      }
+    });
+  }
+
+  if (currentFilter.subCategory) {
+    filtered = filtered.filter(t => t.categoryId === currentFilter.subCategory);
+  }
+
+  if (currentFilter.startDate) {
+    filtered = filtered.filter(t => t.date >= currentFilter.startDate);
+  }
+
+  if (currentFilter.endDate) {
+    filtered = filtered.filter(t => t.date <= currentFilter.endDate);
+  }
+
+  renderTransactionList(filtered, currentCategories, currentAccounts, currentProperties);
+}
+
+// ============================================================================
+// Render Transaction List
+// ============================================================================
+function renderTransactionList(transactions, categories, accounts, properties) {
+  const list = document.getElementById('txList');
+  const count = document.getElementById('txCount');
+  
+  if (!list) return;
+
+  // Get sort option
+  const sortSelect = document.getElementById('sortTransactions');
+  const sortBy = sortSelect ? sortSelect.value : 'date-desc';
+
+  // Sort transactions
+  let sorted = [...transactions];
+  switch (sortBy) {
+    case 'date-desc':
+      sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+      break;
+    case 'date-asc':
+      sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
+      break;
+    case 'amount-desc':
+      sorted.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+      break;
+    case 'amount-asc':
+      sorted.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount));
+      break;
+    case 'category-asc':
+      sorted.sort((a, b) => {
+        const catA = getCategoryDisplayName(a, categories);
+        const catB = getCategoryDisplayName(b, categories);
+        return catA.localeCompare(catB);
+      });
+      break;
+    case 'category-desc':
+      sorted.sort((a, b) => {
+        const catA = getCategoryDisplayName(a, categories);
+        const catB = getCategoryDisplayName(b, categories);
+        return catB.localeCompare(catA);
+      });
+      break;
+  }
+
+  if (sorted.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <p>No transactions found. ${Object.keys(currentFilter).length > 0 ? 'Try clearing filters.' : 'Add your first transaction!'}</p>
+      </div>
+    `;
+    if (count) count.textContent = '0 transactions';
     return;
   }
 
-  const sortSelect = document.getElementById("sortTransactions");
-  const sort = sortSelect ? sortSelect.value : "date-desc";
-
-  let txs = [...transactions];
-
-  if (sort === "date-desc") txs.sort((a, b) => b.date.localeCompare(a.date));
-  if (sort === "date-asc") txs.sort((a, b) => a.date.localeCompare(b.date));
-  if (sort === "amount-desc") txs.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
-  if (sort === "amount-asc") txs.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount));
-
-  if (txs.length === 0) {
-    list.innerHTML = `<div class="empty-state">No transactions found. Add your first transaction!</div>`;
-    return;
-  }
-
+  // Group by date
   const groups = {};
-  txs.forEach(t => (groups[t.date] = groups[t.date] || []).push(t));
+  sorted.forEach(t => {
+    const date = t.date;
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(t);
+  });
 
-  list.innerHTML = Object.keys(groups)
-    .sort((a, b) => b.localeCompare(a))
-    .map(date => {
-      const dayTxs = groups[date];
-      const total = dayTxs.reduce((sum, t) => sum + t.amount, 0);
+  // Render groups
+  let html = '';
+  const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
 
-      return `
-        <div class="transaction-day-group">
-          <div class="transaction-date-header">
-            <span>${formatDate(date)}</span>
-            <span class="${total >= 0 ? "positive" : "negative"}">$${Math.abs(total).toFixed(2)}</span>
-          </div>
-          ${dayTxs.map(t => renderTransactionCard(t, categories, accounts, properties)).join("")}
+  dates.forEach(date => {
+    const dayTxs = groups[date];
+    const total = dayTxs.reduce((sum, t) => sum + t.amount, 0);
+
+    html += `
+      <div class="transaction-day-group">
+        <div class="transaction-date-header">
+          <span>${formatDate(date)}</span>
+          <span class="${total >= 0 ? "positive" : "negative"}">$${Math.abs(total).toFixed(2)}</span>
         </div>
-      `;
-    })
-    .join("");
+        ${dayTxs.map(t => renderTransactionCard(t, categories, accounts, properties)).join('')}
+      </div>
+    `;
+  });
 
-  attachTxEvents(txs, categories, accounts, properties);
+  list.innerHTML = html;
+  
+  if (count) {
+    count.textContent = `${sorted.length} transaction${sorted.length !== 1 ? 's' : ''}`;
+  }
+
+  // Attach event listeners to the new cards
+  attachTransactionCardEvents();
 }
 
 // ============================================================================
-// Smart Category Name Resolver
+// Render Single Transaction Card
 // ============================================================================
-function getCategoryDisplayName(tx, categories) {
-
-  // 1️⃣ Internal category match via categoryId
-  if (tx.categoryId) {
-    const cat = categories.find(c => c.id === tx.categoryId);
-    if (cat) return cat.name;
-  }
-
-  // 2️⃣ NAB/Bank-provided category
-  if (tx.bankCategory && tx.bankCategory.trim() !== "") {
-    return tx.bankCategory;
-  }
-
-  // 3️⃣ Cleaned keyword text extracted from description
-  if (tx.categoryText && tx.categoryText.trim() !== "") {
-    return tx.categoryText;
-  }
-
-  // 4️⃣ Merchant name
-  if (tx.merchant && tx.merchant.trim() !== "") {
-    return tx.merchant;
-  }
-
-  // 5️⃣ Fallback
-  return "Uncategorized";
-}
-
-
 function renderTransactionCard(tx, categories, accounts, properties) {
   const category = categories.find(c => c.id === tx.categoryId);
   const account = accounts.find(a => a.id === tx.accountId);
   const property = properties.find(p => p.id === tx.propertyId);
   const isIncome = tx.amount > 0;
 
-  // Show bank category if no category assigned
-  const displayCategory = getFullCategoryName(tx.categoryId, categories);
-  const displayName = displayCategory === "Uncategorized" && tx.bankCategory 
-    ? `[Bank: ${tx.bankCategory}] ${tx.description}`
-    : displayCategory;
+  // Check if this transaction is being edited
+  const isEditing = document.querySelector(`[data-transaction-id="${tx.id}"]`) !== null;
+
+  if (isEditing) {
+    // Return edit form instead of card
+    return renderEditForm(tx, categories, accounts, properties);
+  }
+
+  const displayCategory = getCategoryDisplayName(tx, categories);
+  const categoryIcon = category?.icon || (isIncome ? '💰' : '💸');
 
   return `
     <div class="transaction-card ${isIncome ? "income" : "expense"}" data-id="${tx.id}">
       <div class="transaction-main">
-        <div class="transaction-icon">${category?.icon || (isIncome ? "💰" : "💸")}</div>
+        <div class="transaction-icon">${categoryIcon}</div>
         <div class="transaction-details">
-          <!-- Show bank category hint if not categorized -->
-          <div class="transaction-title">${displayName}</div>
-          ${!tx.categoryId && tx.bankCategory ? 
-            `<div class="transaction-hint" style="font-size: 0.8em; color: #666;">
-              Bank categorized as: ${tx.bankCategory}
-            </div>` 
-            : ''}
+          <div class="transaction-title">${displayCategory}</div>
+          ${tx.description ? `<div class="transaction-description">${tx.description}</div>` : ''}
           <div class="transaction-meta">
-            <span>${account?.name || "Unknown Account"}</span>
-            ${tx.isPropertyExpense && property ? `<span class="property-tag">🏠 ${property.name}</span>` : ""}
+            <span>${account?.name || 'Unknown Account'}</span>
+            ${property ? `<span class="property-tag">🏠 ${property.name}</span>` : ''}
+            ${tx.bankCategory ? `<span class="bank-tag">🏦 ${tx.bankCategory}</span>` : ''}
           </div>
-          ${tx.description ? `<div class="transaction-description">${tx.description}</div>` : ""}
         </div>
         <div class="transaction-amount ${isIncome ? "positive" : "negative"}">
           ${isIncome ? "+" : "-"}$${Math.abs(tx.amount).toFixed(2)}
         </div>
       </div>
       <div class="transaction-actions">
-        <button class="edit-btn" data-id="${tx.id}" title="Edit">✏️</button>
-        <button class="delete-btn" data-id="${tx.id}" title="Delete">🗑️</button>
+        <button class="action-btn edit-btn" data-id="${tx.id}" title="Edit">✏️</button>
+        <button class="action-btn delete-btn" data-id="${tx.id}" title="Delete">🗑️</button>
       </div>
     </div>
   `;
 }
 
+// ============================================================================
+// Render Edit Form (INLINE)
+// ============================================================================
+function renderEditForm(tx, categories, accounts, properties) {
+  const isIncome = tx.amount > 0;
+  const mainCats = categories.filter(c => !c.parentId);
+  const subCats = categories.filter(c => c.parentId);
+  
+  // Get current category info
+  const currentCategory = categories.find(c => c.id === tx.categoryId);
+  const currentMainCategory = currentCategory?.parentId ? 
+    categories.find(c => c.id === currentCategory.parentId)?.id : 
+    currentCategory?.id;
+  
+  // Get subcategories for current main category
+  const relevantSubCats = currentMainCategory ? 
+    subCats.filter(s => s.parentId === currentMainCategory) : [];
 
-
+  return `
+    <div class="transaction-card editing" data-transaction-id="${tx.id}">
+      <div class="edit-form-header">
+        <h4>✏️ Edit Transaction</h4>
+        <button class="btn-close cancel-edit" data-id="${tx.id}">✕</button>
+      </div>
+      <form class="edit-transaction-form" data-id="${tx.id}">
+        <div class="form-row">
+          <select name="type" class="form-control" required>
+            <option value="income" ${isIncome ? 'selected' : ''}>Income</option>
+            <option value="expense" ${!isIncome ? 'selected' : ''}>Expense</option>
+          </select>
+          <input type="number" name="amount" class="form-control" 
+                 value="${Math.abs(tx.amount)}" step="0.01" min="0.01" required>
+          <input type="date" name="date" class="form-control" value="${tx.date}" required>
+        </div>
+        
+        <div class="form-row">
+          <select name="accountId" class="form-control" required>
+            <option value="">Select Account</option>
+            ${accounts.map(a => `
+              <option value="${a.id}" ${a.id === tx.accountId ? 'selected' : ''}>
+                ${a.name}
+              </option>
+            `).join('')}
+          </select>
+          <input type="text" name="description" class="form-control" 
+                 value="${tx.description || ''}" placeholder="Description">
+        </div>
+        
+        <div class="form-row">
+          <select name="mainCategory" class="form-control main-category-select" required>
+            <option value="">Select Category</option>
+            ${mainCats.map(c => `
+              <option value="${c.id}" ${c.id === currentMainCategory ? 'selected' : ''}>
+                ${c.name}
+              </option>
+            `).join('')}
+          </select>
+          <select name="subCategory" class="form-control sub-category-select">
+            <option value="">-- None --</option>
+            ${relevantSubCats.map(s => `
+              <option value="${s.id}" ${s.id === tx.categoryId ? 'selected' : ''}>
+                ${s.name}
+              </option>
+            `).join('')}
+          </select>
+        </div>
+        
+        ${tx.isPropertyExpense || tx.propertyId ? `
+          <div class="property-expense-section">
+            <div class="form-row">
+              <label class="checkbox-label">
+                <input type="checkbox" name="isPropertyExpense" checked> Property Expense
+              </label>
+            </div>
+            <div class="form-row">
+              <select name="propertyId" class="form-control">
+                <option value="">Select Property</option>
+                ${properties.map(p => `
+                  <option value="${p.id}" ${p.id === tx.propertyId ? 'selected' : ''}>
+                    ${p.name}
+                  </option>
+                `).join('')}
+              </select>
+              <input type="text" name="expenseCategory" class="form-control" 
+                     value="${tx.expenseCategory || ''}" placeholder="Expense Category">
+            </div>
+          </div>
+        ` : ''}
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary save-edit">💾 Save</button>
+          <button type="button" class="btn btn-secondary cancel-edit" data-id="${tx.id}">Cancel</button>
+        </div>
+      </form>
+    </div>
+  `;
+}
 
 // ============================================================================
-// Event Handlers
+// Show Inline Transaction Form (for adding new)
 // ============================================================================
-function attachTxEvents(transactions, categories, accounts, properties) {
-  document.querySelectorAll(".edit-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const tx = transactions.find(t => t.id === btn.dataset.id);
+function showInlineTransactionForm(prefill, categories, accounts, properties) {
+  const mainCats = categories.filter(c => !c.parentId);
+  
+  // Remove any existing edit forms
+  document.querySelectorAll('.transaction-card.editing').forEach(el => el.remove());
+  
+  // Remove any existing add form
+  const existingAddForm = document.querySelector('.add-transaction-form');
+  if (existingAddForm) {
+    existingAddForm.parentElement.remove();
+  }
+  
+  const formHtml = `
+    <div class="transaction-card add-new">
+      <div class="edit-form-header">
+        <h4>➕ Add New Transaction</h4>
+        <button class="btn-close cancel-add">✕</button>
+      </div>
+      <form class="add-transaction-form">
+        <div class="form-row">
+          <select name="type" class="form-control" required>
+            <option value="income" ${prefill?.type === 'income' ? 'selected' : ''}>Income</option>
+            <option value="expense" ${prefill?.type === 'expense' ? 'selected' : ''}>Expense</option>
+          </select>
+          <input type="number" name="amount" class="form-control" 
+                 value="${prefill?.amount || ''}" step="0.01" min="0.01" placeholder="Amount" required>
+          <input type="date" name="date" class="form-control" 
+                 value="${prefill?.date || new Date().toISOString().split('T')[0]}" required>
+        </div>
+        
+        <div class="form-row">
+          <select name="accountId" class="form-control" required>
+            <option value="">Select Account</option>
+            ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+          </select>
+          <input type="text" name="description" class="form-control" placeholder="Description">
+        </div>
+        
+        <div class="form-row">
+          <select name="mainCategory" class="form-control main-category-select" required>
+            <option value="">Select Category</option>
+            ${mainCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+          <select name="subCategory" class="form-control sub-category-select">
+            <option value="">-- None --</option>
+          </select>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">💾 Save Transaction</button>
+          <button type="button" class="btn btn-secondary cancel-add">Cancel</button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  const txList = document.getElementById('txList');
+  if (txList) {
+    txList.insertAdjacentHTML('afterbegin', formHtml);
+    
+    // Scroll to form
+    const formElement = document.querySelector('.add-transaction-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Setup event listeners for the new form
+    setupAddFormListeners(categories);
+  }
+}
+
+// ============================================================================
+// Attach Event Listeners to Transaction Cards
+// ============================================================================
+function attachTransactionCardEvents() {
+  // Edit buttons
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const txId = btn.dataset.id;
+      const tx = currentTransactions.find(t => t.id === txId);
+      
       if (tx) {
-        loadTransactionIntoForm(tx, categories, properties);
+        // Replace the card with edit form
+        const card = btn.closest('.transaction-card');
+        if (card) {
+          const editForm = renderEditForm(tx, currentCategories, currentAccounts, currentProperties);
+          card.outerHTML = editForm;
+          
+          // Setup event listeners for the edit form
+          setupEditFormListeners();
+        }
       }
     });
   });
 
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (confirm("Delete this transaction?")) {
+  // Delete buttons
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const txId = btn.dataset.id;
+      
+      if (confirm('Are you sure you want to delete this transaction?')) {
         try {
-          await deleteItem(STORE_NAMES.transactions, btn.dataset.id);
-          initTransactionsUI();
+          await deleteItem(STORE_NAMES.transactions, txId);
+          // Refresh the list
+          await initTransactionsUI();
         } catch (error) {
-          console.error("[TX] Failed to delete transaction:", error);
-          alert("Failed to delete transaction. Please try again.");
+          console.error('[TX] Failed to delete transaction:', error);
+          alert('Failed to delete transaction. Please try again.');
         }
       }
     });
   });
 }
 
-function loadTransactionIntoForm(tx, categories, properties) {
-  const form = document.getElementById("txForm");
-  if (!form) return;
-
-  form.dataset.id = tx.id;
-
-  form.type.value = tx.amount > 0 ? "income" : "expense";
-  form.amount.value = Math.abs(tx.amount);
-  form.date.value = tx.date;
-  form.accountId.value = tx.accountId || "";
-  form.description.value = tx.description || "";
-
-  // Set category
-  const mainCat = document.getElementById("mainCategory");
-  const subCat = document.getElementById("subCategory");
-  if (tx.categoryId) {
-    const category = categories.find(c => c.id === tx.categoryId);
-    if (category) {
-      if (category.parentId) {
-        // Set main category
-        mainCat.value = category.parentId;
-
-        // Rebuild subcategory list BEFORE selecting
-        rebuildSubcategoriesForEdit(category.parentId, categories);
-
-        // Select subcategory
-        subCat.value = tx.categoryId;
-      } else {
-        // No subcategory
-        mainCat.value = tx.categoryId;
-
-        rebuildSubcategoriesForEdit(tx.categoryId, categories);
-      }
-    }
-
-  }
-
-  // Property expense fields
-  const isPropertyExpense = document.getElementById("isPropertyExpense");
-  const propertyExpenseSection = document.getElementById("propertyExpenseSection");
-  const propertyExpenseFields = document.getElementById("propertyExpenseFields");
-  
-  if (tx.isPropertyExpense) {
-    isPropertyExpense.checked = true;
-    propertyExpenseSection.style.display = "block";
-    propertyExpenseFields.style.display = "block";
-    
-    form.propertyId.value = tx.propertyId || "";
-    form.expenseCategory.value = tx.expenseCategory || "";
-    form.expenseStatus.value = tx.expenseStatus || "Paid";
-    form.receiptUrl.value = tx.receiptUrl || "";
-    form.expenseNotes.value = tx.notes || "";
-  } else {
-    isPropertyExpense.checked = false;
-    propertyExpenseSection.style.display = "none";
-    propertyExpenseFields.style.display = "none";
-  }
-
-  toggleAddForm();
-}
-
 // ============================================================================
-// UI helpers
+// Setup Edit Form Listeners
 // ============================================================================
-function toggleAddForm() {
-  const addForm = document.getElementById("addTxForm");
-  const filterForm = document.getElementById("filterTxForm");
-  
-  if (addForm && filterForm) {
-    addForm.style.display = addForm.style.display === "none" ? "block" : "none";
-    filterForm.style.display = "none";
-  }
-}
-
-function toggleFilterForm() {
-  const addForm = document.getElementById("addTxForm");
-  const filterForm = document.getElementById("filterTxForm");
-  
-  if (addForm && filterForm) {
-    filterForm.style.display = filterForm.style.display === "none" ? "block" : "none";
-    addForm.style.display = "none";
-  }
-}
-
-function hideForms() {
-  const addForm = document.getElementById("addTxForm");
-  const filterForm = document.getElementById("filterTxForm");
-  
-  if (addForm) addForm.style.display = "none";
-  if (filterForm) filterForm.style.display = "none";
-}
-
-function clearFilterForm() {
-  const filterForm = document.getElementById("filterForm");
-  if (filterForm) {
-    filterForm.reset();
-    initTransactionsUI();
-  }
-}
-
-// ============================================================================
-// Property Expense Toggle Functions
-// ============================================================================
-function togglePropertyExpenseFields() {
-  const typeSelect = document.querySelector("[name='type']");
-  const section = document.getElementById("propertyExpenseSection");
-  
-  if (typeSelect && section) {
-    section.style.display = typeSelect.value === "expense" ? "block" : "none";
-    
-    if (typeSelect.value !== "expense") {
-      const isPropertyCheckbox = document.getElementById("isPropertyExpense");
-      const propertyFields = document.getElementById("propertyExpenseFields");
+function setupEditFormListeners() {
+  // Cancel edit buttons
+  document.querySelectorAll('.cancel-edit').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const txId = btn.dataset.id;
       
-      if (isPropertyCheckbox) isPropertyCheckbox.checked = false;
-      if (propertyFields) propertyFields.style.display = "none";
-    }
-  }
+      // Remove the edit form and re-render the card
+      const editForm = document.querySelector(`[data-transaction-id="${txId}"]`);
+      if (editForm) {
+        editForm.remove();
+        
+        // Re-render the transaction list
+        renderTransactionList(currentTransactions, currentCategories, currentAccounts, currentProperties);
+      }
+    });
+  });
+
+  // Category linking in edit forms
+  document.querySelectorAll('.main-category-select').forEach(select => {
+    select.addEventListener('change', function() {
+      const parentId = this.value;
+      const form = this.closest('form');
+      const subSelect = form.querySelector('.sub-category-select');
+      
+      if (subSelect) {
+        const subCats = currentCategories.filter(c => c.parentId === parentId);
+        subSelect.innerHTML = `
+          <option value="">-- None --</option>
+          ${subCats.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+        `;
+      }
+    });
+  });
+
+  // Edit form submission
+  document.querySelectorAll('.edit-transaction-form').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const txId = form.dataset.id;
+      const originalTx = currentTransactions.find(t => t.id === txId);
+      
+      if (!originalTx) return;
+      
+      const subCategory = formData.get('subCategory');
+      const mainCategory = formData.get('mainCategory');
+      const categoryId = subCategory || mainCategory;
+      
+      const updatedTx = {
+        ...originalTx,
+        type: formData.get('type'),
+        amount: formData.get('type') === 'expense' ? 
+          -Math.abs(parseFloat(formData.get('amount'))) : 
+          Math.abs(parseFloat(formData.get('amount'))),
+        date: formData.get('date'),
+        accountId: formData.get('accountId'),
+        description: formData.get('description') || '',
+        categoryId: categoryId,
+        isPropertyExpense: formData.get('isPropertyExpense') === 'on',
+        propertyId: formData.get('propertyId') || null,
+        expenseCategory: formData.get('expenseCategory') || null,
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await updateItem(STORE_NAMES.transactions, updatedTx);
+        
+        // Refresh the UI
+        await initTransactionsUI();
+      } catch (error) {
+        console.error('[TX] Failed to update transaction:', error);
+        alert('Failed to update transaction. Please try again.');
+      }
+    });
+  });
 }
 
-function togglePropertyExpenseCheckbox() {
-  const checkbox = document.getElementById("isPropertyExpense");
-  const propertyFields = document.getElementById("propertyExpenseFields");
-  
-  if (checkbox && propertyFields) {
-    propertyFields.style.display = checkbox.checked ? "block" : "none";
-  }
-}
+// ============================================================================
+// Setup Add Form Listeners
+// ============================================================================
+function setupAddFormListeners(categories) {
+  // Cancel add button
+  document.querySelectorAll('.cancel-add').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const addForm = document.querySelector('.add-transaction-form');
+      if (addForm) {
+        addForm.closest('.transaction-card').remove();
+      }
+    });
+  });
 
-// Make functions available globally for inline onclick handlers
-window.togglePropertyExpenseFields = togglePropertyExpenseFields;
-window.togglePropertyExpenseCheckbox = togglePropertyExpenseCheckbox;
+  // Category linking in add form
+  document.querySelectorAll('.main-category-select').forEach(select => {
+    select.addEventListener('change', function() {
+      const parentId = this.value;
+      const form = this.closest('form');
+      const subSelect = form.querySelector('.sub-category-select');
+      
+      if (subSelect) {
+        const subCats = categories.filter(c => c.parentId === parentId);
+        subSelect.innerHTML = `
+          <option value="">-- None --</option>
+          ${subCats.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+        `;
+      }
+    });
+  });
+
+  // Add form submission
+  document.querySelectorAll('.add-transaction-form').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const subCategory = formData.get('subCategory');
+      const mainCategory = formData.get('mainCategory');
+      const categoryId = subCategory || mainCategory;
+      
+      const newTx = {
+        id: generateId(),
+        type: formData.get('type'),
+        amount: formData.get('type') === 'expense' ? 
+          -Math.abs(parseFloat(formData.get('amount'))) : 
+          Math.abs(parseFloat(formData.get('amount'))),
+        date: formData.get('date'),
+        accountId: formData.get('accountId'),
+        description: formData.get('description') || '',
+        categoryId: categoryId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await addItem(STORE_NAMES.transactions, newTx);
+        
+        // Refresh the UI
+        await initTransactionsUI();
+      } catch (error) {
+        console.error('[TX] Failed to add transaction:', error);
+        alert('Failed to add transaction. Please try again.');
+      }
+    });
+  });
+}
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
+function getCategoryDisplayName(tx, categories) {
+  if (tx.categoryId) {
+    const cat = categories.find(c => c.id === tx.categoryId);
+    if (cat) {
+      if (cat.parentId) {
+        const parent = categories.find(c => c.id === cat.parentId);
+        return parent ? `${parent.name} › ${cat.name}` : cat.name;
+      }
+      return cat.name;
+    }
+  }
+
+  if (tx.bankCategory) return tx.bankCategory;
+  if (tx.description) return tx.description.substring(0, 30) + (tx.description.length > 30 ? '...' : '');
+  
+  return 'Uncategorized';
+}
+
 function formatDate(date) {
   try {
     const d = new Date(date);
-    return d.toLocaleDateString("en-AU", { weekday: "short", month: "short", day: "numeric" });
+    return d.toLocaleDateString('en-AU', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
   } catch (e) {
     return date;
   }
 }
 
 // ============================================================================
-// 🏠 SYNC: Push Property-Related Transactions → Expenses Store
+// Additional CSS for Inline Editing
 // ============================================================================
-export async function syncToExpenses(transaction) {
-  try {
-    const expenses = await getAllItems(STORE_NAMES.expenses).catch(() => []);
-
-    const existingExpense = expenses.find(e => e.transactionId === transaction.id);
-
-    const expenseData = {
-      id: existingExpense ? existingExpense.id : generateId(),
-      transactionId: transaction.id,
-      propertyId: transaction.propertyId || "",
-      category: transaction.expenseCategory || "Other",
-      description: transaction.description || "Property Expense",
-      amount: Math.abs(transaction.amount),
-      date: transaction.date,
-      status: transaction.expenseStatus || "Paid",
-      receiptUrl: transaction.receiptUrl || "",
-      notes: transaction.notes || "",
-      taxDeductible: true,
-      recurring: false,
-      frequency: "monthly",
-      nextDue: transaction.date,
-      createdAt: existingExpense ? existingExpense.createdAt : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    if (existingExpense) {
-      await updateItem(STORE_NAMES.expenses, expenseData);
-    } else {
-      await addItem(STORE_NAMES.expenses, expenseData);
-    }
-
-    return expenseData;
-  } catch (err) {
-    console.error("❌ syncToExpenses() failed:", err);
-    throw err;
+const inlineEditCSS = `
+  .transaction-card.editing {
+    border: 2px solid #3b82f6;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   }
-}
-
-// ============================================================================
-// 🔄 SYNC ALL: Ensure all property expenses appear in Expenses page
-// ============================================================================
-export async function syncAllPropertyExpenses() {
-  try {
-    const [transactions, expenses] = await Promise.all([
-      getAllItems(STORE_NAMES.transactions),
-      getAllItems(STORE_NAMES.expenses).catch(() => [])
-    ]);
-
-    // Look for transactions marked as property expense
-    const propertyTransactions = transactions.filter(
-      t => t.type === "expense" && t.isPropertyExpense && t.propertyId
-    );
-
-    // Filter out ones already synced
-    const unsynced = propertyTransactions.filter(
-      t => !expenses.find(e => e.transactionId === t.id)
-    );
-
-    if (unsynced.length === 0) {
-      return {
-        synced: 0,
-        total: 0,
-        message: "All property expenses are already synced!"
-      };
-    }
-
-    let syncedCount = 0;
-
-    for (const tx of unsynced) {
-      try {
-        await syncToExpenses(tx);
-        syncedCount++;
-      } catch (syncErr) {
-        console.error(`❌ Failed to sync transaction ${tx.id}`, syncErr);
-      }
-    }
-
-    return {
-      synced: syncedCount,
-      total: unsynced.length,
-      message: `Synced ${syncedCount} new property expenses.`
-    };
-
-  } catch (err) {
-    console.error("❌ syncAllPropertyExpenses() error:", err);
-    return {
-      synced: 0,
-      total: 0,
-      message: "Sync failed due to an unexpected error."
-    };
+  
+  .transaction-card.add-new {
+    border: 2px dashed #10b981;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
   }
-
-}
-
-function getFullCategoryName(categoryId, categories) {
-  if (!categoryId) return "Uncategorized";
-
-  const category = categories.find(c => c.id === categoryId);
-  if (!category) return "Uncategorized";
-
-  // If subcategory → show Parent › Child
-  if (category.parentId) {
-    const parent = categories.find(c => c.id === category.parentId);
-    if (parent) return `${parent.name} › ${category.name}`;
+  
+  .edit-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e5e7eb;
   }
+  
+  .edit-form-header h4 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.2rem;
+  }
+  
+  .property-expense-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border-left: 4px solid #8b5cf6;
+  }
+  
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #4b5563;
+  }
+  
+  .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  
+  .bank-tag {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .action-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .action-btn.edit-btn {
+    background: #3b82f6;
+    color: white;
+  }
+  
+  .action-btn.edit-btn:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+  }
+  
+  .action-btn.delete-btn {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+  
+  .action-btn.delete-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-2px);
+  }
+`;
 
-  // Main category only
-  return category.name;
+// Inject the CSS
+if (!document.querySelector('#inline-edit-css')) {
+  const style = document.createElement('style');
+  style.id = 'inline-edit-css';
+  style.textContent = inlineEditCSS;
+  document.head.appendChild(style);
 }
