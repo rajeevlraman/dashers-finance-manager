@@ -24,7 +24,7 @@ document.addEventListener('click', () => {
         window.userHasInteracted = true;
     }
 }, { once: true });
-appcoreasync function initializeAppCore() {
+async function initializeAppCore() {
     console.log('🚀 Starting core app initialization...');
     
     // Initialize UI
@@ -362,6 +362,7 @@ function updateConnectionIcon() {
 // --------------------------
 // Enhanced App Initialization
 // --------------------------
+
 
 // ============================================================================
 // --------------------------
