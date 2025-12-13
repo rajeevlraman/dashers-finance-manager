@@ -37,26 +37,8 @@
   overflow: hidden;
 }
 
-.fab-main::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.fab-main:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
 .fab-main:hover {
-  transform: scale(1.05) rotate(90deg);
+  transform: scale(1.05);
   box-shadow: 
     0 6px 25px rgba(124, 58, 237, 0.4),
     0 10px 40px rgba(0, 0, 0, 0.2);
@@ -69,7 +51,7 @@
 
 /* FAB Actions Container */
 .fab-actions {
-  display: flex;
+  display: none; /* CHANGED: Hidden by default */
   flex-direction: column;
   gap: 12px;
   align-items: flex-end;
@@ -81,6 +63,7 @@
 }
 
 .fab-actions.show {
+  display: flex; /* CHANGED: Show when active */
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
@@ -106,8 +89,6 @@
   color: var(--text-color);
   transform: translateX(20px);
   opacity: 0;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .fab-actions.show button {
@@ -131,82 +112,15 @@
     0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.fab-actions button:active {
-  transform: translateX(-2px) scale(0.98);
-}
-
 /* Button Icons */
-.fab-actions button::before {
-  content: attr(data-icon);
+.fab-actions button .fab-icon {
   font-size: 16px;
   display: inline-block;
   transition: transform 0.3s;
 }
 
-.fab-actions button:hover::before {
+.fab-actions button:hover .fab-icon {
   transform: scale(1.2);
-}
-
-/* Tooltip for action buttons */
-.fab-actions button::after {
-  content: attr(title);
-  position: absolute;
-  right: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s;
-}
-
-.fab-actions button:hover::after {
-  opacity: 1;
-}
-
-/* Live Refresh Indicator */
-#liveRefresh.active {
-  background: linear-gradient(135deg, #10b981, #84cc16);
-  color: white;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
-/* FAB Backdrop (when active) */
-.fab-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s;
-  z-index: 999;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-}
-
-.fab-backdrop.active {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 /* Mobile Adjustments */
@@ -230,57 +144,23 @@
     padding: 10px 16px;
     font-size: 13px;
   }
-  
-  /* On mobile, show buttons in a row at bottom */
-  @media (max-width: 480px) {
-    .fab-container {
-      align-items: center;
-      right: 50%;
-      transform: translateX(50%);
-    }
-    
-    .fab-actions {
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: center;
-      width: 100vw;
-      padding: 0 16px;
-      gap: 8px;
-    }
-    
-    .fab-actions button {
-      flex: 1;
-      min-width: 140px;
-      justify-content: center;
-    }
-    
-    .fab-actions button::after {
-      display: none; /* Hide tooltips on mobile */
-    }
-  }
 }
 
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .fab-actions button {
-    background: rgba(30, 30, 30, 0.9);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #f0f0f0;
-  }
-  
-  .fab-actions button:hover {
-    background: var(--primary);
-    color: white;
-  }
+/* FAB Backdrop */
+.fab-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 999;
 }
 
-/* Accessibility improvements */
-.fab-main:focus {
-  outline: 2px solid var(--primary);
-  outline-offset: 4px;
-}
-
-.fab-actions button:focus {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+.fab-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
 }

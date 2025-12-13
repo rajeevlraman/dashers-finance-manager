@@ -15,20 +15,33 @@ window.toggleSection = function(header) {
 };
 
 window.quickAction = function(action) {
+  console.log(`Quick action: ${action}`);
+  
   const actions = {
-    expense: () => window.showAddTransactionModal?.('expense'),
-    income: () => window.showAddTransactionModal?.('income'),
-    property: () => window.showAddPropertyModal?.(),
-    bill: () => window.showAddBillModal?.()
+    expense: () => {
+      // Add your expense modal code here
+      console.log('Opening expense form');
+      // Example: showAddTransactionModal('expense');
+    },
+    income: () => {
+      // Add your income modal code here
+      console.log('Opening income form');
+      // Example: showAddTransactionModal('income');
+    },
+    property: () => {
+      // Add your property modal code here
+      console.log('Opening property form');
+      // Example: showAddPropertyModal();
+    },
+    bill: () => {
+      // Add your bill modal code here
+      console.log('Opening bill form');
+      // Example: showAddBillModal();
+    }
   };
   
   if (actions[action]) {
     actions[action]();
-    // Close FAB
-    const fabActions = document.querySelector('.fab-actions');
-    const fabMain = document.querySelector('.fab-main');
-    if (fabActions) fabActions.classList.remove('show');
-    if (fabMain) fabMain.textContent = '+';
   }
 };
 
@@ -429,13 +442,25 @@ function getTodayDate() {
 
       <!-- Floating Action Button -->
       <div class="fab-container">
-        <div class="fab-actions">
-          <button onclick="quickAction('expense')">💸 Add Expense</button>
-          <button onclick="quickAction('income')">💰 Add Income</button>
-          <button onclick="quickAction('property')">🏠 Add Property</button>
-          <button onclick="quickAction('bill')">🧾 Pay Bill</button>
+        <div class="fab-actions" id="fabActions">
+          <button data-action="expense">
+            <span class="fab-icon">💸</span>
+            <span class="fab-text">Add Expense</span>
+          </button>
+          <button data-action="income">
+            <span class="fab-icon">💰</span>
+            <span class="fab-text">Add Income</span>
+          </button>
+          <button data-action="property">
+            <span class="fab-icon">🏠</span>
+            <span class="fab-text">Add Property</span>
+          </button>
+          <button data-action="bill">
+            <span class="fab-icon">🧾</span>
+            <span class="fab-text">Pay Bill</span>
+          </button>
         </div>
-        <button class="fab-main">+</button>
+        <button class="fab-main" id="fabMain">+</button>
       </div>
     `;
 
@@ -743,12 +768,72 @@ function getTodayDate() {
     }
 
     // FAB Toggle
-    const fabMain = document.querySelector('.fab-main');
-    if (fabMain) {
-      fabMain.addEventListener('click', function() {
-        const fabActions = document.querySelector('.fab-actions');
-        fabActions.classList.toggle('show');
-        this.textContent = fabActions.classList.contains('show') ? '×' : '+';
+    // ====================================================
+    // FAB EVENT LISTENERS - FIXED VERSION
+    // ====================================================
+    
+    const fabMain = document.getElementById('fabMain');
+    const fabActions = document.getElementById('fabActions');
+    
+    if (fabMain && fabActions) {
+      // Toggle FAB actions when main button is clicked
+      fabMain.addEventListener('click', function(e) {
+        e.stopPropagation();
+        
+        const isActive = fabActions.classList.contains('show');
+        
+        if (!isActive) {
+          // Open FAB
+          fabActions.classList.add('show');
+          fabMain.classList.add('active');
+          fabMain.textContent = '×';
+          
+          // Add backdrop
+          let backdrop = document.querySelector('.fab-backdrop');
+          if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'fab-backdrop';
+            document.body.appendChild(backdrop);
+          }
+          backdrop.classList.add('active');
+          
+          // Click outside to close
+          backdrop.addEventListener('click', closeFAB);
+        } else {
+          closeFAB();
+        }
+      });
+      
+      // Handle action button clicks
+      fabActions.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const action = this.dataset.action;
+          if (action) {
+            window.quickAction(action);
+            closeFAB();
+          }
+        });
+      });
+      
+      // Close function
+      function closeFAB() {
+        fabActions.classList.remove('show');
+        fabMain.classList.remove('active');
+        fabMain.textContent = '+';
+        
+        const backdrop = document.querySelector('.fab-backdrop');
+        if (backdrop) {
+          backdrop.classList.remove('active');
+          backdrop.removeEventListener('click', closeFAB);
+        }
+      }
+      
+      // Close FAB when clicking ESC key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && fabActions.classList.contains('show')) {
+          closeFAB();
+        }
       });
     }
 
