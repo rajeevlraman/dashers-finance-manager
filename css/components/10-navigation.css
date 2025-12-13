@@ -1,240 +1,135 @@
-/* ============================================================================
-   MODERN SIDEBAR NAVIGATION - CRITICAL STYLES
-   ============================================================================ */
-
-/* Reset any conflicting styles first */
-.modern-sidebar,
-.hamburger-menu,
-.sidebar-overlay {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Modern Sidebar Base Styles */
-.modern-sidebar {
-  position: fixed;
-  top: 0;
-  left: -280px;
-  width: 280px;
-  height: 100vh;
-  background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
-  box-shadow: 5px 0 25px rgba(0, 0, 0, 0.3);
-  z-index: 10000 !important; /* Higher z-index to appear above everything */
-  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.modern-sidebar.sidebar-open {
-  left: 0 !important;
-  box-shadow: 10px 0 40px rgba(0, 0, 0, 0.4);
-}
-
-/* Sidebar Header */
-.sidebar-header {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.sidebar-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  object-fit: cover;
-  display: block !important;
-}
-
-.sidebar-title {
-  color: white;
-  font-size: 1.3rem;
-  font-weight: 700;
-  flex: 1;
-  display: block !important;
-}
-
-.close-sidebar {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  font-size: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.close-sidebar:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
-}
-
-/* Menu Sections */
-.sidebar-menu {
-  padding: 20px 0;
-  list-style: none;
-  margin: 0;
-}
-
-.menu-section {
-  margin-bottom: 5px;
-}
-
-.menu-header {
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-}
-
-.menu-header:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-}
-
-.menu-icon {
-  font-size: 1.2rem;
-  width: 24px;
-  text-align: center;
-  display: block !important;
-}
-
-.menu-title {
-  flex: 1;
-  font-size: 0.95rem;
-  display: block !important;
-}
-
-.menu-chevron {
-  font-size: 0.8rem;
-  transition: transform 0.3s ease;
-  display: block !important;
-}
-
-/* Sub Menu */
-.sub-menu {
-  list-style: none;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0;
-  margin: 0;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.menu-section.active .sub-menu {
-  max-height: 500px;
-}
-
-/* Menu Items */
-.menu-item {
-  display: flex !important;
-  align-items: center;
-  gap: 15px;
-  padding: 12px 20px 12px 55px !important;
-  color: rgba(255, 255, 255, 0.7) !important;
-  text-decoration: none !important;
-  font-size: 0.9rem !important;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  background: transparent !important;
-  border: none !important;
-  width: 100% !important;
-  text-align: left !important;
-  position: relative;
-}
-
-.menu-item:hover {
-  color: white !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  padding-left: 60px !important;
-}
-
-.menu-item.active {
-  color: white !important;
-  background: rgba(59, 130, 246, 0.1) !important;
-}
-
-.item-icon {
-  font-size: 1.1rem;
-  width: 24px;
-  text-align: center;
-  display: block !important;
-}
-
-.item-text {
-  flex: 1;
-  display: block !important;
-}
+/* ============================================
+   MINIMAL SIDEBAR CSS - Add this to styles.css
+   ============================================ */
 
 /* Hamburger Menu */
 .hamburger-menu {
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 10001 !important;
-  display: none;
+  z-index: 10001;
 }
 
 .hamburger-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  border-radius: 10px;
+  background: #3b82f6;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 5px;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 10002;
-}
-
-.hamburger-icon:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .hamburger-icon span {
   width: 20px;
   height: 2px;
   background: white;
-  border-radius: 1px;
-  transition: all 0.3s ease;
-  display: block !important;
+  display: block;
 }
 
-/* Overlay for Mobile */
+/* Sidebar Base */
+.modern-sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100vh;
+  background: #1a1f36;
+  z-index: 10000;
+  transition: left 0.3s ease;
+  padding: 20px;
+  color: white;
+  box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+}
+
+.modern-sidebar.sidebar-open {
+  left: 0;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.sidebar-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  flex: 1;
+}
+
+.close-sidebar {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Menu Items */
+.menu-section {
+  margin-bottom: 20px;
+}
+
+.menu-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  margin-bottom: 5px;
+}
+
+.menu-items {
+  padding-left: 20px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  color: rgba(255,255,255,0.8);
+  text-decoration: none;
+  border-radius: 6px;
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: rgba(255,255,255,0.05);
+  color: white;
+}
+
+/* Overlay */
 .sidebar-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 9999 !important;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
-  backdrop-filter: blur(3px);
 }
 
 .sidebar-overlay.active {
@@ -242,23 +137,10 @@
   visibility: visible;
 }
 
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 768px) {
-  .modern-sidebar {
-    left: -320px !important;
-    width: 280px;
-  }
-  
-  .modern-sidebar.sidebar-open {
-    left: 0 !important;
-  }
-  
   .hamburger-menu {
-    display: block !important;
-  }
-  
-  .close-sidebar {
-    display: flex !important;
+    display: block;
   }
 }
 
@@ -266,56 +148,19 @@
   .modern-sidebar {
     left: 0 !important;
   }
-  
+  .hamburger-menu {
+    display: none;
+  }
+  .close-sidebar {
+    display: none;
+  }
   .sidebar-overlay {
     display: none !important;
   }
   
-  .close-sidebar {
-    display: none !important;
-  }
-  
-  .hamburger-menu {
-    display: none !important;
-  }
-  
-  /* Adjust main content to account for sidebar */
+  /* Adjust main content */
   main, #mainContent {
     margin-left: 280px !important;
-    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     width: calc(100% - 280px) !important;
   }
-}
-
-/* Force display important rules to override any other CSS */
-.modern-sidebar,
-.hamburger-menu,
-.sidebar-overlay,
-.sidebar-header,
-.sidebar-logo,
-.sidebar-title,
-.menu-header,
-.menu-icon,
-.menu-title,
-.menu-chevron,
-.menu-item,
-.item-icon,
-.item-text,
-.hamburger-icon span {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Debug border to see if sidebar is rendering */
-.modern-sidebar::before {
-  content: 'SIDEBAR RENDERED';
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: red;
-  color: white;
-  font-size: 10px;
-  padding: 2px 5px;
-  z-index: 100000;
 }

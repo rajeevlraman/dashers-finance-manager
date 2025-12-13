@@ -1,14 +1,11 @@
-// navigation.js - Modern Mobile-App Style Navigation (Module Version)
-// Redesigned with smooth sidebar animations and mobile hamburger menu
+// navigation.js - DEBUGGED VERSION
+console.log("🚀 NAVIGATION: Debug version loading");
 
-console.log("NAVIGATION: Module script loaded");
-
-// ------------------------------------------
-// Build Modern Navigation HTML
-// ------------------------------------------
+// Build Navigation HTML
 function buildNavigationHTML() {
+  console.log("🔧 Building navigation HTML...");
   return `
-<!-- Hamburger Menu for Mobile -->
+<!-- Hamburger Menu -->
 <div class="hamburger-menu">
   <div class="hamburger-icon" id="hamburgerBtn">
     <span></span>
@@ -17,266 +14,206 @@ function buildNavigationHTML() {
   </div>
 </div>
 
-<!-- Main Sidebar Navigation -->
+<!-- Sidebar Navigation -->
 <nav class="modern-sidebar" id="mainSidebar">
-  <!-- Logo Section -->
   <div class="sidebar-header">
-    <img src="./assets/icons/icon-152.png" class="sidebar-logo" alt="Budget Tracker Logo">
+    <img src="./assets/icons/icon-152.png" class="sidebar-logo" alt="Logo">
     <span class="sidebar-title">Budget Tracker</span>
-    <button class="close-sidebar" id="closeSidebar" aria-label="Close menu">×</button>
+    <button class="close-sidebar" id="closeSidebar">×</button>
   </div>
-
-  <!-- Navigation Menu -->
-  <ul class="sidebar-menu">
-    <!-- Finance Section -->
-    <li class="menu-section">
-      <div class="menu-header" role="button" tabindex="0">
+  
+  <div class="sidebar-content">
+    <div class="menu-section">
+      <div class="menu-header">
         <span class="menu-icon">💰</span>
         <span class="menu-title">Finance</span>
         <span class="menu-chevron">▾</span>
       </div>
-      <ul class="sub-menu">
-        <li><a data-view="dashboard" class="menu-item"><span class="item-icon">🏠</span><span class="item-text">Dashboard</span></a></li>
-        <li><a data-view="transactions" class="menu-item"><span class="item-icon">💸</span><span class="item-text">Transactions</span></a></li>
-        <li><a data-view="budgets" class="menu-item"><span class="item-icon">🎯</span><span class="item-text">Budgets</span></a></li>
-        <li><a data-view="accounts" class="menu-item"><span class="item-icon">💳</span><span class="item-text">Accounts</span></a></li>
-        <li><a data-view="loans" class="menu-item"><span class="item-icon">🏦</span><span class="item-text">Loans</span></a></li>
-        <li><a data-view="categories" class="menu-item"><span class="item-icon">🗂️</span><span class="item-text">Categories</span></a></li>
-        <li><a data-view="reports" class="menu-item"><span class="item-icon">📊</span><span class="item-text">Reports</span></a></li>
-        <li><a data-view="bills" class="menu-item"><span class="item-icon">🧾</span><span class="item-text">Bills</span></a></li>
-        <li><a data-view="calendar" class="menu-item"><span class="item-icon">📅</span><span class="item-text">Calendar</span></a></li>
-        <li><a data-view="recurring" class="menu-item"><span class="item-icon">🔁</span><span class="item-text">Recurring</span></a></li>
-        <li><a data-view="expenses" class="menu-item"><span class="item-icon">💸</span><span class="item-text">Expenses</span></a></li>
-      </ul>
-    </li>
-
-    <!-- Properties Section -->
-    <li class="menu-section">
-      <div class="menu-header" role="button" tabindex="0">
-        <span class="menu-icon">🏠</span>
-        <span class="menu-title">Properties</span>
-        <span class="menu-chevron">▾</span>
+      <div class="menu-items">
+        <a data-view="dashboard" class="menu-item"><span class="item-icon">🏠</span><span class="item-text">Dashboard</span></a>
+        <a data-view="transactions" class="menu-item"><span class="item-icon">💸</span><span class="item-text">Transactions</span></a>
+        <a data-view="budgets" class="menu-item"><span class="item-icon">🎯</span><span class="item-text">Budgets</span></a>
+        <a data-view="accounts" class="menu-item"><span class="item-icon">💳</span><span class="item-text">Accounts</span></a>
+        <a data-view="loans" class="menu-item"><span class="item-icon">🏦</span><span class="item-text">Loans</span></a>
       </div>
-      <ul class="sub-menu">
-        <li><a data-view="properties" class="menu-item"><span class="item-icon">🏠</span><span class="item-text">Properties</span></a></li>
-        <li><a data-view="tenants" class="menu-item"><span class="item-icon">👤</span><span class="item-text">Tenants</span></a></li>
-        <li><a data-view="maintenance" class="menu-item"><span class="item-icon">🧰</span><span class="item-text">Maintenance</span></a></li>
-        <li><a data-view="costbase" class="menu-item"><span class="item-icon">🧱</span><span class="item-text">Cost Base</span></a></li>
-      </ul>
-    </li>
-
-    <!-- System Section -->
-    <li class="menu-section">
-      <div class="menu-header" role="button" tabindex="0">
-        <span class="menu-icon">⚙️</span>
-        <span class="menu-title">System</span>
-        <span class="menu-chevron">▾</span>
-      </div>
-      <ul class="sub-menu">
-        <li><a data-view="settings" class="menu-item"><span class="item-icon">⚙️</span><span class="item-text">Settings</span></a></li>
-        <li><a data-view="tax" class="menu-item"><span class="item-icon">📘</span><span class="item-text">ATO Reports</span></a></li>
-      </ul>
-    </li>
-  </ul>
-
-  <!-- Active Item Highlight -->
-  <div class="active-highlight" id="activeHighlight"></div>
+    </div>
+  </div>
 </nav>
 
-<!-- Overlay for Mobile -->
+<!-- Overlay -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
   `;
 }
 
-// ------------------------------------------
 // Inject Navigation
-// ------------------------------------------
 function injectNavigation() {
-  console.log("NAVIGATION: Starting injection...");
+  console.log("🎯 NAVIGATION: Starting injection...");
   
   const splash = document.getElementById("splashScreen");
   if (!splash) {
-    console.error("NAV ERROR: splashScreen not found");
+    console.error("❌ NAV ERROR: splashScreen not found!");
     return;
   }
-
-  console.log("NAVIGATION: Found splash screen, injecting...");
   
+  console.log("✅ Found splash screen, injecting HTML...");
+  
+  // Create wrapper and inject HTML
   const wrapper = document.createElement("div");
   wrapper.innerHTML = buildNavigationHTML();
   
-  // Insert navigation after splash screen
-  splash.insertAdjacentElement("afterend", wrapper.firstElementChild);
+  // Insert ALL elements from wrapper after splash
+  while (wrapper.firstChild) {
+    splash.insertAdjacentElement("afterend", wrapper.firstChild);
+  }
   
-  console.log("NAVIGATION: HTML injected, initializing...");
+  console.log("✅ HTML injected, checking elements...");
   
-  // Initialize after a short delay to ensure DOM is ready
+  // Debug: Check if elements exist
   setTimeout(() => {
-    initModernNavigation();
-    console.log("NAVIGATION: Modern navigation initialized");
-  }, 100);
+    const sidebar = document.getElementById("mainSidebar");
+    const hamburger = document.querySelector(".hamburger-menu");
+    
+    console.log("🔍 DEBUG CHECK:");
+    console.log("  - Sidebar found:", !!sidebar);
+    console.log("  - Hamburger found:", !!hamburger);
+    console.log("  - Sidebar in DOM:", document.contains(sidebar));
+    
+    if (sidebar) {
+      console.log("  - Sidebar HTML:", sidebar.outerHTML.substring(0, 200));
+      console.log("  - Sidebar parent:", sidebar.parentElement?.tagName);
+      
+      // Force sidebar to be visible for debugging
+      sidebar.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 280px !important;
+        height: 100vh !important;
+        background: #1a1f36 !important;
+        color: white !important;
+        z-index: 10000 !important;
+        padding: 20px !important;
+        display: block !important;
+        visibility: visible !important;
+      `;
+    }
+  }, 500);
+  
+  // Initialize functionality
+  initNavigation();
 }
 
-// ------------------------------------------
-// Initialize Modern Navigation
-// ------------------------------------------
-function initModernNavigation() {
-  console.log("NAVIGATION: Initializing modern navigation...");
+// Initialize Navigation
+function initNavigation() {
+  console.log("⚙️ Initializing navigation...");
   
   const sidebar = document.getElementById("mainSidebar");
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const closeBtn = document.getElementById("closeSidebar");
   const overlay = document.getElementById("sidebarOverlay");
   
-  if (!sidebar) {
-    console.error("NAV ERROR: mainSidebar not found!");
-    return;
-  }
-  
-  console.log("NAVIGATION: Elements found:", {
+  console.log("Elements found:", {
     sidebar: !!sidebar,
     hamburgerBtn: !!hamburgerBtn,
     closeBtn: !!closeBtn,
     overlay: !!overlay
   });
-
-  // Initial state - show sidebar on desktop, hide on mobile
-  const isMobile = window.innerWidth <= 768;
-  console.log("NAVIGATION: Is mobile?", isMobile);
   
-  if (isMobile) {
-    sidebar.classList.remove("sidebar-open");
-    console.log("NAVIGATION: Mobile - sidebar hidden");
-  } else {
-    sidebar.classList.add("sidebar-open");
-    console.log("NAVIGATION: Desktop - sidebar visible");
+  if (!sidebar) {
+    console.error("❌ CRITICAL: Sidebar not found! Creating emergency sidebar...");
+    createEmergencySidebar();
+    return;
   }
-
-  // Toggle sidebar on hamburger click
+  
+  // Show sidebar on desktop, hide on mobile
+  if (window.innerWidth > 768) {
+    sidebar.classList.add("sidebar-open");
+    console.log("🖥️ Desktop: Sidebar visible");
+  } else {
+    sidebar.classList.remove("sidebar-open");
+    console.log("📱 Mobile: Sidebar hidden");
+  }
+  
+  // Hamburger click
   if (hamburgerBtn) {
-    hamburgerBtn.addEventListener("click", (e) => {
-      console.log("NAVIGATION: Hamburger clicked");
-      e.stopPropagation();
+    hamburgerBtn.addEventListener("click", () => {
+      console.log("🍔 Hamburger clicked");
       sidebar.classList.toggle("sidebar-open");
-      if (overlay) {
-        overlay.classList.toggle("active");
-      }
-      document.body.style.overflow = sidebar.classList.contains("sidebar-open") ? "hidden" : "";
+      if (overlay) overlay.classList.toggle("active");
     });
   }
-
-  // Close sidebar on close button click
+  
+  // Close button
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
-      console.log("NAVIGATION: Close button clicked");
       sidebar.classList.remove("sidebar-open");
       if (overlay) overlay.classList.remove("active");
-      document.body.style.overflow = "";
     });
   }
-
-  // Close sidebar on overlay click
+  
+  // Overlay click
   if (overlay) {
     overlay.addEventListener("click", () => {
-      console.log("NAVIGATION: Overlay clicked");
       sidebar.classList.remove("sidebar-open");
       overlay.classList.remove("active");
-      document.body.style.overflow = "";
     });
   }
-
-  // Toggle sub-menus
-  const menuSections = document.querySelectorAll(".menu-section");
-  console.log("NAVIGATION: Found", menuSections.length, "menu sections");
   
-  menuSections.forEach(section => {
-    const header = section.querySelector(".menu-header");
-    const subMenu = section.querySelector(".sub-menu");
-    const chevron = section.querySelector(".menu-chevron");
-
-    if (header && subMenu && chevron) {
-      header.addEventListener("click", (e) => {
-        console.log("NAVIGATION: Menu header clicked");
-        e.stopPropagation();
-        
-        if (section.classList.contains("active")) {
-          section.classList.remove("active");
-          subMenu.style.maxHeight = "0px";
-          chevron.style.transform = "rotate(0deg)";
-        } else {
-          // Close other open sections
-          menuSections.forEach(otherSection => {
-            if (otherSection !== section && otherSection.classList.contains("active")) {
-              otherSection.classList.remove("active");
-              const otherSubMenu = otherSection.querySelector(".sub-menu");
-              const otherChevron = otherSection.querySelector(".menu-chevron");
-              if (otherSubMenu) otherSubMenu.style.maxHeight = "0px";
-              if (otherChevron) otherChevron.style.transform = "rotate(0deg)";
-            }
-          });
-
-          section.classList.add("active");
-          subMenu.style.maxHeight = subMenu.scrollHeight + "px";
-          chevron.style.transform = "rotate(180deg)";
-        }
-      });
-    }
-  });
-
-  // Handle menu item clicks
-  const menuItems = document.querySelectorAll(".menu-item");
-  console.log("NAVIGATION: Found", menuItems.length, "menu items");
-  
-  menuItems.forEach(item => {
+  // Menu item clicks
+  document.querySelectorAll(".menu-item").forEach(item => {
     item.addEventListener("click", (e) => {
       e.preventDefault();
-      
       const view = item.dataset.view;
-      console.log("NAVIGATION: Menu item clicked - view:", view);
+      console.log("📄 Menu clicked:", view);
       
-      if (!view) return;
-
-      // Update active state
-      menuItems.forEach(i => i.classList.remove("active"));
-      item.classList.add("active");
-
-      // Close sidebar on mobile after selection
+      // Close sidebar on mobile
       if (window.innerWidth <= 768) {
-        setTimeout(() => {
-          sidebar.classList.remove("sidebar-open");
-          if (overlay) overlay.classList.remove("active");
-          document.body.style.overflow = "";
-        }, 300);
+        sidebar.classList.remove("sidebar-open");
+        if (overlay) overlay.classList.remove("active");
       }
-
-      // Navigate to view
-      window.location.hash = view;
-      if (window.loadView) {
+      
+      // Navigate
+      if (window.loadView && view) {
         window.loadView(view);
-      } else {
-        console.warn("NAVIGATION: loadView function not found");
       }
     });
   });
-
-  // Handle window resize
-  window.addEventListener("resize", () => {
-    const isMobileNow = window.innerWidth <= 768;
-    
-    if (isMobileNow) {
-      if (overlay) overlay.classList.remove("active");
-      document.body.style.overflow = "";
-    } else {
-      sidebar.classList.add("sidebar-open");
-    }
-  });
+  
+  console.log("✅ Navigation initialized successfully");
 }
 
-// ------------------------------------------
-// Export functions for use in other modules
-// ------------------------------------------
-export { injectNavigation, initModernNavigation };
+// Emergency sidebar creation if main one fails
+function createEmergencySidebar() {
+  console.log("🆘 Creating emergency sidebar...");
+  
+  const emergencySidebar = document.createElement("div");
+  emergencySidebar.id = "emergencySidebar";
+  emergencySidebar.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background: #1a1f36;
+    color: white;
+    z-index: 10000;
+    padding: 20px;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+  `;
+  
+  emergencySidebar.innerHTML = `
+    <h2 style="color: white; margin-top: 0;">🚨 Emergency Sidebar</h2>
+    <p style="color: #ccc;">Main sidebar failed to load.</p>
+    <div style="margin-top: 20px;">
+      <a href="#dashboard" style="color: white; display: block; padding: 10px; background: rgba(255,255,255,0.1); margin: 5px 0; border-radius: 5px;">🏠 Dashboard</a>
+      <a href="#transactions" style="color: white; display: block; padding: 10px; background: rgba(255,255,255,0.1); margin: 5px 0; border-radius: 5px;">💸 Transactions</a>
+      <a href="#budgets" style="color: white; display: block; padding: 10px; background: rgba(255,255,255,0.1); margin: 5px 0; border-radius: 5px;">🎯 Budgets</a>
+    </div>
+  `;
+  
+  document.body.appendChild(emergencySidebar);
+}
 
-// Auto-inject when the module loads
-console.log("NAVIGATION: Module loaded, calling injectNavigation...");
+// Start injection
+console.log("🚀 NAVIGATION: Calling injectNavigation...");
 injectNavigation();
