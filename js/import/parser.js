@@ -1,8 +1,9 @@
 // ============================================================================
-// parser.js - Unified Bank Parser with Merchant Extraction + Bank Category
+// parser.js - Updated with Category Mapping
 // ============================================================================
 
 import { detectBankFormat } from './bankFormats.js';
+import { suggestCategoryForTransaction } from './categoryMapper.js';  // ADD THIS IMPORT
 
 /* -------------------------------------------------------------
    NORMALISATION HELPERS
@@ -27,7 +28,25 @@ function extractCategoryText(description) {
 }
 
 /* -------------------------------------------------------------
-   Build Final Transaction Object
+   NEW: Category Assignment Function
+   This maps bankCategory to categoryId IMMEDIATELY during parsing
+------------------------------------------------------------- */
+
+function assignCategoryFromBankCategory(tx) {
+    if (!tx.bankCategory) return null;
+    
+    // Use categoryMapper.js to get the category
+    const suggestion = suggestCategoryForTransaction(
+        tx,
+        tx.bankCategory,
+        { bankId: 'nab' }  // You can make this dynamic based on bank
+    );
+    
+    return suggestion?.categoryId || null;
+}
+
+/* -------------------------------------------------------------
+   UPDATED: Build Final Transaction Object with Category
 ------------------------------------------------------------- */
 
 function buildTxObject({
@@ -40,22 +59,32 @@ function buildTxObject({
     bankCategory = null
 }) {
     const clean = normaliseDescription(description);
-
-    return {
+    
+    // Create initial transaction
+    const tx = {
         date,
         description,
         rawDescription: description,
         cleanDescription: clean,
         merchant: extractMerchant(description),
         categoryText: extractCategoryText(description),
-
         amount,
         type,
-
-        bankCategory,    // ⭐ new field
+        bankCategory,    // This is the BANK's category (e.g., "Attractions & events")
         source,
         originalLine
     };
+    
+    // 🔥 CRITICAL FIX: Assign categoryId based on bankCategory
+    if (bankCategory) {
+        const categoryId = assignCategoryFromBankCategory(tx);
+        if (categoryId) {
+            tx.categoryId = categoryId;  // This is YOUR app's category ID
+            console.log(`[PARSER] Mapped bank category "${bankCategory}" → "${categoryId}"`);
+        }
+    }
+    
+    return tx;
 }
 
 /* -------------------------------------------------------------
@@ -103,29 +132,13 @@ export async function parseCSVFile(file, format) {
     }
 
     console.log(`[PARSER] Parsed ${transactions.length} transactions`);
+    
+    // Log how many got categories assigned
+    const categorized = transactions.filter(tx => tx.categoryId).length;
+    console.log(`[PARSER] ${categorized}/${transactions.length} transactions got categoryId assigned`);
+    
     return transactions;
 }
-
-import { suggestCategoryForTransaction } from './categoryMapper.js';
-
-// Example: NAB CSV with a “Category” column from the bank
-function processImportedTransactions(parsedTxs, bankId, bankCategoryColumnName) {
-  return parsedTxs.map(tx => {
-    // bankCategory might be missing for some banks
-    const bankCategory = tx.bankCategory || null; // or pull from raw CSV if you keep it
-
-    const { categoryId, source } = suggestCategoryForTransaction(tx, bankCategory, {
-      bankId // e.g. 'nab'
-    });
-
-    return {
-      ...tx,
-      categoryId,
-      categorySource: source
-    };
-  });
-}
-
 
 /* -------------------------------------------------------------
    TEXT STATEMENT PARSER
@@ -267,7 +280,7 @@ function parseMEGeneric(lines) {
 }
 
 // ---------------------------
-// NAB (matches your CSV export)
+// NAB (matches your CSV export) - UPDATED
 // ---------------------------
 function parseNAB(lines) {
     console.log("[PARSER] Parsing NAB CSV format");
@@ -280,13 +293,13 @@ function parseNAB(lines) {
     for (let i = startIndex; i < lines.length; i++) {
         const parts = lines[i].split(",").map(x => x.trim());
 
-        if (parts.length < 2) continue;
+        if (parts.length < 9) continue;
 
         const rawDate = parts[0];
         const rawAmount = parts[1];
         const txnDetails = parts[5] || "";
+        const bankCategory = parts[7] || null;  // Column 7 in your CSV
         const merchantName = parts[8] || "";
-        const bankCategory = parts[7] || null;
 
         const date = parseDate(rawDate);
         const amount = parseFloat(rawAmount);
@@ -297,6 +310,11 @@ function parseNAB(lines) {
             merchantName.trim() ||
             txnDetails.trim() ||
             `NAB Transaction ${i}`;
+
+        // Log for debugging
+        if (bankCategory) {
+            console.log(`[PARSER] NAB transaction: "${description}" → bankCategory: "${bankCategory}"`);
+        }
 
         txs.push(
             buildTxObject({
@@ -311,6 +329,7 @@ function parseNAB(lines) {
         );
     }
 
+    console.log(`[PARSER] NAB parser found ${txs.length} transactions`);
     return txs;
 }
 
@@ -467,8 +486,24 @@ function parseGenericCSV(lines) {
 }
 
 /* -------------------------------------------------------------
-   GENERIC TEXT PARSER
+   TEXT PARSERS (add these if missing)
 ------------------------------------------------------------- */
+
+function parseANZText(lines) {
+    return parseGenericText(lines);
+}
+
+function parseCommBankText(lines) {
+    return parseGenericText(lines);
+}
+
+function parseNABText(lines) {
+    return parseGenericText(lines);
+}
+
+function parseWestpacText(lines) {
+    return parseGenericText(lines);
+}
 
 function parseGenericText(lines) {
     const txs = [];
@@ -548,4 +583,3 @@ export function getSupportedFormats() {
         "generic_csv"
     ];
 }
-
