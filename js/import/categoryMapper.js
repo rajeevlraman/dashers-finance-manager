@@ -5,8 +5,6 @@
 // - Auto-learns merchant rules after repeated consistent matches
 // ============================================================================
 
-//To activate logo + category matching in your app, add line 10 to 29 here inside categoryMapper.js:
-
 import { merchantLogos } from "./merchantLogos.js";
 import { merchantCategories } from "./merchantCategories.js";
 
@@ -27,8 +25,6 @@ export function resolveMerchantCategory(cleanDesc) {
   }
   return merchantCategories["default"];
 }
-
-
 
 // Where we persist auto-learned merchant rules
 const LOCAL_STORAGE_KEY = 'dfm_category_rules_v1';
@@ -139,7 +135,7 @@ function findMerchantRuleForTransaction(tx) {
 // (NAB-specific strings + generic fallbacks)
 // ---------------------------------------------------------------------------
 const GENERIC_BANK_CATEGORY_MAP = {
-  // ========== NAB BANK CATEGORIES (ADD THESE) ==========
+  // ========== NAB BANK CATEGORIES ==========
   'attractions & events': 'exp_entertainment',
   'attractions': 'exp_entertainment',
   'events': 'exp_entertainment',
@@ -156,9 +152,9 @@ const GENERIC_BANK_CATEGORY_MAP = {
   'internal transfers': 'exp_transfer_out',
   'uncategorised': 'ms_uncategorised',
 
-  // ========== MACQUARIE BANK CATEGORIES (ADD THESE) ==========
-  'technology': 'ms_tech_software',      // Maps to MoneySmart Software category
-  'financial': 'ms_financial',           // Maps to MoneySmart Financial
+  // ========== MACQUARIE BANK CATEGORIES ==========
+  'technology': 'exp_software',
+  'financial': 'ms_financial',
   'shopping': 'exp_online_shopping',
   'transport': 'exp_transport',
   'entertainment': 'exp_entertainment',
@@ -168,27 +164,26 @@ const GENERIC_BANK_CATEGORY_MAP = {
   'insurance': 'exp_insurance',
   'education': 'exp_education',
 
-  // ========== GOOGLE/SUBSCRIPTION MAPPINGS (ADD THESE) ==========
-  'google': 'ms_tech_software',
-  'software': 'ms_tech_software',
+  // ========== GOOGLE/SUBSCRIPTION MAPPINGS ==========
+  'google': 'exp_software',
+  'software': 'exp_software',
   'subscription': 'exp_subs',
-  'microsoft': 'ms_tech_software',
-  'apple': 'ms_tech_software',
-  'aws': 'ms_tech_software',
-  'cloud': 'ms_tech_software',
+  'microsoft': 'exp_software',
+  'apple': 'exp_software',
+  'aws': 'exp_software',
+  'cloud': 'exp_software',
 
-  // ========== FINANCIAL/TRANSFER MAPPINGS (ADD THESE) ==========
+  // ========== FINANCIAL/TRANSFER MAPPINGS ==========
   'payment': 'ms_financial',
   'bpay': 'ms_financial_bpay',
   'transfer': 'ms_financial_transfers',
   'credit': 'ms_financial',
   'debit': 'ms_financial',
 
-  // ========== YOUR EXISTING MAPPINGS (KEEP THESE) ==========
+  // ========== YOUR EXISTING MAPPINGS ==========
   'food': 'exp_groceries',
   'dining': 'exp_dining',
   'fast food': 'exp_dining',
-  'takeaway': 'exp_dining',
   'takeaway': 'exp_dining',
 
   'health': 'exp_health',
@@ -227,7 +222,6 @@ const GENERIC_BANK_CATEGORY_MAP = {
 };
 
 const BANK_CATEGORY_MAP_BY_BANK = {
-  // NAB MAPPINGS
   nab: {
     'attractions & events': 'exp_entertainment',
     'restaurants & takeaway': 'exp_dining',
@@ -242,9 +236,8 @@ const BANK_CATEGORY_MAP_BY_BANK = {
     'uncategorised': 'ms_uncategorised'
   },
   
-  // MACQUARIE MAPPINGS (ADD THIS)
   macquarie: {
-    'technology': 'ms_tech_software',
+    'technology': 'exp_software',
     'financial': 'ms_financial',
     'shopping': 'exp_online_shopping',
     'transport': 'exp_transport',
@@ -279,7 +272,6 @@ function findBestCategoryMatch(bankCategory, map) {
 }
 
 // Resolve bank category to a categoryId
-// Update the resolveBankCategory function:
 function resolveBankCategory(bankCategoryRaw, opts = {}) {
   if (!bankCategoryRaw) return null;
   const bankId = (opts.bankId || '').toLowerCase();
@@ -297,59 +289,66 @@ function resolveBankCategory(bankCategoryRaw, opts = {}) {
 
   return null;
 }
+
 // ---------------------------------------------------------------------------
-// Keyword → categoryId matching
-// Uses cleanDescription / merchant keyword matches
+// Keyword → SUB-CATEGORY mapping (UPDATED!)
+// Now maps to specific subcategories instead of main categories
 // ---------------------------------------------------------------------------
 const KEYWORD_CATEGORY_MAP = [
-  // Groceries & supermarkets
-  { pattern: /safeway|woolworths|woolies|coles|aldi|iga/gi, categoryId: 'exp_groceries' },
+  // Groceries & supermarkets → SUB-CATEGORIES
+  { pattern: /woolworths|woolies/gi, categoryId: 'exp_Woolworths' },
+  { pattern: /coles/gi, categoryId: 'exp_Coles' },
+  { pattern: /safeway/gi, categoryId: 'exp_Safeway' },
+  { pattern: /aldi/gi, categoryId: 'exp_Aldi' },
+  { pattern: /iga|marketplace\s+fresh/gi, categoryId: 'exp_grocery_supermarket' },
   { pattern: /indian\s+grocer|spice\s+house|malvic|dosa\s+hut\s+grocer/gi, categoryId: 'exp_Indian_Groceries' },
 
-  // Fast food / dining
+  // Fast food / dining → SUB-CATEGORIES under exp_dining
   { pattern: /kfc/gi, categoryId: 'exp_kfc' },
   { pattern: /mcdonald'?s|maccas/gi, categoryId: 'exp_mcd' },
   { pattern: /hungry\s+jacks?/gi, categoryId: 'exp_hj' },
   { pattern: /nando'?s/gi, categoryId: 'exp_nandos' },
   { pattern: /domino'?s/gi, categoryId: 'exp_dominos' },
   { pattern: /pizza\s+hut/gi, categoryId: 'exp_pizzahut' },
+  { pattern: /aangan|casey\s+kebab|indian\s+restaurant/gi, categoryId: 'exp_restaurants' },
   { pattern: /restaurant|diner|bistro|cafe|coffee/gi, categoryId: 'exp_dining' },
 
-  // Fuel / transport
-  { pattern: /bp\s+petrol|caltex|shell|7-eleven.*fuel|ampol/gi, categoryId: 'exp_fuel' },
+  // Fuel / transport → SUB-CATEGORIES
+  { pattern: /bp\s+petrol|caltex|shell|7-eleven.*fuel|ampol|united\s+petroleum/gi, categoryId: 'exp_fuel' },
   { pattern: /rego|registration/gi, categoryId: 'exp_rego' },
   { pattern: /myki|opal.*card|ptv/gi, categoryId: 'exp_public_transport' },
   { pattern: /parking|parkmate|wilson\s+parking/gi, categoryId: 'exp_Parking_Fees' },
   { pattern: /citylink|toll/gi, categoryId: 'exp_citylink_toll' },
 
-  // Utilities
-  { pattern: /agl|origin\s+energy|simply\s+energy|red\s+energy|powershop/gi, categoryId: 'exp_electricity' },
+  // Utilities → SUB-CATEGORIES
+  { pattern: /agl|origin\s+energy|simply\s+energy|red\s+energy|powershop|globird/gi, categoryId: 'exp_electricity' },
   { pattern: /nbn|telstra|optus|vocus|tpg|aussie\s+broadband/gi, categoryId: 'exp_internet' },
 
-  // Health & medical
+  // Health & medical → SUB-CATEGORIES
   { pattern: /chemist\s*warehouse|pharmacy|amcal/gi, categoryId: 'exp_pharmacy' },
   { pattern: /gp\s+clinic|medical\s+centre/gi, categoryId: 'exp_gp' },
   { pattern: /dental|dentist/gi, categoryId: 'exp_dental' },
 
-  // Kids / school
+  // Kids / school → SUB-CATEGORIES
   { pattern: /childcare|early\s+learning/gi, categoryId: 'exp_childcare' },
   { pattern: /school\s+fees|school\s+payment/gi, categoryId: 'exp_school_fees' },
 
-  // Subscriptions
+  // Subscriptions → SUB-CATEGORIES
   { pattern: /netflix|stan|binge/gi, categoryId: 'exp_netflix' },
   { pattern: /disney\+?/gi, categoryId: 'exp_disney' },
   { pattern: /prime\s+video|amazon\s+prime/gi, categoryId: 'exp_prime' },
   { pattern: /spotify|apple\s+music|youtube\s+music/gi, categoryId: 'exp_music' },
+  { pattern: /google|microsoft|apple\s+subscription|software/gi, categoryId: 'exp_software' },
 
-  // Insurance
+  // Insurance → SUB-CATEGORIES
   { pattern: /allianz|aami|budget\s+direct|nrma|racv|bupa|medibank|nib/gi, categoryId: 'exp_insurance' },
 
-  // Property / rates
+  // Property / rates → SUB-CATEGORIES
   { pattern: /council\s+rates|city\s+of\s+/gi, categoryId: 'exp_council_rates' },
   { pattern: /body\s+corporate|owners\s+corp/gi, categoryId: 'exp_body_corporate' },
   { pattern: /land\s+tax/gi, categoryId: 'exp_Land_Tax' },
 
-  // Tech & home office
+  // Tech & home office → SUB-CATEGORIES
   { pattern: /jb\s+hi-fi|harvey\s+norman|good\s+guys/gi, categoryId: 'exp_tech' },
   { pattern: /officeworks/gi, categoryId: 'exp_home_office' }
 ];
@@ -361,9 +360,70 @@ function keywordCategoryMatch(tx) {
 
   for (const rule of KEYWORD_CATEGORY_MAP) {
     if (rule.pattern.test(haystack)) {
+      console.log(`[CategoryMapper] Keyword matched: ${rule.pattern} → ${rule.categoryId}`);
       return rule.categoryId;
     }
   }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// NEW: Merchant-specific subcategory mapping
+// More specific than keyword matching
+// ---------------------------------------------------------------------------
+const MERCHANT_SUBCATEGORY_MAP = {
+  // Grocery stores
+  'woolworths': 'exp_Woolworths',
+  'coles': 'exp_Coles',
+  'safeway': 'exp_Safeway',
+  'aldi': 'exp_Aldi',
+  'malvic': 'exp_Indian_Groceries',
+  'marketplace fresh': 'exp_grocery_supermarket',
+  
+  // Fast food
+  'kfc': 'exp_kfc',
+  'mcdonald': 'exp_mcd',
+  'hungry jack': 'exp_hj',
+  'nando': 'exp_nandos',
+  'domino': 'exp_dominos',
+  'pizza hut': 'exp_pizzahut',
+  'aangan': 'exp_restaurants',
+  'casey kebab': 'exp_restaurants',
+  
+  // Fuel
+  'shell': 'exp_fuel',
+  'bp': 'exp_fuel',
+  'caltex': 'exp_fuel',
+  '7-eleven': 'exp_fuel',
+  'united petroleum': 'exp_fuel',
+  
+  // Utilities
+  'origin energy': 'exp_electricity',
+  'agl': 'exp_electricity',
+  'globird': 'exp_electricity',
+  
+  // Pharmacy
+  'chemist warehouse': 'exp_pharmacy',
+  
+  // Technology
+  'google': 'exp_software',
+  'microsoft': 'exp_software',
+  'apple': 'exp_software',
+  'aws': 'exp_software'
+};
+
+function merchantSubcategoryMatch(tx) {
+  if (!tx || !tx.cleanDescription) return null;
+  
+  const cleanDesc = tx.cleanDescription.toLowerCase();
+  
+  for (const [keyword, subcategoryId] of Object.entries(MERCHANT_SUBCATEGORY_MAP)) {
+    if (cleanDesc.includes(keyword)) {
+      console.log(`[CategoryMapper] Merchant keyword "${keyword}" → subcategory "${subcategoryId}"`);
+      return subcategoryId;
+    }
+  }
+  
   return null;
 }
 
@@ -431,12 +491,13 @@ export function learnFromManualCategory(tx, categoryId, opts = {}) {
 
 // ---------------------------------------------------------------------------
 // Public: Suggest category for a transaction
-// PRIORITY:
+// UPDATED PRIORITY:
 // 1) Explicit userCategoryId (if passed in)
-// 2) Merchant rule (auto-learned or manual future rules)
-// 3) Bank category mapping (if provided)
-// 4) Keyword-based mapping from description/merchant
-// 5) Fallback: ms_uncategorised (or exp_misc_items)
+// 2) Merchant-specific subcategory match (NEW!)
+// 3) Merchant rule (auto-learned or manual future rules)
+// 4) Bank category mapping (if provided)
+// 5) Keyword-based mapping from description/merchant
+// 6) Fallback: ms_uncategorised
 // ---------------------------------------------------------------------------
 export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, options = {}) {
   // 1) User override (if importer already knows a manual choice)
@@ -448,7 +509,17 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     };
   }
 
-  // 2) Merchant rule
+  // 2) Merchant-specific subcategory match (NEW - HIGH PRIORITY!)
+  const merchantSubcategory = merchantSubcategoryMatch(tx);
+  if (merchantSubcategory) {
+    return {
+      categoryId: merchantSubcategory,
+      source: 'merchant_subcategory',
+      rule: null
+    };
+  }
+
+  // 3) Merchant rule
   const merchantRule = findMerchantRuleForTransaction(tx);
   if (merchantRule) {
     merchantRule.hitCount = (merchantRule.hitCount || 0) + 1;
@@ -462,13 +533,13 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     };
   }
 
-  // 3) Bank category mapping
+  // 4) Bank category mapping
   if (bankCategoryRaw) {
     const catIdFromBank = resolveBankCategory(bankCategoryRaw, {
       bankId: options.bankId
     });
     if (catIdFromBank) {
-      // Auto-learn based on merchant + this category (your option A)
+      // Auto-learn based on merchant + this category
       if (tx && tx.merchant) {
         trackAutoLearning('merchant', tx.merchant, catIdFromBank);
       }
@@ -482,7 +553,7 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     }
   }
 
-  // 4) Keyword-based mapping from description/merchant
+  // 5) Keyword-based mapping from description/merchant
   const catIdFromKeywords = keywordCategoryMatch(tx);
   if (catIdFromKeywords) {
     if (tx && tx.merchant) {
@@ -495,11 +566,18 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     };
   }
 
-  // 5) Fallback
-  const fallback = 'ms_uncategorised'; // or 'exp_misc_items'
+  // 6) Fallback
   return {
-    categoryId: fallback,
+    categoryId: 'ms_uncategorised',
     source: 'fallback',
     rule: null
   };
+}
+
+// ---------------------------------------------------------------------------
+// NEW: Helper function for parser.js
+// ---------------------------------------------------------------------------
+export function mapTransactionToSubcategory(tx, bankCategory = null, bankId = null) {
+  const suggestion = suggestCategoryForTransaction(tx, bankCategory, { bankId });
+  return suggestion.categoryId;
 }

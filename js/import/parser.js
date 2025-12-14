@@ -32,17 +32,29 @@ function extractCategoryText(description) {
    This maps bankCategory to categoryId IMMEDIATELY during parsing
 ------------------------------------------------------------- */
 
-function assignCategoryFromBankCategory(tx) {
+function assignCategoryFromBankCategory(tx, source) {
     if (!tx.bankCategory) return null;
     
-    // Use categoryMapper.js to get the category
-    const suggestion = suggestCategoryForTransaction(
-        tx,
-        tx.bankCategory,
-        { bankId: 'nab' }  // You can make this dynamic based on bank
-    );
+    // Determine bank ID from source
+    let bankId = 'generic';
+    if (source.includes('NAB')) bankId = 'nab';
+    if (source.includes('Macquarie')) bankId = 'macquarie';
+    if (source.includes('ANZ')) bankId = 'anz';
+    if (source.includes('CommBank')) bankId = 'commbank';
+    if (source.includes('Westpac')) bankId = 'westpac';
     
-    return suggestion?.categoryId || null;
+    console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory})`);
+    
+    // Use the updated category mapper
+    const categoryId = mapTransactionToSubcategory(tx, tx.bankCategory, bankId);
+    
+    if (categoryId && categoryId !== 'ms_uncategorised') {
+        console.log(`[PARSER] ✓ Assigned: "${tx.description}" → "${categoryId}"`);
+        return categoryId;
+    }
+    
+    console.log(`[PARSER] ✗ No match for: "${tx.description}"`);
+    return null;
 }
 
 /* -------------------------------------------------------------
