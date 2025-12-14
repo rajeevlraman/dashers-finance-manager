@@ -6,8 +6,8 @@
 import { setupDebugConsole } from './debugConsole.js';
 setupDebugConsole();
 import { getAllItems, STORE_NAMES } from './db.js';
-import { buildCategoryIndex } from './categoryRules.js';
-import { initCategoryMapper } from './categoryMapper.js';
+import { buildCategoryIndex } from './import/categoryRules.js';
+import { initCategoryMapper } from './import/categoryMapper.js';
 
 import { initUI } from './ui.js';
 import { processRecurringTransactions, processDueBills } from './recurringJob.js';
