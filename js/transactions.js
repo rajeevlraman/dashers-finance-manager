@@ -1,6 +1,5 @@
 import { getAllItems, addItem, deleteItem, updateItem, STORE_NAMES, generateId } from './db.js';
 import { initImportModal } from './import/modal.js';
-import { resolveCategoryForEdit, loadAllCategories, getSubcategories } from './categories.js';
 
 // ============================================================================
 //  GLOBAL STATE
