@@ -45,18 +45,17 @@ function assignCategoryFromBankCategory(tx, source) {
     
     console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory})`);
     
-    // Use the updated category mapper
-    const categoryId = mapTransactionToSubcategory(tx, tx.bankCategory, bankId);
+    // Use suggestCategoryForTransaction instead of mapTransactionToSubcategory
+    const suggestion = suggestCategoryForTransaction(tx, tx.bankCategory, { bankId });
     
-    if (categoryId && categoryId !== 'ms_uncategorised') {
-        console.log(`[PARSER] ✓ Assigned: "${tx.description}" → "${categoryId}"`);
-        return categoryId;
+    if (suggestion && suggestion.categoryId && suggestion.categoryId !== 'ms_uncategorised') {
+        console.log(`[PARSER] ✓ Assigned: "${tx.description}" → "${suggestion.categoryId}" (source: ${suggestion.source})`);
+        return suggestion.categoryId;
     }
     
     console.log(`[PARSER] ✗ No match for: "${tx.description}"`);
     return null;
 }
-
 /* -------------------------------------------------------------
    UPDATED: Build Final Transaction Object with Category
 ------------------------------------------------------------- */
