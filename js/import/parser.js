@@ -21,7 +21,19 @@ function extractMerchant(description) {
     const clean = normaliseDescription(description);
     const parts = clean.split(" ");
     //return parts.slice(0, 3).join(" "); // take first 1–3 words
-    return parts[0] || "";
+    function extractMerchant(description) {
+    const clean = normaliseDescription(description);
+
+    // Remove location noise
+    const stripped = clean
+        .replace(/\bpty ltd\b|\bltd\b|\bpty\b/gi, '')
+        .replace(/\bcranbourne\b|\bmelbourne\b|\bvic\b/gi, '')
+        .trim();
+
+    // Take first 2–3 meaningful tokens
+    return stripped.split(' ').slice(0, 3).join(' ');
+}
+
 
 }
 
@@ -89,10 +101,10 @@ function buildTxObject({
     };
     
     // 🔥 CRITICAL FIX: Pass source parameter
-const categoryId = assignCategoryFromBankCategory(tx, source || 'Unknown Import');
-if (categoryId) {
-    tx.categoryId = categoryId;
-}
+//const categoryId = assignCategoryFromBankCategory(tx, source || 'Unknown Import');
+//if (categoryId) {
+//    tx.categoryId = categoryId;
+//}
 
     
     return tx;
