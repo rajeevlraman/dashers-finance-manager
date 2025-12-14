@@ -503,3 +503,65 @@ export async function getFullCategoryName(id) {
     const path = await getCategoryPath(id);
     return path.length ? path.join(" / ") : "Uncategorised";
 }
+// ============================================================================
+// PUBLIC CATEGORY HELPERS - Add to bottom of categories.js
+// ============================================================================
+
+let categoryCache = null;
+
+// Load and cache all categories
+export async function loadAllCategories() {
+  if (categoryCache) return categoryCache;
+  
+  categoryCache = await getAllItems(STORE_NAMES.categories);
+  console.log(`[CategoryCache] Loaded ${categoryCache.length} categories`);
+  return categoryCache;
+}
+
+// Get category by ID
+export async function getCategoryById(id) {
+  if (!id) return null;
+  const cats = await loadAllCategories();
+  return cats.find(c => c.id === id) || null;
+}
+
+// Get parent category for a subcategory
+export async function getParentCategory(categoryId) {
+  const cat = await getCategoryById(categoryId);
+  if (!cat || !cat.parentId) return null;
+  return getCategoryById(cat.parentId);
+}
+
+// Get all subcategories for a parent
+export async function getSubcategories(parentId) {
+  const cats = await loadAllCategories();
+  return cats.filter(c => c.parentId === parentId);
+}
+
+// Format category for display in edit form
+export async function resolveCategoryForEdit(categoryId) {
+  if (!categoryId || categoryId === 'ms_uncategorised') {
+    return { main: null, sub: null, displayName: 'Uncategorised' };
+  }
+  
+  const cat = await getCategoryById(categoryId);
+  if (!cat) {
+    console.warn(`Category ${categoryId} not found`);
+    return { main: null, sub: null, displayName: 'Uncategorised' };
+  }
+  
+  if (cat.parentId) {
+    const parent = await getCategoryById(cat.parentId);
+    return {
+      main: parent ? { id: parent.id, name: parent.name } : null,
+      sub: { id: cat.id, name: cat.name },
+      displayName: parent ? `${parent.name} / ${cat.name}` : cat.name
+    };
+  } else {
+    return {
+      main: { id: cat.id, name: cat.name },
+      sub: null,
+      displayName: cat.name
+    };
+  }
+}
