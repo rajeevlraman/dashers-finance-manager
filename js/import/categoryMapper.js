@@ -366,13 +366,23 @@ function keywordCategoryMatch(tx) {
     `${tx.description || ''} ${tx.rawDescription || ''} ${tx.merchant || ''}`.toLowerCase();
 
   for (const rule of KEYWORD_CATEGORY_MAP) {
-    if (rule.pattern.test(haystack)) {
+      const regex = new RegExp(rule.pattern.source, 'i');
+      if (regex.test(haystack)) {
       console.log(`[CategoryMapper] Keyword matched: ${rule.pattern} → ${rule.categoryId}`);
       return rule.categoryId;
     }
   }
   return null;
 }
+
+function normaliseMerchant(merchant = '') {
+  return merchant
+    .toLowerCase()
+    .split(' ')
+    .slice(0, 2)
+    .join(' ');
+}
+
 
 // ---------------------------------------------------------------------------
 // NEW: Merchant-specific subcategory mapping
@@ -444,7 +454,7 @@ function merchantSubcategoryMatch(tx) {
   
   // Check both cleanDescription AND merchant
   const cleanDesc = (tx.cleanDescription || '').toLowerCase();
-  const merchantText = (tx.merchant || '').toLowerCase();
+  const merchantText = normaliseMerchant(tx.merchant);
   
   const searchText = `${cleanDesc} ${merchantText}`.toLowerCase();
   
@@ -508,7 +518,9 @@ export function learnFromManualCategory(tx, categoryId, opts = {}) {
 
   // Prefer merchant-based learning
   if (tx.merchant) {
-    trackAutoLearning('merchant', tx.merchant, categoryId);
+    if (catIdFromBank && !catIdFromBank.startsWith('ms_')) {
+      trackAutoLearning('merchant', tx.merchant, catIdFromBank);
+    }
   } else if (tx.cleanDescription || tx.description) {
     const keySource = tx.cleanDescription || tx.description;
     trackAutoLearning('description', keySource, categoryId);
@@ -567,6 +579,21 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     };
   }
 
+
+  // 5) Keyword-based mapping from description/merchant
+  const catIdFromKeywords = keywordCategoryMatch(tx);
+  if (catIdFromKeywords) {
+    if (tx && tx.merchant) {
+      trackAutoLearning('merchant', tx.merchant, catIdFromKeywords);
+    }
+    return {
+      categoryId: catIdFromKeywords,
+      source: 'keyword_match',
+      rule: null
+    };
+  }
+
+
   // 4) Bank category mapping
   if (bankCategoryRaw) {
     const catIdFromBank = resolveBankCategory(bankCategoryRaw, {
@@ -587,18 +614,7 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     }
   }
 
-  // 5) Keyword-based mapping from description/merchant
-  const catIdFromKeywords = keywordCategoryMatch(tx);
-  if (catIdFromKeywords) {
-    if (tx && tx.merchant) {
-      trackAutoLearning('merchant', tx.merchant, catIdFromKeywords);
-    }
-    return {
-      categoryId: catIdFromKeywords,
-      source: 'keyword_match',
-      rule: null
-    };
-  }
+
 
   // 6) Fallback
   return {
