@@ -71,6 +71,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_grocery_meat', name: 'Meat & Seafood', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
 { id: 'exp_Safeway', name: 'Safeway', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 { id: 'exp_Coles', name: 'Coles', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
+{ id: 'exp_Woolworths', name: 'Woolworths', type: 'expense', icon: '🛒', parentId: 'exp_groceries' },
 { id: 'exp_Aldi', name: 'Aldi', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 { id: 'exp_Indian_Groceries', name: 'Indian Groceroies', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 

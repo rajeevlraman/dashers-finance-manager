@@ -43,7 +43,7 @@ function assignCategoryFromBankCategory(tx, source) {
     
     console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory || 'none'})`);
     
-    // Use suggestCategoryForTransaction with or without bankCategory
+    // ALWAYS try to suggest a category, even without bankCategory
     const suggestion = suggestCategoryForTransaction(tx, tx.bankCategory, { bankId });
     
     if (suggestion && suggestion.categoryId && suggestion.categoryId !== 'ms_uncategorised') {

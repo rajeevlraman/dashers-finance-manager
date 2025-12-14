@@ -233,7 +233,13 @@ const BANK_CATEGORY_MAP_BY_BANK = {
     'transfers in': 'inc_transfer',
     'transfers out': 'exp_transfer_out',
     'internal transfers': 'exp_transfer_out',
-    'uncategorised': 'ms_uncategorised'
+    'uncategorised': 'ms_uncategorised',
+    'personal care': 'exp_personal',
+    'cafe & coffee': 'exp_dining',
+    'other income': 'inc_other',
+    'investment income': 'sav_invest',
+    'refund': 'inc_refund',
+    'gambling': 'exp_misc'
   },
   
   macquarie: {
@@ -246,7 +252,8 @@ const BANK_CATEGORY_MAP_BY_BANK = {
     'personal': 'exp_personal',
     'travel': 'exp_travel',
     'insurance': 'exp_insurance',
-    'education': 'exp_education'
+    'education': 'exp_education',
+    'food & drink': 'exp_groceries'
   }
 };
 
@@ -374,12 +381,13 @@ function keywordCategoryMatch(tx) {
 const MERCHANT_SUBCATEGORY_MAP = {
   // Grocery stores
   'woolworths': 'exp_Woolworths',
-  'Woolworths': 'exp_Woolworths',
   'coles': 'exp_Coles',
   'safeway': 'exp_Safeway',
   'aldi': 'exp_Aldi',
   'malvic': 'exp_Indian_Groceries',
   'marketplace fresh': 'exp_grocery_supermarket',
+  'iga': 'exp_grocery_supermarket',
+  'fish pier': 'exp_groceries',
   
   // Fast food
   'kfc': 'exp_kfc',
@@ -410,20 +418,41 @@ const MERCHANT_SUBCATEGORY_MAP = {
   'google': 'exp_software',
   'microsoft': 'exp_software',
   'apple': 'exp_software',
-  'aws': 'exp_software'
+  'aws': 'exp_software',
+  
+  // Streaming
+  'netflix': 'exp_netflix',
+  'disney': 'exp_disney',
+  'prime video': 'exp_prime',
+  'spotify': 'exp_music',
+  
+  // Insurance
+  'aami': 'exp_insurance',
+  
+  // Transport
+  'citylink': 'exp_citylink_toll',
+  'wilson parking': 'exp_Parking_Fees',
+  'myki': 'exp_public_transport',
+  
+  // Property
+  'council rates': 'exp_council_rates',
+  'body corporate': 'exp_body_corporate',
+  'land tax': 'exp_Land_Tax'
 };
-
 function merchantSubcategoryMatch(tx) {
-  if (!tx || !tx.cleanDescription) return null;
+  if (!tx) return null;
   
-  const cleanDesc = tx.cleanDescription.toLowerCase();
+  // Check both cleanDescription AND merchant
+  const cleanDesc = (tx.cleanDescription || '').toLowerCase();
+  const merchantText = (tx.merchant || '').toLowerCase();
   
-  console.log(`[DEBUG merchantSubcategoryMatch] Checking: "${cleanDesc}"`);
-  console.log(`[DEBUG] Available keys:`, Object.keys(MERCHANT_SUBCATEGORY_MAP));
+  const searchText = `${cleanDesc} ${merchantText}`.toLowerCase();
+  
+  console.log(`[DEBUG merchantSubcategoryMatch] Checking: "${searchText}"`);
   
   for (const [keyword, subcategoryId] of Object.entries(MERCHANT_SUBCATEGORY_MAP)) {
-    console.log(`[DEBUG] Testing keyword: "${keyword}" in "${cleanDesc}"`);
-    if (cleanDesc.includes(keyword)) {
+    const lowerKeyword = keyword.toLowerCase();
+    if (searchText.includes(lowerKeyword)) {
       console.log(`[CategoryMapper] Merchant keyword "${keyword}" → subcategory "${subcategoryId}"`);
       return subcategoryId;
     }
