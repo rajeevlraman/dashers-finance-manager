@@ -1,113 +1,71 @@
 // ============================================================================
-// parser.js - Updated with Category Mapping
+// parser.js — PURE TRANSACTION EXTRACTOR (NO CATEGORY LOGIC)
+// ----------------------------------------------------------------------------
+// Responsibilities:
+// ✔ Parse CSV / text
+// ✔ Normalise fields
+// ✔ Extract merchant + descriptions
+// ✖ DO NOT assign categoryId
+// ✖ DO NOT call category mapper
 // ============================================================================
 
 import { detectBankFormat } from './bankFormats.js';
-import { suggestCategoryForTransaction } from './categoryMapper.js';  // ADD THIS IMPORT
 
 /* -------------------------------------------------------------
    NORMALISATION HELPERS
 ------------------------------------------------------------- */
 
 function normaliseDescription(text) {
-    return (text || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
+  return (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function extractMerchant(description) {
-    const clean = normaliseDescription(description);
-    const parts = clean.split(" ");
-    //return parts.slice(0, 3).join(" "); // take first 1–3 words
-    function extractMerchant(description) {
-    const clean = normaliseDescription(description);
+  const clean = normaliseDescription(description);
 
-    // Remove location noise
-    const stripped = clean
-        .replace(/\bpty ltd\b|\bltd\b|\bpty\b/gi, '')
-        .replace(/\bcranbourne\b|\bmelbourne\b|\bvic\b/gi, '')
-        .trim();
+  const stripped = clean
+    .replace(/\bpty\s+ltd\b|\bltd\b|\bpty\b/gi, '')
+    .replace(/\bvic\b|\bmelbourne\b|\bcranbourne\b/gi, '')
+    .trim();
 
-    // Take first 2–3 meaningful tokens
-    return stripped.split(' ').slice(0, 3).join(' ');
-}
-
-
+  return stripped.split(' ').slice(0, 3).join(' ');
 }
 
 function extractCategoryText(description) {
-    return normaliseDescription(description);
+  return normaliseDescription(description);
 }
 
 /* -------------------------------------------------------------
-   NEW: Category Assignment Function
-   This maps bankCategory to categoryId IMMEDIATELY during parsing
-------------------------------------------------------------- */
-
-function assignCategoryFromBankCategory(tx, source) {
-    // Determine bank ID from source
-    let bankId = 'generic';
-        const src = (source || '').toLowerCase();
-        if (src.includes('nab')) bankId = 'nab';
-        else if (src.includes('anz')) bankId = 'anz';
-        else if (src.includes('macquarie')) bankId = 'macquarie';
-        else if (src.includes('commbank')) bankId = 'commbank';
-        else if (src.includes('westpac')) bankId = 'westpac';
-    
-    console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory || 'none'})`);
-    
-    // ALWAYS try to suggest a category, even without bankCategory
-    const suggestion = suggestCategoryForTransaction(tx, tx.bankCategory, { bankId });
-    
-    if (suggestion && suggestion.categoryId && suggestion.categoryId !== 'ms_uncategorised') {
-        console.log(`[PARSER] ✓ Assigned: "${tx.description}" → "${suggestion.categoryId}" (source: ${suggestion.source})`);
-        return suggestion.categoryId;
-    }
-    
-    console.log(`[PARSER] ✗ No match for: "${tx.description}"`);
-    return 'ms_uncategorised';
-
-}
-/* -------------------------------------------------------------
-   UPDATED: Build Final Transaction Object with Category
+   BUILD TRANSACTION OBJECT (FACTS ONLY)
 ------------------------------------------------------------- */
 
 function buildTxObject({
+  date,
+  description,
+  amount,
+  type,
+  source,
+  originalLine,
+  bankCategory = null
+}) {
+  const clean = normaliseDescription(description);
+
+  return {
     date,
     description,
+    rawDescription: description,
+    cleanDescription: clean,
+    merchant: extractMerchant(description),
+    categoryText: extractCategoryText(description),
     amount,
     type,
-    source,
-    originalLine,
-    bankCategory = null
-}) {
-    const clean = normaliseDescription(description);
-    
-    // Create initial transaction
-    const tx = {
-        date,
-        description,
-        rawDescription: description,
-        cleanDescription: clean,
-        merchant: extractMerchant(description),
-        categoryText: extractCategoryText(description),
-        amount,
-        type,
-        bankCategory,
-        source: source || 'Unknown Import', // Ensure source is never undefined
-        originalLine
-    };
-    
-    // 🔥 CRITICAL FIX: Pass source parameter
-//const categoryId = assignCategoryFromBankCategory(tx, source || 'Unknown Import');
-//if (categoryId) {
-//    tx.categoryId = categoryId;
-//}
-
-    
-    return tx;
+    bankCategory,
+    source: source || 'Unknown Import',
+    originalLine
+  };
 }
 
 /* -------------------------------------------------------------
@@ -115,477 +73,216 @@ function buildTxObject({
 ------------------------------------------------------------- */
 
 export async function parseCSVFile(file, format) {
-    console.log("[PARSER] parseCSVFile called for format:", format);
+  const text = await file.text();
+  const lines = text.split('\n').filter(l => l.trim());
 
-    const text = await file.text();
-    const lines = text.split("\n").filter(l => l.trim());
+  if (!lines.length) {
+    throw new Error('CSV file is empty');
+  }
 
-    if (lines.length === 0) {
-        throw new Error("CSV file is empty");
-    }
+  let transactions = [];
 
-    let transactions = [];
-
-    if (format === "auto") {
-        console.log("[PARSER] Auto-detecting format...");
-        const bankFormat = detectBankFormat(lines[0]);
-
-        if (bankFormat) {
-            transactions = parseWithBankFormat(lines, bankFormat);
-        } else {
-            console.log("[PARSER] No match → generic CSV parser");
-            transactions = parseGenericCSV(lines);
-        }
-    } else {
-        switch (format) {
-            case "macquarie":   transactions = parseMacquarie(lines); break;
-            case "anz_generic": transactions = parseANZGeneric(lines); break;
-            case "nab_generic": transactions = parseNABGeneric(lines); break;
-            case "me_generic":  transactions = parseMEGeneric(lines); break;
-            case "anz":         transactions = parseANZ(lines); break;
-            case "commbank":    transactions = parseCommBank(lines); break;
-            case "nab":         transactions = parseNAB(lines); break;
-            case "westpac":     transactions = parseWestpac(lines); break;
-            case "generic_csv": transactions = parseGenericCSV(lines); break;
-
-            default:
-                console.warn("[PARSER] Unknown format → generic CSV");
-                transactions = parseGenericCSV(lines);
-        }
-    }
-
-    console.log(`[PARSER] Parsed ${transactions.length} transactions`);
-    
-    // Log how many got categories assigned
-    const categorized = transactions.filter(tx => tx.categoryId).length;
-    console.log(`[PARSER] ${categorized}/${transactions.length} transactions got categoryId assigned`);
-    
-    return transactions;
-}
-
-/* -------------------------------------------------------------
-   TEXT STATEMENT PARSER
-------------------------------------------------------------- */
-
-export async function parseStatementText(text, format) {
-    const lines = text.split("\n").filter(l => l.trim());
-    if (!lines.length) throw new Error("No text to parse");
-
-    let tx;
-
+  if (format === 'auto') {
+    const bankFormat = detectBankFormat(lines[0]);
+    transactions = bankFormat
+      ? parseWithBankFormat(lines, bankFormat)
+      : parseGenericCSV(lines);
+  } else {
     switch (format) {
-        case "anz":      tx = parseANZText(lines); break;
-        case "commbank": tx = parseCommBankText(lines); break;
-        case "nab":      tx = parseNABText(lines); break;
-        case "westpac":  tx = parseWestpacText(lines); break;
-        default:         tx = parseGenericText(lines);
+      case 'macquarie':   transactions = parseMacquarie(lines); break;
+      case 'anz_generic': transactions = parseANZGeneric(lines); break;
+      case 'nab_generic': transactions = parseNABGeneric(lines); break;
+      case 'me_generic':  transactions = parseMEGeneric(lines); break;
+      case 'anz':         transactions = parseANZ(lines); break;
+      case 'commbank':    transactions = parseCommBank(lines); break;
+      case 'nab':         transactions = parseNAB(lines); break;
+      case 'westpac':     transactions = parseWestpac(lines); break;
+      default:            transactions = parseGenericCSV(lines);
     }
+  }
 
-    return tx;
+  return transactions;
 }
 
 /* -------------------------------------------------------------
-   GENERIC BANK FORMAT PARSER (auto-match header)
+   GENERIC BANK FORMAT PARSER
 ------------------------------------------------------------- */
 
 function parseWithBankFormat(lines, fmt) {
-    const txs = [];
+  const txs = [];
 
-    for (let i = 1; i < lines.length; i++) {
-        try {
-            const parts = lines[i].split(",").map(p => p.trim().replace(/"/g, ""));
+  for (let i = 1; i < lines.length; i++) {
+    try {
+      const parts = lines[i].split(',').map(p => p.trim().replace(/"/g, ''));
 
-            const rawDate = parts[fmt.dateIndex] || "";
-            const description = parts[fmt.descriptionIndex] || "";
-            const parsedDate = parseDate(rawDate);
+      const rawDate = parts[fmt.dateIndex];
+      const description = parts[fmt.descriptionIndex];
+      const date = parseDate(rawDate);
 
-            if (!description || !parsedDate) continue;
+      if (!date || !description) continue;
 
-            let amount = 0;
+      let amount = 0;
+      if (fmt.debitIndex >= 0 && fmt.creditIndex >= 0) {
+        const debit = parseFloat(parts[fmt.debitIndex]) || 0;
+        const credit = parseFloat(parts[fmt.creditIndex]) || 0;
+        amount = credit > 0 ? credit : -Math.abs(debit);
+      } else if (fmt.amountIndex >= 0) {
+        amount = parseFloat(parts[fmt.amountIndex]) || 0;
+      }
 
-            if (fmt.debitIndex >= 0 && fmt.creditIndex >= 0) {
-                const debit = parseFloat(parts[fmt.debitIndex]) || 0;
-                const credit = parseFloat(parts[fmt.creditIndex]) || 0;
-                amount = credit > 0 ? credit : -Math.abs(debit);
-            } else if (fmt.amountIndex >= 0) {
-                amount = parseFloat(parts[fmt.amountIndex]) || 0;
-            }
+      if (!amount) continue;
 
-            if (amount === 0) continue;
+      txs.push(buildTxObject({
+        date,
+        description,
+        amount,
+        type: amount > 0 ? 'income' : 'expense',
+        source: `${fmt.bankId} Import`,
+        originalLine: i + 1
+      }));
+    } catch {}
+  }
 
-            txs.push(
-                buildTxObject({
-                    date: parsedDate,
-                    description,
-                    amount,
-                    type: amount > 0 ? "income" : "expense",
-                    bankCategory: null,
-                    source: `${fmt.bankId} Import`,
-                    originalLine: i + 1
-                })
-            );
-
-        } catch (e) {
-            console.warn("[PARSER] Auto-format parse error line", i, e);
-        }
-    }
-
-    return txs;
+  return txs;
 }
 
 /* -------------------------------------------------------------
    BANK-SPECIFIC PARSERS
 ------------------------------------------------------------- */
 
-// ---------------------------
-// MACQUARIE BANK
-// ---------------------------
 function parseMacquarie(lines) {
-    const header = lines[0].toLowerCase();
-    const startIndex = header.includes("date") ? 1 : 0;
-    const txs = [];
+  const txs = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(',').map(p => p.replace(/"/g, '').trim());
+    if (parts.length < 10) continue;
 
-    for (let i = startIndex; i < lines.length; i++) {
-        const parts = lines[i].split(",").map(p => p.replace(/"/g, "").trim());
-        if (parts.length < 10) continue;
+    const date = parseDate(parts[0]);
+    const description = parts[1];
+    const bankCategory = parts[3];
 
-        const date = parseDate(parts[0]);
-        const description = parts[1];
-        const bankCategory = parts[3] || null;
+    const debit = parseFloat(parts[7]) || 0;
+    const credit = parseFloat(parts[8]) || 0;
+    const amount = credit > 0 ? credit : -Math.abs(debit);
 
-        const debit = parseFloat(parts[7]) || 0;
-        const credit = parseFloat(parts[8]) || 0;
-        const amount = credit > 0 ? credit : -Math.abs(debit);
+    if (!date || !description || !amount) continue;
 
-        if (!date || !description || amount === 0) continue;
-
-        txs.push(
-            buildTxObject({
-                date,
-                description,
-                amount,
-                type: amount > 0 ? "income" : "expense",
-                bankCategory,
-                source: "Macquarie Import",
-                originalLine: i + 1
-            })
-        );
-    }
-
-    return txs;
+    txs.push(buildTxObject({
+      date,
+      description,
+      amount,
+      type: amount > 0 ? 'income' : 'expense',
+      bankCategory,
+      source: 'Macquarie Import',
+      originalLine: i + 1
+    }));
+  }
+  return txs;
 }
 
-// ---------------------------
-// ANZ GENERIC FORMAT
-// ---------------------------
-function parseANZGeneric(lines) {
-    return parseWithBankFormat(lines, {
-        bankId: "anz_generic",
-        dateIndex: 0,
-        descriptionIndex: 1,
-        debitIndex: 2,
-        creditIndex: 3
-    });
-}
-
-// ---------------------------
-// ME BANK GENERIC
-// ---------------------------
-function parseMEGeneric(lines) {
-    return parseWithBankFormat(lines, {
-        bankId: "me_generic",
-        dateIndex: 0,
-        descriptionIndex: 1,
-        amountIndex: 2,
-        debitIndex: -1,
-        creditIndex: -1
-    });
-}
-
-// ---------------------------
-// NAB (matches your CSV export) - UPDATED
-// ---------------------------
 function parseNAB(lines) {
-    console.log("[PARSER] Parsing NAB CSV format");
+  const txs = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(',').map(p => p.trim());
+    if (parts.length < 9) continue;
 
-    const header = lines[0].toLowerCase();
-    const startIndex = header.includes("date") ? 1 : 0;
+    const date = parseDate(parts[0]);
+    const amount = parseFloat(parts[1]);
+    const description = parts[8] || parts[5];
+    const bankCategory = parts[7];
 
-    const txs = [];
+    if (!date || !description || !amount) continue;
 
-    for (let i = startIndex; i < lines.length; i++) {
-        const parts = lines[i].split(",").map(x => x.trim());
-
-        if (parts.length < 9) continue;
-
-        const rawDate = parts[0];
-        const rawAmount = parts[1];
-        const txnDetails = parts[5] || "";
-        const bankCategory = parts[7] || null;  // Column 7 in your CSV
-        const merchantName = parts[8] || "";
-
-        const date = parseDate(rawDate);
-        const amount = parseFloat(rawAmount);
-
-        if (!date || isNaN(amount) || amount === 0) continue;
-
-        const description =
-            merchantName.trim() ||
-            txnDetails.trim() ||
-            `NAB Transaction ${i}`;
-
-        // Log for debugging
-        if (bankCategory) {
-            console.log(`[PARSER] NAB transaction: "${description}" → bankCategory: "${bankCategory}"`);
-        }
-
-        txs.push(
-            buildTxObject({
-                date,
-                description,
-                amount,
-                type: amount > 0 ? "income" : "expense",
-                bankCategory,
-                source: "NAB Import",
-                originalLine: i + 1
-            })
-        );
-    }
-
-    console.log(`[PARSER] NAB parser found ${txs.length} transactions`);
-    return txs;
+    txs.push(buildTxObject({
+      date,
+      description,
+      amount,
+      type: amount > 0 ? 'income' : 'expense',
+      bankCategory,
+      source: 'NAB Import',
+      originalLine: i + 1
+    }));
+  }
+  return txs;
 }
 
-// ---------------------------
-// ANZ
-// ---------------------------
 function parseANZ(lines) {
-    const startIndex = lines[0].toLowerCase().includes("date") ? 1 : 0;
-    const txs = [];
-
-    for (let i = startIndex; i < lines.length; i++) {
-        const parts = lines[i].split(",").map(x => x.trim());
-        if (parts.length < 3) continue;
-
-        const date = parseDate(parts[0]);
-        const description = parts[1];
-
-        let amount = 0;
-        if (parts[2] && parseFloat(parts[2]) > 0) amount = -parseFloat(parts[2]);
-        else if (parts[3] && parseFloat(parts[3]) > 0) amount = parseFloat(parts[3]);
-
-        if (!date || !description || amount === 0) continue;
-
-        txs.push(
-            buildTxObject({
-                date,
-                description,
-                amount,
-                type: amount > 0 ? "income" : "expense",
-                bankCategory: null,
-                source: "ANZ Import",
-                originalLine: i + 1
-            })
-        );
-    }
-
-    return txs;
+  return parseGenericCSV(lines, 'ANZ Import');
 }
 
-// ---------------------------
-// COMM BANK
-// ---------------------------
 function parseCommBank(lines) {
-    const startIndex = lines[0].toLowerCase().includes("date") ? 1 : 0;
-    const txs = [];
-
-    for (let i = startIndex; i < lines.length; i++) {
-        const parts = lines[i].split(",").map(x => x.trim());
-        if (parts.length < 3) continue;
-
-        const date = parseDate(parts[0]);
-        const description = parts[1];
-        const amount = parseFloat(parts[2]);
-
-        if (!date || !description || isNaN(amount) || amount === 0) continue;
-
-        txs.push(
-            buildTxObject({
-                date,
-                description,
-                amount,
-                type: amount > 0 ? "income" : "expense",
-                bankCategory: null,
-                source: "CommBank Import",
-                originalLine: i + 1
-            })
-        );
-    }
-
-    return txs;
+  return parseGenericCSV(lines, 'CommBank Import');
 }
 
-// ---------------------------
-// WESTPAC
-// ---------------------------
 function parseWestpac(lines) {
-    const startIndex = lines[0].toLowerCase().includes("date") ? 1 : 0;
-    const txs = [];
+  return parseGenericCSV(lines, 'Westpac Import');
+}
 
-    for (let i = startIndex; i < lines.length; i++) {
-        const parts = lines[i].split(",").map(x => x.trim());
-        if (parts.length < 3) continue;
+function parseANZGeneric(lines) {
+  return parseWithBankFormat(lines, {
+    bankId: 'anz',
+    dateIndex: 0,
+    descriptionIndex: 1,
+    debitIndex: 2,
+    creditIndex: 3
+  });
+}
 
-        const date = parseDate(parts[0]);
-        const description = parts[1];
-        const amount = parseFloat(parts[2]);
-
-        if (!date || !description || isNaN(amount) || amount === 0) continue;
-
-        txs.push(
-            buildTxObject({
-                date,
-                description,
-                amount,
-                type: amount > 0 ? "income" : "expense",
-                bankCategory: null,
-                source: "Westpac Import",
-                originalLine: i + 1
-            })
-        );
-    }
-
-    return txs;
+function parseMEGeneric(lines) {
+  return parseWithBankFormat(lines, {
+    bankId: 'me',
+    dateIndex: 0,
+    descriptionIndex: 1,
+    amountIndex: 2
+  });
 }
 
 /* -------------------------------------------------------------
    GENERIC CSV PARSER
 ------------------------------------------------------------- */
 
-function parseGenericCSV(lines) {
-    console.log("[PARSER] Parsing generic CSV");
+function parseGenericCSV(lines, source = 'Generic CSV Import') {
+  const txs = [];
+  for (let i = 1; i < lines.length; i++) {
+    try {
+      const parts = lines[i].split(',').map(p => p.trim().replace(/"/g, ''));
+      const date = parseDate(parts[0]);
+      const description = parts[1];
+      const amount = parseFloat(parts.find(p => !isNaN(parseFloat(p))));
 
-    const header = lines[0].toLowerCase();
-    const startIndex = header.includes("date") ? 1 : 0;
+      if (!date || !description || !amount) continue;
 
-    const txs = [];
-
-    for (let i = startIndex; i < lines.length; i++) {
-        try {
-            let parts = lines[i].split(",").map(x => x.trim().replace(/^"|"$/g, ""));
-
-            if (parts.length < 2) continue;
-
-            let date = parseDate(parts[0]);
-            let description = parts[1];
-
-            let amount = null;
-
-            for (let j = 2; j < parts.length; j++) {
-                const num = parseFloat(parts[j].replace(/[$,]/g, ""));
-                if (!isNaN(num)) {
-                    amount = num;
-                    break;
-                }
-            }
-
-            if (!date || !description || !amount || amount === 0) continue;
-
-            txs.push(
-                buildTxObject({
-                    date,
-                    description,
-                    amount,
-                    type: amount > 0 ? "income" : "expense",
-                    bankCategory: null,
-                    source: "Generic CSV Import",
-                    originalLine: i + 1
-                })
-            );
-        } catch {}
-    }
-
-    return txs;
+      txs.push(buildTxObject({
+        date,
+        description,
+        amount,
+        type: amount > 0 ? 'income' : 'expense',
+        source,
+        originalLine: i + 1
+      }));
+    } catch {}
+  }
+  return txs;
 }
 
 /* -------------------------------------------------------------
-   TEXT PARSERS (add these if missing)
-------------------------------------------------------------- */
-
-function parseANZText(lines) {
-    return parseGenericText(lines);
-}
-
-function parseCommBankText(lines) {
-    return parseGenericText(lines);
-}
-
-function parseNABText(lines) {
-    return parseGenericText(lines);
-}
-
-function parseWestpacText(lines) {
-    return parseGenericText(lines);
-}
-
-function parseGenericText(lines) {
-    const txs = [];
-
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        let date = new Date().toISOString().split("T")[0];
-        let description = line.trim();
-
-        const dateMatch = line.match(/\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/);
-        if (dateMatch) date = parseDate(dateMatch[1]) || date;
-
-        const amountMatch = line.match(/\$?([\d,]+\.?\d{2})\b/);
-        const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, "")) : 0;
-
-        if (!amount) continue;
-
-        txs.push(
-            buildTxObject({
-                date,
-                description,
-                amount,
-                type: amount > 0 ? "income" : "expense",
-                bankCategory: null,
-                source: "Generic Text Import",
-                originalLine: i + 1
-            })
-        );
-    }
-
-    return txs;
-}
-
-/* -------------------------------------------------------------
-   DATE PARSING
+   DATE PARSER
 ------------------------------------------------------------- */
 
 function parseDate(raw) {
-    if (!raw) return null;
+  if (!raw) return null;
+  const clean = raw.trim().replace(/["']/g, '');
 
-    let clean = raw.trim().replace(/["']/g, "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
 
-    // YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  const m = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    let [, d, mm, y] = m;
+    if (y.length === 2) y = '20' + y;
+    return new Date(y, mm - 1, d).toISOString().split('T')[0];
+  }
 
-    // DD/MM/YYYY
-    let m = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-    if (m) {
-        let [, d, mm, y] = m;
-        if (y.length === 2) y = "20" + y;
-        return new Date(y, mm - 1, d).toISOString().split("T")[0];
-    }
-
-    // fallback to Date()
-    let dt = new Date(clean);
-    if (!isNaN(dt.getTime())) return dt.toISOString().split("T")[0];
-
-    return null;
+  const dt = new Date(clean);
+  return isNaN(dt.getTime()) ? null : dt.toISOString().split('T')[0];
 }
 
 /* -------------------------------------------------------------
@@ -593,16 +290,16 @@ function parseDate(raw) {
 ------------------------------------------------------------- */
 
 export function getSupportedFormats() {
-    return [
-        "auto",
-        "macquarie",
-        "anz_generic",
-        "nab_generic",
-        "me_generic",
-        "anz",
-        "commbank",
-        "nab",
-        "westpac",
-        "generic_csv"
-    ];
+  return [
+    'auto',
+    'macquarie',
+    'anz_generic',
+    'nab_generic',
+    'me_generic',
+    'anz',
+    'commbank',
+    'nab',
+    'westpac',
+    'generic_csv'
+  ];
 }
