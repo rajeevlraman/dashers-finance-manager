@@ -511,54 +511,43 @@ function renderTransactionCard(tx, categories, accounts, properties) {
 // ============================================================================
 function renderEditForm(tx, categories, accounts, properties) {
   const isIncome = tx.amount > 0;
+
   const mainCats = categories.filter(c => !c.parentId);
   const subCats = categories.filter(c => c.parentId);
-  
-  // Get current category info
+
   const currentCategory = categories.find(c => c.id === tx.categoryId);
-  
+
   let currentMainCategory = '';
   let currentSubCategory = '';
-  
+  let relevantSubCats = [];
+
   if (currentCategory) {
     if (currentCategory.parentId) {
-      // It's a subcategory
+      // Hierarchical category (e.g. Restaurants › KFC)
       currentMainCategory = currentCategory.parentId;
       currentSubCategory = currentCategory.id;
+      relevantSubCats = subCats.filter(s => s.parentId === currentMainCategory);
     } else {
-      // It's a main category
+      // Flat / merchant category (e.g. Woolworths)
       currentMainCategory = currentCategory.id;
-      currentSubCategory = ''; // No subcategory selected
+      currentSubCategory = '';
+      relevantSubCats = subCats.filter(s => s.parentId === currentMainCategory);
     }
   }
-  
-  // Get subcategories for current main category
-  const relevantSubCats = currentMainCategory ? 
-    subCats.filter(s => s.parentId === currentMainCategory) : [];
 
-  console.log('Edit form debug:', {
-    txCategoryId: tx.categoryId,
-    currentCategory: currentCategory,
-    currentMainCategory,
-    currentSubCategory,
-    isMainCategory: currentCategory && !currentCategory.parentId,
-    relevantSubCatsCount: relevantSubCats.length
-  });
+  // -----------------------------
+  // Build sub-category options
+  // -----------------------------
+  let subCategoryOptions = '';
 
-  // Build subcategory options based on the situation
-let subCategoryOptions = `
-  <option value="">-- None --</option>
-`;
-
-if (currentMainCategory) {
-  subCategoryOptions += relevantSubCats.map(s => `
-    <option value="${s.id}" ${s.id === currentSubCategory ? 'selected' : ''}>
-      ${s.name}
-    </option>
-  `).join('');
-}
- else {
-    // CASE 2: Subcategory is selected or none
+  if (!relevantSubCats.length && currentCategory) {
+    // Flat category → show it explicitly so UI is NOT blank
+    subCategoryOptions = `
+      <option value="${currentCategory.id}" selected>
+        ${currentCategory.name} (Category)
+      </option>
+    `;
+  } else {
     subCategoryOptions = `
       <option value="">-- None --</option>
       ${relevantSubCats.map(s => `
@@ -575,17 +564,29 @@ if (currentMainCategory) {
         <h4>✏️ Edit Transaction</h4>
         <button class="btn-close cancel-edit" data-id="${tx.id}">✕</button>
       </div>
+
       <form class="edit-transaction-form" data-id="${tx.id}">
         <div class="form-row">
           <select name="type" class="form-control" required>
             <option value="income" ${isIncome ? 'selected' : ''}>Income</option>
             <option value="expense" ${!isIncome ? 'selected' : ''}>Expense</option>
           </select>
-          <input type="number" name="amount" class="form-control" 
-                 value="${Math.abs(tx.amount)}" step="0.01" min="0.01" required>
-          <input type="date" name="date" class="form-control" value="${tx.date}" required>
+
+          <input type="number"
+                 name="amount"
+                 class="form-control"
+                 value="${Math.abs(tx.amount)}"
+                 step="0.01"
+                 min="0.01"
+                 required>
+
+          <input type="date"
+                 name="date"
+                 class="form-control"
+                 value="${tx.date}"
+                 required>
         </div>
-        
+
         <div class="form-row">
           <select name="accountId" class="form-control" required>
             <option value="">Select Account</option>
@@ -595,12 +596,18 @@ if (currentMainCategory) {
               </option>
             `).join('')}
           </select>
-          <input type="text" name="description" class="form-control" 
-                 value="${tx.description || ''}" placeholder="Description">
+
+          <input type="text"
+                 name="description"
+                 class="form-control"
+                 value="${tx.description || ''}"
+                 placeholder="Description">
         </div>
-        
+
         <div class="form-row">
-          <select name="mainCategory" class="form-control main-category-select" required>
+          <select name="mainCategory"
+                  class="form-control main-category-select"
+                  required>
             <option value="">Select Category</option>
             ${mainCats.map(c => `
               <option value="${c.id}" ${c.id === currentMainCategory ? 'selected' : ''}>
@@ -608,19 +615,26 @@ if (currentMainCategory) {
               </option>
             `).join('')}
           </select>
-          
-          <select name="subCategory" class="form-control sub-category-select">
+
+          <select name="subCategory"
+                  class="form-control sub-category-select">
             ${subCategoryOptions}
           </select>
         </div>
-        
+
         <div class="property-expense-section">
           <div class="form-row">
             <label class="checkbox-label">
-              <input type="checkbox" name="isPropertyExpense" ${tx.isPropertyExpense ? 'checked' : ''}> Property Expense
+              <input type="checkbox"
+                     name="isPropertyExpense"
+                     ${tx.isPropertyExpense ? 'checked' : ''}>
+              Property Expense
             </label>
           </div>
-          <div id="propertyExpenseFields" style="${tx.isPropertyExpense ? 'display: block;' : 'display: none;'}">
+
+          <div id="propertyExpenseFields"
+               style="${tx.isPropertyExpense ? 'display:block;' : 'display:none;'}">
+
             <div class="form-row">
               <select name="propertyId" class="form-control">
                 <option value="">Select Property</option>
@@ -630,33 +644,46 @@ if (currentMainCategory) {
                   </option>
                 `).join('')}
               </select>
+
               <select name="expenseCategory" class="form-control">
                 <option value="">Expense Category</option>
-                <option value="Mortgage" ${tx.expenseCategory === 'Mortgage' ? 'selected' : ''}>Mortgage</option>
-                <option value="Rates" ${tx.expenseCategory === 'Rates' ? 'selected' : ''}>Rates</option>
-                <option value="Insurance" ${tx.expenseCategory === 'Insurance' ? 'selected' : ''}>Insurance</option>
-                <option value="Repairs" ${tx.expenseCategory === 'Repairs' ? 'selected' : ''}>Repairs</option>
-                <option value="Maintenance" ${tx.expenseCategory === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
-                <option value="Utilities" ${tx.expenseCategory === 'Utilities' ? 'selected' : ''}>Utilities</option>
-                <option value="Other" ${tx.expenseCategory === 'Other' ? 'selected' : ''}>Other</option>
+                ${['Mortgage','Rates','Insurance','Repairs','Maintenance','Utilities','Other']
+                  .map(v => `
+                    <option value="${v}" ${tx.expenseCategory === v ? 'selected' : ''}>
+                      ${v}
+                    </option>
+                  `).join('')}
               </select>
             </div>
+
             <div class="form-row">
-              <input type="text" name="receiptUrl" class="form-control" 
-                     value="${tx.receiptUrl || ''}" placeholder="Receipt URL">
-              <textarea name="notes" class="form-control" placeholder="Notes" rows="2">${tx.notes || ''}</textarea>
+              <input type="text"
+                     name="receiptUrl"
+                     class="form-control"
+                     value="${tx.receiptUrl || ''}"
+                     placeholder="Receipt URL">
+
+              <textarea name="notes"
+                        class="form-control"
+                        rows="2"
+                        placeholder="Notes">${tx.notes || ''}</textarea>
             </div>
           </div>
         </div>
-        
+
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary save-edit">💾 Save</button>
-          <button type="button" class="btn btn-secondary cancel-edit" data-id="${tx.id}">Cancel</button>
+          <button type="submit" class="btn btn-primary">💾 Save</button>
+          <button type="button"
+                  class="btn btn-secondary cancel-edit"
+                  data-id="${tx.id}">
+            Cancel
+          </button>
         </div>
       </form>
     </div>
   `;
 }
+
 
 // ============================================================================
 // Show Inline Transaction Form (for adding new)
