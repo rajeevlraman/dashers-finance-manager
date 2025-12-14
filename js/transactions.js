@@ -731,7 +731,9 @@ function showInlineTransactionForm(prefill, categories, accounts, properties) {
             <option value="">Select Category</option>
             ${mainCats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
           </select>
-          <select name="subCategory" class="form-control sub-category-select">
+<select name="subCategory"
+        class="form-control sub-category-select"
+        ${relevantSubCats.length ? 'required' : ''}>
             <option value="">-- None --</option>
           </select>
         </div>
