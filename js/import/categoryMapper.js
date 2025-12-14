@@ -257,28 +257,46 @@ const BANK_CATEGORY_MAP_BY_BANK = {
   }
 };
 
+// Add this function to improve matching logic
+function findBestCategoryMatch(bankCategory, map) {
+  if (!bankCategory) return null;
+  
+  const lowerCategory = bankCategory.toLowerCase().trim();
+  
+  // Try exact match first
+  if (map[lowerCategory]) {
+    return map[lowerCategory];
+  }
+  
+  // Try partial match (e.g., "Technology" matches "technology")
+  for (const [key, value] of Object.entries(map)) {
+    if (lowerCategory.includes(key) || key.includes(lowerCategory)) {
+      return value;
+    }
+  }
+  
+  return null;
+}
+
 // Resolve bank category to a categoryId
+// Update the resolveBankCategory function:
 function resolveBankCategory(bankCategoryRaw, opts = {}) {
   if (!bankCategoryRaw) return null;
   const bankId = (opts.bankId || '').toLowerCase();
   const raw = bankCategoryRaw.toLowerCase().trim();
 
-  const bankMap = BANK_CATEGORY_MAP_BY_BANK[bankId] || {};
-  const allKeys = [
-    ...Object.keys(bankMap),
-    ...Object.keys(GENERIC_BANK_CATEGORY_MAP)
-  ];
-
-  for (const key of allKeys) {
-    if (!key) continue;
-    if (raw.includes(key)) {
-      return bankMap[key] || GENERIC_BANK_CATEGORY_MAP[key] || null;
-    }
+  // Try bank-specific mapping first
+  if (BANK_CATEGORY_MAP_BY_BANK[bankId]) {
+    const bankMatch = findBestCategoryMatch(raw, BANK_CATEGORY_MAP_BY_BANK[bankId]);
+    if (bankMatch) return bankMatch;
   }
+
+  // Try generic mapping
+  const genericMatch = findBestCategoryMatch(raw, GENERIC_BANK_CATEGORY_MAP);
+  if (genericMatch) return genericMatch;
 
   return null;
 }
-
 // ---------------------------------------------------------------------------
 // Keyword → categoryId matching
 // Uses cleanDescription / merchant keyword matches
