@@ -4,9 +4,9 @@
 export const merchantCategories = {
 
   // Groceries
-  "woolworths": { categoryId: "exp_groceries", confidence: 0.95 },
+  "Woolworths": { categoryId: "exp_groceries", confidence: 0.95 },
   "coles": { categoryId: "exp_groceries", confidence: 0.95 },
-  "malvic": { categoryId: "ms_food", confidence: 0.95 },
+  "mal vic": { categoryId: "ms_food", confidence: 0.95 },
   "eve iga": { categoryId: "exp_groceries", confidence: 0.9 },
   "marketplace fresh": { categoryId: "exp_groceries", confidence: 0.9 },
   "fish pier": { categoryId: "exp_groceries", confidence: 0.85 },
