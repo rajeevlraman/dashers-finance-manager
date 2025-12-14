@@ -5,6 +5,9 @@
 // ✅ Enable debug console for testing; comment out for production
 import { setupDebugConsole } from './debugConsole.js';
 setupDebugConsole();
+import { getAllItems, STORE_NAMES } from './db.js';
+import { buildCategoryIndex } from './categoryRules.js';
+import { initCategoryMapper } from './categoryMapper.js';
 
 import { initUI } from './ui.js';
 import { processRecurringTransactions, processDueBills } from './recurringJob.js';
@@ -12,6 +15,11 @@ import { applyLayoutChanges, LayoutModes } from './layoutManager.js';
 //version import 
 import { APP_VERSION } from './version.js';
 console.log("🚀 Dashers Finance - Version", APP_VERSION);
+// --------------------------
+// Category Intelligence (Option C)
+// --------------------------
+window.__DFM_CATEGORY_INDEX__ = [];
+window.__DFM_CATEGORIES__ = [];
 
 
 // Optional check: warn if not HTTPS (affects PWA install prompt)
@@ -332,7 +340,25 @@ function updateConnectionIcon() {
 // --------------------------
 async function initializeAppCore() {
     console.log('🚀 Starting core app initialization...');
-    
+       // --------------------------
+    // Initialise Category Engines
+    // --------------------------
+    try {
+        const categories = await getAllItems(STORE_NAMES.categories);
+
+        window.__DFM_CATEGORIES__ = categories;
+        window.__DFM_CATEGORY_INDEX__ = buildCategoryIndex(categories);
+
+        initCategoryMapper();
+
+        console.log(
+            `🧠 Category engines ready → ${categories.length} categories, ` +
+            `${window.__DFM_CATEGORY_INDEX__.length} keyword rules`
+        );
+    } catch (err) {
+        console.error('❌ Failed to initialise category engines', err);
+    }
+ 
     // Layout detection
 /*
     applyLayoutChanges(mode => {
