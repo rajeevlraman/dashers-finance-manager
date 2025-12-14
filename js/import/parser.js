@@ -303,3 +303,27 @@ export function getSupportedFormats() {
     'generic_csv'
   ];
 }
+/* -------------------------------------------------------------
+   TEXT STATEMENT PARSER (PURE / GENERIC)
+------------------------------------------------------------- */
+
+export async function parseStatementText(text, format) {
+  const lines = text.split('\n').filter(l => l.trim());
+  if (!lines.length) {
+    throw new Error('No text to parse');
+  }
+
+  return parseGenericText(lines, `${format || 'Generic'} Text Import`);
+}
+/* -------------------------------------------------------------
+   TEXT STATEMENT PARSER (PURE / GENERIC)
+------------------------------------------------------------- */
+
+export async function parseStatementText(text, format) {
+  const lines = text.split('\n').filter(l => l.trim());
+  if (!lines.length) {
+    throw new Error('No text to parse');
+  }
+
+  return parseGenericText(lines, `${format || 'Generic'} Text Import`);
+}
