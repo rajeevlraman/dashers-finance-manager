@@ -579,21 +579,6 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     };
   }
 
-
-  // 5) Keyword-based mapping from description/merchant
-  const catIdFromKeywords = keywordCategoryMatch(tx);
-  if (catIdFromKeywords) {
-    if (tx && tx.merchant) {
-      trackAutoLearning('merchant', tx.merchant, catIdFromKeywords);
-    }
-    return {
-      categoryId: catIdFromKeywords,
-      source: 'keyword_match',
-      rule: null
-    };
-  }
-
-
   // 4) Bank category mapping
   if (bankCategoryRaw) {
     const catIdFromBank = resolveBankCategory(bankCategoryRaw, {
@@ -614,7 +599,18 @@ export function suggestCategoryForTransaction(tx, bankCategoryRaw = null, option
     }
   }
 
-
+  // 5) Keyword-based mapping from description/merchant
+  const catIdFromKeywords = keywordCategoryMatch(tx);
+  if (catIdFromKeywords) {
+    if (tx && tx.merchant) {
+      trackAutoLearning('merchant', tx.merchant, catIdFromKeywords);
+    }
+    return {
+      categoryId: catIdFromKeywords,
+      source: 'keyword_match',
+      rule: null
+    };
+  }
 
   // 6) Fallback
   return {
