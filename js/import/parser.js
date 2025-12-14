@@ -20,7 +20,9 @@ function normaliseDescription(text) {
 function extractMerchant(description) {
     const clean = normaliseDescription(description);
     const parts = clean.split(" ");
-    return parts.slice(0, 3).join(" "); // take first 1–3 words
+    //return parts.slice(0, 3).join(" "); // take first 1–3 words
+    return parts[0] || "";
+
 }
 
 function extractCategoryText(description) {
@@ -35,11 +37,12 @@ function extractCategoryText(description) {
 function assignCategoryFromBankCategory(tx, source) {
     // Determine bank ID from source
     let bankId = 'generic';
-    if (source && source.includes('NAB')) bankId = 'nab';
-    if (source && source.includes('Macquarie')) bankId = 'macquarie';
-    if (source && source.includes('ANZ')) bankId = 'anz';
-    if (source && source.includes('CommBank')) bankId = 'commbank';
-    if (source && source.includes('Westpac')) bankId = 'westpac';
+        const src = (source || '').toLowerCase();
+        if (src.includes('nab')) bankId = 'nab';
+        else if (src.includes('anz')) bankId = 'anz';
+        else if (src.includes('macquarie')) bankId = 'macquarie';
+        else if (src.includes('commbank')) bankId = 'commbank';
+        else if (src.includes('westpac')) bankId = 'westpac';
     
     console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory || 'none'})`);
     
@@ -52,7 +55,8 @@ function assignCategoryFromBankCategory(tx, source) {
     }
     
     console.log(`[PARSER] ✗ No match for: "${tx.description}"`);
-    return null;
+    return 'ms_uncategorised';
+
 }
 /* -------------------------------------------------------------
    UPDATED: Build Final Transaction Object with Category
@@ -85,12 +89,11 @@ function buildTxObject({
     };
     
     // 🔥 CRITICAL FIX: Pass source parameter
-    if (bankCategory) {
-        const categoryId = assignCategoryFromBankCategory(tx, source || 'Unknown Import');
-        if (categoryId) {
-            tx.categoryId = categoryId;
-        }
-    }
+const categoryId = assignCategoryFromBankCategory(tx, source || 'Unknown Import');
+if (categoryId) {
+    tx.categoryId = categoryId;
+}
+
     
     return tx;
 }
