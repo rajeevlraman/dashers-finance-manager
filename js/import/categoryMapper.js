@@ -139,50 +139,85 @@ function findMerchantRuleForTransaction(tx) {
 // (NAB-specific strings + generic fallbacks)
 // ---------------------------------------------------------------------------
 const GENERIC_BANK_CATEGORY_MAP = {
-  // Common high-level concepts
+  // ========== NAB BANK CATEGORIES (ADD THESE) ==========
+  'attractions & events': 'exp_entertainment',
+  'attractions': 'exp_entertainment',
+  'events': 'exp_entertainment',
+  'restaurants & takeaway': 'exp_dining',
+  'restaurants': 'exp_dining',
+  'takeaway': 'exp_dining',
   'groceries': 'exp_groceries',
   'supermarket': 'exp_grocery_supermarket',
+  'utilities': 'exp_utilities',
+  'fuel': 'exp_fuel',
+  'medical': 'exp_health',
+  'transfers in': 'inc_transfer',
+  'transfers out': 'exp_transfer_out',
+  'internal transfers': 'exp_transfer_out',
+  'uncategorised': 'ms_uncategorised',
+
+  // ========== MACQUARIE BANK CATEGORIES (ADD THESE) ==========
+  'technology': 'ms_tech_software',      // Maps to MoneySmart Software category
+  'financial': 'ms_financial',           // Maps to MoneySmart Financial
+  'shopping': 'exp_online_shopping',
+  'transport': 'exp_transport',
+  'entertainment': 'exp_entertainment',
+  'household': 'exp_groceries',
+  'personal': 'exp_personal',
+  'travel': 'exp_travel',
+  'insurance': 'exp_insurance',
+  'education': 'exp_education',
+
+  // ========== GOOGLE/SUBSCRIPTION MAPPINGS (ADD THESE) ==========
+  'google': 'ms_tech_software',
+  'software': 'ms_tech_software',
+  'subscription': 'exp_subs',
+  'microsoft': 'ms_tech_software',
+  'apple': 'ms_tech_software',
+  'aws': 'ms_tech_software',
+  'cloud': 'ms_tech_software',
+
+  // ========== FINANCIAL/TRANSFER MAPPINGS (ADD THESE) ==========
+  'payment': 'ms_financial',
+  'bpay': 'ms_financial_bpay',
+  'transfer': 'ms_financial_transfers',
+  'credit': 'ms_financial',
+  'debit': 'ms_financial',
+
+  // ========== YOUR EXISTING MAPPINGS (KEEP THESE) ==========
   'food': 'exp_groceries',
   'dining': 'exp_dining',
-  'restaurants': 'exp_dining',
   'fast food': 'exp_dining',
   'takeaway': 'exp_dining',
+  'takeaway': 'exp_dining',
 
-  'medical': 'exp_health',
   'health': 'exp_health',
 
-  'fuel': 'exp_fuel',
   'petrol': 'exp_fuel',
-  'transport': 'exp_transport',
   'tolls': 'exp_Parking_Fees',
   'parking': 'exp_Parking_Fees',
   'public transport': 'exp_public_transport',
   'transit': 'exp_public_transport',
 
-  'insurance': 'exp_insurance',
   'home insurance': 'exp_home_ins',
   'car insurance': 'exp_car_ins',
   'life insurance': 'exp_life_ins',
   'health insurance': 'exp_health_ins',
 
-  'utilities': 'exp_utilities',
   'electricity': 'exp_electricity',
   'gas': 'exp_gas',
   'water': 'exp_water_usage',
   'internet': 'exp_internet',
   'phone': 'exp_mobile',
 
-  'education': 'exp_education',
   'school fees': 'exp_school_fees',
   'university': 'exp_uni_fees',
 
-  'fees': 'exp_fees',
   'charges': 'exp_fees',
 
   'rent': 'exp_rent_payment',
   'mortgage': 'exp_Home_mortgage',
 
-  'travel': 'exp_travel',
   'flights': 'exp_flights',
   'accommodation': 'exp_hotel',
 
@@ -192,28 +227,33 @@ const GENERIC_BANK_CATEGORY_MAP = {
 };
 
 const BANK_CATEGORY_MAP_BY_BANK = {
-  // You can expand specific bank mappings here
+  // NAB MAPPINGS
   nab: {
+    'attractions & events': 'exp_entertainment',
+    'restaurants & takeaway': 'exp_dining',
     'groceries': 'exp_groceries',
     'supermarket': 'exp_grocery_supermarket',
-    'medical': 'exp_health',
-    'health': 'exp_health',
+    'utilities': 'exp_utilities',
     'fuel': 'exp_fuel',
-    'petrol': 'exp_fuel',
+    'medical': 'exp_health',
+    'transfers in': 'inc_transfer',
+    'transfers out': 'exp_transfer_out',
+    'internal transfers': 'exp_transfer_out',
+    'uncategorised': 'ms_uncategorised'
+  },
+  
+  // MACQUARIE MAPPINGS (ADD THIS)
+  macquarie: {
+    'technology': 'ms_tech_software',
+    'financial': 'ms_financial',
+    'shopping': 'exp_online_shopping',
     'transport': 'exp_transport',
-    'tolls': 'exp_Parking_Fees',
-    'parking': 'exp_Parking_Fees',
+    'entertainment': 'exp_entertainment',
+    'household': 'exp_groceries',
+    'personal': 'exp_personal',
+    'travel': 'exp_travel',
     'insurance': 'exp_insurance',
-    'electricity': 'exp_electricity',
-    'gas': 'exp_gas',
-    'water': 'exp_water_usage',
-    'internet': 'exp_internet',
-    'phone': 'exp_mobile',
-    'education': 'exp_education',
-    'fees': 'exp_fees',
-    'rent': 'exp_rent_payment',
-    'mortgage': 'exp_Home_mortgage'
-    // etc.
+    'education': 'exp_education'
   }
 };
 
