@@ -374,6 +374,7 @@ function keywordCategoryMatch(tx) {
 const MERCHANT_SUBCATEGORY_MAP = {
   // Grocery stores
   'woolworths': 'exp_Woolworths',
+  'Woolworths': 'exp_Woolworths',
   'coles': 'exp_Coles',
   'safeway': 'exp_Safeway',
   'aldi': 'exp_Aldi',
@@ -417,7 +418,11 @@ function merchantSubcategoryMatch(tx) {
   
   const cleanDesc = tx.cleanDescription.toLowerCase();
   
+  console.log(`[DEBUG merchantSubcategoryMatch] Checking: "${cleanDesc}"`);
+  console.log(`[DEBUG] Available keys:`, Object.keys(MERCHANT_SUBCATEGORY_MAP));
+  
   for (const [keyword, subcategoryId] of Object.entries(MERCHANT_SUBCATEGORY_MAP)) {
+    console.log(`[DEBUG] Testing keyword: "${keyword}" in "${cleanDesc}"`);
     if (cleanDesc.includes(keyword)) {
       console.log(`[CategoryMapper] Merchant keyword "${keyword}" → subcategory "${subcategoryId}"`);
       return subcategoryId;
