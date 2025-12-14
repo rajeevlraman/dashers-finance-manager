@@ -35,13 +35,13 @@ function extractCategoryText(description) {
 function assignCategoryFromBankCategory(tx, source) {
     if (!tx.bankCategory) return null;
     
-    // Determine bank ID from source
+    // Determine bank ID from source (with null check)
     let bankId = 'generic';
-    if (source.includes('NAB')) bankId = 'nab';
-    if (source.includes('Macquarie')) bankId = 'macquarie';
-    if (source.includes('ANZ')) bankId = 'anz';
-    if (source.includes('CommBank')) bankId = 'commbank';
-    if (source.includes('Westpac')) bankId = 'westpac';
+    if (source && source.includes('NAB')) bankId = 'nab';
+    if (source && source.includes('Macquarie')) bankId = 'macquarie';
+    if (source && source.includes('ANZ')) bankId = 'anz';
+    if (source && source.includes('CommBank')) bankId = 'commbank';
+    if (source && source.includes('Westpac')) bankId = 'westpac';
     
     console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory})`);
     
@@ -82,17 +82,16 @@ function buildTxObject({
         categoryText: extractCategoryText(description),
         amount,
         type,
-        bankCategory,    // This is the BANK's category (e.g., "Attractions & events")
-        source,
+        bankCategory,
+        source: source || 'Unknown Import', // Ensure source is never undefined
         originalLine
     };
     
-    // 🔥 CRITICAL FIX: Assign categoryId based on bankCategory
+    // 🔥 CRITICAL FIX: Pass source parameter
     if (bankCategory) {
-        const categoryId = assignCategoryFromBankCategory(tx);
+        const categoryId = assignCategoryFromBankCategory(tx, source || 'Unknown Import');
         if (categoryId) {
-            tx.categoryId = categoryId;  // This is YOUR app's category ID
-            console.log(`[PARSER] Mapped bank category "${bankCategory}" → "${categoryId}"`);
+            tx.categoryId = categoryId;
         }
     }
     
