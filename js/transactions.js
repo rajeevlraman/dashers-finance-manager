@@ -514,7 +514,7 @@ function renderEditForm(tx, categories, accounts, properties) {
   const mainCats = categories.filter(c => !c.parentId);
   const subCats = categories.filter(c => c.parentId);
   
-  // Get current category info - FIXED LOGIC
+  // Get current category info
   const currentCategory = categories.find(c => c.id === tx.categoryId);
   
   let currentMainCategory = '';
@@ -526,9 +526,12 @@ function renderEditForm(tx, categories, accounts, properties) {
       currentMainCategory = currentCategory.parentId;
       currentSubCategory = currentCategory.id;
     } else {
-      // It's a main category
+      // It's a main category - find appropriate subcategory
       currentMainCategory = currentCategory.id;
-      currentSubCategory = ''; // No subcategory selected
+      
+      // For Woolworths under Groceries, maybe default to 'exp_grocery_supermarket'
+      // Or leave empty for user to choose
+      currentSubCategory = ''; // Let user pick subcategory
     }
   }
   
@@ -538,73 +541,44 @@ function renderEditForm(tx, categories, accounts, properties) {
 
   console.log('Edit form debug:', {
     txCategoryId: tx.categoryId,
-    currentCategory: currentCategory,
+    currentCategoryName: currentCategory?.name,
     currentMainCategory,
     currentSubCategory,
-    isMainCategory: currentCategory && !currentCategory.parentId,
-    relevantSubCatsCount: relevantSubCats.length
+    relevantSubCats: relevantSubCats.map(s => `${s.id}: ${s.name}`)
   });
 
   return `
     <div class="transaction-card editing" data-transaction-id="${tx.id}">
-      <div class="edit-form-header">
-        <h4>✏️ Edit Transaction</h4>
-        <button class="btn-close cancel-edit" data-id="${tx.id}">✕</button>
-      </div>
-      <form class="edit-transaction-form" data-id="${tx.id}">
-        <div class="form-row">
-          <select name="type" class="form-control" required>
-            <option value="income" ${isIncome ? 'selected' : ''}>Income</option>
-            <option value="expense" ${!isIncome ? 'selected' : ''}>Expense</option>
-          </select>
-          <input type="number" name="amount" class="form-control" 
-                 value="${Math.abs(tx.amount)}" step="0.01" min="0.01" required>
-          <input type="date" name="date" class="form-control" value="${tx.date}" required>
-        </div>
+      <!-- ... header and other form fields ... -->
+      
+      <div class="form-row">
+        <select name="mainCategory" class="form-control main-category-select" required>
+          <option value="">Select Main Category</option>
+          ${mainCats.map(c => `
+            <option value="${c.id}" ${c.id === currentMainCategory ? 'selected' : ''}>
+              ${c.icon || ''} ${c.name}
+            </option>
+          `).join('')}
+        </select>
         
-        <div class="form-row">
-          <select name="accountId" class="form-control" required>
-            <option value="">Select Account</option>
-            ${accounts.map(a => `
-              <option value="${a.id}" ${a.id === tx.accountId ? 'selected' : ''}>
-                ${a.name}
-              </option>
-            `).join('')}
-          </select>
-          <input type="text" name="description" class="form-control" 
-                 value="${tx.description || ''}" placeholder="Description">
-        </div>
-        
-        <div class="form-row">
-          <select name="mainCategory" class="form-control main-category-select" required>
-            <option value="">Select Category</option>
-            ${mainCats.map(c => `
-              <option value="${c.id}" ${c.id === currentMainCategory ? 'selected' : ''}>
-                ${c.name}
-              </option>
-            `).join('')}
-          </select>
+        <select name="subCategory" class="form-control sub-category-select">
+          <option value="">-- Select Subcategory --</option>
+          ${relevantSubCats.map(s => `
+            <option value="${s.id}" ${s.id === currentSubCategory ? 'selected' : ''}>
+              ${s.icon || ''} ${s.name}
+            </option>
+          `).join('')}
           
-          <select name="subCategory" class="form-control sub-category-select">
-            ${currentSubCategory === '' && currentMainCategory ? `
-              <!-- CASE 1: Main category is selected (like exp_groceries) -->
-              <option value="${currentMainCategory}" selected>
-                ${currentCategory?.name || currentMainCategory}
-              </option>
-            ` : `
-              <!-- CASE 2: Subcategory is selected or none -->
-              <option value="">-- None --</option>
-              ${relevantSubCats.map(s => `
-                <option value="${s.id}" ${s.id === currentSubCategory ? 'selected' : ''}>
-                  ${s.name}
-                </option>
-              `).join('')}
-            `}
-          </select>
-        </div>
-        
-        <!-- ... rest of your form stays the same ... -->
-      </form>
+          <!-- If no subcategories exist for this main category -->
+          ${relevantSubCats.length === 0 && currentMainCategory ? `
+            <option value="${currentMainCategory}" selected>
+              ${currentCategory?.name || 'Main Category Only'}
+            </option>
+          ` : ''}
+        </select>
+      </div>
+      
+      <!-- ... rest of form ... -->
     </div>
   `;
 }
