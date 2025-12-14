@@ -809,6 +809,31 @@ function attachTransactionCardEvents() {
           const editForm = renderEditForm(tx, currentCategories, currentAccounts, currentProperties);
           card.outerHTML = editForm;
           
+function wireEditFormCategoryLogic(formEl, categories) {
+  const mainSelect = formEl.querySelector('.main-category-select');
+  const subSelect  = formEl.querySelector('.sub-category-select');
+
+  if (!mainSelect || !subSelect) return;
+
+  // Initial sync (important for edit mode)
+  updateSubCategorySelect({
+    mainCategoryId: mainSelect.value,
+    subSelect,
+    categories,
+    selectedSubId: subSelect.value
+  });
+
+  // Live change handler
+  mainSelect.addEventListener('change', () => {
+    updateSubCategorySelect({
+      mainCategoryId: mainSelect.value,
+      subSelect,
+      categories
+    });
+  });
+}
+
+
           // Setup event listeners for the edit form
           setupEditFormListeners();
         }
@@ -1415,3 +1440,41 @@ function formatDate(date) {
   }
 }
 
+function updateSubCategorySelect({
+  mainCategoryId,
+  subSelect,
+  categories,
+  selectedSubId = ''
+}) {
+  const subCats = categories.filter(c => c.parentId === mainCategoryId);
+
+  // Clear existing options
+  subSelect.innerHTML = '';
+
+  // 🔹 Case 1: Hierarchical category
+  if (subCats.length) {
+    subSelect.innerHTML = `
+      <option value="">-- None --</option>
+      ${subCats.map(sc => `
+        <option value="${sc.id}" ${sc.id === selectedSubId ? 'selected' : ''}>
+          ${sc.name}
+        </option>
+      `).join('')}
+    `;
+    subSelect.disabled = false;
+    subSelect.required = true;
+    return;
+  }
+
+  // 🔹 Case 2: Flat / merchant category
+  const flatCat = categories.find(c => c.id === mainCategoryId);
+  if (flatCat) {
+    subSelect.innerHTML = `
+      <option value="${flatCat.id}" selected>
+        ${flatCat.name}
+      </option>
+    `;
+    subSelect.disabled = true;
+    subSelect.required = false;
+  }
+}
