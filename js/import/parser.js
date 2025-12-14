@@ -33,7 +33,7 @@ function extractCategoryText(description) {
 ------------------------------------------------------------- */
 
 function assignCategoryFromBankCategory(tx, source) {
-    // Determine bank ID from source (with null check)
+    // Determine bank ID from source
     let bankId = 'generic';
     if (source && source.includes('NAB')) bankId = 'nab';
     if (source && source.includes('Macquarie')) bankId = 'macquarie';
@@ -41,7 +41,7 @@ function assignCategoryFromBankCategory(tx, source) {
     if (source && source.includes('CommBank')) bankId = 'commbank';
     if (source && source.includes('Westpac')) bankId = 'westpac';
     
-    console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory})`);
+    console.log(`[PARSER] Mapping: "${tx.description}" (bank: ${bankId}, category: ${tx.bankCategory || 'none'})`);
     
     // Use suggestCategoryForTransaction with or without bankCategory
     const suggestion = suggestCategoryForTransaction(tx, tx.bankCategory, { bankId });
