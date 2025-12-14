@@ -526,12 +526,9 @@ function renderEditForm(tx, categories, accounts, properties) {
       currentMainCategory = currentCategory.parentId;
       currentSubCategory = currentCategory.id;
     } else {
-      // It's a main category - find appropriate subcategory
+      // It's a main category
       currentMainCategory = currentCategory.id;
-      
-      // For Woolworths under Groceries, maybe default to 'exp_grocery_supermarket'
-      // Or leave empty for user to choose
-      currentSubCategory = ''; // Let user pick subcategory
+      currentSubCategory = ''; // No subcategory selected
     }
   }
   
@@ -541,44 +538,126 @@ function renderEditForm(tx, categories, accounts, properties) {
 
   console.log('Edit form debug:', {
     txCategoryId: tx.categoryId,
-    currentCategoryName: currentCategory?.name,
+    currentCategory: currentCategory,
     currentMainCategory,
     currentSubCategory,
-    relevantSubCats: relevantSubCats.map(s => `${s.id}: ${s.name}`)
+    isMainCategory: currentCategory && !currentCategory.parentId,
+    relevantSubCatsCount: relevantSubCats.length
   });
+
+  // Build subcategory options based on the situation
+  let subCategoryOptions = '';
+  
+  if (currentSubCategory === '' && currentMainCategory) {
+    // CASE 1: Main category is selected (like exp_groceries)
+    subCategoryOptions = `
+      <option value="">-- None --</option>
+      <option value="${currentMainCategory}" selected>
+        ${currentCategory?.name || currentMainCategory} (Main Category)
+      </option>
+      ${relevantSubCats.map(s => `
+        <option value="${s.id}">
+          ${s.name}
+        </option>
+      `).join('')}
+    `;
+  } else {
+    // CASE 2: Subcategory is selected or none
+    subCategoryOptions = `
+      <option value="">-- None --</option>
+      ${relevantSubCats.map(s => `
+        <option value="${s.id}" ${s.id === currentSubCategory ? 'selected' : ''}>
+          ${s.name}
+        </option>
+      `).join('')}
+    `;
+  }
 
   return `
     <div class="transaction-card editing" data-transaction-id="${tx.id}">
-      <!-- ... header and other form fields ... -->
-      
-      <div class="form-row">
-        <select name="mainCategory" class="form-control main-category-select" required>
-          <option value="">Select Main Category</option>
-          ${mainCats.map(c => `
-            <option value="${c.id}" ${c.id === currentMainCategory ? 'selected' : ''}>
-              ${c.icon || ''} ${c.name}
-            </option>
-          `).join('')}
-        </select>
-        
-        <select name="subCategory" class="form-control sub-category-select">
-          <option value="">-- Select Subcategory --</option>
-          ${relevantSubCats.map(s => `
-            <option value="${s.id}" ${s.id === currentSubCategory ? 'selected' : ''}>
-              ${s.icon || ''} ${s.name}
-            </option>
-          `).join('')}
-          
-          <!-- If no subcategories exist for this main category -->
-          ${relevantSubCats.length === 0 && currentMainCategory ? `
-            <option value="${currentMainCategory}" selected>
-              ${currentCategory?.name || 'Main Category Only'}
-            </option>
-          ` : ''}
-        </select>
+      <div class="edit-form-header">
+        <h4>✏️ Edit Transaction</h4>
+        <button class="btn-close cancel-edit" data-id="${tx.id}">✕</button>
       </div>
-      
-      <!-- ... rest of form ... -->
+      <form class="edit-transaction-form" data-id="${tx.id}">
+        <div class="form-row">
+          <select name="type" class="form-control" required>
+            <option value="income" ${isIncome ? 'selected' : ''}>Income</option>
+            <option value="expense" ${!isIncome ? 'selected' : ''}>Expense</option>
+          </select>
+          <input type="number" name="amount" class="form-control" 
+                 value="${Math.abs(tx.amount)}" step="0.01" min="0.01" required>
+          <input type="date" name="date" class="form-control" value="${tx.date}" required>
+        </div>
+        
+        <div class="form-row">
+          <select name="accountId" class="form-control" required>
+            <option value="">Select Account</option>
+            ${accounts.map(a => `
+              <option value="${a.id}" ${a.id === tx.accountId ? 'selected' : ''}>
+                ${a.name}
+              </option>
+            `).join('')}
+          </select>
+          <input type="text" name="description" class="form-control" 
+                 value="${tx.description || ''}" placeholder="Description">
+        </div>
+        
+        <div class="form-row">
+          <select name="mainCategory" class="form-control main-category-select" required>
+            <option value="">Select Category</option>
+            ${mainCats.map(c => `
+              <option value="${c.id}" ${c.id === currentMainCategory ? 'selected' : ''}>
+                ${c.name}
+              </option>
+            `).join('')}
+          </select>
+          
+          <select name="subCategory" class="form-control sub-category-select">
+            ${subCategoryOptions}
+          </select>
+        </div>
+        
+        <div class="property-expense-section">
+          <div class="form-row">
+            <label class="checkbox-label">
+              <input type="checkbox" name="isPropertyExpense" ${tx.isPropertyExpense ? 'checked' : ''}> Property Expense
+            </label>
+          </div>
+          <div id="propertyExpenseFields" style="${tx.isPropertyExpense ? 'display: block;' : 'display: none;'}">
+            <div class="form-row">
+              <select name="propertyId" class="form-control">
+                <option value="">Select Property</option>
+                ${properties.map(p => `
+                  <option value="${p.id}" ${p.id === tx.propertyId ? 'selected' : ''}>
+                    ${p.name}
+                  </option>
+                `).join('')}
+              </select>
+              <select name="expenseCategory" class="form-control">
+                <option value="">Expense Category</option>
+                <option value="Mortgage" ${tx.expenseCategory === 'Mortgage' ? 'selected' : ''}>Mortgage</option>
+                <option value="Rates" ${tx.expenseCategory === 'Rates' ? 'selected' : ''}>Rates</option>
+                <option value="Insurance" ${tx.expenseCategory === 'Insurance' ? 'selected' : ''}>Insurance</option>
+                <option value="Repairs" ${tx.expenseCategory === 'Repairs' ? 'selected' : ''}>Repairs</option>
+                <option value="Maintenance" ${tx.expenseCategory === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+                <option value="Utilities" ${tx.expenseCategory === 'Utilities' ? 'selected' : ''}>Utilities</option>
+                <option value="Other" ${tx.expenseCategory === 'Other' ? 'selected' : ''}>Other</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <input type="text" name="receiptUrl" class="form-control" 
+                     value="${tx.receiptUrl || ''}" placeholder="Receipt URL">
+              <textarea name="notes" class="form-control" placeholder="Notes" rows="2">${tx.notes || ''}</textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary save-edit">💾 Save</button>
+          <button type="button" class="btn btn-secondary cancel-edit" data-id="${tx.id}">Cancel</button>
+        </div>
+      </form>
     </div>
   `;
 }
