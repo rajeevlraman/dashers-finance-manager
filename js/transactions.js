@@ -546,22 +546,18 @@ function renderEditForm(tx, categories, accounts, properties) {
   });
 
   // Build subcategory options based on the situation
-  let subCategoryOptions = '';
-  
-  if (currentSubCategory === '' && currentMainCategory) {
-    // CASE 1: Main category is selected (like exp_groceries)
-    subCategoryOptions = `
-      <option value="">-- None --</option>
-      <option value="${currentMainCategory}" selected>
-        ${currentCategory?.name || currentMainCategory} (Main Category)
-      </option>
-      ${relevantSubCats.map(s => `
-        <option value="${s.id}">
-          ${s.name}
-        </option>
-      `).join('')}
-    `;
-  } else {
+let subCategoryOptions = `
+  <option value="">-- None --</option>
+`;
+
+if (currentMainCategory) {
+  subCategoryOptions += relevantSubCats.map(s => `
+    <option value="${s.id}" ${s.id === currentSubCategory ? 'selected' : ''}>
+      ${s.name}
+    </option>
+  `).join('');
+}
+ else {
     // CASE 2: Subcategory is selected or none
     subCategoryOptions = `
       <option value="">-- None --</option>
