@@ -509,55 +509,42 @@ function renderTransactionCard(tx, categories, accounts, properties) {
 // ============================================================================
 // Render Edit Form (INLINE)
 // ============================================================================
-async function renderEditForm(tx) {
-  // Get data from database
-  const db = new Dexie('budgetTrackerDB');
-  await db.open();
+function renderEditForm(tx, categories, accounts, properties) {
+  const isIncome = tx.amount > 0;
+  const mainCats = categories.filter(c => !c.parentId);
+  const subCats = categories.filter(c => c.parentId);
   
-  const categoriesTable = db.tables.find(t => t.name === 'categories');
-  const allCategories = await categoriesTable.toArray();
+  // Get current category info - FIXED LOGIC
+  const currentCategory = categories.find(c => c.id === tx.categoryId);
   
-  const accounts = await db.accounts.toArray();
-  const properties = await db.properties.toArray();
-  
-  // Debug log
-  console.log('🔧 RENDERING EDIT FORM FOR:', {
-    txId: tx.id,
-    txCategoryId: tx.categoryId,
-    totalCategories: allCategories.length
-  });
-  
-  // Separate categories
-  const mainCats = allCategories.filter(c => !c.parentId);
-  const subCats = allCategories.filter(c => c.parentId);
-  
-  // Find transaction's category
-  const txCategory = allCategories.find(c => c.id === tx.categoryId);
-  
-  // Determine selection
   let currentMainCategory = '';
   let currentSubCategory = '';
   
-  if (txCategory) {
-    if (txCategory.parentId) {
-      // Subcategory
-      currentMainCategory = txCategory.parentId;
-      currentSubCategory = txCategory.id;
+  if (currentCategory) {
+    if (currentCategory.parentId) {
+      // It's a subcategory
+      currentMainCategory = currentCategory.parentId;
+      currentSubCategory = currentCategory.id;
     } else {
-      // Main category
-      currentMainCategory = txCategory.id;
-      currentSubCategory = ''; // Empty for main categories
+      // It's a main category
+      currentMainCategory = currentCategory.id;
+      currentSubCategory = ''; // No subcategory selected
     }
   }
   
-  // Get subcategories for selected main
-  const relevantSubCats = currentMainCategory 
-    ? subCats.filter(s => s.parentId === currentMainCategory)
-    : [];
-  
-  const isIncome = tx.amount > 0;
-  
-  // Build the form HTML with FIXED logic
+  // Get subcategories for current main category
+  const relevantSubCats = currentMainCategory ? 
+    subCats.filter(s => s.parentId === currentMainCategory) : [];
+
+  console.log('Edit form debug:', {
+    txCategoryId: tx.categoryId,
+    currentCategory: currentCategory,
+    currentMainCategory,
+    currentSubCategory,
+    isMainCategory: currentCategory && !currentCategory.parentId,
+    relevantSubCatsCount: relevantSubCats.length
+  });
+
   return `
     <div class="transaction-card editing" data-transaction-id="${tx.id}">
       <div class="edit-form-header">
@@ -589,25 +576,23 @@ async function renderEditForm(tx) {
         </div>
         
         <div class="form-row">
-          <!-- MAIN CATEGORY DROPDOWN -->
           <select name="mainCategory" class="form-control main-category-select" required>
-            <option value="">Select Main Category</option>
+            <option value="">Select Category</option>
             ${mainCats.map(c => `
               <option value="${c.id}" ${c.id === currentMainCategory ? 'selected' : ''}>
-                ${c.icon || '📁'} ${c.name}
+                ${c.name}
               </option>
             `).join('')}
           </select>
           
-          <!-- SUBCATEGORY DROPDOWN - FIXED! -->
-          <select name="subCategory" class="form-control sub-category-select" id="subCategory_${tx.id}">
+          <select name="subCategory" class="form-control sub-category-select">
             ${currentSubCategory === '' && currentMainCategory ? `
-              <!-- Case 1: Main category selected, show it as an option -->
+              <!-- CASE 1: Main category is selected (like exp_groceries) -->
               <option value="${currentMainCategory}" selected>
-                ${txCategory?.name || currentMainCategory} (Main Category)
+                ${currentCategory?.name || currentMainCategory}
               </option>
             ` : `
-              <!-- Case 2: Show "-- None --" and subcategories -->
+              <!-- CASE 2: Subcategory is selected or none -->
               <option value="">-- None --</option>
               ${relevantSubCats.map(s => `
                 <option value="${s.id}" ${s.id === currentSubCategory ? 'selected' : ''}>
@@ -618,12 +603,7 @@ async function renderEditForm(tx) {
           </select>
         </div>
         
-        <!-- ... rest of your form (property expense section, etc.) ... -->
-        
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary save-edit">💾 Save</button>
-          <button type="button" class="btn btn-secondary cancel-edit" data-id="${tx.id}">Cancel</button>
-        </div>
+        <!-- ... rest of your form stays the same ... -->
       </form>
     </div>
   `;
