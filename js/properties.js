@@ -18,11 +18,12 @@ constructor() {
 }
 
 
-        async init() {
-            await this.loadData();
-            this.renderUI();
-            this.attachEventListeners();
-        }
+async init() {
+    await this.loadData();
+    this.renderUI();
+    this.attachEventListeners();
+    this.setupModalEvents(); // Add this line
+}
 
     async loadData() {
         [this.properties, this.tenants, this.maintenanceLogs] = await Promise.all([
@@ -65,11 +66,14 @@ constructor() {
                 </div>
 
                 <div class="properties-content">
-                    ${this.renderPropertiesGrid()}
+  
                 </div>
 
                 ${this.renderPropertyModal()}
             </div>
+
+                            ${this.renderPropertyModal()}
+
         `;
 
         //this.attachStaticEventListeners();
@@ -323,12 +327,12 @@ constructor() {
 
     renderPropertyModal() {
         return `
-            <div id="propertyModal" class="modal-overlay" style="display: none;">
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3 id="modalTitle">Add New Property</h3>
-                        <button class="btn-close" id="closeModal">✕</button>
-                    </div>
+        <div id="propertyModal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s;">
+            <div class="modal" style="transform: translateY(-20px); transition: transform 0.3s;">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Add New Property</h3>
+                    <button class="btn-close" id="closeModal">✕</button>
+                </div>
                     <form id="propertyForm" class="modal-form">
                         <input type="hidden" id="editPropertyId" value="">
                         
@@ -452,92 +456,105 @@ constructor() {
         this.setupModalEvents();
     }
 
-    setupModalEvents() {
-        const modal = document.getElementById('propertyModal');
-        const form = document.getElementById('propertyForm');
-        const closeBtn = document.getElementById('closeModal');
-        const cancelBtn = document.getElementById('cancelProperty');
-        const typeSelect = document.getElementById('propertyType');
+setupModalEvents() {
+    // Close modal when clicking X or cancel
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'closeModal' || e.target.id === 'cancelProperty') {
+            this.closeModal();
+        }
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('propertyModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'propertyModal') {
+            this.closeModal();
+        }
+    });
+    
+    // Handle property type change
+    document.getElementById('propertyType')?.addEventListener('change', () => {
+        this.toggleRentMortgageFields();
+    });
+    
+    // Handle form submission
+    document.getElementById('propertyForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.saveProperty();
+        this.closeModal();
+    });
+}
 
-        // Toggle rent/mortgage fields based on property type
-        typeSelect?.addEventListener('change', (e) => {
-            const type = e.target.value;
-            const rentField = document.getElementById('rentField');
-            const mortgageField = document.getElementById('mortgageField');
-            
-            if (type === 'primary') {
-                rentField.style.display = 'none';
-                mortgageField.style.display = 'block';
-            } else {
-                rentField.style.display = 'block';
-                mortgageField.style.display = 'none';
-            }
-        });
-
-        [closeBtn, cancelBtn].forEach(btn => {
-            btn?.addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
-        });
-
-        form?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.saveProperty();
-            modal.style.display = 'none';
-        });
-
-        modal?.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    }
+closeModal() {
+    const modal = document.getElementById('propertyModal');
+    if (!modal) return;
+    
+    modal.style.opacity = '0';
+    modal.querySelector('.modal').style.transform = 'translateY(-20px)';
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('propertyForm').reset();
+    }, 300);
+}
 
     // Core functionality methods
-async openPropertyForm(prefillType = null, property = null) {
+openPropertyForm(prefillType = null, property = null) {
     const modal = document.getElementById('propertyModal');
     const title = document.getElementById('modalTitle');
     const form = document.getElementById('propertyForm');
-    const typeSelect = document.getElementById('propertyType');
-
-    if (!modal || !form || !typeSelect) {
-        console.error('❌ Property modal elements missing');
-        return;
-    }
-
-    // ✅ MARK MODAL AS OPEN
-    this.isModalOpen = true;
-
+    
+    // Reset form and show modal
+    form.reset();
+    
     if (property) {
         title.textContent = 'Edit Property';
-
         document.getElementById('editPropertyId').value = property.id;
         document.getElementById('propertyName').value = property.name || '';
         document.getElementById('propertyAddress').value = property.address || '';
         document.getElementById('purchasePrice').value = property.purchasePrice || '';
         document.getElementById('currentValue').value = property.currentValue || '';
+        document.getElementById('propertyType').value = property.propertyType || 'primary';
         document.getElementById('propertyRent').value = property.rent || '0';
         document.getElementById('propertyMortgage').value = property.mortgage || '0';
-
-        typeSelect.value = property.propertyType || 'primary';
     } else {
         title.textContent = 'Add New Property';
-
-        form.reset();
         document.getElementById('editPropertyId').value = '';
         document.getElementById('propertyRent').value = '0';
         document.getElementById('propertyMortgage').value = '0';
-
+        
         if (prefillType) {
-            typeSelect.value = prefillType;
+            document.getElementById('propertyType').value = prefillType;
         }
     }
-
-    // Trigger rent/mortgage visibility logic
-    typeSelect.dispatchEvent(new Event('change'));
-
-    // ✅ SHOW MODAL
+    
+    // Toggle fields based on type
+    this.toggleRentMortgageFields();
+    
+    // Show modal with animation
     modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        modal.querySelector('.modal').style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Focus on first input
+    setTimeout(() => {
+        document.getElementById('propertyName').focus();
+    }, 50);
+}
+
+toggleRentMortgageFields() {
+    const type = document.getElementById('propertyType')?.value;
+    const rentField = document.getElementById('rentField');
+    const mortgageField = document.getElementById('mortgageField');
+    
+    if (type === 'primary') {
+        if (rentField) rentField.style.display = 'none';
+        if (mortgageField) mortgageField.style.display = 'block';
+    } else {
+        if (rentField) rentField.style.display = 'block';
+        if (mortgageField) mortgageField.style.display = 'none';
+    }
 }
 
 
