@@ -7,6 +7,7 @@ import { generateId } from './db.js';
 import { syncAllPropertyExpenses } from './transactions.js';
 
 // Enhanced expense categories with ATO classifications
+/*
 const EXPENSE_CATEGORIES = {
   'Maintenance': { type: 'immediate', deductible: true, color: '#3B82F6' },
   'Repairs': { type: 'immediate', deductible: true, color: '#EF4444' },
@@ -21,6 +22,16 @@ const EXPENSE_CATEGORIES = {
   'Legal Fees': { type: 'immediate', deductible: true, color: '#8B5CF6' },
   'Other': { type: 'other', deductible: true, color: '#6B7280' }
 };
+*/
+
+//replaced above with  this
+
+import { PROPERTY_EXPENSE_CATEGORIES as EXPENSE_CATEGORIES } 
+  from './propertyExpenseCategories.js';
+
+//Normalize transaction categories (critical)
+
+
 
 // Store chart instances for cleanup
 let chartInstances = {

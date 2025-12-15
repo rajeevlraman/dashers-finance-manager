@@ -7,13 +7,15 @@ import { initTenantsUI } from './tenants.js';
 import { initMaintenanceUI } from './maintenance.js';
 
 export class PropertiesManager {
-    constructor() {
-        this.properties = [];
-        this.tenants = [];
-        this.maintenanceLogs = [];
-        this.currentFilter = 'all';
-        this.currentSort = 'name';
-    }
+constructor() {
+    this.properties = [];
+    this.tenants = [];
+    this.maintenanceLogs = [];
+    this.currentFilter = 'all';
+    this.currentSort = 'name';
+    this.isModalOpen = false; // ✅ ADD THIS
+}
+
 
         async init() {
             await this.loadData();
