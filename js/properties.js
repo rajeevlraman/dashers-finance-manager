@@ -15,11 +15,11 @@ export class PropertiesManager {
         this.currentSort = 'name';
     }
 
-    async init() {
-        await this.loadData();
-        this.renderUI();
-        this.attachEventListeners();
-    }
+        async init() {
+            await this.loadData();
+            this.renderUI();
+            this.attachEventListeners();
+        }
 
     async loadData() {
         [this.properties, this.tenants, this.maintenanceLogs] = await Promise.all([
@@ -69,7 +69,7 @@ export class PropertiesManager {
             </div>
         `;
 
-        this.attachStaticEventListeners();
+        //this.attachStaticEventListeners();
     }
 
     renderPortfolioSummary() {
