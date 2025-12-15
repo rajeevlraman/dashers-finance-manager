@@ -235,7 +235,7 @@ function autoCategorize(desc, amount) {
         return "inc_other";
     }
 
-    if (d.includes("coles") || d.includes("woolworth") || d.includes("aldi")) return "exp_grocery";
+    //if (d.includes("coles") || d.includes("woolworth") || d.includes("aldi")) return "exp_grocery";
     if (d.includes("shell") || d.includes("bp") || d.includes("fuel")) return "exp_fuel";
     if (d.includes("uber") || d.includes("13cabs")) return "exp_transport";
     if (d.includes("kmart") || d.includes("big w") || d.includes("amazon")) return "exp_shopping";
