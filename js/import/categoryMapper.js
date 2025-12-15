@@ -304,7 +304,7 @@ function resolveBankCategory(bankCategoryRaw, opts = {}) {
 const KEYWORD_CATEGORY_MAP = [
   // Groceries & supermarkets → SUB-CATEGORIES
   { pattern: /woolworths|Woolworths|woolies/gi, categoryId: 'exp_Woolworths' },
-  { pattern: /coles/gi, categoryId: 'exp_Coles' },
+  //{ pattern: /coles/gi, categoryId: 'exp_Coles' },
   { pattern: /safeway/gi, categoryId: 'exp_Safeway' },
   { pattern: /aldi/gi, categoryId: 'exp_Aldi' },
   { pattern: /IGA|marketplace\s+fresh/gi, categoryId: 'exp_grocery_supermarket' },
