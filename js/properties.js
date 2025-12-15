@@ -494,102 +494,124 @@ renderModal() {
         this.setupModalEvents();
     }
 
-    setupModalEvents() {
-        const modal = document.getElementById('propertyModal');
-        const form = document.getElementById('propertyForm');
-        const closeBtn = document.getElementById('closeModal');
-        const cancelBtn = document.getElementById('cancelProperty');
-        const typeSelect = document.getElementById('propertyType');
+setupModalEvents() {
+    const modal = document.getElementById('propertyModal');
+    const form = document.getElementById('propertyForm');
+    const closeBtn = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelProperty');
+    const typeSelect = document.getElementById('propertyType');
 
-        // Toggle rent/mortgage fields based on property type
-        typeSelect?.addEventListener('change', (e) => {
-            const type = e.target.value;
-            const rentField = document.getElementById('rentField');
-            const mortgageField = document.getElementById('mortgageField');
-            
-            if (type === 'primary') {
-                rentField.style.display = 'none';
-                mortgageField.style.display = 'block';
-            } else {
-                rentField.style.display = 'block';
-                mortgageField.style.display = 'none';
-            }
-        });
+    // Toggle rent/mortgage fields based on property type
+    typeSelect?.addEventListener('change', (e) => {
+        const type = e.target.value;
+        const rentField = document.getElementById('rentField');
+        const mortgageField = document.getElementById('mortgageField');
+        
+        if (type === 'primary') {
+            rentField.style.display = 'none';
+            mortgageField.style.display = 'block';
+        } else {
+            rentField.style.display = 'block';
+            mortgageField.style.display = 'none';
+        }
+    });
 
-        [closeBtn, cancelBtn].forEach(btn => {
-            btn?.addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
+    [closeBtn, cancelBtn].forEach(btn => {
+        btn?.addEventListener('click', () => {
+            this.closeModal();
         });
+    });
 
-        form?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.saveProperty();
-            modal.style.display = 'none';
-        });
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.saveProperty();
+        this.closeModal();
+    });
 
-        modal?.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    }
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            this.closeModal();
+        }
+    });
+}
 
     // Core functionality methods
-    async openPropertyForm(prefillType = null, property = null) {
-        console.log('DEBUG: openPropertyForm called');
-        console.log('DEBUG: prefillType:', prefillType);
-        console.log('DEBUG: property:', property);
-        const modal = document.getElementById('propertyModal');
-
-            console.log('DEBUG: modal element found:', !!modal);
-    console.log('DEBUG: modal display style:', modal?.style.display);
-    console.log('DEBUG: modal computed style:', window.getComputedStyle(modal).display);
+// Core functionality methods
+async openPropertyForm(prefillType = null, property = null) {
+    console.log('🔍 DEBUG: Opening property form...');
     
+    const modal = document.getElementById('propertyModal');
     if (!modal) {
-        console.error('DEBUG: Modal element not found!');
+        console.error('❌ Modal not found!');
         return;
     }
-        // Check parent elements
-    let parent = modal.parentElement;
-    while (parent) {
-        console.log('DEBUG: Parent element:', parent.tagName, parent.id, parent.className);
-        console.log('DEBUG: Parent display:', window.getComputedStyle(parent).display);
-        console.log('DEBUG: Parent opacity:', window.getComputedStyle(parent).opacity);
-        console.log('DEBUG: Parent visibility:', window.getComputedStyle(parent).visibility);
-        parent = parent.parentElement;
-    }
-        const title = document.getElementById('modalTitle');
-        const form = document.getElementById('propertyForm');
-        const typeSelect = document.getElementById('propertyType');
+    
+    // DEBUG: Log modal styles before change
+    console.log('🔍 Modal before:', {
+        display: modal.style.display,
+        opacity: modal.style.opacity,
+        visibility: modal.style.visibility,
+        zIndex: modal.style.zIndex,
+        computedDisplay: window.getComputedStyle(modal).display
+    });
+    
+    // Set modal content
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('propertyForm');
+    const typeSelect = document.getElementById('propertyType');
 
-        if (property) {
-            title.textContent = 'Edit Property';
-            document.getElementById('editPropertyId').value = property.id;
-            document.getElementById('propertyName').value = property.name || '';
-            document.getElementById('propertyAddress').value = property.address || '';
-            document.getElementById('purchasePrice').value = property.purchasePrice || '';
-            document.getElementById('currentValue').value = property.currentValue || '';
-            document.getElementById('propertyRent').value = property.rent || '0';
-            document.getElementById('propertyMortgage').value = property.mortgage || '0';
-            typeSelect.value = property.propertyType || 'primary';
-        } else {
-            title.textContent = 'Add New Property';
-            form.reset();
-            document.getElementById('editPropertyId').value = '';
-            document.getElementById('propertyRent').value = '0';
-            document.getElementById('propertyMortgage').value = '0';
-            if (prefillType) {
-                typeSelect.value = prefillType;
-            }
+    if (property) {
+        title.textContent = 'Edit Property';
+        document.getElementById('editPropertyId').value = property.id;
+        document.getElementById('propertyName').value = property.name || '';
+        document.getElementById('propertyAddress').value = property.address || '';
+        document.getElementById('purchasePrice').value = property.purchasePrice || '';
+        document.getElementById('currentValue').value = property.currentValue || '';
+        document.getElementById('propertyRent').value = property.rent || '0';
+        document.getElementById('propertyMortgage').value = property.mortgage || '0';
+        typeSelect.value = property.propertyType || 'primary';
+    } else {
+        title.textContent = 'Add New Property';
+        form.reset();
+        document.getElementById('editPropertyId').value = '';
+        document.getElementById('propertyRent').value = '0';
+        document.getElementById('propertyMortgage').value = '0';
+        if (prefillType) {
+            typeSelect.value = prefillType;
         }
-
-        // Trigger field visibility
-        typeSelect.dispatchEvent(new Event('change'));
-        modal.style.display = 'flex';
-
-            console.log('DEBUG: Modal should be visible now');
     }
+
+    // Trigger field visibility
+    typeSelect.dispatchEvent(new Event('change'));
+    
+    // FIX: Set modal to be visible with !important
+    modal.style.cssText = `
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 9999 !important;
+    `;
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+    
+    console.log('🔍 Modal after:', {
+        display: modal.style.display,
+        opacity: modal.style.opacity,
+        visibility: modal.style.visibility,
+        zIndex: modal.style.zIndex,
+        computedDisplay: window.getComputedStyle(modal).display
+    });
+}
+
+// Add closeModal method if not exists
+closeModal() {
+    const modal = document.getElementById('propertyModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
 
     async saveProperty() {
         const form = document.getElementById('propertyForm');
