@@ -299,61 +299,24 @@ mainContent.innerHTML = `
   }
 
   // ========== RESET TO DEFAULTS ==========
-  // ========== RESET TO DEFAULTS ==========
-// ========== RESET TO DEFAULTS ==========
-async function resetToDefaultCategories() {
-  if (confirm('This will delete ALL your current categories and restore the default set. This action cannot be undone. Continue?')) {
-    console.log('=== STARTING RESET ===');
-    
-    // Step 1: Check initial state
-    const initialCategories = await getAllItems(STORE_NAMES.categories);
-    console.log('Initial categories:', initialCategories.length);
-    console.log('Sample IDs:', initialCategories.slice(0, 3).map(c => c.id));
-    
-    // Step 2: Delete all
-    console.log('Deleting all categories...');
-    for (const category of initialCategories) {
-      console.log(`Deleting: ${category.id} - ${category.name}`);
-      const result = await deleteItem(STORE_NAMES.categories, category.id);
-      console.log(`Delete result for ${category.id}:`, result);
-    }
-    
-    // Step 3: Verify deletion
-    await new Promise(resolve => setTimeout(resolve, 100)); // Wait for async
-    const afterDelete = await getAllItems(STORE_NAMES.categories);
-    console.log('After deletion:', afterDelete.length, 'categories remain');
-    
-    if (afterDelete.length > 0) {
-      console.error('Categories still exist:', afterDelete.map(c => c.id));
-      alert(`Error: ${afterDelete.length} categories were not deleted!`);
-      return;
-    }
-    
-    // Step 4: Add defaults
-    console.log('Adding default categories...');
-    try {
-      const addedCount = await addDefaultCategories({
+  async function resetToDefaultCategories() {
+    if (confirm('This will delete ALL your current categories and restore the default set. This action cannot be undone. Continue?')) {
+      // Delete all existing categories
+      const existingCategories = await getAllItems(STORE_NAMES.categories);
+      for (const category of existingCategories) {
+        await deleteItem(STORE_NAMES.categories, category.id);
+      }
+      
+      // Add default categories
+      await addDefaultCategories({
         getAllItems,
         addItem,
         STORE_NAMES
       });
-      console.log(`Added ${addedCount} default categories`);
-    } catch (error) {
-      console.error('Error adding defaults:', error);
-      alert('Error adding defaults: ' + error.message);
-      return;
+      
+      initCategoriesUI();
     }
-    
-    // Step 5: Verify final state
-    const finalCategories = await getAllItems(STORE_NAMES.categories);
-    console.log('Final categories:', finalCategories.length);
-    
-    alert(`✅ Reset complete! ${finalCategories.length} categories loaded.`);
-    initCategoriesUI();
-    
-    console.log('=== RESET COMPLETE ===');
   }
-}
 
   // ========== BUDGETS-STYLE CATEGORY EDITOR ==========
   async function openCatEditor(id = null, parentId = null) {
