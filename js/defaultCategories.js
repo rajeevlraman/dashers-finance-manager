@@ -238,7 +238,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_Inv_water_rates', name: 'Inv Water Rates', type: 'expense', icon: '💧', parentId: 'exp_property' },
 { id: 'exp_Land_Tax', name: 'Land Tax', type: 'expense', icon: '🏢', parentId: 'exp_property' },
 { id: 'exp_repairs', name: 'Repairs & Maintenance', type: 'expense', icon: '🛠️', parentId: 'exp_property' },
-/*
+
 // =====================================================================
 // MoneySmart Category Set (Namespace: ms_)
 // These do not conflict with your categories — safe to import & use.
@@ -603,7 +603,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'ms_utilities_paytv', name: 'Pay TV', type: 'expense', icon: '📺', parentId: 'ms_utilities' },
 { id: 'ms_utilities_phone', name: 'Phone', type: 'expense', icon: '📱', parentId: 'ms_utilities' },
 
-*/
+
 ];
 
 export function shouldAddDefaultCategories(existingCategories) {
