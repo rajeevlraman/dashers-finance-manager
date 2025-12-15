@@ -504,3 +504,4 @@ export async function getFullCategoryName(id) {
     const path = await getCategoryPath(id);
     return path.length ? path.join(" / ") : "Uncategorised";
 }
+window.resetToDefaultCategories = resetToDefaultCategories;
