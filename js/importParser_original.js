@@ -210,7 +210,7 @@ function cleanMerchant(str) {
         { key: "paypal", replace: /paypal\s*\*?([^0-9]+)/i },
         { key: "uber", replace: /uber\s*trip/i },
         { key: "amazon", replace: /amazon\s*(web services)?/i },
-        { key: "coles", replace: /coles\s*[0-9]*/i },
+        //{ key: "coles", replace: /coles\s*[0-9]*/i },
         { key: "woolworth", replace: /woolworths?\s*[0-9]*/i },
         { key: "7-eleven", replace: /7-?eleven\s*[0-9]*/i },
         { key: "linkt", replace: /linkt/i }
