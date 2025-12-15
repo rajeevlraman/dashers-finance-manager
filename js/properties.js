@@ -29,48 +29,62 @@ export class PropertiesManager {
         ]);
     }
 
-    renderUI() {
-        const mainContent = document.getElementById('mainContent');
-        
-        mainContent.innerHTML = `
-            <div class="properties-container">
-                <div class="properties-header">
-                    <h2>🏠 Property Portfolio</h2>
-                    <div class="header-actions">
-                        <button id="btnNewProperty" class="btn btn-primary">➕ Add Property</button>
-                    </div>
+renderUI() {
+    const mainContent = document.getElementById('mainContent');
+    
+    // Render main content WITHOUT modal
+    mainContent.innerHTML = `
+        <div class="properties-container">
+            <div class="properties-header">
+                <h2>🏠 Property Portfolio</h2>
+                <div class="header-actions">
+                    <button id="btnNewProperty" class="btn btn-primary">➕ Add Property</button>
                 </div>
-
-                ${this.renderPortfolioSummary()}
-
-                ${this.renderQuickActions()}
-
-                <div class="properties-controls">
-                    <select id="filterPropertyType" class="form-select">
-                        <option value="all">All Properties</option>
-                        <option value="primary">🏠 Primary Residence</option>
-                        <option value="investment">💰 Investment Properties</option>
-                        <option value="vacation">🌴 Vacation Homes</option>
-                        <option value="commercial">🏢 Commercial</option>
-                    </select>
-                    <select id="sortProperties" class="form-select">
-                        <option value="name">Name A-Z</option>
-                        <option value="value">Highest Value</option>
-                        <option value="type">Property Type</option>
-                        <option value="rent">Highest Rent</option>
-                    </select>
-                </div>
-
-                <div class="properties-content">
-                    ${this.renderPropertiesGrid()}
-                </div>
-
-                ${this.renderPropertyModal()}
             </div>
-        `;
 
-        this.attachStaticEventListeners();
+            ${this.renderPortfolioSummary()}
+
+            ${this.renderQuickActions()}
+
+            <div class="properties-controls">
+                <select id="filterPropertyType" class="form-select">
+                    <option value="all">All Properties</option>
+                    <option value="primary">🏠 Primary Residence</option>
+                    <option value="investment">💰 Investment Properties</option>
+                    <option value="vacation">🌴 Vacation Homes</option>
+                    <option value="commercial">🏢 Commercial</option>
+                </select>
+                <select id="sortProperties" class="form-select">
+                    <option value="name">Name A-Z</option>
+                    <option value="value">Highest Value</option>
+                    <option value="type">Property Type</option>
+                    <option value="rent">Highest Rent</option>
+                </select>
+            </div>
+
+            <div class="properties-content">
+                ${this.renderPropertiesGrid()}
+            </div>
+        </div>
+    `;
+
+    // Render modal separately at document body level
+    this.renderModal();
+
+    this.attachStaticEventListeners();
+}
+
+renderModal() {
+    // Create modal container if it doesn't exist
+    let modalContainer = document.getElementById('modalContainer');
+    if (!modalContainer) {
+        modalContainer = document.createElement('div');
+        modalContainer.id = 'modalContainer';
+        document.body.appendChild(modalContainer);
     }
+    
+    modalContainer.innerHTML = this.renderPropertyModal();
+}
 
     renderPortfolioSummary() {
         // Ensure we have actual numbers, not promises
@@ -320,12 +334,43 @@ export class PropertiesManager {
 
     renderPropertyModal() {
         return `
-            <div id="propertyModal" class="modal-overlay" style="display: none;">
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3 id="modalTitle">Add New Property</h3>
-                        <button class="btn-close" id="closeModal">✕</button>
-                    </div>
+       <div id="propertyModal" class="modal-overlay" style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        ">
+            <div class="modal" style="
+                background: white;
+                border-radius: 8px;
+                padding: 20px;
+                min-width: 400px;
+                max-width: 600px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                position: relative;
+            ">
+                <div class="modal-header" style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                ">
+                    <h3 id="modalTitle" style="margin: 0;">Add New Property</h3>
+                    <button class="btn-close" id="closeModal" style="
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                        padding: 5px;
+                        line-height: 1;
+                    ">✕</button>
+                </div>
                     <form id="propertyForm" class="modal-form">
                         <input type="hidden" id="editPropertyId" value="">
                         
@@ -492,7 +537,28 @@ export class PropertiesManager {
 
     // Core functionality methods
     async openPropertyForm(prefillType = null, property = null) {
+        console.log('DEBUG: openPropertyForm called');
+        console.log('DEBUG: prefillType:', prefillType);
+        console.log('DEBUG: property:', property);
         const modal = document.getElementById('propertyModal');
+
+            console.log('DEBUG: modal element found:', !!modal);
+    console.log('DEBUG: modal display style:', modal?.style.display);
+    console.log('DEBUG: modal computed style:', window.getComputedStyle(modal).display);
+    
+    if (!modal) {
+        console.error('DEBUG: Modal element not found!');
+        return;
+    }
+        // Check parent elements
+    let parent = modal.parentElement;
+    while (parent) {
+        console.log('DEBUG: Parent element:', parent.tagName, parent.id, parent.className);
+        console.log('DEBUG: Parent display:', window.getComputedStyle(parent).display);
+        console.log('DEBUG: Parent opacity:', window.getComputedStyle(parent).opacity);
+        console.log('DEBUG: Parent visibility:', window.getComputedStyle(parent).visibility);
+        parent = parent.parentElement;
+    }
         const title = document.getElementById('modalTitle');
         const form = document.getElementById('propertyForm');
         const typeSelect = document.getElementById('propertyType');
@@ -521,6 +587,8 @@ export class PropertiesManager {
         // Trigger field visibility
         typeSelect.dispatchEvent(new Event('change'));
         modal.style.display = 'flex';
+
+            console.log('DEBUG: Modal should be visible now');
     }
 
     async saveProperty() {
