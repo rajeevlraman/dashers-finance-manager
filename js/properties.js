@@ -493,44 +493,52 @@ constructor() {
     }
 
     // Core functionality methods
-    async openPropertyForm(prefillType = null, property = null) {
+async openPropertyForm(prefillType = null, property = null) {
+    const modal = document.getElementById('propertyModal');
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('propertyForm');
+    const typeSelect = document.getElementById('propertyType');
 
-    console.log('openPropertyForm called');
-        
-        const modal = document.getElementById('propertyModal');
-        const title = document.getElementById('modalTitle');
-        const form = document.getElementById('propertyForm');
-        const typeSelect = document.getElementById('propertyType');
-
-        console.log({ modal, title, form, typeSelect });
-
-        if (property) {
-            title.textContent = 'Edit Property';
-            document.getElementById('editPropertyId').value = property.id;
-            document.getElementById('propertyName').value = property.name || '';
-            document.getElementById('propertyAddress').value = property.address || '';
-            document.getElementById('purchasePrice').value = property.purchasePrice || '';
-            document.getElementById('currentValue').value = property.currentValue || '';
-            document.getElementById('propertyRent').value = property.rent || '0';
-            document.getElementById('propertyMortgage').value = property.mortgage || '0';
-            typeSelect.value = property.propertyType || 'primary';
-        } else {
-            title.textContent = 'Add New Property';
-            form.reset();
-            document.getElementById('editPropertyId').value = '';
-            document.getElementById('propertyRent').value = '0';
-            document.getElementById('propertyMortgage').value = '0';
-            if (prefillType) {
-                typeSelect.value = prefillType;
-            }
-        }
-
-        // Trigger field visibility
-        //typeSelect.dispatchEvent(new Event('change'));
-        + typeSelect?.dispatchEvent(new Event('change'));
-        console.log({ modal, title, form, typeSelect });
-        modal.style.display = 'flex';
+    if (!modal || !form || !typeSelect) {
+        console.error('❌ Property modal elements missing');
+        return;
     }
+
+    // ✅ MARK MODAL AS OPEN
+    this.isModalOpen = true;
+
+    if (property) {
+        title.textContent = 'Edit Property';
+
+        document.getElementById('editPropertyId').value = property.id;
+        document.getElementById('propertyName').value = property.name || '';
+        document.getElementById('propertyAddress').value = property.address || '';
+        document.getElementById('purchasePrice').value = property.purchasePrice || '';
+        document.getElementById('currentValue').value = property.currentValue || '';
+        document.getElementById('propertyRent').value = property.rent || '0';
+        document.getElementById('propertyMortgage').value = property.mortgage || '0';
+
+        typeSelect.value = property.propertyType || 'primary';
+    } else {
+        title.textContent = 'Add New Property';
+
+        form.reset();
+        document.getElementById('editPropertyId').value = '';
+        document.getElementById('propertyRent').value = '0';
+        document.getElementById('propertyMortgage').value = '0';
+
+        if (prefillType) {
+            typeSelect.value = prefillType;
+        }
+    }
+
+    // Trigger rent/mortgage visibility logic
+    typeSelect.dispatchEvent(new Event('change'));
+
+    // ✅ SHOW MODAL
+    modal.style.display = 'flex';
+}
+
 
     async saveProperty() {
         const form = document.getElementById('propertyForm');

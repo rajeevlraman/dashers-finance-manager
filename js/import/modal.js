@@ -5,11 +5,13 @@ import { saveImportedTransactions } from './saver.js';
 import { BANK_FORMATS } from './bankFormats.js';
 
 let modalInitialized = false;
+let isImportModalOpen = false;
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
+//working version of hideImportModal before fixing propertyadd
+/*
 function hideImportModal() {
   const modal = document.getElementById("importModal");
   if (modal) {
@@ -18,6 +20,15 @@ function hideImportModal() {
     console.log("[MODAL] Modal hidden");
   }
 }
+*/
+function hideImportModal() {
+  const overlay = document.getElementById('importModalOverlay');
+  if (!overlay || !isImportModalOpen) return;
+
+  overlay.style.display = 'none';
+  isImportModalOpen = false;
+}
+
 
 async function handleParseData() {
   console.log("[MODAL] handleParseData called");
@@ -280,6 +291,7 @@ async function handleSaveImport() {
         await window._importData.onImported(saved);
       }
 
+
       hideImportModal();
     } else {
       console.warn("[MODAL] No transactions saved");
@@ -395,15 +407,30 @@ function setupModalEvents() {
   
   if (closeBtn) closeBtn.addEventListener('click', hideImportModal);
   if (cancelBtn) cancelBtn.addEventListener('click', hideImportModal);
-  if (overlay) overlay.addEventListener('click', hideImportModal);
-  
-  // Close on Escape key
+//  if (overlay) overlay.addEventListener('click', hideImportModal);
+if (overlay) {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay && isImportModalOpen) {
+      hideImportModal();
+    }
+  });
+}  
+  // Close on Escape key version before changing to fix propertyadd
+/*
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       hideImportModal();
     }
   });
-  
+  */
+
+// Close on Escape key (IMPORT MODAL ONLY)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && isImportModalOpen) {
+    hideImportModal();
+  }
+});
+
   // Parse button
   const parseBtn = document.getElementById('parseData');
   if (parseBtn) {
@@ -572,6 +599,7 @@ export function initImportModal({ accounts, categories, onImported }) {
   console.log("[MODAL] Modal initialized successfully");
 }
 
+
 export function showImportModal({ accounts, categories, onImported }) {
   console.log("[MODAL] showImportModal called with:", {
     accountsCount: accounts?.length,
@@ -579,6 +607,14 @@ export function showImportModal({ accounts, categories, onImported }) {
     hasCallback: !!onImported
   });
   
+//this is added to fix property add function
+  const overlay = document.getElementById('importModalOverlay');
+  if (!overlay) return;
+
+  overlay.style.display = 'flex';
+  isImportModalOpen = true;
+//this is added to fix property add function
+
   const modal = document.getElementById("importModal");
   console.log("[MODAL] Modal element found:", !!modal);
   
