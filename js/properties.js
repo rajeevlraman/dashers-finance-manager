@@ -5,7 +5,7 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 import { initTenantsUI } from './tenants.js';
 import { initMaintenanceUI } from './maintenance.js';
-let isPropertyModalOpen = false;
+
 
 export class PropertiesManager {
 constructor() {
@@ -14,7 +14,7 @@ constructor() {
     this.maintenanceLogs = [];
     this.currentFilter = 'all';
     this.currentSort = 'name';
-    this.isModalOpen = false; // ✅ ADD THIS
+
 }
 
 
