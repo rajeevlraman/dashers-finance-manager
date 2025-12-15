@@ -391,7 +391,7 @@ function normaliseMerchant(merchant = '') {
 const MERCHANT_SUBCATEGORY_MAP = {
   // Grocery stores
   'woolworths': 'exp_Woolworths',
-  'coles': 'exp_Coles',
+ //'coles': 'exp_Coles',
   'safeway': 'exp_Safeway',
   'aldi': 'exp_Aldi',
   'malvic': 'exp_Indian_Groceries',
