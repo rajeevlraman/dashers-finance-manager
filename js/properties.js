@@ -332,100 +332,174 @@ renderModal() {
         `;
     }
 
-    renderPropertyModal() {
-        return `
-       <div id="propertyModal" class="modal-overlay" style="
+renderPropertyModal() {
+    return `
+        <!-- Modal Overlay - JUST the background -->
+        <div id="propertyModal" style="
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 99999;
             justify-content: center;
             align-items: center;
         ">
-            <div class="modal" style="
+            <!-- Modal Content - Separate from background -->
+            <div style="
                 background: white;
-                border-radius: 8px;
-                padding: 20px;
-                min-width: 400px;
+                border-radius: 12px;
+                padding: 30px;
+                width: 90%;
                 max-width: 600px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                max-height: 85vh;
+                overflow-y: auto;
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
                 position: relative;
+                z-index: 100000;
             ">
-                <div class="modal-header" style="
+                <div style="
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 20px;
+                    margin-bottom: 25px;
+                    padding-bottom: 15px;
+                    border-bottom: 2px solid #e9ecef;
                 ">
-                    <h3 id="modalTitle" style="margin: 0;">Add New Property</h3>
-                    <button class="btn-close" id="closeModal" style="
+                    <h3 id="modalTitle" style="margin: 0; font-size: 24px; font-weight: 600;">Add New Property</h3>
+                    <button id="closeModal" style="
                         background: none;
                         border: none;
-                        font-size: 24px;
+                        font-size: 28px;
                         cursor: pointer;
-                        padding: 5px;
-                        line-height: 1;
+                        padding: 0;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #666;
+                        border-radius: 50%;
                     ">✕</button>
                 </div>
-                    <form id="propertyForm" class="modal-form">
-                        <input type="hidden" id="editPropertyId" value="">
-                        
-                        <div class="form-group">
-                            <label>Property Type</label>
-                            <select id="propertyType" class="form-select" required>
-                                <option value="primary">🏠 Primary Residence</option>
-                                <option value="investment">💰 Investment Property</option>
-                                <option value="vacation">🌴 Vacation Home</option>
-                                <option value="commercial">🏢 Commercial Property</option>
-                            </select>
-                        </div>
+                
+                <form id="propertyForm" style="margin: 0;">
+                    <input type="hidden" id="editPropertyId" value="">
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Property Type</label>
+                        <select id="propertyType" style="
+                            width: 100%;
+                            padding: 12px 15px;
+                            border: 2px solid #dee2e6;
+                            border-radius: 8px;
+                            font-size: 16px;
+                        " required>
+                            <option value="primary">🏠 Primary Residence</option>
+                            <option value="investment">💰 Investment Property</option>
+                            <option value="vacation">🌴 Vacation Home</option>
+                            <option value="commercial">🏢 Commercial Property</option>
+                        </select>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Property Name</label>
-                            <input type="text" id="propertyName" class="form-input" 
-                                   placeholder="e.g., Family Home, City Apartment" required>
-                        </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Property Name</label>
+                        <input type="text" id="propertyName" style="
+                            width: 100%;
+                            padding: 12px 15px;
+                            border: 2px solid #dee2e6;
+                            border-radius: 8px;
+                            font-size: 16px;
+                        " placeholder="e.g., Family Home, City Apartment" required>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Address</label>
-                            <input type="text" id="propertyAddress" class="form-input" 
-                                   placeholder="Full property address" required>
-                        </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Address</label>
+                        <input type="text" id="propertyAddress" style="
+                            width: 100%;
+                            padding: 12px 15px;
+                            border: 2px solid #dee2e6;
+                            border-radius: 8px;
+                            font-size: 16px;
+                        " placeholder="Full property address" required>
+                    </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Purchase Price</label>
-                                <input type="number" id="purchasePrice" class="form-input" step="0.01" min="0" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Current Market Value</label>
-                                <input type="number" id="currentValue" class="form-input" step="0.01" min="0" required>
-                            </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Purchase Price</label>
+                            <input type="number" id="purchasePrice" style="
+                                width: 100%;
+                                padding: 12px 15px;
+                                border: 2px solid #dee2e6;
+                                border-radius: 8px;
+                                font-size: 16px;
+                            " step="0.01" min="0" required>
                         </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Market Value</label>
+                            <input type="number" id="currentValue" style="
+                                width: 100%;
+                                padding: 12px 15px;
+                                border: 2px solid #dee2e6;
+                                border-radius: 8px;
+                                font-size: 16px;
+                            " step="0.01" min="0" required>
+                        </div>
+                    </div>
 
-                        <div class="form-group" id="rentField">
-                            <label>Monthly Rent</label>
-                            <input type="number" id="propertyRent" class="form-input" step="0.01" min="0" value="0">
-                        </div>
+                    <div id="rentField" style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Monthly Rent</label>
+                        <input type="number" id="propertyRent" style="
+                            width: 100%;
+                            padding: 12px 15px;
+                            border: 2px solid #dee2e6;
+                            border-radius: 8px;
+                            font-size: 16px;
+                        " step="0.01" min="0" value="0">
+                    </div>
 
-                        <div class="form-group" id="mortgageField" style="display: none;">
-                            <label>Monthly Mortgage Payment</label>
-                            <input type="number" id="propertyMortgage" class="form-input" step="0.01" min="0" value="0">
-                        </div>
+                    <div id="mortgageField" style="display: none; margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Monthly Mortgage Payment</label>
+                        <input type="number" id="propertyMortgage" style="
+                            width: 100%;
+                            padding: 12px 15px;
+                            border: 2px solid #dee2e6;
+                            border-radius: 8px;
+                            font-size: 16px;
+                        " step="0.01" min="0" value="0">
+                    </div>
 
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">💾 Save Property</button>
-                            <button type="button" class="btn btn-secondary" id="cancelProperty">Cancel</button>
-                        </div>
-                    </form>
-                </div>
+                    <div style="display: flex; gap: 15px; margin-top: 25px;">
+                        <button type="submit" style="
+                            flex: 1;
+                            padding: 14px 20px;
+                            background: linear-gradient(135deg, #007bff, #0056b3);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            font-weight: 600;
+                            cursor: pointer;
+                        ">💾 Save Property</button>
+                        <button type="button" id="cancelProperty" style="
+                            flex: 1;
+                            padding: 14px 20px;
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            font-weight: 600;
+                            cursor: pointer;
+                        ">Cancel</button>
+                    </div>
+                </form>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
 
     renderEmptyState() {
         return `
