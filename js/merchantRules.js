@@ -18,12 +18,12 @@ export const merchantRules = [
     categoryId: 'ms_food_groceries',
     confidence: 0.9
   },
-  {
+ /* {
     id: 'coles',
     includesAny: ['COLES (CASEY CENTRAL)', 'COLES CASEY CENTRAL', 'COLES'],
     categoryId: 'ms_food_groceries',
     confidence: 0.9
-  },
+  },*/
   {
     id: 'woolworths',
     includesAny: ['WOOLWORTHS (CASEY CENTRAL)', 'WOOLWORTHS (THE AVENUE)', 'WOOLWORTHS THE AVENUE', 'WOOLWORTHS'],
