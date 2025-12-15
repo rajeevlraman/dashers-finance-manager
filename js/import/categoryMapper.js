@@ -135,6 +135,7 @@ function findMerchantRuleForTransaction(tx) {
 // (NAB-specific strings + generic fallbacks)
 // ---------------------------------------------------------------------------
 const GENERIC_BANK_CATEGORY_MAP = {
+ /*
   // ========== NAB BANK CATEGORIES ==========
   'attractions & events': 'exp_entertainment',
   'attractions': 'exp_entertainment',
@@ -219,10 +220,12 @@ const GENERIC_BANK_CATEGORY_MAP = {
   'savings': 'sav_main',
   'investment': 'sav_invest',
   'loan repayment': 'debt_main'
+  */
 };
 
 const BANK_CATEGORY_MAP_BY_BANK = {
   nab: {
+   /*
     'attractions & events': 'exp_entertainment',
     'restaurants & takeaway': 'exp_dining',
     'groceries': 'exp_groceries',
@@ -254,6 +257,7 @@ const BANK_CATEGORY_MAP_BY_BANK = {
     'insurance': 'exp_insurance',
     'education': 'exp_education',
     'food & drink': 'exp_groceries'
+    */
   }
 };
 
