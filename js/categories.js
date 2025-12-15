@@ -319,6 +319,8 @@ async function resetToDefaultCategories() {
   console.log('✅ Categories reset to defaults');
 }
 
+window.resetToDefaultCategories = resetToDefaultCategories;
+
   // ========== BUDGETS-STYLE CATEGORY EDITOR ==========
   async function openCatEditor(id = null, parentId = null) {
     const allCats = await getAllItems(STORE_NAMES.categories);
@@ -504,4 +506,4 @@ export async function getFullCategoryName(id) {
     const path = await getCategoryPath(id);
     return path.length ? path.join(" / ") : "Uncategorised";
 }
-window.resetToDefaultCategories = resetToDefaultCategories;
+
