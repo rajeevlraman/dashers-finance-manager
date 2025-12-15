@@ -519,7 +519,9 @@ export class PropertiesManager {
         }
 
         // Trigger field visibility
-        typeSelect.dispatchEvent(new Event('change'));
+        //typeSelect.dispatchEvent(new Event('change'));
+        + typeSelect?.dispatchEvent(new Event('change'));
+
         modal.style.display = 'flex';
     }
 
