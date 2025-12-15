@@ -2,6 +2,7 @@ import { addItem, getAllItems, deleteItem, updateItem, STORE_NAMES } from './db.
 import { setupEmojiPicker } from './emojiPicker.js';
 import { generateId } from './db.js';
 import { addDefaultCategories, shouldAddDefaultCategories } from './defaultCategories.js';
+import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 
 export async function initCategoriesUI() {
   const mainContent = document.getElementById('mainContent');
