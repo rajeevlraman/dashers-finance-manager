@@ -2,7 +2,7 @@
 // 💰 Budget Tracker - IndexedDB Manager (Enhanced for Property & Tax System)
 // ----------------------------------------------------------------------------
 // Handles safe initialization, schema upgrades, and CRUD operations
-// without version-change race conditions or retry loops.
+// without version-change race conditions or retry loops. v2
 // ============================================================================
 
 // 🔹 Database configuration
@@ -85,12 +85,14 @@ export function openDb() {
     // ------------------------------------------------------------------------
     // ✅ Successfully opened database
     // ------------------------------------------------------------------------
-    request.onsuccess = event => {
-      dbInstance = event.target.result;
-      dbPromise = null;
-      console.log("✅ DB opened successfully");
-      resolve(dbInstance);
-    };
+request.onsuccess = event => {
+  dbInstance = event.target.result;
+  dbPromise = null;
+  console.log("✅ DB opened successfully");
++ seedDefaultCategories().catch(console.error);
+  resolve(dbInstance);
+};
+
 
     // ------------------------------------------------------------------------
     // ❌ Opening failed (permissions, blocked tab, etc.)
@@ -794,6 +796,43 @@ export async function importAllData(data) {
 
   console.log("✅ Import complete");
 }
+
+// ----------------------------------------------------------------------------
+// 🌱 Seed Default Categories (SAFE + ID-PRESERVING)
+// ----------------------------------------------------------------------------
+import { DEFAULT_CATEGORIES } from './defaultCategories.js';
+
+export async function seedDefaultCategories(force = false) {
+  const store = await getStore(STORE_NAMES.categories, 'readwrite');
+
+  const existing = await new Promise(resolve => {
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => resolve([]);
+  });
+
+  if (existing.length > 0 && !force) {
+    console.log('📁 Categories already exist, skipping seed');
+    return;
+  }
+
+  const now = new Date().toISOString();
+
+  for (const cat of DEFAULT_CATEGORIES) {
+    try {
+      store.put({
+        ...cat,
+        createdAt: cat.createdAt || now,
+        updatedAt: now
+      });
+    } catch (e) {
+      console.warn('⚠️ Skipped category:', cat.id);
+    }
+  }
+
+  console.log('✅ Default categories seeded');
+}
+
 
 // ----------------------------------------------------------------------------
 // 📊 Get Database Stats
