@@ -299,24 +299,24 @@ mainContent.innerHTML = `
   }
 
   // ========== RESET TO DEFAULTS ==========
-  async function resetToDefaultCategories() {
-    if (confirm('This will delete ALL your current categories and restore the default set. This action cannot be undone. Continue?')) {
-      // Delete all existing categories
-      const existingCategories = await getAllItems(STORE_NAMES.categories);
-      for (const category of existingCategories) {
-        await deleteItem(STORE_NAMES.categories, category.id);
-      }
-      
-      // Add default categories
-      await addDefaultCategories({
-        getAllItems,
-        addItem,
-        STORE_NAMES
-      });
-      
-      initCategoriesUI();
-    }
+async function resetToDefaultCategories() {
+  const existing = await getAllItems(STORE_NAMES.categories);
+  const existingIds = new Set(existing.map(c => c.id));
+  const now = new Date().toISOString();
+
+  for (const cat of DEFAULT_CATEGORIES) {
+    const record = {
+      ...cat,
+      createdAt: cat.createdAt || now,
+      updatedAt: now
+    };
+
+    // 🔑 use updateItem (put), not addItem
+    await updateItem(STORE_NAMES.categories, record);
   }
+
+  console.log('✅ Categories reset to defaults');
+}
 
   // ========== BUDGETS-STYLE CATEGORY EDITOR ==========
   async function openCatEditor(id = null, parentId = null) {
