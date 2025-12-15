@@ -69,7 +69,7 @@ export class PropertiesManager {
             </div>
         `;
 
-        this.attachStaticEventListeners();
+       // this.attachStaticEventListeners();
     }
 
     renderPortfolioSummary() {
