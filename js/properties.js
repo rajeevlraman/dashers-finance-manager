@@ -492,6 +492,9 @@ export class PropertiesManager {
 
     // Core functionality methods
     async openPropertyForm(prefillType = null, property = null) {
+
+    console.log('openPropertyForm called');
+        
         const modal = document.getElementById('propertyModal');
         const title = document.getElementById('modalTitle');
         const form = document.getElementById('propertyForm');
