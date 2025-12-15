@@ -64,7 +64,7 @@ export const DEFAULT_CATEGORIES = [
 
 // Groceries Main
 { id: 'exp_groceries', name: 'Groceries & Household', type: 'expense', icon: '🛒', parentId: null },
-/*
+
 // Groceries Subcategories
 { id: 'exp_grocery_supermarket', name: 'Supermarket', type: 'expense', icon: '🛍️', parentId: 'exp_groceries' },
 { id: 'exp_grocery_fresh', name: 'Fruits & Vegetables', type: 'expense', icon: '🥬', parentId: 'exp_groceries' },
@@ -72,13 +72,13 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_Mal_Vic_Pty', name: 'Meat & Afghani', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
 { id: 'exp_MalVic', name: 'Meat & Afghani', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
 { id: 'exp_Safeway', name: 'Safeway', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
-//{ id: 'exp_Woolworths', name: 'Woolworths', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
-//{ id: 'exp_Coles', name: 'Coles', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
-//{ id: 'exp_IGA', name: 'IGA', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
+{ id: 'exp_Woolworths', name: 'Woolworths', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
+{ id: 'exp_Coles', name: 'Coles', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
+{ id: 'exp_IGA', name: 'IGA', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 { id: 'exp_Woolworths', name: 'Woolworths', type: 'expense', icon: '🛒', parentId: 'exp_groceries' },
 { id: 'exp_Aldi', name: 'Aldi', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 { id: 'exp_Indian_Groceries', name: 'Indian Groceroies', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
-*/
+
 // Transport Main
 { id: 'exp_transport', name: 'Transport', type: 'expense', icon: '🚗', parentId: null },
 
