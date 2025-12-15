@@ -299,22 +299,50 @@ mainContent.innerHTML = `
   }
 
   // ========== RESET TO DEFAULTS ==========
+  // ========== RESET TO DEFAULTS ==========
   async function resetToDefaultCategories() {
     if (confirm('This will delete ALL your current categories and restore the default set. This action cannot be undone. Continue?')) {
-      // Delete all existing categories
-      const existingCategories = await getAllItems(STORE_NAMES.categories);
-      for (const category of existingCategories) {
-        await deleteItem(STORE_NAMES.categories, category.id);
+      try {
+        console.log('Starting category reset...');
+        
+        // Get current categories fresh from DB
+        const existingCategories = await getAllItems(STORE_NAMES.categories);
+        console.log(`Found ${existingCategories.length} categories to delete`);
+        
+        // Delete all existing categories
+        for (const category of existingCategories) {
+          try {
+            await deleteItem(STORE_NAMES.categories, category.id);
+            console.log(`Deleted: ${category.name}`);
+          } catch (error) {
+            console.error(`Failed to delete ${category.name}:`, error);
+          }
+        }
+        
+        console.log('All categories deleted, now adding defaults...');
+        
+        // Clear the category cache
+        _categoryCache = null;
+        
+        // Add default categories
+        const addedCount = await addDefaultCategories({
+          getAllItems,
+          addItem,
+          STORE_NAMES
+        });
+        
+        console.log(`Reset complete. Added ${addedCount} default categories`);
+        
+        // Show success message
+        alert(`✅ Reset complete! Added ${addedCount} default categories.`);
+        
+        // Reload the UI
+        await initCategoriesUI();
+        
+      } catch (error) {
+        console.error('Error resetting categories:', error);
+        alert('❌ Error resetting categories: ' + error.message);
       }
-      
-      // Add default categories
-      await addDefaultCategories({
-        getAllItems,
-        addItem,
-        STORE_NAMES
-      });
-      
-      initCategoriesUI();
     }
   }
 
