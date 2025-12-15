@@ -500,6 +500,8 @@ export class PropertiesManager {
         const form = document.getElementById('propertyForm');
         const typeSelect = document.getElementById('propertyType');
 
+        console.log({ modal, title, form, typeSelect });
+
         if (property) {
             title.textContent = 'Edit Property';
             document.getElementById('editPropertyId').value = property.id;
@@ -524,7 +526,7 @@ export class PropertiesManager {
         // Trigger field visibility
         //typeSelect.dispatchEvent(new Event('change'));
         + typeSelect?.dispatchEvent(new Event('change'));
-
+        console.log({ modal, title, form, typeSelect });
         modal.style.display = 'flex';
     }
 
