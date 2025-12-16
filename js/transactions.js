@@ -368,8 +368,13 @@ function applyFilters() {
 // ============================================================================
 // Render Transaction List
 // ============================================================================
+// ============================================================================
+// Render Transaction List
+// ============================================================================
 function renderTransactionList(transactions, categories, accounts, properties) {
   const list = document.getElementById('txList');
+  const count = document.getElementById('txCount'); // DECLARE count here
+  
   if (!list) return;
 
   // Get sort option
@@ -413,11 +418,11 @@ function renderTransactionList(transactions, categories, accounts, properties) {
         <p>No transactions found. ${Object.keys(currentFilter).length > 0 ? 'Try clearing filters.' : 'Add your first transaction!'}</p>
       </div>
     `;
-    if (count) {
-    count.textContent = `${sorted.length} transaction${sorted.length !== 1 ? 's' : ''}`;
+    // Use count variable here
+    if (count) count.textContent = '0 transactions';
+    return;
   }
-  }
-  attachTransactionCardEvents();
+
   // Group by date
   const groups = {};
   sorted.forEach(t => {
@@ -426,11 +431,13 @@ function renderTransactionList(transactions, categories, accounts, properties) {
     groups[date].push(t);
   });
 
- // Get dates array - THIS WAS MISSING!
+  // Get dates array
   const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
+
   // Check if mobile
   const isMobile = window.innerWidth <= 480;
-  // Render cards
+  
+  // Render groups
   let html = '';
   dates.forEach(date => {
     const dayTxs = groups[date];
@@ -453,6 +460,7 @@ function renderTransactionList(transactions, categories, accounts, properties) {
 
   list.innerHTML = html;
   
+  // Use count variable here - THIS IS LINE 456
   if (count) {
     count.textContent = `${sorted.length} transaction${sorted.length !== 1 ? 's' : ''}`;
   }
