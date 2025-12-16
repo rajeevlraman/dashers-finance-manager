@@ -463,7 +463,7 @@ function renderTransactionList(transactions, categories, accounts, properties) {
 // ============================================================================
 // Render Single Transaction Card
 // ============================================================================
-/*function renderTransactionCard(tx, categories, accounts, properties) {
+function renderTransactionCard(tx, categories, accounts, properties) {
   const category = categories.find(c => c.id === tx.categoryId);
   const account = accounts.find(a => a.id === tx.accountId);
   const property = properties.find(p => p.id === tx.propertyId);
@@ -509,7 +509,7 @@ function renderTransactionList(transactions, categories, accounts, properties) {
     </div>
   `;
 }
-*/
+
 
 //compact rendering
 // ============================================================================
