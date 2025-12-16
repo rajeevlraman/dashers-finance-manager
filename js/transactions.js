@@ -370,8 +370,6 @@ function applyFilters() {
 // ============================================================================
 function renderTransactionList(transactions, categories, accounts, properties) {
   const list = document.getElementById('txList');
-  const count = document.getElementById('txCount');
-  
   if (!list) return;
 
   // Get sort option
@@ -427,10 +425,8 @@ function renderTransactionList(transactions, categories, accounts, properties) {
     groups[date].push(t);
   });
 
-  // Render groups
+  // Render cards
   let html = '';
-  const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
-
   dates.forEach(date => {
     const dayTxs = groups[date];
     const total = dayTxs.reduce((sum, t) => sum + t.amount, 0);
@@ -441,7 +437,11 @@ function renderTransactionList(transactions, categories, accounts, properties) {
           <span>${formatDate(date)}</span>
           <span class="${total >= 0 ? "positive" : "negative"}">$${Math.abs(total).toFixed(2)}</span>
         </div>
-        ${dayTxs.map(t => renderTransactionCard(t, categories, accounts, properties)).join('')}
+        ${dayTxs.map(t => 
+          isMobile ? 
+            renderCompactTransactionCard(t, categories, accounts, properties) :
+            renderTransactionCard(t, categories, accounts, properties)
+        ).join('')}
       </div>
     `;
   });
@@ -459,7 +459,7 @@ function renderTransactionList(transactions, categories, accounts, properties) {
 // ============================================================================
 // Render Single Transaction Card
 // ============================================================================
-function renderTransactionCard(tx, categories, accounts, properties) {
+/*function renderTransactionCard(tx, categories, accounts, properties) {
   const category = categories.find(c => c.id === tx.categoryId);
   const account = accounts.find(a => a.id === tx.accountId);
   const property = properties.find(p => p.id === tx.propertyId);
@@ -504,6 +504,102 @@ function renderTransactionCard(tx, categories, accounts, properties) {
       </div>
     </div>
   `;
+}
+*/
+
+//compact rendering
+// ============================================================================
+// Render Compact Transaction Card
+// ============================================================================
+function renderCompactTransactionCard(tx, categories, accounts, properties) {
+  const category = categories.find(c => c.id === tx.categoryId);
+  const account = accounts.find(a => a.id === tx.accountId);
+  const property = properties.find(p => p.id === tx.propertyId);
+  const isIncome = tx.amount > 0;
+
+  const displayCategory = getCategoryDisplayName(tx, categories);
+  const categoryIcon = category?.icon || (isIncome ? '💰' : '💸');
+  const isSynced = tx.isPropertyExpense && tx.propertyId;
+  const shortDescription = tx.description ? (tx.description.length > 50 ? tx.description.substring(0, 50) + '...' : tx.description) : '';
+
+  return `
+    <div class="compact-transaction-card ${isIncome ? "income" : "expense"}" data-id="${tx.id}" onclick="toggleTransactionDetails('${tx.id}')">
+      <div class="compact-transaction-grid">
+        <!-- Icon -->
+        <div class="compact-transaction-icon">${categoryIcon}</div>
+        
+        <!-- Merchant/Category -->
+        <div class="compact-merchant-section">
+          <div class="compact-merchant-name">${displayCategory}</div>
+          <div class="compact-category-info">
+            <span class="compact-date">${formatShortDate(tx.date)}</span>
+            ${tx.bankCategory ? `<span class="compact-category-tag">🏦 ${tx.bankCategory}</span>` : ''}
+            ${property ? `<span class="compact-property-tag">🏠 ${property.name}</span>` : ''}
+            ${isSynced ? `<span class="compact-synced-tag">✅ Synced</span>` : ''}
+          </div>
+        </div>
+        
+        <!-- Amount -->
+        <div class="compact-amount-section">
+          <div class="compact-amount ${isIncome ? "positive" : "negative"}">
+            ${isIncome ? "+" : "-"}$${Math.abs(tx.amount).toFixed(2)}
+          </div>
+          <div class="compact-date">${formatShortDate(tx.date)}</div>
+        </div>
+        
+        <!-- Details -->
+        <div class="compact-details-section">
+          <span class="compact-account-info">
+            <span class="compact-account-icon">🏦</span>
+            <span>${account?.name || 'Unknown'}</span>
+          </span>
+          ${tx.expenseCategory ? `<span class="compact-category-tag">📁 ${tx.expenseCategory}</span>` : ''}
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="compact-action-buttons">
+          <button class="compact-action-btn compact-edit-btn" data-id="${tx.id}" title="Edit" onclick="event.stopPropagation(); editTransaction('${tx.id}')">✏️</button>
+          <button class="compact-action-btn compact-delete-btn" data-id="${tx.id}" title="Delete" onclick="event.stopPropagation(); deleteTransaction('${tx.id}')">🗑️</button>
+        </div>
+        
+        <!-- Description (hidden by default) -->
+        ${shortDescription ? `
+          <div class="compact-description" id="desc-${tx.id}">
+            ${shortDescription}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
+
+
+// Helper function for short date format
+function formatShortDate(dateString) {
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  if (date.toDateString() === today.toDateString()) {
+    return 'Today';
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  } else {
+    return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  }
+}
+
+// Toggle transaction details on mobile
+function toggleTransactionDetails(txId) {
+  if (window.innerWidth <= 768) {
+    const card = document.querySelector(`.compact-transaction-card[data-id="${txId}"]`);
+    const desc = document.getElementById(`desc-${txId}`);
+    if (card && desc) {
+      card.classList.toggle('expanded');
+    }
+  }
 }
 
 // ============================================================================

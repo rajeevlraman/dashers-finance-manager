@@ -746,3 +746,400 @@
 .filter-indicator.active .remove-filter:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* ============================================================================
+   COMPACT TRANSACTION STYLES FOR MOBILE
+   ============================================================================ */
+
+/* Compact Transaction Card */
+.compact-transaction-card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.compact-transaction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+}
+
+/* Income vs Expense indicators */
+.compact-transaction-card.income {
+  border-left: 4px solid #10b981;
+}
+
+.compact-transaction-card.expense {
+  border-left: 4px solid #ef4444;
+}
+
+/* Main Grid Layout */
+.compact-transaction-grid {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 6px 12px;
+  align-items: start;
+}
+
+/* Icon - much smaller */
+.compact-transaction-icon {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #4b5563;
+}
+
+.compact-transaction-card.income .compact-transaction-icon {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+}
+
+.compact-transaction-card.expense .compact-transaction-icon {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+}
+
+/* Merchant/Category Section */
+.compact-merchant-section {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compact-merchant-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-category-info {
+  font-size: 11px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.compact-category-tag {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Amount Section */
+.compact-amount-section {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.compact-amount {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #f9fafb;
+  text-align: right;
+}
+
+.compact-amount.positive {
+  color: #10b981;
+  background: #d1fae5;
+}
+
+.compact-amount.negative {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.compact-date {
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+/* Details Section */
+.compact-details-section {
+  grid-column: 2 / span 2;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  padding-top: 4px;
+  border-top: 1px dashed #f3f4f6;
+}
+
+.compact-account-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.compact-account-icon {
+  font-size: 12px;
+}
+
+/* Action Buttons */
+.compact-action-buttons {
+  grid-column: 3;
+  grid-row: 2;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.compact-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.compact-edit-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.compact-delete-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* Description - only shown on hover/tap */
+.compact-description {
+  grid-column: 1 / span 3;
+  grid-row: 3;
+  font-size: 12px;
+  color: #4b5563;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin-top: 4px;
+  border-left: 3px solid #d1d5db;
+  display: none;
+}
+
+.compact-transaction-card.expanded .compact-description {
+  display: block;
+}
+
+/* Property Tags - smaller */
+.compact-property-tag {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Synced Tag */
+.compact-synced-tag {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Expand/Collapse Toggle */
+.compact-expand-toggle {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.compact-expand-toggle:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+/* ============================================================================
+   RESPONSIVE COMPACT DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .transaction-card {
+    /* Keep original cards for desktop, but make them more compact on mobile */
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+  }
+  
+  .transaction-main {
+    gap: 12px;
+  }
+  
+  .transaction-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+  
+  .transaction-title {
+    font-size: 1rem;
+  }
+  
+  .transaction-amount {
+    font-size: 1.1rem;
+    padding: 6px 12px;
+  }
+  
+  .transaction-actions {
+    padding-top: 12px;
+    margin-top: 12px;
+    gap: 8px;
+  }
+  
+  .edit-btn, .delete-btn {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Switch to ultra-compact layout on very small screens */
+  .transaction-card {
+    display: none; /* Hide original cards */
+  }
+  
+  .compact-transaction-card {
+    display: block; /* Show compact cards */
+  }
+  
+  /* Even more compact for very small phones */
+  .compact-transaction-grid {
+    grid-template-columns: 32px 1fr auto;
+    gap: 4px 8px;
+  }
+  
+  .compact-transaction-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  
+  .compact-merchant-name {
+    font-size: 13px;
+  }
+  
+  .compact-amount {
+    font-size: 13px;
+    padding: 3px 6px;
+  }
+  
+  .compact-action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .compact-action-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+  
+  .compact-details-section {
+    font-size: 11px;
+    gap: 8px;
+  }
+}
+
+/* ============================================================================
+   TOGGLE BETWEEN REGULAR AND COMPACT VIEW
+   ============================================================================ */
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.view-toggle-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: white;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background: #f9fafb;
+}
+
+/* Hide/show based on view mode */
+.compact-view .transaction-card:not(.compact-transaction-card) {
+  display: none;
+}
+
+.regular-view .compact-transaction-card {
+  display: none;
+}
