@@ -425,6 +425,9 @@ function renderTransactionList(transactions, categories, accounts, properties) {
     groups[date].push(t);
   });
 
+ // Get dates array - THIS WAS MISSING!
+  const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
+
   // Render cards
   let html = '';
   dates.forEach(date => {
