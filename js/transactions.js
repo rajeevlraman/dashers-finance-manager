@@ -413,10 +413,11 @@ function renderTransactionList(transactions, categories, accounts, properties) {
         <p>No transactions found. ${Object.keys(currentFilter).length > 0 ? 'Try clearing filters.' : 'Add your first transaction!'}</p>
       </div>
     `;
-    if (count) count.textContent = '0 transactions';
-    return;
+    if (count) {
+    count.textContent = `${sorted.length} transaction${sorted.length !== 1 ? 's' : ''}`;
   }
-
+  }
+  attachTransactionCardEvents();
   // Group by date
   const groups = {};
   sorted.forEach(t => {
