@@ -203,6 +203,41 @@ export async function initDashboardUI() {
           <button id="resetFilters" class="btn btn-secondary">Reset</button>
         </div>
 
+        <!-- Quick Stats Grid -->
+        <div class="section-card">
+          <h3>⚡ Quick Stats</h3>
+          <div class="stats-grid">
+            <div class="stat-item positive" id="incomeStat">
+              <span class="stat-icon">💰</span>
+              <div class="stat-content">
+                <span class="stat-value" id="totalIncome">$0.00</span>
+                <span class="stat-label">Total Income</span>
+              </div>
+            </div>
+            <div class="stat-item negative" id="expenseStat">
+              <span class="stat-icon">💸</span>
+              <div class="stat-content">
+                <span class="stat-value" id="totalExpenses">$0.00</span>
+                <span class="stat-label">Total Expenses</span>
+              </div>
+            </div>
+            <div class="stat-item positive" id="cashStat">
+              <span class="stat-icon">💳</span>
+              <div class="stat-content">
+                <span class="stat-value" id="cashBalanceStat">$0.00</span>
+                <span class="stat-label">Cash Balance</span>
+              </div>
+            </div>
+            <div class="stat-item negative" id="creditStat">
+              <span class="stat-icon">🏦</span>
+              <div class="stat-content">
+                <span class="stat-value" id="creditBalanceStat">$0.00</span>
+                <span class="stat-label">Credit Balance</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Financial Health Summary -->
         <div class="expandable-section">
           <div class="section-header" onclick="toggleSection(this)">
@@ -314,40 +349,7 @@ export async function initDashboardUI() {
           </div>
         </div>
 
-        <!-- Quick Stats Grid -->
-        <div class="section-card">
-          <h3>⚡ Quick Stats</h3>
-          <div class="stats-grid">
-            <div class="stat-item positive" id="incomeStat">
-              <span class="stat-icon">💰</span>
-              <div class="stat-content">
-                <span class="stat-value" id="totalIncome">$0.00</span>
-                <span class="stat-label">Total Income</span>
-              </div>
-            </div>
-            <div class="stat-item negative" id="expenseStat">
-              <span class="stat-icon">💸</span>
-              <div class="stat-content">
-                <span class="stat-value" id="totalExpenses">$0.00</span>
-                <span class="stat-label">Total Expenses</span>
-              </div>
-            </div>
-            <div class="stat-item positive" id="cashStat">
-              <span class="stat-icon">💳</span>
-              <div class="stat-content">
-                <span class="stat-value" id="cashBalanceStat">$0.00</span>
-                <span class="stat-label">Cash Balance</span>
-              </div>
-            </div>
-            <div class="stat-item negative" id="creditStat">
-              <span class="stat-icon">🏦</span>
-              <div class="stat-content">
-                <span class="stat-value" id="creditBalanceStat">$0.00</span>
-                <span class="stat-label">Credit Balance</span>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Charts Section -->
         <div class="charts-container">
