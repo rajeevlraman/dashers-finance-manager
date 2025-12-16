@@ -434,29 +434,30 @@ function renderTransactionList(transactions, categories, accounts, properties) {
   // Get dates array
   const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
 
-  // Check if mobile
-  const isMobile = window.innerWidth <= 480;
-  
-  // Render groups
-  let html = '';
-  dates.forEach(date => {
-    const dayTxs = groups[date];
-    const total = dayTxs.reduce((sum, t) => sum + t.amount, 0);
+ // In the renderTransactionList function, change this part:
+// Check if mobile
+const isMobile = window.innerWidth <= 480;
 
-    html += `
-      <div class="transaction-day-group">
-        <div class="transaction-date-header">
-          <span>${formatDate(date)}</span>
-          <span class="${total >= 0 ? "positive" : "negative"}">$${Math.abs(total).toFixed(2)}</span>
-        </div>
-        ${dayTxs.map(t => 
-          isMobile ? 
-            renderCompactTransactionCard(t, categories, accounts, properties) :
-            renderTransactionCard(t, categories, accounts, properties)
-        ).join('')}
+// Render groups
+let html = '';
+dates.forEach(date => {
+  const dayTxs = groups[date];
+  const total = dayTxs.reduce((sum, t) => sum + t.amount, 0);
+
+  html += `
+    <div class="transaction-day-group">
+      <div class="transaction-date-header">
+        <span>${formatDate(date)}</span>
+        <span class="${total >= 0 ? "positive" : "negative"}">$${Math.abs(total).toFixed(2)}</span>
       </div>
-    `;
-  });
+      ${dayTxs.map(t => 
+        isMobile ? 
+          renderCompactTransactionCard(t, categories, accounts, properties) :
+          renderTransactionCard(t, categories, accounts, properties)
+      ).join('')}
+    </div>
+  `;
+});
 
   list.innerHTML = html;
   
@@ -605,15 +606,16 @@ function formatShortDate(dateString) {
 }
 
 // Toggle transaction details on mobile
+// Update your toggleTransactionDetails function:
 function toggleTransactionDetails(txId) {
   if (window.innerWidth <= 768) {
-    const card = document.querySelector(`.compact-transaction-card[data-id="${txId}"]`);
-    const desc = document.getElementById(`desc-${txId}`);
-    if (card && desc) {
+    const card = document.querySelector(`.compact-transaction-card[data-id="${tx.id}"]`);
+    if (card) {
       card.classList.toggle('expanded');
     }
   }
 }
+
 
 // ============================================================================
 // Render Edit Form (INLINE)
