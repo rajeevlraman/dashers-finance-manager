@@ -31,8 +31,7 @@ export function resolveMerchantCategory(cleanDesc) {
 // Where we persist auto-learned merchant rules
 const LOCAL_STORAGE_KEY = 'dfm_category_rules_v1';
 
-// In-memory rule list
-let merchantRules = [];
+
 
 // Auto-learn threshold (how many consistent matches before we save a rule)
 const AUTO_LEARN_THRESHOLD = 3;
