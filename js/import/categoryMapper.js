@@ -7,6 +7,8 @@
 
 import { merchantLogos } from "./merchantLogos.js";
 import { merchantCategories } from "./merchantCategories.js";
+import { merchantRules, findMerchantRule } from './merchantRules.js';
+
 
 export function resolveMerchantLogo(cleanDesc) {
   for (const key of Object.keys(merchantLogos)) {
