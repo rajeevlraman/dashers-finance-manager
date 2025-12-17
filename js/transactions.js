@@ -438,24 +438,30 @@ function setupFormHandlers(categories, accounts, properties) {
       tx.notes = txForm.expenseNotes.value;
     }
 
-    try {
-      if (txForm.dataset.id) {
-        await updateItem(STORE_NAMES.transactions, tx);
-      } else {
-        await addItem(STORE_NAMES.transactions, tx);
-      }
+try {
+  if (txForm.dataset.id) {
+    await updateItem(STORE_NAMES.transactions, tx);
+  } else {
+    await addItem(STORE_NAMES.transactions, tx);
+  }
 
-      // Sync property expenses if needed
-      if (isProp) {
-        await syncToExpenses(tx);
-      }
+  // Sync property expenses if needed
+  if (isProp) {
+    await syncToExpenses(tx);
+  }
 
-      hideForms();
-      initTransactionsUI();
-    } catch (error) {
-      console.error("[TX] Failed to save transaction:", error);
-      alert("Failed to save transaction. Please try again.");
-    }
+  hideForms();
+  
+  // 🔥 ADD THIS: Clear form ID
+  txForm.removeAttribute("data-id");
+  // Reset form if needed
+  txForm.reset();
+  
+  initTransactionsUI();
+} catch (error) {
+  console.error("[TX] Failed to save transaction:", error);
+  alert("Failed to save transaction. Please try again.");
+}
   });
 
   if (filterForm) {
