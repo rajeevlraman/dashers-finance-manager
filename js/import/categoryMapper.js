@@ -7,7 +7,7 @@
 
 import { merchantLogos } from "./merchantLogos.js";
 import { merchantCategories } from "./merchantCategories.js";
-import { merchantRules, findMerchantRule } from './merchantRules.js';
+import { merchantRules, findMerchantRule } from './js/merchantRules.js';
 
 
 export function resolveMerchantLogo(cleanDesc) {
