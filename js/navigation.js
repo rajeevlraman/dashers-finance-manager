@@ -1,144 +1,185 @@
-// ui.js
-import { initBudgetsUI } from './budgets.js';
-import { initTransactionsUI } from './transactions.js';
-import { initAccountsUI } from './accounts.js';
-import { initCategoriesUI } from './categories.js';
-import { initReportsUI } from './reports.js';
-import { initDashboardUI } from './dashboard.js';
-import { initSettingsUI } from './settings.js';
-import { initBillsUI } from './bills.js';
-import { initCalendarUI } from './calendar.js';
-import { initRecurringUI } from './recurring.js';
-import { initLoansUI } from './loans.js';
-import { initPropertiesUI } from './properties.js';
-import { initTenantsUI } from './tenants.js';
-import { initMaintenanceUI } from './maintenance.js';
-import { initExpensesUI } from './expenses.js';
-import { initTaxComplianceUI } from './tax_compliance.js';
-import { initCostBaseTrackerUI } from './cost_base_tracker.js';
+// navigation.js - Complete Navigation with All Pages
+console.log("NAVIGATION: Loading complete navigation system");
 
-// ============================================================================
-// 🎯 VIEW ROUTING
-// ============================================================================
+// Navigation configuration
+const mainNavItems = [
+  { id: 'dashboard', icon: '🏠', label: 'Dashboard' },
+  { id: 'transactions', icon: '💸', label: 'Transactions' },
+  { id: 'budgets', icon: '🎯', label: 'Budgets' },
+  { id: 'accounts', icon: '💳', label: 'Accounts' },
+  { id: 'properties', icon: '🏠', label: 'Properties' },
+  { id: 'more', icon: '📂', label: 'More' }
+];
 
-function setActiveNav(view) {
-  // Navigation owns active UI, but this is kept
-  // in case other modules rely on it later.
-  document.querySelectorAll('[data-view]').forEach(link => {
-    link.classList.toggle('active', link.dataset.view === view);
-  });
+const allViews = {
+  finance: [
+    { id: 'dashboard', name: 'Dashboard', icon: '🏠' },
+    { id: 'transactions', name: 'Transactions', icon: '💸' },
+    { id: 'budgets', name: 'Budgets', icon: '🎯' },
+    { id: 'accounts', name: 'Accounts', icon: '💳' },
+    { id: 'loans', name: 'Loans', icon: '🏦' },
+    { id: 'categories', name: 'Categories', icon: '🗂️' },
+    { id: 'reports', name: 'Reports', icon: '📊' },
+    { id: 'bills', name: 'Bills', icon: '🧾' },
+    { id: 'calendar', name: 'Calendar', icon: '📅' },
+    { id: 'recurring', name: 'Recurring', icon: '🔁' },
+    { id: 'expenses', name: 'Expenses', icon: '💸' }
+  ],
+  properties: [
+    { id: 'properties', name: 'Properties', icon: '🏠' },
+    { id: 'tenants', name: 'Tenants', icon: '👤' },
+    { id: 'maintenance', name: 'Maintenance', icon: '🧰' },
+    { id: 'costbase', name: 'Cost Base', icon: '🧱' }
+  ],
+  system: [
+    { id: 'settings', name: 'Settings', icon: '⚙️' },
+    { id: 'tax', name: 'ATO Reports', icon: '📘' }
+  ]
+};
+
+function buildNavigationHTML() {
+  return `
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-brand">
+      <img src="./assets/icons/icon-152.png" class="nav-logo" alt="Budget Tracker">
+      <span class="nav-title">Budget Tracker</span>
+    </div>
+
+    <ul class="nav-menu">
+      ${mainNavItems.map((item, i) => `
+        <li class="nav-item ${i === 0 ? 'active' : ''}" data-view="${item.id}">
+          <a href="#" class="nav-link">
+            <span class="nav-icon">${item.icon}</span>
+            <span class="nav-label">${item.label}</span>
+          </a>
+        </li>
+      `).join('')}
+      <div class="indicator"></div>
+    </ul>
+
+    <div class="mobile-toggle" id="mobileToggle">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="more-menu" id="moreMenu">
+    <div class="more-menu-header">
+      <h3>All Pages</h3>
+      <button id="closeMoreMenu">×</button>
+    </div>
+    <div class="more-menu-content">
+      ${Object.entries(allViews).map(([group, items]) => `
+        <div class="more-section">
+          <h4>${group.toUpperCase()}</h4>
+          <div class="section-grid">
+            ${items.map(v => `
+              <a href="#" class="more-item" data-view="${v.id}">
+                <span>${v.icon}</span>
+                <span>${v.name}</span>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <div class="more-overlay" id="moreOverlay"></div>
+</nav>`;
 }
 
-// ============================================================================
-// 📄 VIEW LOADING
-// ============================================================================
-
-export async function loadView(view) {
-  console.log(`📄 Loading view: ${view}`);
-
-  const main = document.getElementById('mainContent');
-  if (!main) return;
-
-  setActiveNav(view);
-
-  main.style.opacity = '0.7';
-  main.innerHTML = `
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading ${view.replace('-', ' ')}...</p>
-    </div>
-  `;
-
-  try {
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    switch (view) {
-      case 'dashboard':   await initDashboardUI(); break;
-      case 'transactions':await initTransactionsUI(); break;
-      case 'budgets':     await initBudgetsUI(); break;
-      case 'accounts':    await initAccountsUI(); break;
-      case 'categories':  await initCategoriesUI(); break;
-      case 'reports':     await initReportsUI(); break;
-      case 'calendar':    await initCalendarUI(); break;
-      case 'bills':       await initBillsUI(); break;
-      case 'recurring':   await initRecurringUI(); break;
-      case 'settings':    await initSettingsUI(); break;
-      case 'loans':       await initLoansUI(); break;
-      case 'properties':  await initPropertiesUI(); break;
-      case 'tenants':     await initTenantsUI(); break;
-      case 'maintenance': await initMaintenanceUI(); break;
-      case 'expenses':    await initExpensesUI(); break;
-      case 'tax':         await initTaxComplianceUI(); break;
-      case 'costbase':    await initCostBaseTrackerUI(); break;
-
-      default:
-        main.innerHTML = `
-          <div class="page-container">
-            <div class="page-header">
-              <h2>Welcome to Budget Tracker</h2>
-            </div>
-            <div class="section-card">
-              <p>Select a section from the menu to begin.</p>
-            </div>
-          </div>
-        `;
-    }
-
-    main.style.opacity = '1';
-
-  } catch (err) {
-    console.error(`❌ Error loading view ${view}`, err);
-    main.style.opacity = '1';
-    main.innerHTML = `
-      <div class="error-state">
-        <h2>⚠️ Error Loading ${view}</h2>
-        <p>${err.message || 'There was a problem loading this section.'}</p>
-        <div class="error-actions">
-          <button class="btn btn-primary" onclick="loadView('${view}')">Retry</button>
-          <button class="btn btn-secondary" onclick="loadView('dashboard')">Home</button>
-        </div>
-      </div>
-    `;
+// ----------------------------
+// Inject Navigation (ROBUST)
+// ----------------------------
+function injectNavigation() {
+  if (document.querySelector('.navbar')) {
+    console.log("NAVIGATION: Navbar already exists, skipping inject");
+    return;
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = buildNavigationHTML();
+  document.body.insertAdjacentElement('afterbegin', wrapper.firstElementChild);
+
+  initNavigation();
+  console.log("NAVIGATION: Complete navigation injected");
 }
 
-// ============================================================================
-// 🚀 UI INITIALIZATION
-// ============================================================================
+// ----------------------------
+// Navigation Behaviour
+// ----------------------------
+function initNavigation() {
+  const navbar = document.querySelector('.navbar');
+  const navItems = document.querySelectorAll('.nav-item');
+  const indicator = document.querySelector('.indicator');
+  const moreMenu = document.getElementById('moreMenu');
+  const moreOverlay = document.getElementById('moreOverlay');
+  const mobileToggle = document.getElementById('mobileToggle');
+  const closeMoreMenu = document.getElementById('closeMoreMenu');
 
-export function initUI() {
-  console.log('✅ initUI() running...');
+  function closeMore() {
+    moreMenu.classList.remove('active');
+    moreOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
 
-  // Unified navigation handling (clicks handled in navigation.js)
-  ['click', 'touchstart'].forEach(evt => {
-    document.addEventListener(evt, e => {
-      const link = e.target.closest('[data-view]');
-      if (!link) return;
-
+  navItems.forEach((item, index) => {
+    item.addEventListener('click', e => {
       e.preventDefault();
-      const view = link.dataset.view;
-      if (!view) return;
+      const view = item.dataset.view;
 
-      // Navigation.js will set the hash
+      if (view === 'more') {
+        moreMenu.classList.add('active');
+        moreOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        return;
+      }
+
       window.location.hash = view;
-    }, { passive: false });
+      updateIndicator(index);
+      setActive(item);
+      closeMore();
+    });
   });
 
-  // Hash-based routing (single source of truth)
-  window.addEventListener('hashchange', () => {
-    const view = window.location.hash.slice(1) || 'dashboard';
-    loadView(view);
+  document.querySelectorAll('.more-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      window.location.hash = item.dataset.view;
+      closeMore();
+    });
   });
 
-  // Initial view
-  setTimeout(() => {
-    const initialView = window.location.hash.slice(1) || 'dashboard';
-    console.log(`🚀 Loading initial view: ${initialView}`);
-    loadView(initialView);
-  }, 100);
+  closeMoreMenu?.addEventListener('click', closeMore);
+  moreOverlay?.addEventListener('click', closeMore);
+  mobileToggle?.addEventListener('click', () => navbar.classList.toggle('mobile-open'));
+
+  function setActive(active) {
+    navItems.forEach(i => i.classList.remove('active'));
+    active.classList.add('active');
+  }
+
+  function updateIndicator(index) {
+    if (!indicator) return;
+    const w = navItems[0].offsetWidth;
+    indicator.style.width = `${w}px`;
+    indicator.style.transform = `translateX(${index * w}px)`;
+  }
+
+  function syncWithHash() {
+    const hash = location.hash.replace('#', '') || 'dashboard';
+    const item = [...navItems].find(n => n.dataset.view === hash);
+    if (item) {
+      setActive(item);
+      updateIndicator([...navItems].indexOf(item));
+    }
+  }
+
+  window.addEventListener('hashchange', syncWithHash);
+  window.addEventListener('resize', syncWithHash);
+  syncWithHash();
 }
 
-// Expose for navigation.js
-window.loadView = loadView;
+// Auto-inject when DOM ready
+document.addEventListener('DOMContentLoaded', injectNavigation);
