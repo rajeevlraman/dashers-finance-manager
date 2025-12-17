@@ -464,13 +464,59 @@ try {
 }
   });
 
-  if (filterForm) {
-    filterForm.addEventListener("submit", e => {
-      e.preventDefault();
-      // Apply filters logic here
-      console.log("Filter form submitted");
+// Replace the empty filter handler (around line 470):
+if (filterForm) {
+  filterForm.addEventListener("submit", e => {
+    e.preventDefault();
+    
+    // Get all transactions again to apply filters
+    const formData = new FormData(filterForm);
+    const filters = {
+      type: formData.get('type'),
+      accountId: formData.get('accountId'),
+      mainCategory: formData.get('mainCategory'),
+      subCategory: formData.get('subCategory'),
+      startDate: formData.get('startDate'),
+      endDate: formData.get('endDate')
+    };
+    
+    // Store filters globally or in module scope
+    window.currentFilters = filters;
+    
+    // Re-fetch and re-render with filters
+    applyFiltersAndRender();
+  });
+}
+
+// Add this function:
+async function applyFiltersAndRender() {
+  const [transactions, categories, accounts, properties] = await Promise.all([
+    getAllItems(STORE_NAMES.transactions),
+    getAllItems(STORE_NAMES.categories),
+    getAllItems(STORE_NAMES.accounts),
+    getAllItems(STORE_NAMES.properties).catch(() => [])
+  ]);
+  
+  // Apply filters if they exist
+  let filteredTx = transactions;
+  if (window.currentFilters) {
+    const f = window.currentFilters;
+    filteredTx = transactions.filter(t => {
+      if (f.type && t.type !== f.type) return false;
+      if (f.accountId && t.accountId !== f.accountId) return false;
+      if (f.mainCategory) {
+        const cat = categories.find(c => c.id === t.categoryId);
+        if (!cat || cat.parentId !== f.mainCategory) return false;
+      }
+      if (f.subCategory && t.categoryId !== f.subCategory) return false;
+      if (f.startDate && t.date < f.startDate) return false;
+      if (f.endDate && t.date > f.endDate) return false;
+      return true;
     });
   }
+  
+  renderTransactions(filteredTx, categories, accounts, properties);
+}
 }
 
 // ============================================================================
