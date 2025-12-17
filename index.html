@@ -68,6 +68,21 @@
       <div class="spinner"></div>
     </div>
   </div>
+<script type="module">
+  import { bootstrapApp } from './js/app.js';
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await bootstrapApp();
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./serviceWorker.js');
+      }
+    } catch (err) {
+      console.error('❌ App failed to start', err);
+    }
+  });
+</script>
 
 
 
