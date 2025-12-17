@@ -203,3 +203,4 @@ function initNavigation() {
 
 // ✅ FIX: wait for DOM
 document.addEventListener("DOMContentLoaded", injectNavigation);
+
