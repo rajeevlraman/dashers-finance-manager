@@ -1,366 +1,144 @@
-// navigation.js - Complete Navigation with All Pages
-console.log("NAVIGATION: Loading complete navigation system");
+// ui.js
+import { initBudgetsUI } from './budgets.js';
+import { initTransactionsUI } from './transactions.js';
+import { initAccountsUI } from './accounts.js';
+import { initCategoriesUI } from './categories.js';
+import { initReportsUI } from './reports.js';
+import { initDashboardUI } from './dashboard.js';
+import { initSettingsUI } from './settings.js';
+import { initBillsUI } from './bills.js';
+import { initCalendarUI } from './calendar.js';
+import { initRecurringUI } from './recurring.js';
+import { initLoansUI } from './loans.js';
+import { initPropertiesUI } from './properties.js';
+import { initTenantsUI } from './tenants.js';
+import { initMaintenanceUI } from './maintenance.js';
+import { initExpensesUI } from './expenses.js';
+import { initTaxComplianceUI } from './tax_compliance.js';
+import { initCostBaseTrackerUI } from './cost_base_tracker.js';
 
-// Navigation configuration with ALL pages
-const mainNavItems = [
-  { id: 'dashboard', icon: '🏠', activeIcon: '🏠', label: 'Dashboard' },
-  { id: 'transactions', icon: '💸', activeIcon: '💸', label: 'Transactions' },
-  { id: 'budgets', icon: '🎯', activeIcon: '🎯', label: 'Budgets' },
-  { id: 'accounts', icon: '💳', activeIcon: '💳', label: 'Accounts' },
-  { id: 'properties', icon: '🏠', activeIcon: '🏠', label: 'Properties' },
-  { id: 'more', icon: '📂', activeIcon: '📂', label: 'More' }
-];
+// ============================================================================
+// 🎯 VIEW ROUTING
+// ============================================================================
 
-// All available views grouped by category
-const allViews = {
-  finance: [
-    { id: 'dashboard', name: 'Dashboard', icon: '🏠' },
-    { id: 'transactions', name: 'Transactions', icon: '💸' },
-    { id: 'budgets', name: 'Budgets', icon: '🎯' },
-    { id: 'accounts', name: 'Accounts', icon: '💳' },
-    { id: 'loans', name: 'Loans', icon: '🏦' },
-    { id: 'categories', name: 'Categories', icon: '🗂️' },
-    { id: 'reports', name: 'Reports', icon: '📊' },
-    { id: 'bills', name: 'Bills', icon: '🧾' },
-    { id: 'calendar', name: 'Calendar', icon: '📅' },
-    { id: 'recurring', name: 'Recurring', icon: '🔁' },
-    { id: 'expenses', name: 'Expenses', icon: '💸' }
-  ],
-  properties: [
-    { id: 'properties', name: 'Properties', icon: '🏠' },
-    { id: 'tenants', name: 'Tenants', icon: '👤' },
-    { id: 'maintenance', name: 'Maintenance', icon: '🧰' },
-    { id: 'costbase', name: 'Cost Base', icon: '🧱' }
-  ],
-  system: [
-    { id: 'settings', name: 'Settings', icon: '⚙️' },
-    { id: 'tax', name: 'ATO Reports', icon: '📘' }
-  ]
-};
+function setActiveNav(view) {
+  // Navigation owns active UI, but this is kept
+  // in case other modules rely on it later.
+  document.querySelectorAll('[data-view]').forEach(link => {
+    link.classList.toggle('active', link.dataset.view === view);
+  });
+}
 
-// Build Navigation HTML
-function buildNavigationHTML() {
-  return `
-<nav class="navbar">
-  <div class="nav-container">
-    <!-- Brand -->
-    <div class="nav-brand">
-      <img src="./assets/icons/icon-152.png" class="nav-logo" alt="Budget Tracker">
-      <span class="nav-title">Budget Tracker</span>
+// ============================================================================
+// 📄 VIEW LOADING
+// ============================================================================
+
+export async function loadView(view) {
+  console.log(`📄 Loading view: ${view}`);
+
+  const main = document.getElementById('mainContent');
+  if (!main) return;
+
+  setActiveNav(view);
+
+  main.style.opacity = '0.7';
+  main.innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading ${view.replace('-', ' ')}...</p>
     </div>
-    
-    <!-- Main Navigation -->
-    <ul class="nav-menu">
-      ${mainNavItems.map((item, index) => `
-        <li class="nav-item ${index === 0 ? 'active' : ''}" data-view="${item.id}">
-          <a href="#" class="nav-link">
-            <span class="nav-icon">${item.icon}</span>
-            <span class="nav-active-icon">${item.activeIcon}</span>
-            <span class="nav-label">${item.label}</span>
-          </a>
-        </li>
-      `).join('')}
-      <div class="indicator"></div>
-    </ul>
-    
-    <!-- Mobile Toggle -->
-    <div class="mobile-toggle" id="mobileToggle">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </div>
-  
-  <!-- More Menu (Dropdown for additional pages) -->
-  <div class="more-menu" id="moreMenu">
-    <div class="more-menu-header">
-      <h3>All Pages</h3>
-      <button class="close-more-menu" id="closeMoreMenu">×</button>
-    </div>
-    
-    <div class="more-menu-content">
-      <!-- Finance Section -->
-      <div class="more-section">
-        <h4><span class="section-icon">💰</span> Finance</h4>
-        <div class="section-grid">
-          ${allViews.finance.map(item => `
-            <a href="#" class="more-item" data-view="${item.id}">
-              <span class="more-icon">${item.icon}</span>
-              <span class="more-label">${item.name}</span>
-            </a>
-          `).join('')}
-        </div>
-      </div>
-      
-      <!-- Properties Section -->
-      <div class="more-section">
-        <h4><span class="section-icon">🏠</span> Properties</h4>
-        <div class="section-grid">
-          ${allViews.properties.map(item => `
-            <a href="#" class="more-item" data-view="${item.id}">
-              <span class="more-icon">${item.icon}</span>
-              <span class="more-label">${item.name}</span>
-            </a>
-          `).join('')}
-        </div>
-      </div>
-      
-      <!-- System Section -->
-      <div class="more-section">
-        <h4><span class="section-icon">⚙️</span> System</h4>
-        <div class="section-grid">
-          ${allViews.system.map(item => `
-            <a href="#" class="more-item" data-view="${item.id}">
-              <span class="more-icon">${item.icon}</span>
-              <span class="more-label">${item.name}</span>
-            </a>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- More Menu Overlay -->
-  <div class="more-overlay" id="moreOverlay"></div>
-</nav>
   `;
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    switch (view) {
+      case 'dashboard':   await initDashboardUI(); break;
+      case 'transactions':await initTransactionsUI(); break;
+      case 'budgets':     await initBudgetsUI(); break;
+      case 'accounts':    await initAccountsUI(); break;
+      case 'categories':  await initCategoriesUI(); break;
+      case 'reports':     await initReportsUI(); break;
+      case 'calendar':    await initCalendarUI(); break;
+      case 'bills':       await initBillsUI(); break;
+      case 'recurring':   await initRecurringUI(); break;
+      case 'settings':    await initSettingsUI(); break;
+      case 'loans':       await initLoansUI(); break;
+      case 'properties':  await initPropertiesUI(); break;
+      case 'tenants':     await initTenantsUI(); break;
+      case 'maintenance': await initMaintenanceUI(); break;
+      case 'expenses':    await initExpensesUI(); break;
+      case 'tax':         await initTaxComplianceUI(); break;
+      case 'costbase':    await initCostBaseTrackerUI(); break;
+
+      default:
+        main.innerHTML = `
+          <div class="page-container">
+            <div class="page-header">
+              <h2>Welcome to Budget Tracker</h2>
+            </div>
+            <div class="section-card">
+              <p>Select a section from the menu to begin.</p>
+            </div>
+          </div>
+        `;
+    }
+
+    main.style.opacity = '1';
+
+  } catch (err) {
+    console.error(`❌ Error loading view ${view}`, err);
+    main.style.opacity = '1';
+    main.innerHTML = `
+      <div class="error-state">
+        <h2>⚠️ Error Loading ${view}</h2>
+        <p>${err.message || 'There was a problem loading this section.'}</p>
+        <div class="error-actions">
+          <button class="btn btn-primary" onclick="loadView('${view}')">Retry</button>
+          <button class="btn btn-secondary" onclick="loadView('dashboard')">Home</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Inject Navigation
-function injectNavigation() {
-  console.log("NAVIGATION: Injecting complete navigation...");
-  
-  const splash = document.getElementById("splashScreen");
-  if (!splash) {
-    console.error("NAV ERROR: splashScreen not found");
-    return;
-  }
-  
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = buildNavigationHTML();
-  
-  // Insert navigation
-  splash.insertAdjacentElement("afterend", wrapper.firstElementChild);
-  
-  // Initialize
-  initNavigation();
-  console.log("NAVIGATION: Complete navigation injected");
-}
+// ============================================================================
+// 🚀 UI INITIALIZATION
+// ============================================================================
 
-// Initialize Navigation
-// Initialize Navigation - FIXED with proper menu closing
-function initNavigation() {
-  const navbar = document.querySelector(".navbar");
-  const navItems = document.querySelectorAll(".nav-item");
-  const indicator = document.querySelector(".indicator");
-  const mobileToggle = document.getElementById("mobileToggle");
-  const moreMenu = document.getElementById("moreMenu");
-  const moreOverlay = document.getElementById("moreOverlay");
-  const closeMoreMenu = document.getElementById("closeMoreMenu");
-  const moreItems = document.querySelectorAll(".more-item");
-  
-  if (!navbar) {
-    console.error("NAV ERROR: Navigation elements not found");
-    return;
-  }
-  
-  // Set initial indicator position
-  updateActiveItem();
-  
-  // Function to close more menu
-  function closeMoreMenuFunc() {
-    moreMenu.classList.remove('active');
-    moreOverlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-  
-  // Handle main nav item clicks
-  navItems.forEach((item, index) => {
-    item.addEventListener("click", (e) => {
+export function initUI() {
+  console.log('✅ initUI() running...');
+
+  // Unified navigation handling (clicks handled in navigation.js)
+  ['click', 'touchstart'].forEach(evt => {
+    document.addEventListener(evt, e => {
+      const link = e.target.closest('[data-view]');
+      if (!link) return;
+
       e.preventDefault();
-      
-      const view = item.dataset.view;
-      
-      if (view === 'more') {
-        // Show more menu
-        moreMenu.classList.add('active');
-        moreOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      } else {
-        // Navigate to main view
-        navigateToView(view, index);
-        
-        // Close mobile menu on mobile
-        if (window.innerWidth <= 768) {
-          navbar.classList.remove("mobile-open");
-        }
-        
-        // Also close more menu if it's open
-        closeMoreMenuFunc();
-      }
-    });
+      const view = link.dataset.view;
+      if (!view) return;
+
+      // Navigation.js will set the hash
+      window.location.hash = view;
+    }, { passive: false });
   });
-  
-  // Handle more menu item clicks - FIXED
-  moreItems.forEach(item => {
-    item.addEventListener("click", (e) => {
-      e.preventDefault();
-      
-      const view = item.dataset.view;
-      const mainItem = Array.from(navItems).find(nav => nav.dataset.view === view);
-      
-      if (mainItem) {
-        // If view is in main nav, activate it
-        const index = Array.from(navItems).indexOf(mainItem);
-        navigateToView(view, index);
-      } else {
-        // Navigate to view that's not in main nav
-        navigateToView(view);
-      }
-      
-      // Close more menu - THIS IS THE FIX
-      closeMoreMenuFunc();
-      
-      // Also close mobile menu if open
-      if (window.innerWidth <= 768) {
-        navbar.classList.remove("mobile-open");
-      }
-    });
-  });
-  
-  // Close more menu with close button
-  if (closeMoreMenu) {
-    closeMoreMenu.addEventListener('click', closeMoreMenuFunc);
-  }
-  
-  // Close more menu with overlay click
-  if (moreOverlay) {
-    moreOverlay.addEventListener('click', closeMoreMenuFunc);
-  }
-  
-  // Close more menu with Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && moreMenu.classList.contains('active')) {
-      closeMoreMenuFunc();
-    }
-  });
-  
-  // Mobile toggle
-  if (mobileToggle) {
-    mobileToggle.addEventListener("click", () => {
-      navbar.classList.toggle("mobile-open");
-    });
-  }
-  
-  // Close mobile menu on outside click
-  document.addEventListener("click", (e) => {
-    if (!navbar.contains(e.target) && !mobileToggle?.contains(e.target)) {
-      navbar.classList.remove("mobile-open");
-    }
-  });
-  
-  // Handle window resize
-  window.addEventListener("resize", () => {
-    updateActiveItem();
-    
-    // Close more menu on mobile when resizing to desktop
-    if (window.innerWidth > 768 && moreMenu.classList.contains('active')) {
-      closeMoreMenuFunc();
-    }
-  });
-  
-  // Handle hash changes (browser back/forward)
+
+  // Hash-based routing (single source of truth)
   window.addEventListener('hashchange', () => {
-    const hash = window.location.hash.substring(1);
-    if (hash) {
-      const item = Array.from(navItems).find(nav => nav.dataset.view === hash);
-      if (item) {
-        const index = Array.from(navItems).indexOf(item);
-        updateIndicatorPosition(index);
-        updateActiveStates(item);
-      }
-    }
+    const view = window.location.hash.slice(1) || 'dashboard';
+    loadView(view);
   });
-  
-  console.log("NAVIGATION: Navigation initialized with fixed menu closing");
+
+  // Initial view
+  setTimeout(() => {
+    const initialView = window.location.hash.slice(1) || 'dashboard';
+    console.log(`🚀 Loading initial view: ${initialView}`);
+    loadView(initialView);
+  }, 100);
 }
 
-// Navigate to view
-function navigateToView(view, index = null) {
-  console.log("NAVIGATION: Navigating to", view);
-  
-  // Update URL hash
-  window.location.hash = view;
-  
-  // Call loadView if exists
-  if (window.loadView) {
-    window.loadView(view);
-  }
-  
-  // Update navigation if it's a main nav item
-  const navItems = document.querySelectorAll(".nav-item");
-  const clickedItem = Array.from(navItems).find(item => item.dataset.view === view);
-  
-  if (clickedItem && index !== null) {
-    updateIndicatorPosition(index);
-    updateActiveStates(clickedItem);
-  }
-}
-
-// Update active states
-function updateActiveStates(activeItem) {
-  const navItems = document.querySelectorAll(".nav-item");
-  navItems.forEach(item => item.classList.remove("active"));
-  activeItem.classList.add("active");
-}
-
-// Update indicator position
-function updateIndicatorPosition(index) {
-  const indicator = document.querySelector(".indicator");
-  const navItems = document.querySelectorAll(".nav-item");
-  
-  if (!indicator || navItems.length === 0) return;
-  
-  const itemWidth = navItems[0].offsetWidth;
-  const translateX = index * itemWidth;
-  
-  indicator.style.transform = `translateX(${translateX}px)`;
-  indicator.style.width = `${itemWidth}px`;
-}
-
-// Update active item based on current view
-function updateActiveItem() {
-  const navItems = document.querySelectorAll(".nav-item");
-  const hash = window.location.hash.substring(1) || 'dashboard';
-  
-  let activeIndex = 0;
-  let found = false;
-  
-  navItems.forEach((item, index) => {
-    if (item.dataset.view === hash) {
-      activeIndex = index;
-      found = true;
-      item.classList.add("active");
-    } else {
-      item.classList.remove("active");
-    }
-  });
-  
-  // If not found in main nav, check if it's in more menu
-  if (!found) {
-    // Make "More" active
-    const moreItem = Array.from(navItems).find(item => item.dataset.view === 'more');
-    if (moreItem) {
-      activeIndex = Array.from(navItems).indexOf(moreItem);
-      moreItem.classList.add("active");
-    }
-  }
-  
-  updateIndicatorPosition(activeIndex);
-}
-
-// Export for module use
-export { injectNavigation };
-
-// Auto-inject
-injectNavigation();
+// Expose for navigation.js
+window.loadView = loadView;
