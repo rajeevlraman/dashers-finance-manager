@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+
   <meta name="theme-color" content="#3498db">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -10,45 +11,35 @@
 
   <!-- Enhanced Viewport for iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
+
+  <!-- iOS splash images -->
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
   <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+
   <title>Budget Tracker</title>
 
   <!-- IMPORTANT: base path matches GitHub Pages repo -->
   <base href="/dashers-finance-manager/">
 
-  <!--<link rel="stylesheet" href="./css/styles.css" /> -->
   <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/styles.css">
 
-
-  
   <!-- Icons -->
   <link rel="icon" href="./assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-192.png">
 
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
 
-  
-   <!-- navigation menu called -->
-  <script type="module" src="./js/navigation.js"></script>
-
-
-  <!-- Charts (local) -->
+  <!-- Charts -->
   <script src="js/vendor/chart.umd.min.js"></script>
 
-  <!-- ✅ Dexie: load local UMD to create global window.Dexie -->
+  <!-- Dexie -->
   <script src="js/vendor/dexie.min.js"></script>
 
-
-
+  <!-- App JS -->
   <script type="module" src="./js/app.js"></script>
 
   <!-- iOS PWA Detection -->
@@ -60,7 +51,10 @@
     }
   </script>
 </head>
+
 <body>
+
+  <!-- Splash Screen -->
   <div id="splashScreen">
     <div class="splash-inner">
       <img src="assets/icons/icon-192.png" alt="Logo">
@@ -68,24 +62,30 @@
       <div class="spinner"></div>
     </div>
   </div>
-<script type="module">
-  import { bootstrapApp } from './js/app.js';
 
-  window.addEventListener('DOMContentLoaded', async () => {
-    try {
-      await bootstrapApp();
+  <!-- FIX: Navigation must load AFTER body exists -->
+  <script type="module" src="./js/navigation.js"></script>
 
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./serviceWorker.js');
+  <!-- Main content -->
+  <main id="mainContent"></main>
+
+  <!-- App bootstrap -->
+  <script type="module">
+    import { bootstrapApp } from './js/app.js';
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await bootstrapApp();
+
+        /* FIX: Single Service Worker registration ONLY */
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./serviceWorker.js', { scope: './' });
+        }
+      } catch (err) {
+        console.error('❌ App failed to start', err);
       }
-    } catch (err) {
-      console.error('❌ App failed to start', err);
-    }
-  });
-</script>
-
-
-
+    });
+  </script>
 
   <!-- TEMP FIX: Disable old header to avoid conflict with new top navigation -->
   <style>
@@ -95,14 +95,6 @@
     }
   </style>
 
-
-
-
-
-
-  <main id="mainContent"></main>
-
- 
   <!-- PWA Installation Banner -->
   <div id="installBanner" class="install-banner hidden">
     <div class="install-banner-content">
@@ -117,105 +109,49 @@
       </div>
     </div>
   </div>
+
   <button id="btnMigrateToDexie" class="btn-warning">⚙️ Migrate to Dexie Database</button>
 
+  <!-- Debug PWA -->
   <div style="position: fixed; top: 10px; right: 10px; z-index: 10000; display: none;" id="debugPWA">
     <button onclick="checkPWAStatus()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;">Check PWA</button>
   </div>
 
+  <!-- Device detection -->
   <script>
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
 
     console.log('📱 Device Detection:', {
       isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
-      isSafari, 
+      isSafari,
       isAndroid,
       userAgent: navigator.userAgent
     });
 
-    // ✅ Register service worker (path relative to <base>)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
-        .then((reg) => {
-          console.log('✅ SW registered:', reg.scope);
-        })
-        .catch((err) => console.error('❌ SW registration failed:', err));
-    }
-
-    // Android install prompt (only for Android)
     if (isAndroid) {
       window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('✅ Android: PWA installable');
         e.preventDefault();
         window.deferredPrompt = e;
         setTimeout(() => {
-          const banner = document.getElementById('installBanner');
-          if (banner) banner.classList.remove('hidden');
+          document.getElementById('installBanner')?.classList.remove('hidden');
         }, 2000);
       });
     }
 
-    function showIOSInstallGuide() {
-      const guide = document.getElementById('iosInstallGuide');
-      if (guide && !localStorage.getItem('iosGuideDismissed')) {
-        console.log('📱 Showing iOS install guide');
-        guide.classList.add('show');
-      }
-    }
-    function hideIOSInstallGuide() {
-      const guide = document.getElementById('iosInstallGuide');
-      if (guide) {
-        guide.classList.remove('show');
-        localStorage.setItem('iosGuideDismissed', 'true');
-        console.log('📱 iOS install guide dismissed');
-      }
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('installDismiss')?.addEventListener('click', () => {
+        document.getElementById('installBanner')?.classList.add('hidden');
+      });
 
-    document.addEventListener('DOMContentLoaded', function() {
-      const closeBtn = document.getElementById('closeIosGuide');
-      if (closeBtn) closeBtn.addEventListener('click', hideIOSInstallGuide);
-
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      if (isIOS) {
-        let guideShown = false;
-        const showGuideOnInteraction = function() {
-          if (!guideShown) {
-            setTimeout(showIOSInstallGuide, 1000);
-            guideShown = true;
-          }
-        };
-        document.addEventListener('touchstart', showGuideOnInteraction, { once: true, passive: true });
-        document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
-      }
-
-      const installBtn = document.getElementById('installBtn');
-      if (installBtn && isAndroid) {
-        installBtn.addEventListener('click', async () => {
-          if (!window.deferredPrompt) return;
-          window.deferredPrompt.prompt();
-          await window.deferredPrompt.userChoice;
-          window.deferredPrompt = null;
-          document.getElementById('installBanner').classList.add('hidden');
-        });
-      }
-
-      const installDismiss = document.getElementById('installDismiss');
-      if (installDismiss) {
-        installDismiss.addEventListener('click', () => {
-          const banner = document.getElementById('installBanner');
-          if (banner) banner.classList.add('hidden');
-        });
-      }
+      document.getElementById('installBtn')?.addEventListener('click', async () => {
+        if (!window.deferredPrompt) return;
+        window.deferredPrompt.prompt();
+        await window.deferredPrompt.userChoice;
+        window.deferredPrompt = null;
+        document.getElementById('installBanner')?.classList.add('hidden');
+      });
     });
-
-    if (isAndroid) {
-      setTimeout(() => {
-        if (!window.deferredPrompt) {
-          console.log('❌ Android: beforeinstallprompt never fired');
-        }
-      }, 5000);
-    }
   </script>
 
   <!-- iOS Installation Guide -->
@@ -223,108 +159,23 @@
     <div class="ios-install-content">
       <h3>📱 Install Budget Tracker on iOS</h3>
       <ol class="ios-install-steps">
-        <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
-        <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-        <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
+        <li>Tap <strong>Share</strong></li>
+        <li>Select <strong>Add to Home Screen</strong></li>
+        <li>Tap <strong>Add</strong></li>
       </ol>
-      <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
+      <button id="closeIosGuide" class="button">Got It!</button>
     </div>
   </div>
-<script>
-// Add this to test CSS interference
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Checking for CSS issues...');
-    
-    // Test 1: Check if form elements are visible and clickable
-    const loginButton = document.getElementById('loginButton');
-    if (loginButton) {
-        const styles = window.getComputedStyle(loginButton);
-        console.log('Login button CSS:', {
-            display: styles.display,
-            visibility: styles.visibility,
-            opacity: styles.opacity,
-            pointerEvents: styles.pointerEvents,
-            cursor: styles.cursor,
-            zIndex: styles.zIndex
-        });
-        
-        if (styles.pointerEvents === 'none') {
-            console.error('❌ Button has pointer-events: none !');
-            loginButton.style.pointerEvents = 'auto';
-        }
-    }
-    
-    // Test 2: Check for overlay elements blocking clicks
-    const loginScreen = document.getElementById('loginScreen');
-    if (loginScreen) {
-        // Look for any ::before or ::after that might be blocking
-        const pseudoStyles = window.getComputedStyle(loginScreen, '::before');
-        if (pseudoStyles.content !== 'none') {
-            console.warn('⚠️ loginScreen has ::before pseudo-element');
-        }
-    }
-    
-    // Test 3: Manually test click without CSS interference
-    const form = document.getElementById('loginForm');
-    if (form) {
-        const originalSubmit = form.onsubmit;
-        form.onsubmit = function(e) {
-            console.log('🎯 Form submit triggered (direct, not via event listener)');
-            e.preventDefault();
-            
-            // Test credentials directly
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            console.log('Testing:', {email, password});
-            
-            // Simulate login
-            if (email && password) {
-                localStorage.setItem('loggedIn', 'true');
-                localStorage.setItem('userEmail', email);
-                console.log('✅ Manual login successful');
-                document.getElementById('loginScreen').style.display = 'none';
-            }
-            
-            return false;
-        };
-    }
-});
-</script>
 
-<!--<script type="module" src="./js/ui.js"></script>-->
+  <script>
+    document.getElementById('closeIosGuide')?.addEventListener('click', () => {
+      document.getElementById('iosInstallGuide')?.classList.remove('show');
+      localStorage.setItem('iosGuideDismissed', 'true');
+    });
+  </script>
 
-<script>
-// Debug script to check if navigation is loading
-console.log('🔍 Debug: Checking if navigation.js loaded...');
-
-// Check if navigation elements exist after a delay
-setTimeout(() => {
-  console.log('🔍 Debug: Checking DOM after 2 seconds...');
-  
-  const sidebar = document.querySelector('.modern-sidebar');
-  const hamburger = document.querySelector('.hamburger-menu');
-  
-  console.log('Sidebar found:', !!sidebar);
-  console.log('Hamburger found:', !!hamburger);
-  
-  if (sidebar) {
-    console.log('Sidebar styles:', window.getComputedStyle(sidebar));
-    console.log('Sidebar HTML:', sidebar.outerHTML.substring(0, 200) + '...');
-  }
-  
-  // Force sidebar to be visible for testing
-  if (sidebar) {
-    console.log('🔍 Forcing sidebar to be visible for testing...');
-    sidebar.style.left = '0';
-    sidebar.style.zIndex = '100000';
-    sidebar.style.backgroundColor = 'red';
-    sidebar.style.color = 'white';
-    sidebar.style.padding = '20px';
-    sidebar.innerHTML = '<h2>SIDEBAR IS LOADING</h2><p>If you can see this, JavaScript is working but CSS might have issues.</p>';
-  }
-}, 2000);
-</script>
+  <!-- FIX: REMOVED broken sidebar/hamburger debug block -->
+  <!-- It checked elements that do not exist in your app -->
 
 </body>
 </html>

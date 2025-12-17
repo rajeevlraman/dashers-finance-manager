@@ -1,14 +1,16 @@
 // navigation.js - Complete Navigation with All Pages
 console.log("NAVIGATION: Loading complete navigation system");
 
+// ===============================
 // Navigation configuration
+// ===============================
 const mainNavItems = [
-  { id: 'dashboard', icon: '🏠', label: 'Dashboard' },
-  { id: 'transactions', icon: '💸', label: 'Transactions' },
-  { id: 'budgets', icon: '🎯', label: 'Budgets' },
-  { id: 'accounts', icon: '💳', label: 'Accounts' },
-  { id: 'properties', icon: '🏠', label: 'Properties' },
-  { id: 'more', icon: '📂', label: 'More' }
+  { id: 'dashboard', icon: '🏠', activeIcon: '🏠', label: 'Dashboard' },
+  { id: 'transactions', icon: '💸', activeIcon: '💸', label: 'Transactions' },
+  { id: 'budgets', icon: '🎯', activeIcon: '🎯', label: 'Budgets' },
+  { id: 'accounts', icon: '💳', activeIcon: '💳', label: 'Accounts' },
+  { id: 'properties', icon: '🏠', activeIcon: '🏠', label: 'Properties' },
+  { id: 'more', icon: '📂', activeIcon: '📂', label: 'More' }
 ];
 
 const allViews = {
@@ -37,18 +39,22 @@ const allViews = {
   ]
 };
 
+// ===============================
+// Build Navigation HTML
+// ===============================
 function buildNavigationHTML() {
   return `
 <nav class="navbar">
   <div class="nav-container">
+
     <div class="nav-brand">
       <img src="./assets/icons/icon-152.png" class="nav-logo" alt="Budget Tracker">
       <span class="nav-title">Budget Tracker</span>
     </div>
 
     <ul class="nav-menu">
-      ${mainNavItems.map((item, i) => `
-        <li class="nav-item ${i === 0 ? 'active' : ''}" data-view="${item.id}">
+      ${mainNavItems.map((item, index) => `
+        <li class="nav-item ${index === 0 ? 'active' : ''}" data-view="${item.id}">
           <a href="#" class="nav-link">
             <span class="nav-icon">${item.icon}</span>
             <span class="nav-label">${item.label}</span>
@@ -66,17 +72,18 @@ function buildNavigationHTML() {
   <div class="more-menu" id="moreMenu">
     <div class="more-menu-header">
       <h3>All Pages</h3>
-      <button id="closeMoreMenu">×</button>
+      <button class="close-more-menu" id="closeMoreMenu">×</button>
     </div>
+
     <div class="more-menu-content">
       ${Object.entries(allViews).map(([group, items]) => `
         <div class="more-section">
           <h4>${group.toUpperCase()}</h4>
           <div class="section-grid">
-            ${items.map(v => `
-              <a href="#" class="more-item" data-view="${v.id}">
-                <span>${v.icon}</span>
-                <span>${v.name}</span>
+            ${items.map(item => `
+              <a href="#" class="more-item" data-view="${item.id}">
+                <span class="more-icon">${item.icon}</span>
+                <span class="more-label">${item.name}</span>
               </a>
             `).join('')}
           </div>
@@ -86,46 +93,54 @@ function buildNavigationHTML() {
   </div>
 
   <div class="more-overlay" id="moreOverlay"></div>
-</nav>`;
+</nav>
+  `;
 }
 
-// ----------------------------
-// Inject Navigation (ROBUST)
-// ----------------------------
+// ===============================
+// Inject Navigation (FIXED)
+// ===============================
 function injectNavigation() {
   if (document.querySelector('.navbar')) {
-    console.log("NAVIGATION: Navbar already exists, skipping inject");
+    console.log("NAVIGATION: Navbar already exists, skipping injection");
     return;
   }
 
   const wrapper = document.createElement('div');
   wrapper.innerHTML = buildNavigationHTML();
+
+  // ✅ FIX: inject into BODY, not splash screen
   document.body.insertAdjacentElement('afterbegin', wrapper.firstElementChild);
 
   initNavigation();
   console.log("NAVIGATION: Complete navigation injected");
 }
 
-// ----------------------------
-// Navigation Behaviour
-// ----------------------------
+// ===============================
+// Initialise Navigation Behaviour
+// ===============================
 function initNavigation() {
-  const navbar = document.querySelector('.navbar');
-  const navItems = document.querySelectorAll('.nav-item');
-  const indicator = document.querySelector('.indicator');
-  const moreMenu = document.getElementById('moreMenu');
-  const moreOverlay = document.getElementById('moreOverlay');
-  const mobileToggle = document.getElementById('mobileToggle');
-  const closeMoreMenu = document.getElementById('closeMoreMenu');
+  const navbar = document.querySelector(".navbar");
+  const navItems = document.querySelectorAll(".nav-item");
+  const indicator = document.querySelector(".indicator");
+  const mobileToggle = document.getElementById("mobileToggle");
+  const moreMenu = document.getElementById("moreMenu");
+  const moreOverlay = document.getElementById("moreOverlay");
+  const closeMoreMenu = document.getElementById("closeMoreMenu");
 
-  function closeMore() {
+  if (!navbar) {
+    console.error("NAV ERROR: Navbar not found");
+    return;
+  }
+
+  function closeMoreMenuFunc() {
     moreMenu.classList.remove('active');
     moreOverlay.classList.remove('active');
     document.body.style.overflow = '';
   }
 
   navItems.forEach((item, index) => {
-    item.addEventListener('click', e => {
+    item.addEventListener("click", e => {
       e.preventDefault();
       const view = item.dataset.view;
 
@@ -138,30 +153,33 @@ function initNavigation() {
 
       window.location.hash = view;
       updateIndicator(index);
-      setActive(item);
-      closeMore();
+      updateActiveStates(item);
+      closeMoreMenuFunc();
     });
   });
 
-  document.querySelectorAll('.more-item').forEach(item => {
-    item.addEventListener('click', e => {
+  document.querySelectorAll(".more-item").forEach(item => {
+    item.addEventListener("click", e => {
       e.preventDefault();
       window.location.hash = item.dataset.view;
-      closeMore();
+      closeMoreMenuFunc();
     });
   });
 
-  closeMoreMenu?.addEventListener('click', closeMore);
-  moreOverlay?.addEventListener('click', closeMore);
-  mobileToggle?.addEventListener('click', () => navbar.classList.toggle('mobile-open'));
+  closeMoreMenu?.addEventListener("click", closeMoreMenuFunc);
+  moreOverlay?.addEventListener("click", closeMoreMenuFunc);
 
-  function setActive(active) {
-    navItems.forEach(i => i.classList.remove('active'));
-    active.classList.add('active');
+  mobileToggle?.addEventListener("click", () => {
+    navbar.classList.toggle("mobile-open");
+  });
+
+  function updateActiveStates(activeItem) {
+    navItems.forEach(i => i.classList.remove("active"));
+    activeItem.classList.add("active");
   }
 
   function updateIndicator(index) {
-    if (!indicator) return;
+    if (!indicator || !navItems.length) return;
     const w = navItems[0].offsetWidth;
     indicator.style.width = `${w}px`;
     indicator.style.transform = `translateX(${index * w}px)`;
@@ -171,15 +189,17 @@ function initNavigation() {
     const hash = location.hash.replace('#', '') || 'dashboard';
     const item = [...navItems].find(n => n.dataset.view === hash);
     if (item) {
-      setActive(item);
+      updateActiveStates(item);
       updateIndicator([...navItems].indexOf(item));
     }
   }
 
-  window.addEventListener('hashchange', syncWithHash);
-  window.addEventListener('resize', syncWithHash);
+  window.addEventListener("hashchange", syncWithHash);
+  window.addEventListener("resize", syncWithHash);
   syncWithHash();
+
+  console.log("NAVIGATION: Navigation initialized");
 }
 
-// Auto-inject when DOM ready
-document.addEventListener('DOMContentLoaded', injectNavigation);
+// ✅ FIX: wait for DOM
+document.addEventListener("DOMContentLoaded", injectNavigation);
