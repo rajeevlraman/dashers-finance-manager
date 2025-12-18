@@ -27,6 +27,7 @@ function hideImportModal() {
 
   modal.style.display = "none";
   document.body.style.overflow = "auto";
+      console.log("[MODAL] Modal hidden");
 }
 
 
