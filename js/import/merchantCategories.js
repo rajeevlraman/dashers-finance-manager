@@ -21,6 +21,12 @@ export const merchantCategories = {
   "fish pier": { categoryId: "exp_groceries_seafood", confidence: 0.85 },
   "antony ivan francis angelo": { categoryId: "exp_groceries_unknown", confidence: 0.7 },
 
+"grindstone barbers": {
+  categoryId: "exp_personal_care",
+  confidence: 0.95
+},
+
+
   // Restaurants & Takeaway
   // 🛑 FIX: Lowercase keys
   "casey kebab": { categoryId: "exp_takeaway_kebab", confidence: 0.9 },
