@@ -562,8 +562,8 @@ function createImportModal() {
 const mount = document.getElementById('importPanelMount');
 if (!mount) {
   console.error('[MODAL] importPanelMount not found');
-  return;
 }
+
 mount.innerHTML = modalHTML;
   console.log("[MODAL] Modal HTML created");
   
