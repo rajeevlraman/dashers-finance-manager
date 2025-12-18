@@ -54,83 +54,66 @@ export function buildCategoryIndex(categories = []) {
 // Auto-assign a categoryId based on description & keyword index (Fixed)
 // ----------------------------------------------------------------------------
 export function autoAssignCategory(tx, categories = [], index = []) {
-  // Do NOT override existing categoryId
-  if (tx.categoryId) return tx.categoryId;
+  if (tx.categoryId) {
+    return {
+      categoryId: tx.categoryId,
+      source: 'manual',
+      confidence: 1.0
+    };
+  }
 
-  // Use 'cleanDescription' for higher accuracy, fallback to 'description'
-  const rawDesc = tx.cleanDescription || tx.description || '';
-  const desc = rawDesc.toLowerCase().trim();
-  
-  if (!desc || !index.length) return null;
+  const rawDesc = tx.cleanDescription || tx.description || '';
+  const desc = rawDesc.toLowerCase().trim();
 
-// ===================================================================
-// 🏆 TIER 1: STATIC MERCHANT MATCH (Highest Priority)
-// ===================================================================
+  if (!desc) {
+    return null;
+  }
 
-  // Check against the exact match merchant map
-  const merchantMatch = merchantCategories[desc]; 
+  // ===============================
+  // 🏆 TIER 1 — MERCHANT MATCH
+  // ===============================
+  const merchantMatch = merchantCategories[desc];
 
-  if (merchantMatch && merchantMatch.categoryId) {
-    const merchantCatId = merchantMatch.categoryId;
-    const chosen = categories.find(c => c.id === merchantCatId);
-    
-    logImportDebug('autoAssignCategory(): 🏆 MERCHANT MATCH (Tier 1)', {
-      description: tx.description,
-      cleanDescription: desc,
-      categoryId: merchantCatId,
-      categoryName: chosen?.name
-    });
-    return merchantCatId; // 🛑 IMMEDIATE RETURN: High confidence match
-  }
+  if (merchantMatch?.categoryId) {
+    return {
+      categoryId: merchantMatch.categoryId,
+      source: 'merchant',
+      confidence: merchantMatch.confidence ?? 0.95,
+      ruleId: desc
+    };
+  }
 
+  // ===============================
+  // 💡 TIER 2 — KEYWORD MATCH
+  // ===============================
+  const scores = new Map();
 
-// ===================================================================
-// 💡 TIER 2: KEYWORD SCORING (Fallback Logic)
-// ===================================================================
+  index.forEach(rule => {
+    if (desc.includes(rule.keyword)) {
+      scores.set(
+        rule.categoryId,
+        (scores.get(rule.categoryId) || 0) + rule.weight
+      );
+    }
+  });
 
-  // Collect scores per category
-  const scores = new Map(); // categoryId -> score
+  if (!scores.size) return null;
 
-  index.forEach(rule => {
-    // Use the lowercased description for keyword matching
-    if (desc.includes(rule.keyword)) {
-      const prev = scores.get(rule.categoryId) || 0;
-      scores.set(rule.categoryId, prev + rule.weight);
-    }
-  });
+  let bestCatId = null;
+  let bestScore = 0;
 
-  if (scores.size === 0) return null;
+  scores.forEach((score, catId) => {
+    if (score > bestScore) {
+      bestScore = score;
+      bestCatId = catId;
+    }
+  });
 
-  // Pick best scoring category, tie-breaker prefers subcategories
-  let bestCatId = null;
-  let bestScore = 0;
+  const confidence = Math.min(0.4 + bestScore * 0.15, 0.9);
 
-  scores.forEach((score, catId) => {
-    if (score > bestScore) {
-      bestScore = score;
-      bestCatId = catId;
-    } else if (score === bestScore && bestCatId) {
-      const existing = categories.find(c => c.id === bestCatId);
-      const candidate = categories.find(c => c.id === catId);
-
-      if (candidate && candidate.parentId && !existing?.parentId) {
-        bestCatId = catId; // prefer subcategory in tie
-      }
-    }
-  });
-
-  // Require at least a minimal confidence
-  if (!bestCatId || bestScore < 2) {
-    return null;
-  }
-
-  const chosen = categories.find(c => c.id === bestCatId);
-  logImportDebug('autoAssignCategory(): 💡 KEYWORD MATCH (Tier 2)', {
-    description: tx.description,
-    categoryId: bestCatId,
-    categoryName: chosen?.name,
-    score: bestScore
-  });
-
-  return bestCatId;
+  return {
+    categoryId: bestCatId,
+    source: 'keyword',
+    confidence
+  };
 }

@@ -85,19 +85,29 @@ export function suggestCategory(tx) {
   // ==========================================================
   // 💡 TIER 2 — KEYWORD ENGINE (Fallback)
   // ==========================================================
-  const keywordMatch = autoAssignCategory(
-    tx,
-    _categories,
-    _keywordIndex
-  );
+if (keywordMatch) {
+  const confidence = 0.6;
 
-  if (keywordMatch) {
-    return {
-      categoryId: keywordMatch,
-      confidence: 0.6,
-      source: 'keyword'
-    };
-  }
+  tx.categorisation = {
+    source: 'keyword',
+    confidence,
+    needsReview: confidence < 0.85
+  };
 
-  return null;
+  return {
+    categoryId: keywordMatch,
+    confidence,
+    source: 'keyword'
+  };
+}
+
+// No match → mark as needs review
+tx.categorisation = {
+  source: 'none',
+  confidence: 0,
+  needsReview: true
+};
+
+return null;
+
 }
