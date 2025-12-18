@@ -4,10 +4,8 @@
 
 import { addItem, getAllItems, STORE_NAMES } from '../db.js';
 import { logImportDebug } from './debug.js';
-
-// IMPORTANT: use keyword rules, not category index
 import {
-  buildKeywordIndex,
+  buildCategoryIndex,
   autoAssignCategory
 } from './categoryRules.js';
 
@@ -25,7 +23,6 @@ export async function saveImportedTransactions(transactions, options = {}) {
 
   const accountId = transactions[0].accountId;
 
-  // Load existing transactions + categories
   const [existing, categories] = await Promise.all([
     getAllItems(STORE_NAMES.transactions),
     getAllItems(STORE_NAMES.categories).catch(() => [])
@@ -33,32 +30,26 @@ export async function saveImportedTransactions(transactions, options = {}) {
 
   const existingForAccount = existing.filter(tx => tx.accountId === accountId);
 
-  // ✅ THIS IS THE CRITICAL FIX
-  const keywordIndex = buildKeywordIndex(categories);
-
-  logImportDebug('Keyword index built', keywordIndex.length);
+  // ✅ Correct keyword / merchant index
+  const keywordIndex = buildCategoryIndex(categories);
 
   let saved = 0;
   let skipped = 0;
 
   for (const tx of transactions) {
-    // -----------------------------------------------------------------------
-    // Auto-assign category via MERCHANT + KEYWORD rules
-    // -----------------------------------------------------------------------
+    // Auto-category assignment
     if (!tx.categoryId && keywordIndex.length) {
       const autoCatId = autoAssignCategory(tx, categories, keywordIndex);
       if (autoCatId) {
         tx.categoryId = autoCatId;
         logImportDebug('Auto category assigned', {
-          tx: tx.description,
+          desc: tx.description,
           categoryId: autoCatId
         });
       }
     }
 
-    // -----------------------------------------------------------------------
     // De-duplication
-    // -----------------------------------------------------------------------
     if (dedupe && isDuplicate(tx, existingForAccount)) {
       skipped++;
       continue;
@@ -91,12 +82,7 @@ function isDuplicate(tx, existingList) {
     const sameDesc = (e.description || '').toLowerCase() === txDesc;
     const sameAccount = e.accountId === tx.accountId;
     const closeDate = Math.abs(dayDiff(e.date, txDate)) <= 2;
-
-    const dup = sameAmt && sameDesc && sameAccount && closeDate;
-    if (dup) {
-      logImportDebug('Duplicate detected, skipping', { tx });
-    }
-    return dup;
+    return sameAmt && sameDesc && sameAccount && closeDate;
   });
 }
 
