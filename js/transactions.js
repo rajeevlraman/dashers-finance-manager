@@ -68,8 +68,7 @@ export async function initTransactionsUI() {
         </div>
       </div>
     
-      <div id="transactionsImportContainer"></div>
-   <div id="importPanelMount"></div>
+
       <!-- Summary Cards -->
       <div class="summary-cards">
         <div class="summary-card">

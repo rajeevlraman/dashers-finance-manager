@@ -22,11 +22,13 @@ function hideImportModal() {
 }
 */
 function hideImportModal() {
-  const panel = document.getElementById('importModal');
-  if (!panel) return;
+  const modal = document.getElementById("importModal");
+  if (!modal) return;
 
-  panel.style.display = 'none';
+  modal.style.display = "none";
+  document.body.style.overflow = "auto";
 }
+
 
 
 async function handleParseData() {
@@ -558,14 +560,13 @@ function createImportModal() {
   `;
   
   // Add modal to body
-const mount = document.getElementById('importPanelMount');
-if (!mount) {
-  console.error('[MODAL] importPanelMount not found');
-  return;
-}
-mount.innerHTML = modalHTML;
+
   console.log("[MODAL] Modal HTML created");
-  
+
+
+
+
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
   // Setup event listeners
   setupModalEvents();
 }
