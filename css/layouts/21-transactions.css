@@ -886,3 +886,26 @@
     transform: translateX(0);
   }
 }
+
+/* ============================================
+   IMPORT FORM VISIBILITY
+   ============================================ */
+
+.import-section.hidden {
+  display: none;
+}
+
+.import-section {
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

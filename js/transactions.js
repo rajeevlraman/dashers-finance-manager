@@ -65,6 +65,7 @@ export async function initTransactionsUI() {
           <button class="btn btn-success" id="btnImportTx">📁 Import</button>
         </div>
       </div>
+      <div id="transactionsImportContainer"></div>
 
       <!-- Summary Cards -->
       <div class="summary-cards">

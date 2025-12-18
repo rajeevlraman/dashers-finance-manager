@@ -22,12 +22,12 @@ function hideImportModal() {
 }
 */
 function hideImportModal() {
-  const overlay = document.getElementById('importModalOverlay');
-  if (!overlay || !isImportModalOpen) return;
+  const panel = document.getElementById('importModal');
+  if (!panel) return;
 
-  overlay.style.display = 'none';
-  isImportModalOpen = false;
+  panel.style.display = 'none';
 }
+
 
 
 async function handleParseData() {
@@ -470,7 +470,8 @@ function createImportModal() {
   }
   
   const modalHTML = `
-    <div id="importModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
+    <div id="importModal" style="display:none; margin-bottom:24px;">
+
       <div class="modal-overlay" id="importModalOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);"></div>
       <div class="modal-content" style="position: relative; background: white; border-radius: 12px; max-width: 800px; width: 90%; margin: 5vh auto; padding: 0; z-index: 10000; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
         
@@ -558,7 +559,12 @@ function createImportModal() {
   `;
   
   // Add modal to body
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
+const mount = document.getElementById('importPanelMount');
+if (!mount) {
+  console.error('[MODAL] importPanelMount not found');
+  return;
+}
+mount.innerHTML = modalHTML;
   console.log("[MODAL] Modal HTML created");
   
   // Setup event listeners
@@ -600,12 +606,14 @@ export function initImportModal({ accounts, categories, onImported }) {
 }
 
 
-export function showImportModal({ accounts, categories, onImported }) {
-  console.log("[MODAL] showImportModal called with:", {
-    accountsCount: accounts?.length,
-    categoriesCount: categories?.length,
-    hasCallback: !!onImported
-  });
+export function showImportModal() {
+  const panel = document.getElementById('importModal');
+  if (!panel) return;
+
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
   
 //this is added to fix property add function
   const overlay = document.getElementById('importModalOverlay');
