@@ -23,12 +23,13 @@ function hideImportModal() {
 */
 function hideImportModal() {
   const modal = document.getElementById("importModal");
-  if (!modal) return;
-
-  modal.style.display = "none";
-  document.body.style.overflow = "auto";
-      console.log("[MODAL] Modal hidden");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+    console.log("[MODAL] Modal hidden");
+  }
 }
+
 
 
 
@@ -561,13 +562,13 @@ function createImportModal() {
   `;
   
   // Add modal to body
-
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
   console.log("[MODAL] Modal HTML created");
 
 
 
 
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
+
   // Setup event listeners
   setupModalEvents();
 }
