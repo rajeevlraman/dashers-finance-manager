@@ -613,14 +613,6 @@ export function showImportModal({ accounts, categories, onImported }) {
     hasCallback: !!onImported
   });
   
-//this is added to fix property add function
-  const panel = document.getElementById('importModal');
-  if (!panel) return;
-
-  panel.style.display = 'block';
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-//this is added to fix property add function
-
   const modal = document.getElementById("importModal");
   console.log("[MODAL] Modal element found:", !!modal);
   
