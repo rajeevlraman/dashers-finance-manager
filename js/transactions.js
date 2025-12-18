@@ -58,7 +58,7 @@ export async function initTransactionsUI() {
 
 
       <div class="page-header">
-          <div id="importPanelMount"></div>
+
         <h2>💸 Transactions</h2>
         <div class="page-actions">
           <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
@@ -67,6 +67,7 @@ export async function initTransactionsUI() {
           <button class="btn btn-success" id="btnImportTx">📁 Import</button>
         </div>
       </div>
+       <div id="importPanelMount"></div>
       <div id="transactionsImportContainer"></div>
 
       <!-- Summary Cards -->
