@@ -5,13 +5,11 @@ import { saveImportedTransactions } from './saver.js';
 import { BANK_FORMATS } from './bankFormats.js';
 
 let modalInitialized = false;
-let isImportModalOpen = false;
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
-//working version of hideImportModal before fixing propertyadd
-/*
+
 function hideImportModal() {
   const modal = document.getElementById("importModal");
   if (modal) {
@@ -20,18 +18,6 @@ function hideImportModal() {
     console.log("[MODAL] Modal hidden");
   }
 }
-*/
-function hideImportModal() {
-  const modal = document.getElementById("importModal");
-  if (modal) {
-    modal.style.display = "none";
-    document.body.style.overflow = "auto";
-    console.log("[MODAL] Modal hidden");
-  }
-}
-
-
-
 
 async function handleParseData() {
   console.log("[MODAL] handleParseData called");
@@ -294,7 +280,6 @@ async function handleSaveImport() {
         await window._importData.onImported(saved);
       }
 
-
       hideImportModal();
     } else {
       console.warn("[MODAL] No transactions saved");
@@ -410,30 +395,15 @@ function setupModalEvents() {
   
   if (closeBtn) closeBtn.addEventListener('click', hideImportModal);
   if (cancelBtn) cancelBtn.addEventListener('click', hideImportModal);
-//  if (overlay) overlay.addEventListener('click', hideImportModal);
-if (overlay) {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay && isImportModalOpen) {
-      hideImportModal();
-    }
-  });
-}  
-  // Close on Escape key version before changing to fix propertyadd
-/*
+  if (overlay) overlay.addEventListener('click', hideImportModal);
+  
+  // Close on Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       hideImportModal();
     }
   });
-  */
-
-// Close on Escape key (IMPORT MODAL ONLY)
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && isImportModalOpen) {
-    hideImportModal();
-  }
-});
-
+  
   // Parse button
   const parseBtn = document.getElementById('parseData');
   if (parseBtn) {
@@ -473,8 +443,7 @@ function createImportModal() {
   }
   
   const modalHTML = `
-    <div id="importModal" style="display:none; margin-bottom:24px;">
-
+    <div id="importModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
       <div class="modal-overlay" id="importModalOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);"></div>
       <div class="modal-content" style="position: relative; background: white; border-radius: 12px; max-width: 800px; width: 90%; margin: 5vh auto; padding: 0; z-index: 10000; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
         
@@ -564,11 +533,7 @@ function createImportModal() {
   // Add modal to body
   document.body.insertAdjacentHTML('beforeend', modalHTML);
   console.log("[MODAL] Modal HTML created");
-
-
-
-
-
+  
   // Setup event listeners
   setupModalEvents();
 }
@@ -606,7 +571,6 @@ export function initImportModal({ accounts, categories, onImported }) {
   modalInitialized = true;
   console.log("[MODAL] Modal initialized successfully");
 }
-
 
 export function showImportModal({ accounts, categories, onImported }) {
   console.log("[MODAL] showImportModal called with:", {
