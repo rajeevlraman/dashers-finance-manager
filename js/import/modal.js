@@ -29,7 +29,6 @@ function hideImportModal() {
 }
 
 
-
 async function handleParseData() {
   console.log("[MODAL] handleParseData called");
   
@@ -562,8 +561,8 @@ function createImportModal() {
 const mount = document.getElementById('importPanelMount');
 if (!mount) {
   console.error('[MODAL] importPanelMount not found');
+  return;
 }
-
 mount.innerHTML = modalHTML;
   console.log("[MODAL] Modal HTML created");
   
@@ -606,21 +605,19 @@ export function initImportModal({ accounts, categories, onImported }) {
 }
 
 
-export function showImportModal() {
+export function showImportModal({ accounts, categories, onImported }) {
+  console.log("[MODAL] showImportModal called with:", {
+    accountsCount: accounts?.length,
+    categoriesCount: categories?.length,
+    hasCallback: !!onImported
+  });
+  
+//this is added to fix property add function
   const panel = document.getElementById('importModal');
   if (!panel) return;
 
   panel.style.display = 'block';
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-  
-//this is added to fix property add function
-  const overlay = document.getElementById('importModalOverlay');
-  if (!overlay) return;
-
-  overlay.style.display = 'flex';
-  isImportModalOpen = true;
 //this is added to fix property add function
 
   const modal = document.getElementById("importModal");
