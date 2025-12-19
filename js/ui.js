@@ -20,7 +20,7 @@ import {
   initCategoryMapper, 
   suggestCategoriesForBatch,
   debugTransaction 
-} from './js/import/categoryMapper.js';
+} from './import/categoryMapper.js';
 
 // ============================================================================
 // 📄 VIEW LOADING
