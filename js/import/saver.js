@@ -1,95 +1,71 @@
 // ============================================================================
-// 💾 import/saver.js — Save Imported Transactions with Categorisation + Dedupe
+// 💾 import/saver.js — Save Imported Transactions with De-duplication
 // ============================================================================
 
 import { addItem, getAllItems, STORE_NAMES } from '../db.js';
 import { logImportDebug } from './debug.js';
-
-// 🔑 IMPORT THE RULES THAT ACTUALLY WORK
-import { findMerchantRule } from './merchantRules.js';
 import { buildCategoryIndex, autoAssignCategory } from './categoryRules.js';
 
 export async function saveImportedTransactions(transactions, options = {}) {
   const { dedupe = true } = options;
 
-  if (!transactions || !transactions.length) {
+  logImportDebug('saveImportedTransactions: starting', {
+    count: transactions.length,
+    dedupe
+  });
+
+  if (!transactions.length) {
     return { saved: 0, skipped: 0 };
   }
 
-  logImportDebug('saveImportedTransactions:start', {
-    count: transactions.length
-  });
+  const accountId = transactions[0].accountId;
 
-  // Load existing data
-  const [existingTx, categories] = await Promise.all([
+  // Load existing tx + categories in parallel
+  const [existing, categories] = await Promise.all([
     getAllItems(STORE_NAMES.transactions),
-    getAllItems(STORE_NAMES.categories)
+    getAllItems(STORE_NAMES.categories).catch(() => [])
   ]);
 
-  const accountId = transactions[0].accountId;
-  const existingForAccount = existingTx.filter(tx => tx.accountId === accountId);
-
-  // Build keyword index ONCE
+  const existingForAccount = existing.filter(tx => tx.accountId === accountId);
   const categoryIndex = buildCategoryIndex(categories);
+
+  logImportDebug('Existing transactions for account', existingForAccount.length);
 
   let saved = 0;
   let skipped = 0;
 
   for (const tx of transactions) {
-
-    // ============================================================
-    // 1️⃣ MERCHANT RULES (highest confidence)
-    // ============================================================
-    if (!tx.categoryId && tx.merchant) {
-      const merchantRule = findMerchantRule(tx.merchant);
-
-      if (merchantRule) {
-        tx.categoryId = merchantRule.categoryId;
-        tx._categorySource = 'merchant';
-        tx._categoryConfidence = merchantRule.confidence;
-      }
-    }
-
-    // ============================================================
-    // 2️⃣ KEYWORD RULES (fallback)
-    // ============================================================
+    // 🔹 Auto-assign category IF missing
     if (!tx.categoryId && categories.length && categoryIndex.length) {
-      const keywordCatId = autoAssignCategory(tx, categories, categoryIndex);
-
-      if (keywordCatId) {
-        tx.categoryId = keywordCatId;
-        tx._categorySource = 'keyword';
-        tx._categoryConfidence = 0.6;
+      const autoCatId = autoAssignCategory(tx, categories, categoryIndex);
+      if (autoCatId) {
+        tx.categoryId = autoCatId;
       }
     }
 
-    // ============================================================
-    // 3️⃣ DEDUPLICATION
-    // ============================================================
+    // 🔹 De-duplication
     if (dedupe && isDuplicate(tx, existingForAccount)) {
       skipped++;
       continue;
     }
 
-    // ============================================================
-    // 4️⃣ SAVE
-    // ============================================================
     try {
       await addItem(STORE_NAMES.transactions, tx);
-      existingForAccount.push(tx);
+      existingForAccount.push(tx); // add to in-memory for further dedupe
       saved++;
-    } catch (err) {
-      console.error('[IMPORT] Failed to save transaction', tx, err);
+    } catch (e) {
+      console.error('[IMPORT] Failed to save transaction', tx, e);
       skipped++;
     }
   }
 
-  logImportDebug('saveImportedTransactions:end', { saved, skipped });
+  logImportDebug('saveImportedTransactions: finished', { saved, skipped });
   return { saved, skipped };
 }
 
 // ---------------------------------------------------------------------------
-// Duplicate detection
+// Simple duplicate detection: same date, amount, description, account
+// within +/- 2 days considerate buffer
 // ---------------------------------------------------------------------------
 function isDuplicate(tx, existingList) {
   const txAmt = roundAmount(tx.amount);
@@ -102,7 +78,11 @@ function isDuplicate(tx, existingList) {
     const sameAccount = e.accountId === tx.accountId;
     const closeDate = Math.abs(dayDiff(e.date, txDate)) <= 2;
 
-    return sameAmt && sameDesc && sameAccount && closeDate;
+    const dup = sameAmt && sameDesc && sameAccount && closeDate;
+    if (dup) {
+      logImportDebug('Duplicate detected, skipping:', { tx, existing: e });
+    }
+    return dup;
   });
 }
 
