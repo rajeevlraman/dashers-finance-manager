@@ -50,54 +50,46 @@ export function buildCategoryIndex(categories = []) {
   return index;
 }
 // Build lookup maps from default categories
-/**
- * Build lookup structures from default categories
- */
 export function buildCategoryResolver(categories) {
   const byId = new Map();
   const byName = new Map();
+  const bySlug = new Map();
 
   for (const cat of categories) {
-    if (!cat?.id) continue;
-
     byId.set(cat.id, cat);
 
     if (cat.name) {
       byName.set(cat.name.toLowerCase(), cat);
     }
+
+    // optional slug match
+    if (cat.id) {
+      bySlug.set(cat.id.toLowerCase(), cat);
+    }
   }
 
-  return { byId, byName };
+  return { byId, byName, bySlug };
 }
 
 import { findMerchantRule } from './merchantRules.js';
 
-
-/**
- * Resolve a transaction to a real categoryId
- */
 export function resolveCategoryId(tx, categories, resolver) {
-  const text =
-    (tx.merchant ||
-      tx.cleanDescription ||
-      tx.description ||
-      '').toLowerCase();
+  const text = (tx.merchant || tx.cleanDescription || '').toLowerCase();
 
-  // 1️⃣ Merchant rules (most accurate)
+  // 1️⃣ Merchant rules
   const rule = findMerchantRule(text);
-  if (rule && resolver.byId.has(rule.categoryId)) {
-    return rule.categoryId;
+  if (rule) {
+    const cat = resolver.byId.get(rule.categoryId);
+    if (cat) return cat.id;
   }
 
-  // 2️⃣ Bank category text → default category name
+  // 2️⃣ Bank category text
   if (tx.bankCategory) {
-    const bankMatch = resolver.byName.get(
-      tx.bankCategory.toLowerCase()
-    );
-    if (bankMatch) return bankMatch.id;
+    const bankCat = resolver.byName.get(tx.bankCategory.toLowerCase());
+    if (bankCat) return bankCat.id;
   }
 
-  // 3️⃣ Keyword fallback against category names
+  // 3️⃣ Keyword fallback
   for (const [name, cat] of resolver.byName.entries()) {
     if (text.includes(name)) {
       return cat.id;
