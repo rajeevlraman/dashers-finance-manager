@@ -166,6 +166,19 @@ export async function initDashboardUI() {
       <div class="dashboard icloud-dashboard">
         <!-- iCloud-style header -->
         <header class="icloud-header">
+        // In the header section of your HTML template, add this:
+<div class="header-left">
+  <h1 class="dashboard-title">Finance Dashboard</h1>
+  <p class="dashboard-subtitle">Overview & Analytics</p>
+  <!-- ADD THESE LINES: -->
+  <div class="welcome-info">
+    <div id="welcomeGreeting" class="welcome-greeting"></div>
+    <div class="welcome-details">
+      <span id="welcomeDate"></span>
+      <span id="welcomeWeather"></span>
+    </div>
+  </div>
+</div>
           <div class="header-content">
             <div class="header-left">
               <h1 class="dashboard-title">Finance Dashboard</h1>
@@ -496,8 +509,8 @@ export async function initDashboardUI() {
     `;
 
     // Populate Welcome Banner
-    document.getElementById("welcomeGreeting").textContent = getGreeting();
-    document.getElementById("welcomeDate").textContent = getTodayDate();
+  //  document.getElementById("welcomeGreeting").textContent = getGreeting();
+   // document.getElementById("welcomeDate").textContent = getTodayDate();
     
     // Weather (async)
     getWeather().then(weather => {

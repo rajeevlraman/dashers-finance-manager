@@ -482,3 +482,23 @@
         border-bottom-color: rgba(255, 255, 255, 0.1);
     }
 }
+
+.welcome-info {
+  margin-top: 0.5rem;
+}
+
+.welcome-greeting {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 0.25rem;
+}
+
+.welcome-details {
+  font-size: 0.9rem;
+  color: #8e8e93;
+}
+
+.welcome-details span {
+  margin-right: 1rem;
+}
