@@ -9,7 +9,7 @@ export const merchantRules = [
   // ========= GROCERIES =========
   {
     id: 'mal_vic_groceries',
-    includesAny: ['MAL VIC PTY LTD', 'MAL VIC PTY'],
+    includesAny: ['MAL VIC PTY LTD', 'malvic'],
     categoryId: 'exp_MalVic',
     confidence: 0.9
   },
