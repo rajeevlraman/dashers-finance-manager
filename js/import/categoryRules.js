@@ -78,26 +78,42 @@ export function resolveCategoryId(tx, categories, resolver) {
 
   // 1️⃣ Merchant rules
   const rule = findMerchantRule(text);
-  if (rule) {
-    const cat = resolver.byId.get(rule.categoryId);
-    if (cat) return cat.id;
+  if (rule?.categoryId) {
+    // PERSONAL category → done
+    if (rule.categoryId.startsWith('exp_')) {
+      return rule.categoryId;
+    }
+
+    // MoneySmart → map to personal
+    if (rule.categoryId.startsWith('ms_')) {
+      const mapped = mapMoneySmartToPersonal(rule.categoryId);
+      if (mapped && resolver.byId.has(mapped)) {
+        return mapped;
+      }
+    }
   }
 
-  // 2️⃣ Bank category text
+  // 2️⃣ Bank category → MoneySmart → personal
   if (tx.bankCategory) {
-    const bankCat = resolver.byName.get(tx.bankCategory.toLowerCase());
-    if (bankCat) return bankCat.id;
+    const bankName = tx.bankCategory.toLowerCase();
+
+    // try MoneySmart-style inference
+    if (bankName.includes('grocery')) return 'exp_groceries';
+    if (bankName.includes('restaurant')) return 'exp_dining';
+    if (bankName.includes('fuel')) return 'exp_fuel';
   }
 
-  // 3️⃣ Keyword fallback
+  // 3️⃣ Keyword fallback (personal only)
   for (const [name, cat] of resolver.byName.entries()) {
-    if (text.includes(name)) {
+    if (cat.id.startsWith('exp_') && text.includes(name)) {
       return cat.id;
     }
   }
 
-  return null;
+  // 4️⃣ Final fallback
+  return 'exp_misc_items';
 }
+
 
 
 // ----------------------------------------------------------------------------
