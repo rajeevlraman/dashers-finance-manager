@@ -1,5 +1,5 @@
 import { getAllItems, STORE_NAMES } from './db.js';
-import Chart from 'chart.js/auto';
+//import Chart from 'chart.js/auto';
 
 // Chart instances stored globally
 let catChart = null;
