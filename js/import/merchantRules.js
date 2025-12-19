@@ -137,14 +137,27 @@ export const merchantRules = [
 // ------------------------------------------------------------
 // Matcher
 // ------------------------------------------------------------
+// In merchantRules.js, improve the matcher:
 export function findMerchantRule(cleanedMerchant) {
   if (!cleanedMerchant) return null;
 
   const text = cleanedMerchant.toUpperCase();
-
+  
+  // Try exact matches first
   for (const rule of merchantRules) {
     if (rule.includesAny.some(k => text.includes(k))) {
       return rule;
+    }
+  }
+  
+  // Try partial matches for common words
+  const commonWords = ['WOOLWORTH', 'COLES', 'KFC', 'MCDONALD', 'IGA'];
+  for (const word of commonWords) {
+    if (text.includes(word)) {
+      const matchingRule = merchantRules.find(rule => 
+        rule.includesAny.some(k => k.includes(word))
+      );
+      if (matchingRule) return matchingRule;
     }
   }
 
