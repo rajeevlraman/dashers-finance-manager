@@ -13,7 +13,7 @@ export const merchantCategories = {
  // "coles": { categoryId: "exp_groceries_coles", confidence: 0.95 },
   
   // 🛑 FIX: This key must match the full cleaned output (as confirmed above)
-  "malvic grocery halal butcher": { categoryId: "ms_food", confidence: 0.95 },
+  "Malvic grocery halal butcher": { categoryId: "ms_food", confidence: 0.95 },
   
   // 🛑 FIX: Lowercase keys & check against the full clean description
   "eve iga": { categoryId: "exp_groceries_iga", confidence: 0.9 },
