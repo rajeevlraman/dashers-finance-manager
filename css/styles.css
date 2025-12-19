@@ -25,6 +25,7 @@
 
 /* PAGE LAYOUTS */
 @import url("./layouts/20-dashboard.css");
+@import url("./layouts/20-dashboard_icloud.css");
 @import url("./layouts/21-transactions.css");
 @import url("./layouts/22-properties.css");
 @import url("./layouts/22-costbase.css");
