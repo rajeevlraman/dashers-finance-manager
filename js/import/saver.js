@@ -5,16 +5,22 @@
 import { addItem, getAllItems, STORE_NAMES } from '../db.js';
 import { logImportDebug } from './debug.js';
 
+// 🔑 IMPORT THE RULES THAT ACTUALLY WORK
 import { findMerchantRule } from './merchantRules.js';
 import { buildCategoryIndex, autoAssignCategory } from './categoryRules.js';
 
 export async function saveImportedTransactions(transactions, options = {}) {
   const { dedupe = true } = options;
 
-  if (!transactions?.length) {
+  if (!transactions || !transactions.length) {
     return { saved: 0, skipped: 0 };
   }
 
+  logImportDebug('saveImportedTransactions:start', {
+    count: transactions.length
+  });
+
+  // Load existing data
   const [existingTx, categories] = await Promise.all([
     getAllItems(STORE_NAMES.transactions),
     getAllItems(STORE_NAMES.categories)
@@ -23,6 +29,7 @@ export async function saveImportedTransactions(transactions, options = {}) {
   const accountId = transactions[0].accountId;
   const existingForAccount = existingTx.filter(tx => tx.accountId === accountId);
 
+  // Build keyword index ONCE
   const categoryIndex = buildCategoryIndex(categories);
 
   let saved = 0;
@@ -30,41 +37,43 @@ export async function saveImportedTransactions(transactions, options = {}) {
 
   for (const tx of transactions) {
 
-    // ===============================
-    // 1️⃣ MERCHANT RULES (Tier 1)
-    // ===============================
+    // ============================================================
+    // 1️⃣ MERCHANT RULES (highest confidence)
+    // ============================================================
     if (!tx.categoryId && tx.merchant) {
-      const rule = findMerchantRule(tx.merchant);
-      if (rule?.categoryId) {
-        tx.categoryId = rule.categoryId;
+      const merchantRule = findMerchantRule(tx.merchant);
+
+      if (merchantRule) {
+        tx.categoryId = merchantRule.categoryId;
         tx._categorySource = 'merchant';
-        tx._categoryConfidence = rule.confidence ?? 0.95;
+        tx._categoryConfidence = merchantRule.confidence;
       }
     }
 
-    // ===============================
-    // 2️⃣ KEYWORD RULES (Tier 2)
-    // ===============================
-    if (!tx.categoryId) {
-      const result = autoAssignCategory(tx, categories, categoryIndex);
-      if (result?.categoryId) {
-        tx.categoryId = result.categoryId;
-        tx._categorySource = result.source;
-        tx._categoryConfidence = result.confidence;
+    // ============================================================
+    // 2️⃣ KEYWORD RULES (fallback)
+    // ============================================================
+    if (!tx.categoryId && categories.length && categoryIndex.length) {
+      const keywordCatId = autoAssignCategory(tx, categories, categoryIndex);
+
+      if (keywordCatId) {
+        tx.categoryId = keywordCatId;
+        tx._categorySource = 'keyword';
+        tx._categoryConfidence = 0.6;
       }
     }
 
-    // ===============================
+    // ============================================================
     // 3️⃣ DEDUPLICATION
-    // ===============================
+    // ============================================================
     if (dedupe && isDuplicate(tx, existingForAccount)) {
       skipped++;
       continue;
     }
 
-    // ===============================
+    // ============================================================
     // 4️⃣ SAVE
-    // ===============================
+    // ============================================================
     try {
       await addItem(STORE_NAMES.transactions, tx);
       existingForAccount.push(tx);
@@ -92,6 +101,7 @@ function isDuplicate(tx, existingList) {
     const sameDesc = (e.description || '').toLowerCase() === txDesc;
     const sameAccount = e.accountId === tx.accountId;
     const closeDate = Math.abs(dayDiff(e.date, txDate)) <= 2;
+
     return sameAmt && sameDesc && sameAccount && closeDate;
   });
 }
@@ -101,7 +111,7 @@ function roundAmount(n) {
 }
 
 function dayDiff(d1, d2) {
-  return Math.round(
-    (new Date(d1) - new Date(d2)) / (1000 * 60 * 60 * 24)
-  );
+  const a = new Date(d1);
+  const b = new Date(d2);
+  return Math.round((a - b) / (1000 * 60 * 60 * 24));
 }
