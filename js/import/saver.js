@@ -3,16 +3,13 @@
 // ============================================================================
 
 import { addItem, getAllItems, STORE_NAMES } from '../db.js';
-import { logImportDebug } from './debug.js';
-import { buildCategoryIndex, autoAssignCategory } from './categoryRules.js';
+import {
+  buildCategoryResolver,
+  resolveCategoryId
+} from './categoryRules.js';
 
 export async function saveImportedTransactions(transactions, options = {}) {
   const { dedupe = true } = options;
-
-  logImportDebug('saveImportedTransactions: starting', {
-    count: transactions.length,
-    dedupe
-  });
 
   if (!transactions.length) {
     return { saved: 0, skipped: 0 };
@@ -20,27 +17,26 @@ export async function saveImportedTransactions(transactions, options = {}) {
 
   const accountId = transactions[0].accountId;
 
-  // Load existing tx + categories in parallel
+  // Load existing transactions + categories
   const [existing, categories] = await Promise.all([
     getAllItems(STORE_NAMES.transactions),
-    getAllItems(STORE_NAMES.categories).catch(() => [])
+    getAllItems(STORE_NAMES.categories)
   ]);
 
-  const existingForAccount = existing.filter(tx => tx.accountId === accountId);
-  const categoryIndex = buildCategoryIndex(categories);
+  const existingForAccount = existing.filter(
+    tx => tx.accountId === accountId
+  );
 
-  logImportDebug('Existing transactions for account', existingForAccount.length);
+  // 🔥 THIS WAS MISSING BEFORE
+  const resolver = buildCategoryResolver(categories);
 
   let saved = 0;
   let skipped = 0;
 
   for (const tx of transactions) {
-    // 🔹 Auto-assign category IF missing
-    if (!tx.categoryId && categories.length && categoryIndex.length) {
-      const autoCatId = autoAssignCategory(tx, categories, categoryIndex);
-      if (autoCatId) {
-        tx.categoryId = autoCatId;
-      }
+    // 🔹 Resolve category properly
+    if (!tx.categoryId) {
+      tx.categoryId = resolveCategoryId(tx, categories, resolver);
     }
 
     // 🔹 De-duplication
@@ -51,7 +47,7 @@ export async function saveImportedTransactions(transactions, options = {}) {
 
     try {
       await addItem(STORE_NAMES.transactions, tx);
-      existingForAccount.push(tx); // add to in-memory for further dedupe
+      existingForAccount.push(tx);
       saved++;
     } catch (e) {
       console.error('[IMPORT] Failed to save transaction', tx, e);
@@ -59,13 +55,11 @@ export async function saveImportedTransactions(transactions, options = {}) {
     }
   }
 
-  logImportDebug('saveImportedTransactions: finished', { saved, skipped });
   return { saved, skipped };
 }
 
 // ---------------------------------------------------------------------------
-// Simple duplicate detection: same date, amount, description, account
-// within +/- 2 days considerate buffer
+// Duplicate detection
 // ---------------------------------------------------------------------------
 function isDuplicate(tx, existingList) {
   const txAmt = roundAmount(tx.amount);
@@ -74,15 +68,13 @@ function isDuplicate(tx, existingList) {
 
   return existingList.some(e => {
     const sameAmt = roundAmount(e.amount) === txAmt;
-    const sameDesc = (e.description || '').toLowerCase() === txDesc;
+    const sameDesc =
+      (e.description || '').toLowerCase() === txDesc;
     const sameAccount = e.accountId === tx.accountId;
-    const closeDate = Math.abs(dayDiff(e.date, txDate)) <= 2;
+    const closeDate =
+      Math.abs(dayDiff(e.date, txDate)) <= 2;
 
-    const dup = sameAmt && sameDesc && sameAccount && closeDate;
-    if (dup) {
-      logImportDebug('Duplicate detected, skipping:', { tx, existing: e });
-    }
-    return dup;
+    return sameAmt && sameDesc && sameAccount && closeDate;
   });
 }
 
