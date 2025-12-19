@@ -15,7 +15,7 @@ const mainNavItems = [
 
 const allViews = {
   finance: [
-    { id: 'dashboard_icloud', name: 'Dashboard', icon: '🏠' },
+    { id: 'dashboard', name: 'Dashboard', icon: '🏠' },
     { id: 'transactions', name: 'Transactions', icon: '💸' },
     { id: 'budgets', name: 'Budgets', icon: '🎯' },
     { id: 'accounts', name: 'Accounts', icon: '💳' },
