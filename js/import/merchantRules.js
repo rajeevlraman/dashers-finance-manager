@@ -295,16 +295,22 @@ export const merchantRules = [
  * @param {string} cleanedMerchant - uppercased, normalised merchant text
  * @returns {object|null}
  */
-export function findMerchantRule(cleanedMerchant) {
-  if (!cleanedMerchant) return null;
-  const text = cleanedMerchant.toUpperCase();
+/**
+ * Find a merchant rule based on merchant name
+ * @param {string} merchant - cleaned merchant name (lower or upper case)
+ * @returns {object|null}
+ */
+export function findMerchantRule(merchant) {
+  if (!merchant) return null;
+
+  const text = merchant.toUpperCase();
 
   for (const rule of merchantRules) {
-    const { includesAny = [] } = rule;
-    if (includesAny.some(keyword => text.includes(keyword))) {
+    if (rule.includesAny.some(keyword => text.includes(keyword))) {
       return rule;
     }
   }
 
   return null;
 }
+
