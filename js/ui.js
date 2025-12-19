@@ -4,7 +4,7 @@ import { initTransactionsUI } from './transactions.js';
 import { initAccountsUI } from './accounts.js';
 import { initCategoriesUI } from './categories.js';
 import { initReportsUI } from './reports.js';
-import { initDashboardUI } from './dashboard.js';
+import { initDashboardUI } from './dashboard_icloud.js';
 import { initSettingsUI } from './settings.js';
 import { initBillsUI } from './bills.js';
 import { initCalendarUI } from './calendar.js';
