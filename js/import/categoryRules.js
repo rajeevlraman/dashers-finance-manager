@@ -114,7 +114,46 @@ export function resolveCategoryId(tx, categories, resolver) {
   return 'exp_misc_items';
 }
 
-
+// Add this helper function
+export function debugCategoryAssignment(tx, categories) {
+  const text = (tx.merchant || tx.cleanDescription || '').toLowerCase();
+  const upperText = text.toUpperCase();
+  
+  console.log('🔍 DEBUG Category Assignment:');
+  console.log('Transaction:', tx.description);
+  console.log('Clean text:', text);
+  console.log('Bank Category:', tx.bankCategory);
+  
+  // Check merchant rules
+  for (const rule of merchantRules) {
+    for (const keyword of rule.includesAny) {
+      if (upperText.includes(keyword)) {
+        console.log(`✓ Found merchant rule: ${rule.id} -> ${rule.categoryId}`);
+        
+        // Check if category exists
+        const exists = categories.some(c => c.id === rule.categoryId);
+        console.log(`  Category exists: ${exists}`);
+        
+        if (!exists) {
+          console.log(`  ❌ Category ${rule.categoryId} doesn't exist!`);
+          
+          // Find similar categories
+          const similar = categories.filter(c => 
+            c.id.toLowerCase().includes(rule.categoryId.toLowerCase().replace('exp_', '').slice(0, 5))
+          );
+          if (similar.length > 0) {
+            console.log('  Similar categories:', similar.map(c => c.id));
+          }
+        }
+      }
+    }
+  }
+  
+  // Check bank category mapping
+  if (tx.bankCategory) {
+    console.log(`Bank category: ${tx.bankCategory}`);
+  }
+}
 
 // ----------------------------------------------------------------------------
 // Auto-assign a categoryId based on description & keyword index (Fixed)
@@ -188,3 +227,4 @@ export function autoAssignCategory(tx, categories = [], index = []) {
 
   
 }
+
