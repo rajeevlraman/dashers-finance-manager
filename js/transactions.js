@@ -460,7 +460,10 @@ function renderTransactionList(transactions, categories, accounts, properties) {
 // Render Single Transaction Card
 // ============================================================================
 function renderTransactionCard(tx, categories, accounts, properties) {
-  const category = categories.find(c => c.id === tx.categoryId);
+const { main: mainCategory, sub: subCategory } =
+  resolveCategoryParts(tx, categories);
+
+const category = subCategory || mainCategory;
   const account = accounts.find(a => a.id === tx.accountId);
   const property = properties.find(p => p.id === tx.propertyId);
   const isIncome = tx.amount > 0;
@@ -1108,21 +1111,35 @@ function hideSyncStatus() {
 // ============================================================================
 function getCategoryDisplayName(tx, categories) {
   if (tx.categoryId) {
-    const cat = categories.find(c => c.id === tx.categoryId);
-    if (cat) {
-      if (cat.parentId) {
-        const parent = categories.find(c => c.id === cat.parentId);
-        return parent ? `${parent.name} › ${cat.name}` : cat.name;
-      }
-      return cat.name;
-    }
+    const { main, sub } = resolveCategoryParts(tx, categories);
+    if (main && sub) return `${main.name} › ${sub.name}`;
+    if (main) return main.name;
   }
 
   if (tx.bankCategory) return tx.bankCategory;
-  if (tx.description) return tx.description.substring(0, 30) + (tx.description.length > 30 ? '...' : '');
-  
+  if (tx.description)
+    return tx.description.substring(0, 30) +
+      (tx.description.length > 30 ? '...' : '');
+
   return 'Uncategorized';
 }
+
+
+function resolveCategoryParts(tx, categories) {
+  if (!tx.categoryId) return { main: null, sub: null };
+
+  const cat = categories.find(c => c.id === tx.categoryId);
+  if (!cat) return { main: null, sub: null };
+
+  if (cat.parentId) {
+    const parent = categories.find(c => c.id === cat.parentId);
+    return { main: parent || null, sub: cat };
+  }
+
+  // Main category only
+  return { main: cat, sub: null };
+}
+
 
 // ============================================================================
 //  EXPORT FUNCTIONALITY
