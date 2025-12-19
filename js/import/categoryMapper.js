@@ -281,9 +281,3 @@ export function debugTransaction(tx) {
 
 // categoryMapper.js - END OF FILE (after all functions)
 
-export {
-  initCategoryMapper,
-  suggestCategory,
-  suggestCategoriesForBatch,
-  
-};
