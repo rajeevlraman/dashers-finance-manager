@@ -69,7 +69,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_grocery_supermarket', name: 'Supermarket', type: 'expense', icon: '🛍️', parentId: 'exp_groceries' },
 { id: 'exp_grocery_fresh', name: 'Fruits & Vegetables', type: 'expense', icon: '🥬', parentId: 'exp_groceries' },
 { id: 'exp_grocery_meat', name: 'Meat & Seafood', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
-{ id: 'exp_malvic_Pty', name: 'Meat & Afghani', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
+{ id: 'exp_Malvic_Pty', name: 'Meat & Afghani', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
 { id: 'exp_Malvic', name: 'Meat & Afghani', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
 { id: 'exp_Safeway', name: 'Safeway', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 { id: 'exp_Woolworths', name: 'Woolworths', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
