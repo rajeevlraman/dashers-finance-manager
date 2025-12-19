@@ -276,4 +276,14 @@ export function debugTransaction(tx) {
   
   console.groupEnd();
   return suggestion;
+  
 }
+
+// categoryMapper.js - END OF FILE (after all functions)
+
+export {
+  initCategoryMapper,
+  suggestCategory,
+  suggestCategoriesForBatch,
+  debugTransaction
+};
