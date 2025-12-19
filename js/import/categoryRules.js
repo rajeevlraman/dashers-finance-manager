@@ -49,6 +49,56 @@ export function buildCategoryIndex(categories = []) {
 
   return index;
 }
+// Build lookup maps from default categories
+export function buildCategoryResolver(categories) {
+  const byId = new Map();
+  const byName = new Map();
+  const bySlug = new Map();
+
+  for (const cat of categories) {
+    byId.set(cat.id, cat);
+
+    if (cat.name) {
+      byName.set(cat.name.toLowerCase(), cat);
+    }
+
+    // optional slug match
+    if (cat.id) {
+      bySlug.set(cat.id.toLowerCase(), cat);
+    }
+  }
+
+  return { byId, byName, bySlug };
+}
+
+import { findMerchantRule } from './merchantRules.js';
+
+export function resolveCategoryId(tx, categories, resolver) {
+  const text = (tx.merchant || tx.cleanDescription || '').toLowerCase();
+
+  // 1️⃣ Merchant rules
+  const rule = findMerchantRule(text);
+  if (rule) {
+    const cat = resolver.byId.get(rule.categoryId);
+    if (cat) return cat.id;
+  }
+
+  // 2️⃣ Bank category text
+  if (tx.bankCategory) {
+    const bankCat = resolver.byName.get(tx.bankCategory.toLowerCase());
+    if (bankCat) return bankCat.id;
+  }
+
+  // 3️⃣ Keyword fallback
+  for (const [name, cat] of resolver.byName.entries()) {
+    if (text.includes(name)) {
+      return cat.id;
+    }
+  }
+
+  return null;
+}
+
 
 // ----------------------------------------------------------------------------
 // Auto-assign a categoryId based on description & keyword index (Fixed)
@@ -83,6 +133,9 @@ export function autoAssignCategory(tx, categories = [], index = []) {
     };
   }
 
+
+
+  
   // ===============================
   // 💡 TIER 2 — KEYWORD MATCH
   // ===============================
@@ -116,4 +169,6 @@ export function autoAssignCategory(tx, categories = [], index = []) {
     source: 'keyword',
     confidence
   };
+
+  
 }

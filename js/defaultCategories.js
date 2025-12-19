@@ -142,7 +142,7 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_grooming', name: 'Grooming / Salon', type: 'expense', icon: '💇', parentId: 'exp_personal' },
 { id: 'exp_gifts', name: 'Gifts', type: 'expense', icon: '🎁 ', parentId: 'exp_personal' },
 { id: 'exp_fitness', name: 'Fitness / Gym', type: 'expense', icon: '🏋️', parentId: 'exp_personal' },
-{ id: 'exp_barber', name: 'Hairdresser', type: 'expense', icon: '🎁', parentId: 'exp_personal '},
+{ id: 'exp_grindsten', name: 'Hairdresser', type: 'expense', icon: '🎁', parentId: 'exp_personal '},
   // Subscriptions Main
 { id: 'exp_subs', name: 'Subscriptions', type: 'expense', icon: '📺', parentId: null },
 
