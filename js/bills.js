@@ -24,21 +24,19 @@ export class BillsManager {
     }
 
     renderUI() {
-            console.log('Starting renderUI...');
-
         const mainContent = document.getElementById('mainContent');
         const today = new Date().toISOString().slice(0, 10);
-            console.log('HTML to render:', html);
-
+        
         mainContent.innerHTML = `
             <div class="bills-container">
                 <div class="bills-header">
                     <h2>📋 Bills Manager</h2>
+                    <button id="addBillBtn" class="btn btn-primary">+ Add Bill</button>
                 </div>
 
                 ${this.renderStatsCards(today)}
 
-                ${this.renderHorizontalQuickActions(today)}
+                ${this.renderQuickActions(today)}
 
                 <div class="bills-content">
                     ${this.bills.length === 0 ? this.renderEmptyState() : this.renderBillsTable(today)}
