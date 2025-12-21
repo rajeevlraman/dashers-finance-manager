@@ -24,9 +24,12 @@ export class BillsManager {
     }
 
     renderUI() {
+            console.log('Starting renderUI...');
+
         const mainContent = document.getElementById('mainContent');
         const today = new Date().toISOString().slice(0, 10);
-        
+            console.log('HTML to render:', html);
+
         mainContent.innerHTML = `
             <div class="bills-container">
                 <div class="bills-header">
@@ -265,6 +268,8 @@ export class BillsManager {
                     <button class="btn btn-primary" id="emptyAddBill">Add Your First Bill</button>
                 </div>
             </div>
+
+
         `;
     }
 
