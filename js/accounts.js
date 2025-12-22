@@ -18,6 +18,32 @@ function generateId() {
   });
 }
 
+const PRIMARY_ACCOUNT_KEY = 'primaryAccountId';
+
+async function getPrimaryAccountId() {
+  const meta = await getAllItems(STORE_NAMES.meta);
+  const item = meta.find(m => m.key === PRIMARY_ACCOUNT_KEY);
+  return item?.value || null;
+}
+
+async function setPrimaryAccountId(accountId) {
+  const meta = await getAllItems(STORE_NAMES.meta);
+  const existing = meta.find(m => m.key === PRIMARY_ACCOUNT_KEY);
+
+  const payload = {
+    id: existing?.id || generateId(),
+    key: PRIMARY_ACCOUNT_KEY,
+    value: accountId
+  };
+
+  if (existing) {
+    await updateItem(STORE_NAMES.meta, payload);
+  } else {
+    await addItem(STORE_NAMES.meta, payload);
+  }
+}
+
+
 // Helper functions moved to top
 function formatCurrency(amount, currency) {
   return new Intl.NumberFormat('en-US', {
@@ -278,6 +304,37 @@ function updateSummaryCards(accounts, transactions) {
 
   return s; // 👈 important
 }
+
+function renderAccountsInsights(summary) {
+  const insights = document.getElementById('accountsInsights');
+  if (!insights) return;
+
+  insights.innerHTML = `
+    <h4>Overview</h4>
+
+    <div class="insight highlight">
+      <small>Net Worth</small>
+      <strong>${formatCurrency(summary.netWorth, 'AUD')}</strong>
+    </div>
+
+    <div class="insight">
+      <small>Total Assets</small>
+      <strong>${formatCurrency(summary.totalAssets, 'AUD')}</strong>
+    </div>
+
+    <div class="insight">
+      <small>Total Liabilities</small>
+      <strong>${formatCurrency(summary.totalLiabilities, 'AUD')}</strong>
+    </div>
+
+    <div class="insight">
+      <small>Available Credit</small>
+      <strong>${formatCurrency(summary.availableCredit, 'AUD')}</strong>
+    </div>
+  `;
+}
+
+
 function quickAddTransaction(accountId) {
   // Simple prompt for quick transaction addition
   const amount = prompt('Enter transaction amount (negative for expenses):');
@@ -484,9 +541,10 @@ function refreshAccountList() {
   Promise.all([
     getAllItems(STORE_NAMES.accounts),
     getAllItems(STORE_NAMES.loans),
-    getAllItems(STORE_NAMES.transactions)
-    
-  ]).then(([accounts, loans, transactions]) => {
+    getAllItems(STORE_NAMES.transactions),
+    getPrimaryAccountId()
+  ]).then(([accounts, loans, transactions, primaryAccountId]) => {
+
     const listEl = document.getElementById('accList');
     const searchTerm = document.getElementById('accountSearch').value.toLowerCase();
     const typeFilter = document.getElementById('accountTypeFilter').value;
@@ -582,7 +640,7 @@ function refreshAccountList() {
       }
 
 return `
-  <div class="account-card ${account.type}">
+<div class="account-card ${account.type} ${account.id === primaryAccountId ? 'primary' : ''}">
     
     <!-- HEADER (collapsed view) -->
     <div class="account-header" data-id="${account.id}">
