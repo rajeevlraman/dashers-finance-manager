@@ -430,7 +430,6 @@ export function initAccountsUI() {
               <button>📦 Budgets</button>
             </section>
 
-            <section class="mobile-accounts-list" id="mobileAccounts"></section>
 
           </div>
 
