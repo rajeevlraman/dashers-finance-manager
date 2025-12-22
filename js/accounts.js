@@ -368,7 +368,7 @@ export function initAccountsUI() {
 
 function calculateAccountBalance(account, transactions) {
   const tx = transactions.filter(t => t.accountId === account.id);
-  if (!tx.length) return derivedBalance || 0;
+  if (!tx.length) return account.balance || 0;
 
   return tx.reduce((sum, t) => sum + t.amount, 0);
 }
