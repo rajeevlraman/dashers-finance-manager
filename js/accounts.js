@@ -534,30 +534,34 @@ export function initAccountsUI() {
           </div>
         </div>
         
-        <!-- SUMMARY CARDS IN HEADER -->
-        <div class="header-summary">
-          <div class="summary-card wide-card green">
-            <h3>Net Worth</h3>
-            <p class="summary-amount">$0.00</p>
-            <small>Loading...</small>
-          </div>
-          <div class="summary-card wide-card blue">
-            <h3>Total Assets</h3>
-            <p class="summary-amount">$0.00</p>
-            <small>Across 0 accounts</small>
-          </div>
-          <div class="summary-card wide-card red">
-            <h3>Liabilities</h3>
-            <p class="summary-amount">$0.00</p>
-            <small>Credit & Loans</small>
-          </div>
-          <div class="summary-card wide-card teal">
-            <h3>Available Credit</h3>
-            <p class="summary-amount">$0.00</p>
-            <small>0% of limit used</small>
-          </div>
+      <div class="summary-cards">
+
+        <div class="card green">
+          <h3>Net Worth</h3>
+          <p class="summary-amount positive">A$834,066.73</p>
+          <small>Positive growth</small>
         </div>
+
+        <div class="card blue">
+          <h3>Total Assets</h3>
+          <p class="summary-amount">A$835,710.24</p>
+          <small>Across 6 accounts</small>
+        </div>
+
+        <div class="card red">
+          <h3>Liabilities</h3>
+          <p class="summary-amount negative">A$1,643.51</p>
+          <small>Credit & Loans</small>
+        </div>
+
+        <div class="card teal">
+          <h3>Available Credit</h3>
+          <p class="summary-amount">A$456.49</p>
+          <small>78.3% of limit used</small>
+        </div>
+
       </div>
+
       
       <!-- 3-COLUMN MAIN DASHBOARD -->
       <div class="dashboard-grid">
