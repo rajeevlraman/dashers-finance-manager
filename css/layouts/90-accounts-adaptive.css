@@ -211,3 +211,63 @@
         width: 100%;
     }
 }
+
+/* ================================
+   ACCOUNT CARD — TEXT VISIBILITY FIX
+   ================================ */
+
+.account-card {
+  color: var(--color-text);
+}
+
+/* Primary text */
+.account-card .account-name,
+.account-card .account-balance,
+.account-card .stat-value {
+  color: #f8fafc;
+}
+
+/* Secondary text */
+.account-card .account-type,
+.account-card .last-activity,
+.account-card .stat-label,
+.account-card small {
+  color: rgba(241, 245, 249, 0.75);
+}
+
+/* Positive / Negative amounts */
+.account-card .account-balance.positive,
+.account-card .stat-value.positive {
+  color: var(--color-positive);
+}
+
+.account-card .account-balance.negative,
+.account-card .stat-value.negative {
+  color: var(--color-negative);
+}
+
+.account-balance {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.account-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.06),
+    transparent 40%
+  );
+  pointer-events: none;
+}
+/* ================================
+   SUMMARY CARDS — FORCE 4-UP DESKTOP
+   ================================ */
+@media (min-width: 1024px) {
+  .summary-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
