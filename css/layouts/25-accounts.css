@@ -556,3 +556,59 @@
 }
 
 
+
+/* ================================
+   PRIMARY (HIGHLIGHT) ACCOUNT
+   ================================ */
+
+.account-card:first-child {
+  background: linear-gradient(135deg, #0f172a, #020617);
+  color: white;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+}
+
+.account-card:first-child .account-name,
+.account-card:first-child .account-type,
+.account-card:first-child .last-activity {
+  color: rgba(255,255,255,0.85);
+}
+
+.account-card:first-child .account-balance {
+  font-size: 2rem;
+  font-weight: 800;
+}
+/* ================================
+   STANDARD ACCOUNT CARDS
+   ================================ */
+
+.account-card:not(:first-child) {
+  background: var(--card-bg);
+  color: var(--text-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.account-card:not(:first-child):hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+/* ================================
+   TRANSACTIONS – DASHBOARD STYLE
+   ================================ */
+
+.account-details {
+  background: transparent;
+  border-top: 1px solid var(--border-color);
+}
+
+.rt-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.rt-desc {
+  font-weight: 500;
+}
+
+.rt-date {
+  font-size: 0.75rem;
+}
