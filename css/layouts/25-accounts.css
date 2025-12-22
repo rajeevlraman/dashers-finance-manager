@@ -150,9 +150,11 @@
 
 /* Balance Section */
 .account-balance {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
 }
 
 .balance-amount {
@@ -166,6 +168,16 @@
 .account-updated {
     font-size: 0.8rem;
     color: var(--text-muted);
+}
+
+.account-balance > * {
+  min-width: 0; /* critical for overflow */
+}
+
+.credit-limit {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* ---------------------------------------
@@ -343,11 +355,6 @@
   color: var(--text-muted);
 }
 
-/* Balance */
-.account-balance {
-  font-size: 1.6rem;
-  font-weight: 700;
-}
 
 .account-balance.positive { color: #27ae60; }
 .account-balance.negative { color: #e74c3c; }
