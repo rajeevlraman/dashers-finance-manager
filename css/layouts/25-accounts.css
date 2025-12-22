@@ -372,3 +372,36 @@
     display: none;
   }
 }
+
+
+.account-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  padding: 1.25rem;
+  color: white;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Card face */
+.account-header {
+  background: linear-gradient(135deg, #1f2937, #111827);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* Card shine */
+.account-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at top left,
+    rgba(255,255,255,0.18),
+    transparent 60%
+  );
+  pointer-events: none;
+}
