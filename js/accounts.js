@@ -366,6 +366,14 @@ export function initAccountsUI() {
   refreshAccountList();
 }
 
+function calculateAccountBalance(account, transactions) {
+  const tx = transactions.filter(t => t.accountId === account.id);
+  if (!tx.length) return derivedBalance || 0;
+
+  return tx.reduce((sum, t) => sum + t.amount, 0);
+}
+
+
 function refreshAccountList() {
   Promise.all([
     getAllItems(STORE_NAMES.accounts),
@@ -415,7 +423,10 @@ function refreshAccountList() {
     });
 
     listEl.innerHTML = filteredAccounts.map(account => {
-      const isNegative = account.balance < 0;
+     // const isNegative = derivedBalance < 0;
+      const derivedBalance = calculateAccountBalance(account, transactions);
+      const isNegative = derivedBalance < 0;
+
       const isCredit = account.type === 'credit';
       const balanceClass = isNegative ? 'negative' : 'positive';
       const icon = getAccountIcon(account.type);
@@ -440,7 +451,7 @@ function refreshAccountList() {
       // Credit utilization for credit cards
       let creditUtilization = '';
       if (isCredit && account.creditLimit && account.creditLimit > 0) {
-        const utilization = (Math.abs(account.balance) / account.creditLimit) * 100;
+        const utilization = (Math.abs(derivedBalance) / account.creditLimit) * 100;
         creditUtilization = `
           <div class="credit-utilization">
             <div class="utilization-bar">
@@ -464,7 +475,7 @@ function refreshAccountList() {
               ${linkedLoanInfo}
             </div>
             <div class="account-balance ${balanceClass}">
-              ${formatCurrency(account.balance, account.currency)}
+              ${formatCurrency(derivedBalance, account.currency)}
               ${isCredit && account.creditLimit ? `
                 <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
               ` : ''}
@@ -490,7 +501,7 @@ function refreshAccountList() {
               ${isCredit && account.creditLimit ? `
                 <div class="stat">
                   <span class="stat-label">Available Credit</span>
-                  <span class="stat-value positive">${formatCurrency(account.creditLimit + account.balance, account.currency)}</span>
+                  <span class="stat-value positive">${formatCurrency(account.creditLimit + derivedBalance, account.currency)}</span>
                 </div>
               ` : ''}
             </div>
