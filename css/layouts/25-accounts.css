@@ -87,6 +87,14 @@
     gap: 1.5rem;
 }
 
+
+/* Neutralize generic card styles inside accounts page */
+.accounts-grid .card {
+  padding: 0;
+  box-shadow: none;
+  border: none;
+}
+
 /* ---------------------------------------
    ACCOUNT CARD
 ---------------------------------------- */
@@ -377,3 +385,9 @@
 .rt-date { color: var(--text-muted); }
 .rt-amt.neg { color: #e74c3c; }
 .rt-amt.pos { color: #27ae60; }
+
+.account-card h4,
+.account-card p,
+.account-card small {
+  margin: 0;
+}
