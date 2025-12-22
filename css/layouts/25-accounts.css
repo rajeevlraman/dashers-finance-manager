@@ -1659,3 +1659,12 @@ select:focus {
 
 /* Final export line for the CSS file */
 /* End of accounts-styles.css */
+
+/* ================================
+   SUMMARY CARDS — FORCE 4-UP DESKTOP
+   ================================ */
+@media (min-width: 1024px) {
+  .summary-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
