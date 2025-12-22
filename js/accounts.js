@@ -1595,7 +1595,6 @@ export function initEnhancedAccountsUI() {
 
 // Export functions for use in other modules
 export {
-  initAccountsUI,
   addDefaultAccounts,
   getPrimaryAccountId,
   setPrimaryAccountId,
