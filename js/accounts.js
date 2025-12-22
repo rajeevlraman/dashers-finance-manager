@@ -462,57 +462,89 @@ function refreshAccountList() {
         `;
       }
 
-      return `
-        <div class="account-card ${account.type}">
-          <div class="account-header" data-id="${account.id}">
-            <div class="account-icon">${icon}</div>
-            <div class="account-info">
-              <h4 class="account-name">${account.name}</h4>
-              <p class="account-type">${getAccountTypeLabel(account.type)}</p>
-              ${lastTransaction ? `
-                <small class="last-activity">Last activity: ${daysSinceActivity === 0 ? 'Today' : `${daysSinceActivity} days ago`}</small>
-              ` : '<small class="last-activity">No transactions yet</small>'}
-              ${linkedLoanInfo}
-            </div>
-            <div class="account-balance ${balanceClass}">
-              ${formatCurrency(derivedBalance, account.currency)}
-              ${isCredit && account.creditLimit ? `
-                <div class="credit-limit">Limit: ${formatCurrency(account.creditLimit, account.currency)}</div>
-              ` : ''}
-              ${creditUtilization}
-            </div>
-          </div>
-          <div id="details-${account.id}" class="account-details" style="display: none;">
-            <div class="account-actions">
-              <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
-              <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
-              <button class="btn btn-primary" data-id="${account.id}" data-action="quick-add">💸 Quick Add Transaction</button>
-            </div>
+return `
+  <div class="account-card ${account.type}">
+    
+    <!-- HEADER (collapsed view) -->
+    <div class="account-header" data-id="${account.id}">
+      
+      <div class="account-left">
+        <div class="account-icon">${icon}</div>
 
-            <div class="account-stats">
-              <div class="stat">
-                <span class="stat-label">Transactions</span>
-                <span class="stat-value">${accountTransactions.length}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Last Activity</span>
-                <span class="stat-value">${lastTransaction ? formatDate(lastTransaction) : 'Never'}</span>
-              </div>
-              ${isCredit && account.creditLimit ? `
-                <div class="stat">
-                  <span class="stat-label">Available Credit</span>
-                  <span class="stat-value positive">${formatCurrency(account.creditLimit + derivedBalance, account.currency)}</span>
-                </div>
-              ` : ''}
-            </div>
+        <div class="account-info">
+          <h4 class="account-name">${account.name}</h4>
+          <p class="account-type">${getAccountTypeLabel(account.type)}</p>
 
-            <div class="recent-transactions" id="recent-${account.id}">
-              <p class="rt-title">Recent Transactions</p>
-              <div class="rt-loading">Loading…</div>
-            </div>
-          </div>
+          ${
+            lastTransaction
+              ? `<small class="last-activity">
+                   Last activity: ${daysSinceActivity === 0 ? 'Today' : `${daysSinceActivity} days ago`}
+                 </small>`
+              : `<small class="last-activity">No transactions yet</small>`
+          }
+
+          ${linkedLoanInfo}
         </div>
-      `;
+      </div>
+
+      <div class="account-right">
+        <div class="account-balance ${balanceClass}">
+          ${formatCurrency(derivedBalance, account.currency)}
+        </div>
+
+        <div class="account-chevron">▾</div>
+      </div>
+    </div>
+
+    <!-- EXPANDED DETAILS -->
+    <div id="details-${account.id}" class="account-details" style="display: none;">
+      
+      <div class="account-actions">
+        <button class="btn btn-secondary" data-id="${account.id}" data-action="edit">✏️ Edit</button>
+        <button class="btn btn-danger" data-id="${account.id}" data-action="delete">🗑️ Delete</button>
+        <button class="btn btn-primary" data-id="${account.id}" data-action="quick-add">💸 Quick Add Transaction</button>
+      </div>
+
+      <div class="account-stats">
+        <div class="stat">
+          <span class="stat-label">Transactions</span>
+          <span class="stat-value">${accountTransactions.length}</span>
+        </div>
+
+        <div class="stat">
+          <span class="stat-label">Last Activity</span>
+          <span class="stat-value">${lastTransaction ? formatDate(lastTransaction) : 'Never'}</span>
+        </div>
+
+        ${
+          isCredit && account.creditLimit
+            ? `<div class="stat">
+                 <span class="stat-label">Available Credit</span>
+                 <span class="stat-value positive">
+                   ${formatCurrency(account.creditLimit + derivedBalance, account.currency)}
+                 </span>
+               </div>`
+            : ''
+        }
+      </div>
+
+      ${
+        isCredit && account.creditLimit
+          ? `<div class="credit-limit">
+               Limit: ${formatCurrency(account.creditLimit, account.currency)}
+             </div>
+             ${creditUtilization}`
+          : ''
+      }
+
+      <div class="recent-transactions" id="recent-${account.id}">
+        <p class="rt-title">Recent Transactions</p>
+        <div class="rt-loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+`;
+
     }).join('');
 
     // Event listeners
