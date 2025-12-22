@@ -26,6 +26,43 @@ function formatCurrency(amount, currency) {
   }).format(amount);
 }
 
+function computeAccountSummary(accounts, transactions) {
+  const assets = accounts.filter(a => a.type !== 'credit');
+  const liabilities = accounts.filter(a => a.type === 'credit');
+
+  const totalAssets = assets.reduce((s, a) => s + (a.balance || 0), 0);
+  const totalLiabilities = liabilities.reduce(
+    (s, a) => s + Math.abs(a.balance || 0), 0
+  );
+
+  const netWorth = totalAssets - totalLiabilities;
+
+  const cashAccounts = accounts.filter(acc =>
+    ['bank', 'savings', 'cash', 'offset'].includes(acc.type)
+  ).length;
+
+  const totalCreditLimit = liabilities.reduce(
+    (s, a) => s + (a.creditLimit || 0), 0
+  );
+
+  const usedCredit = liabilities.reduce(
+    (s, a) => s + Math.abs(a.balance || 0), 0
+  );
+
+  const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
+
+  return {
+    netWorth,
+    totalAssets,
+    totalLiabilities,
+    cashAccounts,
+    creditCards: liabilities.length,
+    totalCreditLimit,
+    availableCredit
+  };
+}
+
+
 function formatDate(date) {
   return date.toLocaleDateString('en-US', { 
     month: 'short', 
@@ -209,32 +246,38 @@ function updateSummaryCards(accounts, transactions) {
       creditCards,
       availableCredit: formatCurrency(availableCredit, 'AUD')
     });
+  const s = computeAccountSummary(accounts, transactions);
 
-    // Update summary cards with better labels
-    document.getElementById('totalBalanceCard').innerHTML = `
-      <h3>Net Worth</h3>
-      <p class="summary-amount ${netWorth >= 0 ? 'positive' : 'negative'}">${formatCurrency(netWorth, 'AUD')}</p>
-      <small>Assets: ${formatCurrency(totalAssets, 'AUD')}</small>
-    `;
-    
-    document.getElementById('cashAccountsCard').innerHTML = `
-      <h3>Cash Accounts</h3>
-      <p class="summary-count">${cashAccounts}</p>
-      <small>Total: ${formatCurrency(totalAssets, 'AUD')}</small>
-    `;
-    
-    document.getElementById('creditCardsCard').innerHTML = `
-      <h3>Credit Cards</h3>
-      <p class="summary-count">${creditCards}</p>
-      <small>Owed: ${formatCurrency(totalLiabilities, 'AUD')}</small>
-    `;
-    
-    document.getElementById('totalCreditCard').innerHTML = `
-      <h3>Available Credit</h3>
-      <p class="summary-amount">${formatCurrency(availableCredit, 'AUD')}</p>
-      <small>Limit: ${formatCurrency(totalCreditLimit, 'AUD')}</small>
-    `;
-  }
+  document.getElementById('totalBalanceCard').innerHTML = `
+    <h3>Net Worth</h3>
+    <p class="summary-amount ${s.netWorth >= 0 ? 'positive' : 'negative'}">
+      ${formatCurrency(s.netWorth, 'AUD')}
+    </p>
+    <small>Assets: ${formatCurrency(s.totalAssets, 'AUD')}</small>
+  `;
+
+  document.getElementById('cashAccountsCard').innerHTML = `
+    <h3>Cash Accounts</h3>
+    <p class="summary-count">${s.cashAccounts}</p>
+    <small>Total: ${formatCurrency(s.totalAssets, 'AUD')}</small>
+  `;
+
+  document.getElementById('creditCardsCard').innerHTML = `
+    <h3>Credit Cards</h3>
+    <p class="summary-count">${s.creditCards}</p>
+    <small>Owed: ${formatCurrency(s.totalLiabilities, 'AUD')}</small>
+  `;
+
+  document.getElementById('totalCreditCard').innerHTML = `
+    <h3>Available Credit</h3>
+    <p class="summary-amount">
+      ${formatCurrency(s.availableCredit, 'AUD')}
+    </p>
+    <small>Limit: ${formatCurrency(s.totalCreditLimit, 'AUD')}</small>
+  `;
+
+  return s; // 👈 important
+}
 function quickAddTransaction(accountId) {
   // Simple prompt for quick transaction addition
   const amount = prompt('Enter transaction amount (negative for expenses):');
@@ -303,6 +346,8 @@ export function initAccountsUI() {
 
   main.innerHTML = `
     <div class="page-container">
+
+      <!-- PAGE HEADER -->
       <div class="page-header">
         <h2>🏦 Accounts</h2>
         <div class="page-actions">
@@ -311,60 +356,122 @@ export function initAccountsUI() {
         </div>
       </div>
 
-      <!-- Summary Cards -->
-      <div class="summary-cards">
-        <div class="card green" id="totalBalanceCard">
-          <h3>Total Balance</h3>
-          <p class="summary-amount">$0.00</p>
-        </div>
-        <div class="card blue" id="cashAccountsCard">
-          <h3>Cash Accounts</h3>
-          <p class="summary-count">0</p>
-        </div>
-        <div class="card red" id="creditCardsCard">
-          <h3>Credit Cards</h3>
-          <p class="summary-count">0</p>
-        </div>
-        <div class="card teal" id="totalCreditCard">
-          <h3>Available Credit</h3>
-          <p class="summary-amount">$0.00</p>
-        </div>
-      </div>
+      <!-- 3-ZONE LAYOUT -->
+      <div class="accounts-layout">
 
-      <div class="section-card">
-        <div class="accounts-controls">
-          <div class="search-box">
-            <input type="text" id="accountSearch" placeholder="🔍 Search accounts..." class="form-input">
+        <!-- LEFT: FILTERS / SIDEBAR -->
+        <aside class="accounts-sidebar">
+          <h4>Filter Accounts</h4>
+
+          <div class="form-group">
+            <label class="form-label">Search</label>
+            <input
+              type="text"
+              id="accountSearch"
+              class="form-input"
+              placeholder="🔍 Search accounts..."
+            >
           </div>
-          <div class="filter-controls">
+
+          <div class="form-group mt-2">
+            <label class="form-label">Account Type</label>
             <select id="accountTypeFilter" class="form-select">
               <option value="all">All Account Types</option>
-              <option value="bank">🏦 Bank Accounts</option>
-              <option value="credit">💳 Credit Cards</option>
+              <option value="bank">🏦 Bank</option>
+              <option value="credit">💳 Credit</option>
               <option value="savings">💰 Savings</option>
-              <option value="investment">📈 Investments</option>
-              <option value="offset">⚖️ Offset Accounts</option>
+              <option value="investment">📈 Investment</option>
+              <option value="offset">⚖️ Offset</option>
               <option value="cash">💵 Cash</option>
               <option value="other">📁 Other</option>
             </select>
           </div>
-        </div>
-        <div id="accList" class="accounts-grid">Loading…</div>
+        </aside>
+
+        <!-- CENTER: MAIN CONTENT -->
+        <main class="accounts-main">
+
+          <!-- SUMMARY CARDS -->
+          <div class="summary-cards">
+            <div class="card green" id="totalBalanceCard">
+              <h3>Net Worth</h3>
+              <p class="summary-amount">$0.00</p>
+            </div>
+
+            <div class="card blue" id="cashAccountsCard">
+              <h3>Cash Accounts</h3>
+              <p class="summary-count">0</p>
+            </div>
+
+            <div class="card red" id="creditCardsCard">
+              <h3>Credit Cards</h3>
+              <p class="summary-count">0</p>
+            </div>
+
+            <div class="card teal" id="totalCreditCard">
+              <h3>Available Credit</h3>
+              <p class="summary-amount">$0.00</p>
+            </div>
+          </div>
+
+          <!-- MOBILE SUMMARY -->
+          <div class="accounts-mobile">
+
+            <section class="mobile-balance-card">
+              <small>Net Worth</small>
+              <h1 id="mobileNetWorth">A$0.00</h1>
+              <span id="mobileAssets">Assets A$0.00</span>
+            </section>
+
+            <section class="mobile-actions">
+              <button>➕ Add</button>
+              <button>📄 Transactions</button>
+              <button>📊 Reports</button>
+              <button>📦 Budgets</button>
+            </section>
+
+            <section class="mobile-accounts-list" id="mobileAccounts"></section>
+
+          </div>
+
+          <!-- ACCOUNTS GRID -->
+          <div id="accList" class="accounts-grid">
+            Loading…
+          </div>
+
+        </main>
+
+        <!-- RIGHT: INSIGHTS -->
+        <aside class="accounts-insights" id="accountsInsights">
+          <h4>Overview</h4>
+          <p class="text-muted">Loading insights…</p>
+        </aside>
+
       </div>
     </div>
   `;
 
+  // Remove page transition after render
   setTimeout(() => main.classList.remove('page-transition'), 400);
 
-  document.getElementById('btnNewAcc').addEventListener('click', () => openAccountEditor());
-  document.getElementById('btnAddDefaults').addEventListener('click', addDefaultAccounts);
+  // Header actions
+  document.getElementById('btnNewAcc')
+    .addEventListener('click', () => openAccountEditor());
 
-  // Add search and filter functionality
-  document.getElementById('accountSearch').addEventListener('input', refreshAccountList);
-  document.getElementById('accountTypeFilter').addEventListener('change', refreshAccountList);
+  document.getElementById('btnAddDefaults')
+    .addEventListener('click', addDefaultAccounts);
 
+  // Filters
+  document.getElementById('accountSearch')
+    .addEventListener('input', refreshAccountList);
+
+  document.getElementById('accountTypeFilter')
+    .addEventListener('change', refreshAccountList);
+
+  // Initial load
   refreshAccountList();
 }
+
 
 function calculateAccountBalance(account, transactions) {
   const tx = transactions.filter(t => t.accountId === account.id);
@@ -379,10 +486,12 @@ function refreshAccountList() {
     getAllItems(STORE_NAMES.accounts),
     getAllItems(STORE_NAMES.loans),
     getAllItems(STORE_NAMES.transactions)
+    
   ]).then(([accounts, loans, transactions]) => {
     const listEl = document.getElementById('accList');
     const searchTerm = document.getElementById('accountSearch').value.toLowerCase();
     const typeFilter = document.getElementById('accountTypeFilter').value;
+    const summary = computeAccountSummary(accounts, transactions);
 
     if (!accounts.length) {
       listEl.innerHTML = `
@@ -447,6 +556,17 @@ function refreshAccountList() {
         const loanName = loanMap[account.linkedLoanId] || 'Unknown Loan';
         linkedLoanInfo = `<div class="linked-loan">Linked to: ${loanName}</div>`;
       }
+
+      // Mobile summary
+      const netWorthEl = document.getElementById('mobileNetWorth');
+      const assetsEl = document.getElementById('mobileAssets');
+
+      if (netWorthEl && assetsEl) {
+        netWorthEl.textContent = formatCurrency(summary.netWorth, 'AUD');
+        assetsEl.textContent = `Assets ${formatCurrency(summary.totalAssets, 'AUD')}`;
+      }
+
+
 
       // Credit utilization for credit cards
       let creditUtilization = '';

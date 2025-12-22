@@ -340,3 +340,35 @@
 .rt-date { color: var(--text-muted); }
 .rt-amt.neg { color: #dc2626; }
 .rt-amt.pos { color: #16a34a; }
+
+
+
+.accounts-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 280px;
+  gap: 1.5rem;
+}
+
+.accounts-sidebar,
+.accounts-insights {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.accounts-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .accounts-layout {
+    grid-template-columns: 1fr;
+  }
+  .accounts-sidebar,
+  .accounts-insights {
+    display: none;
+  }
+}

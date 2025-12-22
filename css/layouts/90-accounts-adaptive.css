@@ -1,0 +1,75 @@
+/* ===========================
+   ADAPTIVE ACCOUNTS LAYOUT
+   =========================== */
+
+.accounts-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .accounts-desktop {
+    display: none;
+  }
+
+  .accounts-mobile {
+    display: block;
+    padding: 1rem;
+  }
+
+  .mobile-balance-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+
+  .mobile-balance-card h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: .25rem 0;
+  }
+
+  .mobile-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .5rem;
+    margin-bottom: 1rem;
+  }
+
+  .mobile-actions button {
+    padding: .75rem;
+    border-radius: 12px;
+    border: none;
+    background: #f1f5f9;
+    font-weight: 600;
+  }
+
+  .mobile-account-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .75rem 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .mobile-account-row strong {
+    display: block;
+  }
+
+  .mobile-account-row small {
+    opacity: .6;
+  }
+
+  .mobile-account-row .amount {
+    font-weight: 700;
+  }
+
+  .mobile-account-row .amount.neg {
+    color: #e74c3c;
+  }
+
+  .mobile-account-row .amount.pos {
+    color: #27ae60;
+  }
+}
