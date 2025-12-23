@@ -300,7 +300,9 @@ async function updateSelectedAccountCard(accountId = null) {
   `;
 }
 
-// Update recent transactions in right panel - FIXED VERSION
+
+
+// Update recent transactions in right panel
 async function updateRecentTransactions() {
   const [transactions, accounts] = await Promise.all([
     getAllItems(STORE_NAMES.transactions),
@@ -330,19 +332,16 @@ async function updateRecentTransactions() {
     accountMap[acc.id] = acc.name;
   });
   
-  // SIMPLE TEXT-ONLY LIST - NO ICONS, NO CARDS
   container.innerHTML = recent.map(t => {
     const accountName = accountMap[t.accountId] || 'Unknown Account';
-    const formattedDate = new Date(t.date).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric'
-    });
-    
     return `
-      <div class="transaction-item" data-id="${t.id}">
+      <div class="transaction-item">
+        <div class="transaction-icon ${t.amount < 0 ? 'expense' : 'income'}">
+          ${t.amount < 0 ? '↓' : '↑'}
+        </div>
         <div class="transaction-info">
           <strong>${t.description || 'No description'}</strong>
-          <small>${accountName} • ${formattedDate}</small>
+          <small>${accountName} • ${formatDate(new Date(t.date))}</small>
         </div>
         <div class="transaction-amount ${t.amount < 0 ? 'negative' : 'positive'}">
           ${formatCurrency(t.amount, 'AUD')}
@@ -447,14 +446,7 @@ function updateSummaryCards(accounts, transactions) {
   return summary;
 }
 
-// FIXED quickAddTransaction function
-function quickAddTransaction(accountId = null) {
-  const idToUse = accountId || currentSelectedAccountId;
-  if (!idToUse) {
-    alert('Please select an account first');
-    return;
-  }
-  
+function quickAddTransaction(accountId) {
   const amount = prompt('Enter transaction amount (negative for expenses):');
   if (amount === null) return;
   
@@ -463,7 +455,7 @@ function quickAddTransaction(accountId = null) {
 
   const transaction = {
     id: generateId(),
-    accountId: idToUse,
+    accountId: accountId,
     amount: parseFloat(amount),
     description: description,
     date: new Date().toISOString().split('T')[0],
@@ -515,9 +507,53 @@ function toggleAccountDetails(accountId) {
   });
 }
 
-// FIXED initAccountsUI function
 export function initAccountsUI() {
   const main = document.getElementById('mainContent');
+// In your initAccountsUI() function, update the button event listener:
+document.getElementById('btnNewAcc').addEventListener('click', () => openAccountEditor());
+
+// Add this for the transaction button:
+document.getElementById('btnAddTransaction')?.addEventListener('click', () => {
+    if (currentSelectedAccountId) {
+        quickAddTransaction(currentSelectedAccountId);
+    } else {
+        alert('Please select an account first');
+    }
+});
+
+// Also update the quickAddTransaction function to use the current selected account:
+function quickAddTransaction(accountId = null) {
+    const idToUse = accountId || currentSelectedAccountId;
+    if (!idToUse) {
+        alert('Please select an account first');
+        return;
+    }
+    
+    const amount = prompt('Enter transaction amount (negative for expenses):');
+    if (amount === null) return;
+    
+    const description = prompt('Enter description:');
+    if (description === null) return;
+
+    const transaction = {
+        id: generateId(),
+        accountId: idToUse,
+        amount: parseFloat(amount),
+        description: description,
+        date: new Date().toISOString().split('T')[0],
+        type: parseFloat(amount) < 0 ? 'expense' : 'income',
+        categoryId: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    addItem(STORE_NAMES.transactions, transaction).then(() => {
+        alert('Transaction added successfully!');
+        refreshAccountList();
+        updateRecentTransactions();
+    });
+}
+  
   main.classList.add('page-transition');
 
   main.innerHTML = `
@@ -546,27 +582,33 @@ export function initAccountsUI() {
         </div>
         
       <div class="summary-cards">
+
         <div class="card green">
           <h3>Net Worth</h3>
           <p class="summary-amount positive">A$834,066.73</p>
           <small>Positive growth</small>
         </div>
+
         <div class="card blue">
           <h3>Total Assets</h3>
           <p class="summary-amount">A$835,710.24</p>
           <small>Across 6 accounts</small>
         </div>
+
         <div class="card red">
           <h3>Liabilities</h3>
           <p class="summary-amount negative">A$1,643.51</p>
           <small>Credit & Loans</small>
         </div>
+
         <div class="card teal">
           <h3>Available Credit</h3>
           <p class="summary-amount">A$456.49</p>
           <small>78.3% of limit used</small>
         </div>
+
       </div>
+
       
       <!-- 3-COLUMN MAIN DASHBOARD -->
       <div class="dashboard-grid">
@@ -595,17 +637,56 @@ export function initAccountsUI() {
         <!-- RIGHT: INSIGHTS & TRANSACTIONS -->
         <div class="dashboard-right">
           <div class="insights-card" id="accountsInsights">
+          
             <p class="text-muted">Loading insights...</p>
           </div>
           
-          <div class="transactions-history">
-            <div class="section-title">
-              <h3>Recent Transactions</h3>
-              <button class="btn-text" id="btnViewAll">View All</button>
+          <!-- In your dashboard-right section, replace the transactions section with: -->
+<div class="dashboard-right">
+    <!-- Insights panel (keeps existing flat style) -->
+    <div class="insights-card" id="accountsInsights">
+
+        <!-- Insights items rendered by JavaScript -->
+    </div>
+    
+    <!-- Recent Transactions as a flat list card -->
+    <div class="transactions-history">
+        <div class="section-title">
+            <h3>Recent Transactions</h3>
+            <button class="btn-text" id="btnViewAll">View All</button>
+        </div>
+        
+        <div class="transaction-list" id="recentTransactions">
+            <!-- Example transaction items (these would be generated by JS) -->
+            <div class="transaction-item">
+                <div class="transaction-icon expense">↓</div>
+                <div class="transaction-info">
+                    <strong>Amazon Purchase</strong>
+                    <small>Main Checking • Today</small>
+                </div>
+                <div class="transaction-amount negative">-A$89.99</div>
             </div>
-            <div class="transaction-list" id="recentTransactions">
-              <p class="text-muted">Loading transactions...</p>
+            
+            <div class="transaction-item">
+                <div class="transaction-icon income">↑</div>
+                <div class="transaction-info">
+                    <strong>Salary Deposit</strong>
+                    <small>Savings Account • Jan 15</small>
+                </div>
+                <div class="transaction-amount positive">+A$3,500.00</div>
             </div>
+            
+            <div class="transaction-item">
+                <div class="transaction-icon expense">↓</div>
+                <div class="transaction-info">
+                    <strong>Groceries Supermarket</strong>
+                    <small>Credit Card • Jan 14</small>
+                </div>
+                <div class="transaction-amount negative">-A$145.67</div>
+            </div>
+        </div>
+    </div>
+</div>
           </div>
         </div>
       </div>
@@ -614,20 +695,19 @@ export function initAccountsUI() {
 
   setTimeout(() => main.classList.remove('page-transition'), 400);
 
-  // Event listeners - MOVED OUTSIDE OF INNERHTML
-  setTimeout(() => {
-    document.getElementById('btnNewAcc').addEventListener('click', () => openAccountEditor());
-    document.getElementById('btnAddDefaults').addEventListener('click', addDefaultAccounts);
-    document.getElementById('btnViewAll').addEventListener('click', () => {
-      window.location.hash = '#transactions';
-    });
+  // Event listeners
+  document.getElementById('btnNewAcc').addEventListener('click', () => openAccountEditor());
+  document.getElementById('btnAddDefaults').addEventListener('click', addDefaultAccounts);
+  document.getElementById('btnViewAll').addEventListener('click', () => {
+    // Navigate to transactions page
+    window.location.hash = '#transactions';
+  });
 
-    document.getElementById('accountSearch').addEventListener('input', refreshAccountList);
-    document.getElementById('accountTypeFilter').addEventListener('change', refreshAccountList);
+  document.getElementById('accountSearch').addEventListener('input', refreshAccountList);
+  document.getElementById('accountTypeFilter').addEventListener('change', refreshAccountList);
 
-    // Initial load
-    refreshAccountList();
-  }, 100);
+  // Initial load
+  refreshAccountList();
 }
 
 function refreshAccountList() {
@@ -912,10 +992,7 @@ function showAccountForm(acc) {
             </div>
 
             <div class="form-actions">
-              <button class="btn btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account</button>
-              <button class="btn btn-secondary" type="button" id="btnCancel">Cancel</button>
-            </div>
-          </form>
+              <button class="btn btn-primary" type="submit">${acc.id ? '💾 Update' : '➕ Add'} Account           </form>
         </div>
       </div>
     `;
@@ -963,6 +1040,631 @@ function showAccountForm(acc) {
   });
 }
 
+// ===== ENHANCED FEATURES =====
+
+// 1. MONTHLY SPENDING CHART
+async function renderMonthlySpendingChart(accountId) {
+    const transactions = await getAllItems(STORE_NAMES.transactions);
+    const now = new Date();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(now.getMonth() - 5);
+    
+    // Filter transactions for the last 6 months
+    const monthlyData = {};
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        monthlyData[monthKey] = 0;
+    }
+    
+    transactions
+        .filter(t => t.accountId === accountId && t.amount < 0)
+        .forEach(t => {
+            const date = new Date(t.date);
+            if (date >= sixMonthsAgo) {
+                const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                monthlyData[monthKey] = monthlyData[monthKey] + Math.abs(t.amount);
+            }
+        });
+    
+    // Create chart HTML
+    const maxSpending = Math.max(...Object.values(monthlyData));
+    const chartHTML = Object.entries(monthlyData).map(([month, amount]) => {
+        const percentage = maxSpending > 0 ? (amount / maxSpending) * 100 : 0;
+        return `
+            <div class="chart-item">
+                <div class="chart-label">${month}</div>
+                <div class="chart-bar">
+                    <div class="chart-fill" style="width: ${percentage}%"></div>
+                </div>
+                <div class="chart-value">${formatCurrency(amount, 'AUD')}</div>
+            </div>
+        `;
+    }).join('');
+    
+    return chartHTML;
+}
+
+// 2. QUICK STATS FOR SELECTED ACCOUNT
+async function getAccountQuickStats(accountId) {
+    const transactions = await getAllItems(STORE_NAMES.transactions);
+    const accountTransactions = transactions.filter(t => t.accountId === accountId);
+    
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    
+    const monthlyExpenses = accountTransactions
+        .filter(t => t.amount < 0 && new Date(t.date) >= startOfMonth)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    
+    const weeklyExpenses = accountTransactions
+        .filter(t => t.amount < 0 && new Date(t.date) >= startOfWeek)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    
+    const avgTransaction = accountTransactions.length > 0
+        ? Math.abs(accountTransactions.reduce((sum, t) => sum + t.amount, 0)) / accountTransactions.length
+        : 0;
+    
+    const largestExpense = accountTransactions.length > 0
+        ? Math.min(...accountTransactions.filter(t => t.amount < 0).map(t => t.amount))
+        : 0;
+    
+    return {
+        monthlyExpenses,
+        weeklyExpenses,
+        avgTransaction,
+        largestExpense: Math.abs(largestExpense),
+        transactionCount: accountTransactions.length
+    };
+}
+
+// 3. ENHANCED UPDATE SELECTED ACCOUNT CARD
+async function updateSelectedAccountCardEnhanced(accountId = null) {
+    const [accounts, transactions, loans] = await Promise.all([
+        getAllItems(STORE_NAMES.accounts),
+        getAllItems(STORE_NAMES.transactions),
+        getAllItems(STORE_NAMES.loans)
+    ]);
+    
+    let selectedAccount = null;
+    
+    if (accountId) {
+        selectedAccount = accounts.find(a => a.id === accountId);
+        currentSelectedAccountId = accountId;
+    } else if (currentSelectedAccountId) {
+        selectedAccount = accounts.find(a => a.id === currentSelectedAccountId);
+    } else if (accounts.length > 0) {
+        selectedAccount = accounts[0];
+        currentSelectedAccountId = accounts[0].id;
+    }
+    
+    if (!selectedAccount) {
+        document.getElementById('selectedAccountCard').innerHTML = `
+            <div class="empty-selected">
+                <p>No account selected</p>
+                <small>Click on any account to view details</small>
+            </div>
+        `;
+        return;
+    }
+    
+    const derivedBalance = calculateAccountBalance(selectedAccount, transactions);
+    const monthlySpending = calculateMonthlySpending(selectedAccount.id, transactions);
+    const monthlyBudget = selectedAccount.type === 'credit' ? 
+        (selectedAccount.creditLimit || 3000) : 3000;
+    
+    const spendingPercentage = Math.min((monthlySpending / monthlyBudget) * 100, 100);
+    
+    // Get quick stats
+    const stats = await getAccountQuickStats(selectedAccount.id);
+    
+    // Get spending chart
+    const spendingChart = await renderMonthlySpendingChart(selectedAccount.id);
+    
+    // Find linked loan
+    let linkedLoanName = '';
+    if (selectedAccount.type === 'offset' && selectedAccount.linkedLoanId) {
+        const linkedLoan = loans.find(l => l.id === selectedAccount.linkedLoanId);
+        linkedLoanName = linkedLoan ? linkedLoan.name : 'Unknown Loan';
+    }
+    
+    // Generate card details based on account type
+    let cardDetails = '';
+    if (selectedAccount.type === 'credit') {
+        const availableCredit = (selectedAccount.creditLimit || 0) + derivedBalance;
+        cardDetails = `
+            <div class="detail-item">
+                <span>Available Credit</span>
+                <strong>${formatCurrency(availableCredit, selectedAccount.currency)}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Total Limit</span>
+                <strong>${formatCurrency(selectedAccount.creditLimit || 0, selectedAccount.currency)}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Due Date</span>
+                <strong>${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 15).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Status</span>
+                <strong class="status-active">Active</strong>
+            </div>
+        `;
+    } else {
+        cardDetails = `
+            <div class="detail-item">
+                <span>Daily Limit</span>
+                <strong>${formatCurrency(2500, selectedAccount.currency)}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Last Transaction</span>
+                <strong>${stats.transactionCount > 0 ? 'Today' : 'None'}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Account Type</span>
+                <strong>${getAccountTypeLabel(selectedAccount.type)}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Status</span>
+                <strong class="status-active">Active</strong>
+            </div>
+        `;
+    }
+    
+    // Update the card with enhanced features
+    document.getElementById('selectedAccountCard').innerHTML = `
+        <div class="selected-account-header">
+            <h3>Selected Account</h3>
+            <div class="account-balance-large ${derivedBalance < 0 ? 'negative' : 'positive'}">
+                ${formatCurrency(derivedBalance, selectedAccount.currency)}
+            </div>
+        </div>
+        
+        <!-- Quick Stats Row -->
+        <div class="quick-stats">
+            <div class="stat-badge">
+                <span>Monthly</span>
+                <strong>${formatCurrency(stats.monthlyExpenses, selectedAccount.currency)}</strong>
+            </div>
+            <div class="stat-badge">
+                <span>Weekly</span>
+                <strong>${formatCurrency(stats.weeklyExpenses, selectedAccount.currency)}</strong>
+            </div>
+            <div class="stat-badge">
+                <span>Avg Tx</span>
+                <strong>${formatCurrency(stats.avgTransaction, selectedAccount.currency)}</strong>
+            </div>
+            <div class="stat-badge">
+                <span>Count</span>
+                <strong>${stats.transactionCount}</strong>
+            </div>
+        </div>
+        
+        <div class="spending-progress">
+            <div class="progress-header">
+                <span>Monthly Spending</span>
+                <span>${formatCurrency(monthlySpending, selectedAccount.currency)} / ${formatCurrency(monthlyBudget, selectedAccount.currency)}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${spendingPercentage}%"></div>
+            </div>
+            <small>${spendingPercentage.toFixed(1)}% of monthly budget</small>
+        </div>
+        
+        <!-- Monthly Spending Chart -->
+        <div class="spending-chart">
+            <h4>6-Month Spending Trend</h4>
+            <div class="chart-container">
+                ${spendingChart}
+            </div>
+        </div>
+        
+        <div class="bank-card-style ${selectedAccount.type}">
+            <div class="bank-card-header">
+                <div class="bank-logo">${getAccountIcon(selectedAccount.type)}</div>
+                <div class="bank-info">
+                    <h4>${selectedAccount.name}</h4>
+                    <p>${selectedAccount.type === 'credit' ? '**** 4832 • Exp 12/28' : '•••• •••• •••• 4832'}</p>
+                </div>
+            </div>
+            <div class="bank-card-details">
+                ${cardDetails}
+            </div>
+            ${linkedLoanName ? `<div class="linked-loan-notice">Linked to: ${linkedLoanName}</div>` : ''}
+        </div>
+        
+        <div class="selected-account-actions">
+            <button class="btn btn-primary" onclick="quickAddTransaction('${selectedAccount.id}')">
+                💸 Add Transaction
+            </button>
+            <button class="btn btn-secondary" onclick="openAccountEditor('${selectedAccount.id}')">
+                ✏️ Edit Account
+            </button>
+            <button class="btn btn-secondary" onclick="exportAccountData('${selectedAccount.id}')">
+                📁 Export Data
+            </button>
+        </div>
+    `;
+}
+
+// 4. EXPORT ACCOUNT DATA
+async function exportAccountData(accountId) {
+    const [accounts, transactions] = await Promise.all([
+        getAllItems(STORE_NAMES.accounts),
+        getAllItems(STORE_NAMES.transactions)
+    ]);
+    
+    const account = accounts.find(a => a.id === accountId);
+    if (!account) return;
+    
+    const accountTransactions = transactions
+        .filter(t => t.accountId === accountId)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Create CSV content
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Account Export: " + account.name + "\n";
+    csvContent += "Export Date: " + new Date().toLocaleDateString() + "\n\n";
+    csvContent += "Date,Description,Amount,Type,Balance After\n";
+    
+    let runningBalance = account.balance;
+    accountTransactions.forEach(t => {
+        runningBalance += t.amount;
+        csvContent += `${t.date},"${t.description || ''}",${t.amount},${t.amount < 0 ? 'Expense' : 'Income'},${runningBalance}\n`;
+    });
+    
+    // Create download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${account.name.replace(/\s+/g, '_')}_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// 5. BULK ACTIONS
+function initBulkActions() {
+    const bulkActionsHTML = `
+        <div class="bulk-actions" id="bulkActions">
+            <div class="bulk-header">
+                <h4>Bulk Actions</h4>
+                <button class="btn-text" onclick="toggleBulkSelection()">Select Multiple</button>
+            </div>
+            <div class="bulk-buttons">
+                <button class="btn btn-secondary" onclick="bulkExport()" disabled>
+                    📁 Export Selected
+                </button>
+                <button class="btn btn-secondary" onclick="bulkHide()" disabled>
+                    👁️ Hide Selected
+                </button>
+                <button class="btn btn-danger" onclick="bulkDelete()" disabled>
+                    🗑️ Delete Selected
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Insert after the account list
+    const accountList = document.getElementById('accList');
+    if (accountList) {
+        accountList.insertAdjacentHTML('afterend', bulkActionsHTML);
+    }
+}
+
+let bulkSelectionMode = false;
+let selectedAccounts = new Set();
+
+function toggleBulkSelection() {
+    bulkSelectionMode = !bulkSelectionMode;
+    selectedAccounts.clear();
+    
+    const accounts = document.querySelectorAll('.account-card');
+    accounts.forEach(acc => {
+        if (bulkSelectionMode) {
+            acc.classList.add('bulk-selectable');
+            acc.addEventListener('click', handleBulkSelection);
+        } else {
+            acc.classList.remove('bulk-selectable', 'bulk-selected');
+            acc.removeEventListener('click', handleBulkSelection);
+        }
+    });
+    
+    updateBulkButtons();
+}
+
+function handleBulkSelection(e) {
+    if (!bulkSelectionMode) return;
+    
+    const accountCard = e.currentTarget;
+    const accountId = accountCard.dataset.id;
+    
+    if (selectedAccounts.has(accountId)) {
+        selectedAccounts.delete(accountId);
+        accountCard.classList.remove('bulk-selected');
+    } else {
+        selectedAccounts.add(accountId);
+        accountCard.classList.add('bulk-selected');
+    }
+    
+    updateBulkButtons();
+    e.stopPropagation();
+}
+
+function updateBulkButtons() {
+    const buttons = document.querySelectorAll('.bulk-buttons button');
+    const isEnabled = selectedAccounts.size > 0;
+    
+    buttons.forEach(btn => {
+        btn.disabled = !isEnabled;
+    });
+    
+    const selectBtn = document.querySelector('.bulk-header .btn-text');
+    if (selectBtn) {
+        selectBtn.textContent = bulkSelectionMode 
+            ? `Cancel (${selectedAccounts.size} selected)`
+            : 'Select Multiple';
+    }
+}
+
+async function bulkExport() {
+    if (selectedAccounts.size === 0) return;
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Bulk Account Export\n";
+    csvContent += "Export Date: " + new Date().toLocaleDateString() + "\n\n";
+    
+    const [accounts, transactions] = await Promise.all([
+        getAllItems(STORE_NAMES.accounts),
+        getAllItems(STORE_NAMES.transactions)
+    ]);
+    
+    for (const accountId of selectedAccounts) {
+        const account = accounts.find(a => a.id === accountId);
+        if (!account) continue;
+        
+        csvContent += `\n=== ${account.name} ===\n`;
+        csvContent += "Type,Current Balance,Currency\n";
+        csvContent += `${account.type},${account.balance},${account.currency}\n\n`;
+        
+        const accountTx = transactions
+            .filter(t => t.accountId === accountId)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 50); // Limit to last 50 transactions
+        
+        if (accountTx.length > 0) {
+            csvContent += "Recent Transactions:\n";
+            csvContent += "Date,Description,Amount,Type\n";
+            accountTx.forEach(t => {
+                csvContent += `${t.date},"${t.description || ''}",${t.amount},${t.amount < 0 ? 'Expense' : 'Income'}\n`;
+            });
+        }
+        csvContent += "\n";
+    }
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `bulk_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Reset selection
+    toggleBulkSelection();
+}
+
+async function bulkDelete() {
+    if (selectedAccounts.size === 0) return;
+    
+    const confirmation = confirm(`Are you sure you want to delete ${selectedAccounts.size} account(s)? This will also delete all associated transactions.`);
+    if (!confirmation) return;
+    
+    for (const accountId of selectedAccounts) {
+        await deleteItem(STORE_NAMES.accounts, accountId);
+    }
+    
+    toggleBulkSelection();
+    refreshAccountList();
+}
+
+// 6. ENHANCED TRANSACTION HISTORY
+async function updateEnhancedTransactionHistory() {
+    const [transactions, accounts] = await Promise.all([
+        getAllItems(STORE_NAMES.transactions),
+        getAllItems(STORE_NAMES.accounts)
+    ]);
+    
+    const recent = transactions
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 8);
+    
+    const container = document.getElementById('recentTransactions');
+    if (!container) return;
+    
+    if (recent.length === 0) {
+        container.innerHTML = `
+            <div class="empty-transactions">
+                <p>No recent transactions</p>
+                <small>Add your first transaction to see history</small>
+            </div>
+        `;
+        return;
+    }
+    
+    const accountMap = {};
+    accounts.forEach(acc => {
+        accountMap[acc.id] = acc.name;
+    });
+    
+    // TEXT-ONLY SIMPLE LIST - NO ICONS, NO CARDS
+    container.innerHTML = recent.map(t => {
+        const accountName = accountMap[t.accountId] || 'Unknown Account';
+        const formattedDate = new Date(t.date).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric'
+        });
+        
+        return `
+            <div class="transaction-item" data-id="${t.id}">
+                <div class="transaction-info">
+                    <strong>${t.description || 'No description'}</strong>
+                    <small>${accountName} • ${formattedDate}</small>
+                </div>
+                <div class="transaction-amount ${t.amount < 0 ? 'negative' : 'positive'}">
+                    ${formatCurrency(t.amount, 'AUD')}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Add click handler to view transaction details
+    container.querySelectorAll('.transaction-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            const txId = e.currentTarget.dataset.id;
+            viewTransactionDetails(txId);
+        });
+    });
+}
+
+// 7. TRANSACTION DETAILS VIEW
+async function viewTransactionDetails(transactionId) {
+    const transactions = await getAllItems(STORE_NAMES.transactions);
+    const accounts = await getAllItems(STORE_NAMES.accounts);
+    
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (!transaction) return;
+    
+    const account = accounts.find(a => a.id === transaction.accountId);
+    
+    // Create modal
+    const modalHTML = `
+        <div class="modal-overlay" id="transactionModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Transaction Details</h3>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="transaction-detail-row">
+                        <span>Amount</span>
+                        <strong class="${transaction.amount < 0 ? 'negative' : 'positive'}">
+                            ${formatCurrency(transaction.amount, 'AUD')}
+                        </strong>
+                    </div>
+                    <div class="transaction-detail-row">
+                        <span>Description</span>
+                        <strong>${transaction.description || 'No description'}</strong>
+                    </div>
+                    <div class="transaction-detail-row">
+                        <span>Date</span>
+                        <strong>${formatDate(new Date(transaction.date))}</strong>
+                    </div>
+                    <div class="transaction-detail-row">
+                        <span>Account</span>
+                        <strong>${account ? account.name : 'Unknown Account'}</strong>
+                    </div>
+                    <div class="transaction-detail-row">
+                        <span>Type</span>
+                        <strong>${transaction.amount < 0 ? 'Expense' : 'Income'}</strong>
+                    </div>
+                    <div class="transaction-detail-row">
+                        <span>Created</span>
+                        <strong>${formatDate(new Date(transaction.createdAt))}</strong>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="editTransaction('${transaction.id}')">
+                        ✏️ Edit
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteTransaction('${transaction.id}')">
+                        🗑️ Delete
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeModal() {
+    const modal = document.getElementById('transactionModal');
+    if (modal) modal.remove();
+}
+
+async function editTransaction(transactionId) {
+    // Implementation for editing transaction
+    alert('Edit transaction feature would open here');
+    closeModal();
+}
+
+async function deleteTransaction(transactionId) {
+    const confirmation = confirm('Are you sure you want to delete this transaction?');
+    if (!confirmation) return;
+    
+    await deleteItem(STORE_NAMES.transactions, transactionId);
+    closeModal();
+    refreshAccountList();
+    updateRecentTransactions();
+}
+
+// 8. ENHANCED INIT FUNCTION
+export function initEnhancedAccountsUI() {
+    initAccountsUI(); // Call the original init
+    
+    // Add bulk actions after a short delay
+    setTimeout(() => {
+        initBulkActions();
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + F to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('accountSearch').focus();
+            }
+            
+            // Ctrl/Cmd + N for new account
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                openAccountEditor();
+            }
+            
+            // Escape to cancel bulk selection
+            if (e.key === 'Escape' && bulkSelectionMode) {
+                toggleBulkSelection();
+            }
+        });
+        
+        // Add loading indicator for long operations
+        const originalRefresh = refreshAccountList;
+        refreshAccountList = async function() {
+            const listEl = document.getElementById('accList');
+            if (listEl) {
+                listEl.innerHTML = `
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading accounts...</p>
+                    </div>
+                `;
+            }
+            
+            await originalRefresh();
+        };
+        
+    }, 100);
+}
+
+// 9. UPDATE THE REFRESH FUNCTION TO USE ENHANCED VERSION
+// Replace the updateSelectedAccountCard call in refreshAccountList with:
+// updateSelectedAccountCardEnhanced();
+
 // Export functions for use in other modules
 export {
   addDefaultAccounts,
@@ -970,9 +1672,5 @@ export {
   setPrimaryAccountId,
   calculateAccountBalance,
   formatCurrency,
-  formatDate,
-  quickAddTransaction,
-  openAccountEditor,
-  refreshAccountList,
-  updateRecentTransactions
+  formatDate
 };
