@@ -805,6 +805,7 @@
 .transaction-info small {
   font-size: 0.7rem;
   color: var(--color-text-muted);
+  align-items: center;
 }
 
 /* Amount — ONLY bold element */
