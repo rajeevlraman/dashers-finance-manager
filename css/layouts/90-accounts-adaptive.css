@@ -7,13 +7,14 @@
     --color-primary-light: #60a5fa;
     --color-positive: #10b981; /* Emerald green */
     --color-negative: #ef4444; /* Red */
-    --color-text: #f1f5f9;     /* Light text */
-    --color-text-muted: #94a3b8;
+    --color-text: #f8fafc;     /* Light text - increased contrast */
+    --color-text-muted: #cbd5e1; /* Brighter muted text */
+    --color-text-secondary: #94a3b8; /* Secondary text */
     --border-radius: 16px;
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
-/* Apply theme to the accounts page container */
+/* ===== BASE STYLES ===== */
 .page-container,
 .accounts-layout {
     background-color: var(--color-bg);
@@ -21,7 +22,7 @@
     min-height: 100vh;
 }
 
-/* ===== 3-ZONE LAYOUT STRUCTURE ===== */
+/* ===== LAYOUT STRUCTURE ===== */
 .accounts-layout {
     display: grid;
     grid-template-columns: 240px 1fr 300px; /* Sidebar | Main | Insights */
@@ -29,23 +30,56 @@
     padding: 1.5rem;
 }
 
-/* Sidebar and Insights panel styling */
-.accounts-sidebar,
-.accounts-insights {
-    background: var(--color-surface);
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    height: fit-content;
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr 300px;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
 }
 
-/* ===== SUMMARY CARDS (Top of Main Area) ===== */
+/* ===== TYPOGRAPHY FIXES ===== */
+h1, h2, h3, h4 {
+    color: var(--color-text);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* ===== SUMMARY CARDS ===== */
 .summary-cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin-bottom: 2rem;
 }
+
+@media (max-width: 1200px) {
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
 .summary-cards .card {
     background: linear-gradient(145deg, var(--color-surface), var(--color-surface-light));
     padding: 1.5rem;
@@ -53,75 +87,55 @@
     box-shadow: var(--shadow);
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: transform 0.2s ease;
+    color: #ffffff;
+    border: none;
 }
+
 .summary-cards .card:hover {
     transform: translateY(-5px);
 }
-/* Individual card color accents */
-/*.card.green { border-top: 4px solid var(--color-positive); }*/
-/*.card.blue { border-top: 4px solid var(--color-primary); }*/
-/*.card.red { border-top: 4px solid var(--color-negative); }*/
-/*.card.teal { border-top: 4px solid #0d9488; }*/
 
-/* ======================================
-   SUMMARY CARDS — COLOURED ACCENT STYLE
-   ====================================== */
-
-/* ======================================
-   SUMMARY CARDS — SOLID COLOUR STYLE
-   ====================================== */
-
-.summary-cards .card {
-  color: #ffffff;                 /* Force readable text */
-  border: none;
-}
-
-/* GREEN — Net Worth */
+/* Card Colors */
 .summary-cards .card.green {
-  background-color: var(--color-positive);
+    background-color: var(--color-positive);
 }
 
-/* BLUE — Assets */
 .summary-cards .card.blue {
-  background-color: var(--color-primary);
+    background-color: var(--color-primary);
 }
 
-/* RED — Liabilities */
 .summary-cards .card.red {
-  background-color: var(--color-negative);
+    background-color: var(--color-negative);
 }
 
-/* TEAL — Available Credit */
 .summary-cards .card.teal {
-  background-color: #0d9488;
+    background-color: #0d9488;
 }
-/* Ensure text contrast on solid cards */
+
 .summary-cards .card h3,
 .summary-cards .card p,
 .summary-cards .card small {
-  color: #ffffff;
+    color: #ffffff;
 }
 
 .summary-cards .card small {
-  opacity: 0.9;
+    opacity: 0.9;
+    font-size: 0.875rem;
 }
-
-
-
-
 
 .summary-amount {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 800;
     margin: 0.5rem 0;
+    color: #ffffff !important;
 }
-.summary-amount.positive { color: var(--color-positive); }
-.summary-amount.negative { color: var(--color-negative); }
-.summary-count {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin: 0.5rem 0;
-    color: var(--color-primary-light);
+
+.summary-amount.positive { 
+    color: rgba(255, 255, 255, 0.95) !important; 
+}
+
+.summary-amount.negative { 
+    color: rgba(255, 255, 255, 0.95) !important; 
 }
 
 /* ===== ACCOUNT CARDS GRID ===== */
@@ -130,6 +144,7 @@
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
 }
+
 .account-card {
     background: var(--color-surface);
     border-radius: var(--border-radius);
@@ -137,18 +152,72 @@
     box-shadow: var(--shadow);
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
+
+.account-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.06),
+        transparent 40%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
 .account-card:hover {
     border-color: var(--color-primary-light);
     box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.4);
 }
+
 .account-card.primary {
     border: 2px solid var(--color-primary);
     background: linear-gradient(to right, var(--color-surface), #1e3a8a20);
 }
 
-/* ===== ACCOUNT CARD INTERNAL COMPONENTS ===== */
-/* Card Header (Collapsed View) */
+/* ===== ACCOUNT CARD TEXT VISIBILITY ===== */
+.account-card {
+    color: var(--color-text);
+}
+
+.account-card .account-name,
+.account-card .account-balance,
+.account-card .stat-value {
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+.account-card .account-type,
+.account-card .last-activity,
+.account-card .stat-label,
+.account-card small {
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.account-card .account-balance.positive,
+.account-card .stat-value.positive {
+    color: var(--color-positive);
+    font-weight: 800;
+}
+
+.account-card .account-balance.negative,
+.account-card .stat-value.negative {
+    color: var(--color-negative);
+    font-weight: 800;
+}
+
+.account-balance {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+/* ===== ACCOUNT CARD HEADER ===== */
 .account-header {
     display: flex;
     justify-content: space-between;
@@ -156,36 +225,65 @@
     cursor: pointer;
     padding-bottom: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    z-index: 2;
 }
+
 .account-left {
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex: 1;
 }
+
 .account-icon {
-    font-size: 2rem;
+    font-size: 1.5rem;
     background: rgba(59, 130, 246, 0.15);
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
-.account-balance {
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-.account-balance.positive { color: var(--color-positive); }
-.account-balance.negative { color: var(--color-negative); }
 
-/* Buttons & Actions */
-.account-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin: 1.5rem 0;
-    flex-wrap: wrap;
+.account-info {
+    flex: 1;
+    min-width: 0;
 }
+
+.account-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: var(--color-text);
+}
+
+.account-type {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.last-activity {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.account-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.account-chevron {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+/* ===== BUTTONS ===== */
 .btn {
     padding: 0.6rem 1.2rem;
     border-radius: 10px;
@@ -193,28 +291,557 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-size: 0.875rem;
 }
+
 .btn-primary {
     background-color: var(--color-primary);
     color: white;
 }
+
 .btn-secondary {
     background-color: var(--color-surface-light);
     color: var(--color-text);
 }
+
 .btn-danger {
     background-color: #7f1d1d;
     color: white;
 }
+
 .btn:hover {
     opacity: 0.9;
     transform: scale(1.03);
 }
 
-/* Credit Utilization Progress Bar */
+.account-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+/* ===== INSIGHTS PANEL - LIST MODE ===== */
+.accounts-insights {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 2rem;
+}
+
+.insights-card {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+
+.insights-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--color-text);
+}
+
+.insight-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.insight-item:last-child {
+    border-bottom: none;
+}
+
+.insight-item span {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.insight-item strong {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.insight-item strong.positive {
+    color: var(--color-positive);
+}
+
+.insight-item strong.negative {
+    color: var(--color-negative);
+}
+
+.insight-with-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mini-progress {
+    width: 60px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.mini-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-positive));
+    border-radius: 3px;
+}
+
+/* ===== TRANSACTIONS - LIST MODE ===== */
+.transactions-history {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-title h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-primary-light);
+    cursor: pointer;
+    padding: 0;
+}
+
+.btn-text:hover {
+    opacity: 0.8;
+}
+
+.transaction-list {
+    background: transparent;
+}
+
+.transaction-item {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.transaction-icon {
+    opacity: 0.7;
+    font-size: 0.875rem;
+}
+
+.transaction-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-info strong {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+    display: block;
+    margin-bottom: 0.125rem;
+}
+
+.transaction-info small {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    display: block;
+}
+
+.transaction-amount {
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.transaction-amount.positive {
+    color: var(--color-positive);
+}
+
+.transaction-amount.negative {
+    color: var(--color-negative);
+}
+
+/* ===== EMPTY STATES ===== */
+.empty-transactions {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-text-muted);
+}
+
+.empty-transactions p {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-transactions small {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.empty-selected {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-text-muted);
+}
+
+.empty-selected p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-selected small {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+/* ===== SELECTED ACCOUNT CARD ===== */
+.selected-account-container {
+    background: var(--color-surface);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.selected-account-header {
+    margin-bottom: 1.5rem;
+}
+
+.selected-account-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.account-balance-large {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.account-balance-large.positive {
+    color: var(--color-positive);
+}
+
+.account-balance-large.negative {
+    color: var(--color-negative);
+}
+
+/* ===== SPENDING PROGRESS ===== */
+.spending-progress {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.progress-header span:last-child {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-positive));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.spending-progress small {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .accounts-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .accounts-sidebar,
+    .accounts-insights {
+        position: static !important;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .accounts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .account-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .dashboard-grid {
+        gap: 1rem;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.text-muted {
+    color: var(--color-text-muted) !important;
+}
+
+.text-secondary {
+    color: var(--color-text-secondary) !important;
+}
+
+.count-badge {
+    background: var(--color-primary-light);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-active {
+    color: var(--color-positive) !important;
+    font-weight: 600;
+}
+
+/* ===== FORM STYLES ===== */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--color-surface-light);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--color-text);
+    font-size: 0.875rem;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+/* ===== MODAL STYLES ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--color-surface);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-body {
+    margin-bottom: 1.5rem;
+}
+
+.transaction-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.transaction-detail-row:last-child {
+    border-bottom: none;
+}
+
+.transaction-detail-row span {
+    color: var(--color-text-muted);
+}
+
+.transaction-detail-row strong {
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ===== LOADING STATES ===== */
+.loading-indicator {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-text-muted);
+}
+
+.spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--color-primary);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== PAGE TRANSITIONS ===== */
+.page-transition {
+    opacity: 0;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* ===== SEARCH AND FILTERS ===== */
+.header-filters {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.search-input {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-surface-light);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--color-text);
+    font-size: 0.875rem;
+    min-width: 200px;
+}
+
+.filter-select {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-surface-light);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--color-text);
+    font-size: 0.875rem;
+}
+
+/* ===== CREDIT UTILIZATION ===== */
 .credit-utilization {
     margin-top: 1rem;
 }
+
 .utilization-bar {
     height: 8px;
     background: rgba(255, 255, 255, 0.1);
@@ -222,6 +849,7 @@
     overflow: hidden;
     margin-bottom: 0.5rem;
 }
+
 .utilization-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--color-primary), var(--color-positive));
@@ -229,638 +857,44 @@
     transition: width 0.5s ease;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 1200px) {
-    .accounts-layout {
-        grid-template-columns: 1fr; /* Stack all zones */
-    }
-    .accounts-sidebar,
-    .accounts-insights {
-        position: static !important;
-        width: 100%;
-    }
-    .summary-cards {
-        grid-template-columns: repeat(2, 1fr); /* 2 cards per row */
-    }
+.credit-limit {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
 }
 
-@media (max-width: 768px) {
-    .accounts-grid {
-        grid-template-columns: 1fr; /* Single column for cards */
-    }
-    .summary-cards {
-        grid-template-columns: 1fr; /* Single column for summaries */
-    }
-    .account-actions {
-        flex-direction: column; /* Stack buttons */
-    }
-    .btn {
-        width: 100%;
-    }
+/* ===== ACCOUNT STATS ===== */
+.account-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 1rem 0;
 }
 
-/* ================================
-   ACCOUNT CARD — TEXT VISIBILITY FIX
-   ================================ */
-
-.account-card {
-  color: var(--color-text);
-}
-
-/* Primary text */
-.account-card .account-name,
-.account-card .account-balance,
-.account-card .stat-value {
-  color: #f8fafc;
-}
-
-/* Secondary text */
-.account-card .account-type,
-.account-card .last-activity,
-.account-card .stat-label,
-.account-card small {
-  color: rgba(241, 245, 249, 0.75);
-}
-
-/* Positive / Negative amounts */
-.account-card .account-balance.positive,
-.account-card .stat-value.positive {
-  color: var(--color-positive);
-}
-
-.account-card .account-balance.negative,
-.account-card .stat-value.negative {
-  color: var(--color-negative);
-}
-
-.account-balance {
-  font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.account-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.06),
-    transparent 40%
-  );
-  pointer-events: none;
-}
-/* ================================
-   SUMMARY CARDS — FORCE 4-UP DESKTOP
-   ================================ */
-@media (min-width: 1024px) {
-  .summary-cards {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-
-/* =========================================
-   INSIGHTS & TRANSACTIONS — LIST MODE
-   ========================================= */
-
-.accounts-insights,
-.recent-transactions {
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-}
-
-/* INSIGHTS LIST */
-.accounts-insights h4 {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.accounts-insights .insight {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.accounts-insights .insight:last-child {
-  border-bottom: none;
-}
-
-.accounts-insights .insight small {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.accounts-insights .insight strong {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-/* Highlight only the KEY metric */
-.accounts-insights .insight.highlight strong {
-  font-size: 1.2rem;
-}
-
-/* =========================================
-   RECENT TRANSACTIONS — DENSE LIST
-   ========================================= */
-
-.recent-transactions {
-  margin-top: 1rem;
-}
-
-.rt-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.rt-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.rt-item:last-child {
-  border-bottom: none;
-}
-
-/* Left: merchant + date */
-.rt-desc {
-  font-size: 0.9rem;
-  color: var(--color-text);
-}
-
-.rt-date {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-/* Right: amount (bold & clear) */
-.rt-amt {
-  font-weight: 800;
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.rt-amt.pos {
-  color: var(--color-positive);
-}
-
-.rt-amt.neg {
-  color: var(--color-negative);
-}
-
-.rt-item:hover {
-  background: transparent;
-}
-
-
-/* ==================================================
-   FORCE LIST MODE — REMOVE CARD LOOK COMPLETELY
-   ================================================== */
-
-
-/* INSIGHTS — CLEAN LIST */
-.accounts-insights h4 {
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.accounts-insights .insight {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.accounts-insights .insight:last-child {
-  border-bottom: none;
-}
-
-.accounts-insights .insight small {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.accounts-insights .insight strong {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--color-text);
-}
-/* TRANSACTIONS — BANK DENSITY MODE */
-.recent-transactions {
-  margin-top: 0.5rem;
-}
-
-.recent-transactions .rt-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.recent-transactions .rt-item:last-child {
-  border-bottom: none;
-}
-
-/* Merchant + date */
-.recent-transactions .rt-desc {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.recent-transactions .rt-date {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-}
-
-/* Amount — the hero */
-.recent-transactions .rt-amt {
-  font-weight: 900;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.recent-transactions .rt-amt.pos {
-  color: var(--color-positive);
-}
-
-.recent-transactions .rt-amt.neg {
-  color: var(--color-negative);
-}
-.accounts-insights.card,
-.accounts-insights .card,
-.recent-transactions.card,
-.recent-transactions .card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-}
-
-
-/* INSIGHTS PANEL — NOT A CARD */
-.accounts-insights {
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-/* INSIGHTS HEADER */
-.accounts-insights h4 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  color: var(--color-text);
-}
-
-/* INSIGHTS ROW */
-.accounts-insights .insight {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.accounts-insights .insight:last-child {
-  border-bottom: none;
+.stat {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.75rem;
 }
 
-/* Insight label */
-.accounts-insights .insight small {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+.stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.25rem;
 }
 
-/* Insight value */
-.accounts-insights .insight strong {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--color-text);
+.stat-value {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
 }
 
-/* Highlight ONLY the main metric */
-.accounts-insights .insight.highlight strong {
-  font-size: 1.15rem;
+.stat-value.positive {
+    color: var(--color-positive);
 }
 
-/* -----------------------------------------------------
-   RECENT TRANSACTIONS — DENSE BANK LIST
-   ----------------------------------------------------- */
-
-.recent-transactions {
-  margin-top: 1rem;
-  background: transparent;
-  padding: 0;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-/* Section title */
-.rt-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: var(--color-text);
-}
-
-/* Transaction row */
-.recent-transactions .rt-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.recent-transactions .rt-item:last-child {
-  border-bottom: none;
-}
-
-/* Merchant / description */
-.recent-transactions .rt-desc {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-/* Date */
-.recent-transactions .rt-date {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-}
-
-/* Amount — THE ONLY BOLD ELEMENT */
-.recent-transactions .rt-amt {
-  font-size: 0.9rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.recent-transactions .rt-amt.pos {
-  color: var(--color-positive);
-}
-
-.recent-transactions .rt-amt.neg {
-  color: var(--color-negative);
-}
-
-/* Disable card visuals anywhere inside insights/transactions */
-.accounts-insights .card,
-.recent-transactions .card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-}
-/* =====================================================
-   INSIGHTS — LIST MODE (NO CARD)
-   ===================================================== */
-
-.insights-card {
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-}
-
-/* Title */
-.insights-card h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  color: var(--color-text);
-}
-
-/* Insight rows */
-.insights-card .insight {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.insights-card .insight:last-child {
-  border-bottom: none;
-}
-
-/* Label */
-.insights-card .insight small {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-/* Value (bold but clean) */
-.insights-card .insight strong {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--color-text);
-}
-
-/* Emphasise key metric only */
-.insights-card .insight.highlight strong {
-  font-size: 1.15rem;
-}
-/* =====================================================
-   TRANSACTIONS — LIST MODE (BANK STYLE)
-   ===================================================== */
-
-.transactions-history {
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-  margin-top: 1.25rem;
-}
-
-/* Section header */
-.transactions-history .section-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.transactions-history h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.btn-text {
-  background: none;
-  border: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-primary-light);
-  cursor: pointer;
-}
-
-/* Transaction list */
-.transaction-list {
-  background: transparent;
-}
-
-/* Individual row */
-.transaction-list .rt-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.transaction-list .rt-item:last-child {
-  border-bottom: none;
-}
-
-/* Merchant */
-.transaction-list .rt-desc {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-/* Date */
-.transaction-list .rt-date {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-}
-
-/* Amount — ONLY bold element */
-.transaction-list .rt-amt {
-  font-size: 0.9rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.transaction-list .rt-amt.pos {
-  color: var(--color-positive);
-}
-
-.transaction-list .rt-amt.neg {
-  color: var(--color-negative);
-}
-.insights-card.card,
-.transactions-history.card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* =====================================================
-   INSIGHTS — TRUE LIST MODE (MATCHES JS)
-   ===================================================== */
-
-.insights-card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* Insight rows rendered by JS */
-.insight-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.insight-item:last-child {
-  border-bottom: none;
-}
-
-.insight-item span {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.insight-item strong {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--color-text);
-}
-
-/* =====================================================
-   RECENT TRANSACTIONS — TRUE LIST MODE (MATCHES JS)
-   ===================================================== */
-
-.transactions-history {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* Transaction rows rendered by JS */
-.transaction-item {
-  display: grid;
-  grid-template-columns: 20px 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.transaction-item:last-child {
-  border-bottom: none;
-}
-
-/* Left arrow */
-.transaction-icon {
-  opacity: 0.7;
-}
-
-/* Merchant + meta */
-.transaction-info strong {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.transaction-info small {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-}
-
-/* Amount — ONLY bold element */
-.transaction-amount {
-  font-size: 0.9rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.transaction-amount.positive {
-  color: var(--color-positive);
+.stat-value.negative {
+    color: var(--color-negative);
 }
-
-.transaction-amount.negative {
-  color: var(--color-negative);
-}
-
