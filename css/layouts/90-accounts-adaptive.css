@@ -398,7 +398,7 @@ h4 {
 
 /* ===== TRANSACTIONS - LIST MODE ===== */
 
-/* ===== RECENT TRANSACTIONS - FLAT LIST CARD ===== */
+/* ===== RECENT TRANSACTIONS - FLAT LIST CARD ===== *//* ===== RECENT TRANSACTIONS - CLEAN TEXT LIST (NO ICONS) ===== */
 .transactions-history {
     background: var(--color-surface) !important;
     border-radius: var(--border-radius) !important;
@@ -408,68 +408,6 @@ h4 {
     margin-top: 1.5rem;
 }
 
-/* Section header - consistent with insights */
-.transactions-history .section-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.transactions-history .section-title h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.transactions-history .section-title h3::before {
-    content: "📊";
-    font-size: 1rem;
-}
-
-/* Empty state */
-.transactions-history .empty-transactions {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: var(--color-text-muted);
-}
-
-.transactions-history .empty-transactions p {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-}
-
-.transactions-history .empty-transactions small {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-}
-
-/* Transaction list container */
-.transaction-list {
-    background: transparent;
-    margin: 0;
-    padding: 0;
-}
-
-/* Individual transaction row - flat design */
-/* ===== RECENT TRANSACTIONS - TEXT-ONLY LIST (NO CARDS) ===== */
-.transactions-history {
-    background: var(--color-surface) !important;
-    border-radius: var(--border-radius) !important;
-    padding: 1.5rem !important;
-    box-shadow: var(--shadow) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    margin-top: 1.5rem;
-}
-
-/* Section header */
 .transactions-history .section-title {
     display: flex;
     justify-content: space-between;
@@ -499,22 +437,20 @@ h4 {
     opacity: 0.8;
 }
 
-/* SIMPLE TEXT-ONLY TRANSACTION LIST (NO CARDS/BORDERS) */
+/* TRANSACTION LIST - CLEAN & SIMPLE */
 .transaction-list {
     background: transparent;
     margin: 0;
     padding: 0;
 }
 
-/* Clean text-only transaction item - NO boxes, NO cards, NO borders */
+/* Transaction row - text only, no cards */
 .transaction-list .transaction-item {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     padding: 0.75rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    min-height: 48px;
-    transition: background-color 0.2s ease;
 }
 
 .transaction-list .transaction-item:last-child {
@@ -525,14 +461,14 @@ h4 {
     background-color: rgba(255, 255, 255, 0.02);
 }
 
-/* Left side: merchant info - NO icon */
-.transaction-info {
+/* Left side: merchant info */
+.transaction-list .transaction-info {
     flex: 1;
     min-width: 0;
     padding-right: 1rem;
 }
 
-.transaction-info strong {
+.transaction-list .transaction-info strong {
     display: block;
     font-size: 0.95rem;
     font-weight: 600;
@@ -541,7 +477,7 @@ h4 {
     line-height: 1.4;
 }
 
-.transaction-info small {
+.transaction-list .transaction-info small {
     display: block;
     font-size: 0.8rem;
     color: var(--color-text-muted);
@@ -549,8 +485,8 @@ h4 {
     line-height: 1.3;
 }
 
-/* Right side: amount - prominent */
-.transaction-amount {
+/* Right side: amount */
+.transaction-list .transaction-amount {
     font-size: 0.95rem;
     font-weight: 700;
     white-space: nowrap;
@@ -558,16 +494,16 @@ h4 {
     text-align: right;
 }
 
-.transaction-amount.positive {
+.transaction-list .transaction-amount.positive {
     color: var(--color-positive);
 }
 
-.transaction-amount.negative {
+.transaction-list .transaction-amount.negative {
     color: var(--color-negative);
 }
 
-/* Empty state - matches your current site */
-.empty-transactions {
+/* Empty state */
+.transaction-list .empty-transactions {
     text-align: center;
     padding: 2rem 1rem;
     color: var(--color-text-muted);
@@ -576,75 +512,44 @@ h4 {
     margin-top: 0.5rem;
 }
 
-.empty-transactions p {
+.transaction-list .empty-transactions p {
     font-size: 1rem;
     margin-bottom: 0.5rem;
     font-weight: 500;
 }
 
-.empty-transactions small {
+.transaction-list .empty-transactions small {
     font-size: 0.875rem;
     color: var(--color-text-secondary);
     opacity: 0.8;
 }
 
-/* Responsive adjustments */
+/* Remove any icon-related styling */
+.transaction-list .transaction-icon,
+.transaction-list .transaction-item .icon,
+.transaction-list .rt-icon {
+    display: none !important;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .transactions-history {
-        padding: 1.25rem !important;
-    }
-    
     .transaction-list .transaction-item {
         padding: 0.625rem 0;
         align-items: center;
     }
     
-    .transaction-info strong {
+    .transaction-list .transaction-info strong {
         font-size: 0.9rem;
     }
     
-    .transaction-info small {
+    .transaction-list .transaction-info small {
         font-size: 0.75rem;
     }
     
-    .transaction-amount {
+    .transaction-list .transaction-amount {
         font-size: 0.9rem;
     }
 }
-
-/* For very small screens - stack vertically */
-@media (max-width: 480px) {
-    .transaction-list .transaction-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-    
-    .transaction-amount {
-        align-self: flex-end;
-        text-align: right;
-        margin-top: -1.5rem; /* Pull amount up to align with merchant */
-    }
-    
-    .transaction-info {
-        padding-right: 0;
-    }
-}
-
-/* Add this to remove any residual card/border styling */
-.transaction-list .transaction-item {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-}
-
-.transaction-list .transaction-item::before,
-.transaction-list .transaction-item::after {
-    content: none !important;
-}
-
 /* ===== SELECTED ACCOUNT CARD ===== */
 .selected-account-container {
     background: var(--color-surface);
