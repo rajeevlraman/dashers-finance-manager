@@ -300,6 +300,15 @@ async function updateSelectedAccountCard(accountId = null) {
   `;
 }
 
+function setupEventListeners(categories, accounts, properties) {
+  // Add transaction button
+  const btnAddTx = document.getElementById('btnAddTx');
+  if (btnAddTx) {
+    btnAddTx.addEventListener('click', () => {
+      showInlineTransactionForm(null, categories, accounts, properties);
+    });
+  }
+}
 // Update recent transactions in right panel
 async function updateRecentTransactions() {
   const [transactions, accounts] = await Promise.all([
