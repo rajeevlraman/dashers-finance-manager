@@ -590,7 +590,7 @@ export function initAccountsUI() {
         <!-- RIGHT: INSIGHTS & TRANSACTIONS -->
         <div class="dashboard-right">
           <div class="insights-card" id="accountsInsights">
-            <h3>Financial Insights</h3>
+          
             <p class="text-muted">Loading insights...</p>
           </div>
           
@@ -598,7 +598,7 @@ export function initAccountsUI() {
 <div class="dashboard-right">
     <!-- Insights panel (keeps existing flat style) -->
     <div class="insights-card" id="accountsInsights">
-        <h3>Financial Insights</h3>
+
         <!-- Insights items rendered by JavaScript -->
     </div>
     
