@@ -290,9 +290,7 @@ async function updateSelectedAccountCard(accountId = null) {
     </div>
     
     <div class="selected-account-actions">
-      <button class="btn btn-primary" onclick="quickAddTransaction('${selectedAccount.id}')">
-        💸 Add Transaction
-      </button>
+      <button class="btn btn-primary" id="btnAddTx">➕ Add Transaction</button>
       <button class="btn btn-secondary" onclick="openAccountEditor('${selectedAccount.id}')">
         ✏️ Edit Account
       </button>
