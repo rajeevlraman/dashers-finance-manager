@@ -490,7 +490,7 @@
 
 .transaction-info small {
   font-size: 0.7rem;
-  color: var(--color-text-muted);
+  color: var(--color-bg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
