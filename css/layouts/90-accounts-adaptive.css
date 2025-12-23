@@ -863,4 +863,92 @@
 .transaction-amount.negative {
   color: var(--color-negative);
 }
+/* =====================================================
+   RECENT TRANSACTIONS — SINGLE CARD + LIST
+   ===================================================== */
+
+/* Keep ONE card */
+.transactions-history {
+  background: var(--color-surface);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.25rem;
+  margin-top: 1.25rem;
+}
+
+/* Header */
+.transactions-history .section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.transactions-history h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* List container */
+.transaction-list {
+  margin-top: 0.25rem;
+}
+
+/* =========================
+   LIST ROW
+   ========================= */
+
+.transaction-item {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+/* Last row no divider */
+.transaction-item:last-child {
+  border-bottom: none;
+}
+
+/* Arrow icon */
+.transaction-icon {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* Merchant + meta */
+.transaction-info strong {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  display: block;
+}
+
+.transaction-info small {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Amount — hero element */
+.transaction-amount {
+  font-size: 0.9rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.transaction-amount.positive {
+  color: var(--color-positive);
+}
+
+.transaction-amount.negative {
+  color: var(--color-negative);
+}
+
+/* No hover card nonsense */
+.transaction-item:hover {
+  background: transparent;
+}
 
