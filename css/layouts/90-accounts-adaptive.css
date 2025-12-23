@@ -479,14 +479,16 @@
 }
 
 .transaction-info strong {
-  font-size: 0.85rem;
-  font-weight: 500;
-  --color-negative: #ef4444; /* Red */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: list-item;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text);
+
+    display: block;           /* critical */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
 
 .transaction-info small {
   font-size: 0.7rem;
