@@ -812,24 +812,21 @@
    Flat list, subtle dividers, no card rows
    ===================================================== */
 
+.transactions-history.card
+{  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;}
+
 /* Keep ONE outer container only */
-.transactions-history {
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-  margin-top: 1.25rem;
-}
+
 
 /* Header stays */
 .transactions-history .section-title {
   margin-bottom: 0.75rem;
 }
 
-/* List wrapper */
-.transaction-list {
-  background: transparent;
-}
+
 
 /* -----------------------------
    TRANSACTION ROW (INSIGHTS-LIKE)
