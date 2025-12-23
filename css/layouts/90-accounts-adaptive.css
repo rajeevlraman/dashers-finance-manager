@@ -876,3 +876,90 @@ h4 {
 /* Quick inline fix you can add directly to your page */
 /* Add this style tag to your HTML head */
 
+/* ===== FIX TRANSACTION ITEM CARDS ===== */
+
+/* Remove all card styling from transaction items */
+.transaction-item {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0.5rem 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0 !important;
+    min-height: auto !important;
+}
+
+/* Remove the icon/arrow */
+.transaction-item .transaction-icon,
+.transaction-item > div:first-child,
+.transaction-item > span:first-child {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Remove hover effects */
+.transaction-item:hover {
+    background: transparent !important;
+    transform: none !important;
+}
+
+/* Fix the merchant text */
+.transaction-item .transaction-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding-right: 1rem !important;
+}
+
+.transaction-item .transaction-info strong {
+    color: var(--color-text) !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    display: block !important;
+}
+
+.transaction-item .transaction-info small {
+    color: var(--color-text-muted) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    display: block !important;
+    margin-top: 0.125rem !important;
+}
+
+/* Remove box from amount */
+.transaction-item .transaction-amount {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+}
+
+.transaction-item .transaction-amount.positive {
+    color: var(--color-positive) !important;
+}
+
+.transaction-item .transaction-amount.negative {
+    color: var(--color-negative) !important;
+}
+
+/* Add line separation */
+.transaction-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.transaction-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Target the recent transactions container */
+#recentTransactions .transaction-item {
+    background: transparent !important;
+    border: none !important;
+}
