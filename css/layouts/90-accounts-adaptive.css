@@ -940,3 +940,90 @@
   background: transparent !important;
 }
 
+/* =====================================================
+   RECENT TRANSACTIONS — MATCH INSIGHTS STYLE
+   Flat list, subtle dividers, no card rows
+   ===================================================== */
+
+/* Keep ONE outer container only */
+.transactions-history {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 1.25rem;
+}
+
+/* Header stays */
+.transactions-history .section-title {
+  margin-bottom: 0.75rem;
+}
+
+/* List wrapper */
+.transaction-list {
+  background: transparent;
+}
+
+/* -----------------------------
+   TRANSACTION ROW (INSIGHTS-LIKE)
+   ----------------------------- */
+.transaction-item {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+
+  padding: 0.6rem 0;
+  margin: 0;
+
+  /* ONE subtle divider line */
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* No divider on last row */
+.transaction-item:last-child {
+  border-bottom: none;
+}
+
+/* Icon — subtle */
+.transaction-icon {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* Text block */
+.transaction-info strong {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  display: block;
+}
+
+.transaction-info small {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Amount — ONLY bold element */
+.transaction-amount {
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.transaction-amount.positive {
+  color: var(--color-positive);
+}
+
+.transaction-amount.negative {
+  color: var(--color-negative);
+}
+
+/* Kill hover effects completely */
+.transaction-item:hover {
+  background: transparent !important;
+}
