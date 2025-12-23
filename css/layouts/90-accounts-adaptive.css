@@ -430,16 +430,7 @@
    FORCE LIST MODE — REMOVE CARD LOOK COMPLETELY
    ================================================== */
 
-.accounts-insights.card,
-.accounts-insights .card,
-.recent-transactions.card,
-.recent-transactions .card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-}
+
 /* INSIGHTS — CLEAN LIST */
 .accounts-insights h4 {
   margin-bottom: 0.75rem;
@@ -512,4 +503,14 @@
 
 .recent-transactions .rt-amt.neg {
   color: var(--color-negative);
+}
+.accounts-insights.card,
+.accounts-insights .card,
+.recent-transactions.card,
+.recent-transactions .card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 }
