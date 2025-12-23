@@ -808,139 +808,6 @@
 }
 
 /* =====================================================
-   RECENT TRANSACTIONS — TRUE LIST MODE (MATCHES JS)
-   ===================================================== */
-
-.transactions-history {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* Transaction rows rendered by JS */
-.transaction-item {
-  display: grid;
-  grid-template-columns: 20px 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.transaction-item:last-child {
-  border-bottom: none;
-}
-
-/* Left arrow */
-.transaction-icon {
-  opacity: 0.7;
-}
-
-/* Merchant + meta */
-.transaction-info strong {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.transaction-info small {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-}
-
-/* Amount — ONLY bold element */
-.transaction-amount {
-  font-size: 0.9rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.transaction-amount.positive {
-  color: var(--color-positive);
-}
-
-.transaction-amount.negative {
-  color: var(--color-negative);
-}
-/* =====================================================
-   🔥 FORCE RECENT TRANSACTIONS INTO LIST ROWS
-   (Overrides legacy card styles from base.css)
-   ===================================================== */
-
-/* Keep ONE outer card */
-.transactions-history {
-  background: var(--color-surface);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  padding: 1rem 1.25rem;
-}
-
-/* -----------------------------
-   HARD RESET transaction-item
-   ----------------------------- */
-.transaction-item {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-
-  display: grid;
-  grid-template-columns: 18px 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-
-  padding: 0.6rem 0 !important;
-  margin: 0 !important;
-
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-/* Remove divider on last row */
-.transaction-item:last-child {
-  border-bottom: none;
-}
-
-/* Icon */
-.transaction-icon {
-  font-size: 0.75rem;
-  opacity: 0.6;
-}
-
-/* Merchant */
-.transaction-info strong {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text);
-  display: block;
-}
-
-/* Meta */
-.transaction-info small {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-}
-
-/* Amount = HERO */
-.transaction-amount {
-  font-size: 0.9rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.transaction-amount.positive {
-  color: var(--color-positive);
-}
-
-.transaction-amount.negative {
-  color: var(--color-negative);
-}
-
-/* Kill hover card behaviour */
-.transaction-item:hover {
-  background: transparent !important;
-}
-
-/* =====================================================
    RECENT TRANSACTIONS — MATCH INSIGHTS STYLE
    Flat list, subtle dividers, no card rows
    ===================================================== */
@@ -1000,7 +867,7 @@
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--color-text);
-  display: list-item;
+  display: block;
 }
 
 .transaction-info small {
