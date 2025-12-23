@@ -634,3 +634,52 @@
   padding: 0 !important;
   border: none !important;
 }
+/* =====================================================
+   INSIGHTS — LIST MODE (NO CARD)
+   ===================================================== */
+
+.insights-card {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Title */
+.insights-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+}
+
+/* Insight rows */
+.insights-card .insight {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.insights-card .insight:last-child {
+  border-bottom: none;
+}
+
+/* Label */
+.insights-card .insight small {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Value (bold but clean) */
+.insights-card .insight strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+/* Emphasise key metric only */
+.insights-card .insight.highlight strong {
+  font-size: 1.15rem;
+}
