@@ -17,7 +17,7 @@
 .page-container,
 .accounts-layout {
     background-color: var(--color-bg);
-    color: var(--color-text);
+    color: var(--color-bg);
     min-height: 100vh;
 }
 
