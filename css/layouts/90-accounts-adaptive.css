@@ -943,3 +943,118 @@ h4 {
 .stat-value.negative {
     color: var(--color-negative);
 }
+
+
+/* ===== OVERRIDE EXISTING TRANSACTION CARD STYLES ===== */
+/* Remove all card styling from transaction items */
+.rt-item,
+.recent-transactions .rt-item,
+.transactions-history .rt-item,
+.transaction-list .rt-item {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0.6rem 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0 !important;
+}
+
+/* Override the grid layout */
+.rt-item[style*="grid"],
+.recent-transactions .rt-item[style*="grid"],
+.transactions-history .rt-item[style*="grid"] {
+    display: flex !important;
+    grid-template-columns: none !important;
+}
+
+/* Remove any hover effects */
+.rt-item:hover,
+.recent-transactions .rt-item:hover,
+.transactions-history .rt-item:hover {
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Fix the merchant text visibility */
+.rt-desc {
+    color: var(--color-text) !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    flex: 1;
+    min-width: 0;
+}
+
+.rt-date {
+    color: var(--color-text-muted) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    display: block;
+    margin-top: 0.125rem;
+}
+
+/* Fix amount styling */
+.rt-amt {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-left: 0.5rem;
+}
+
+.rt-amt.pos {
+    color: var(--color-positive) !important;
+}
+
+.rt-amt.neg {
+    color: var(--color-negative) !important;
+}
+
+/* Remove any inner containers */
+.rt-item > div,
+.rt-item > span {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Add bottom border for separation */
+.rt-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.rt-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Specifically target the account card transaction lists */
+.account-card .rt-item {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0.5rem 0 !important;
+    margin: 0 !important;
+}
+
+/* Also need to override the transaction items inside the main transaction list */
+#recentTransactions .rt-item {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0.6rem 0 !important;
+    margin: 0 !important;
+}
+
+/* Remove any card-like containers in recent transactions */
+#recentTransactions > div:not(.rt-item) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
