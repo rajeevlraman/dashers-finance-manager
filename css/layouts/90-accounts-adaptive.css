@@ -683,3 +683,184 @@
 .insights-card .insight.highlight strong {
   font-size: 1.15rem;
 }
+/* =====================================================
+   TRANSACTIONS — LIST MODE (BANK STYLE)
+   ===================================================== */
+
+.transactions-history {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 1.25rem;
+}
+
+/* Section header */
+.transactions-history .section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.transactions-history h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary-light);
+  cursor: pointer;
+}
+
+/* Transaction list */
+.transaction-list {
+  background: transparent;
+}
+
+/* Individual row */
+.transaction-list .rt-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.transaction-list .rt-item:last-child {
+  border-bottom: none;
+}
+
+/* Merchant */
+.transaction-list .rt-desc {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* Date */
+.transaction-list .rt-date {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Amount — ONLY bold element */
+.transaction-list .rt-amt {
+  font-size: 0.9rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.transaction-list .rt-amt.pos {
+  color: var(--color-positive);
+}
+
+.transaction-list .rt-amt.neg {
+  color: var(--color-negative);
+}
+.insights-card.card,
+.transactions-history.card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* =====================================================
+   INSIGHTS — TRUE LIST MODE (MATCHES JS)
+   ===================================================== */
+
+.insights-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Insight rows rendered by JS */
+.insight-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.insight-item:last-child {
+  border-bottom: none;
+}
+
+.insight-item span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.insight-item strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+/* =====================================================
+   RECENT TRANSACTIONS — TRUE LIST MODE (MATCHES JS)
+   ===================================================== */
+
+.transactions-history {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Transaction rows rendered by JS */
+.transaction-item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.transaction-item:last-child {
+  border-bottom: none;
+}
+
+/* Left arrow */
+.transaction-icon {
+  opacity: 0.7;
+}
+
+/* Merchant + meta */
+.transaction-info strong {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.transaction-info small {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Amount — ONLY bold element */
+.transaction-amount {
+  font-size: 0.9rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.transaction-amount.positive {
+  color: var(--color-positive);
+}
+
+.transaction-amount.negative {
+  color: var(--color-negative);
+}
+
