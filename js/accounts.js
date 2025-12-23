@@ -1432,7 +1432,7 @@ async function updateEnhancedTransactionHistory() {
     
     const recent = transactions
         .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 10);
+        .slice(0, 8);
     
     const container = document.getElementById('recentTransactions');
     if (!container) return;
@@ -1447,48 +1447,31 @@ async function updateEnhancedTransactionHistory() {
         return;
     }
     
-    // Group by date
-    const groupedByDate = {};
-    recent.forEach(t => {
-        const date = new Date(t.date).toLocaleDateString('en-US', { 
-            weekday: 'short',
-            month: 'short', 
-            day: 'numeric' 
-        });
-        if (!groupedByDate[date]) {
-            groupedByDate[date] = [];
-        }
-        groupedByDate[date].push(t);
-    });
-    
     const accountMap = {};
     accounts.forEach(acc => {
         accountMap[acc.id] = acc.name;
     });
     
-    container.innerHTML = Object.entries(groupedByDate).map(([date, txList]) => `
-        <div class="transaction-day">
-            <div class="day-header">${date}</div>
-            ${txList.map(t => {
-                const accountName = accountMap[t.accountId] || 'Unknown Account';
-                const categoryIcon = t.amount < 0 ? '📤' : '📥';
-                return `
-                    <div class="transaction-item" data-id="${t.id}">
-                        <div class="transaction-icon ${t.amount < 0 ? 'expense' : 'income'}">
-                            ${categoryIcon}
-                        </div>
-                        <div class="transaction-info">
-                            <strong>${t.description || 'No description'}</strong>
-                            <small>${accountName}</small>
-                        </div>
-                        <div class="transaction-amount ${t.amount < 0 ? 'negative' : 'positive'}">
-                            ${formatCurrency(t.amount, 'AUD')}
-                        </div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `).join('');
+    // TEXT-ONLY SIMPLE LIST - NO ICONS, NO CARDS
+    container.innerHTML = recent.map(t => {
+        const accountName = accountMap[t.accountId] || 'Unknown Account';
+        const formattedDate = new Date(t.date).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric'
+        });
+        
+        return `
+            <div class="transaction-item" data-id="${t.id}">
+                <div class="transaction-info">
+                    <strong>${t.description || 'No description'}</strong>
+                    <small>${accountName} • ${formattedDate}</small>
+                </div>
+                <div class="transaction-amount ${t.amount < 0 ? 'negative' : 'positive'}">
+                    ${formatCurrency(t.amount, 'AUD')}
+                </div>
+            </div>
+        `;
+    }).join('');
     
     // Add click handler to view transaction details
     container.querySelectorAll('.transaction-item').forEach(item => {

@@ -459,13 +459,61 @@ h4 {
 }
 
 /* Individual transaction row - flat design */
-.transaction-list .transaction-item {
-    display: grid;
-    grid-template-columns: 30px 1fr auto;
+/* ===== RECENT TRANSACTIONS - TEXT-ONLY LIST (NO CARDS) ===== */
+.transactions-history {
+    background: var(--color-surface) !important;
+    border-radius: var(--border-radius) !important;
+    padding: 1.5rem !important;
+    box-shadow: var(--shadow) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    margin-top: 1.5rem;
+}
+
+/* Section header */
+.transactions-history .section-title {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 0.85rem 0;
+    margin-bottom: 1rem;
+}
+
+.transactions-history h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.transactions-history .btn-text {
+    background: none;
+    border: none;
+    color: var(--color-primary-light);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem 0;
+    transition: opacity 0.2s ease;
+}
+
+.transactions-history .btn-text:hover {
+    opacity: 0.8;
+}
+
+/* SIMPLE TEXT-ONLY TRANSACTION LIST (NO CARDS/BORDERS) */
+.transaction-list {
+    background: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+/* Clean text-only transaction item - NO boxes, NO cards, NO borders */
+.transaction-list .transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.75rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    gap: 1rem;
+    min-height: 48px;
     transition: background-color 0.2s ease;
 }
 
@@ -474,105 +522,70 @@ h4 {
 }
 
 .transaction-list .transaction-item:hover {
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
-/* Icon column */
-.transaction-list .transaction-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.transaction-list .transaction-icon.expense {
-    background: rgba(239, 68, 68, 0.15);
-    color: var(--color-negative);
-}
-
-.transaction-list .transaction-icon.income {
-    background: rgba(16, 185, 129, 0.15);
-    color: var(--color-positive);
-}
-
-/* Transaction details */
-.transaction-list .transaction-info {
+/* Left side: merchant info - NO icon */
+.transaction-info {
+    flex: 1;
     min-width: 0;
-    overflow: hidden;
+    padding-right: 1rem;
 }
 
-.transaction-list .transaction-info strong {
+.transaction-info strong {
     display: block;
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--color-text);
     margin-bottom: 0.125rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.4;
 }
 
-.transaction-list .transaction-info small {
+.transaction-info small {
     display: block;
     font-size: 0.8rem;
     color: var(--color-text-muted);
     font-weight: 500;
+    line-height: 1.3;
 }
 
-/* Amount column */
-.transaction-list .transaction-amount {
+/* Right side: amount - prominent */
+.transaction-amount {
     font-size: 0.95rem;
     font-weight: 700;
     white-space: nowrap;
+    flex-shrink: 0;
     text-align: right;
-    padding-left: 0.5rem;
 }
 
-.transaction-list .transaction-amount.positive {
+.transaction-amount.positive {
     color: var(--color-positive);
 }
 
-.transaction-list .transaction-amount.negative {
+.transaction-amount.negative {
     color: var(--color-negative);
 }
 
-/* "View All" button - subtle text button */
-.transactions-history .btn-text {
-    background: transparent;
-    border: none;
-    color: var(--color-primary-light);
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.transactions-history .btn-text:hover {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--color-primary);
-}
-
-/* Transaction day grouping (if you want to show by date) */
-.transaction-list .transaction-day {
-    margin-bottom: 0.5rem;
-}
-
-.transaction-list .day-header {
-    font-size: 0.8rem;
+/* Empty state - matches your current site */
+.empty-transactions {
+    text-align: center;
+    padding: 2rem 1rem;
     color: var(--color-text-muted);
-    font-weight: 600;
-    padding: 0.5rem 0;
-    margin-bottom: 0.25rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.empty-transactions p {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.empty-transactions small {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
 }
 
 /* Responsive adjustments */
@@ -582,49 +595,54 @@ h4 {
     }
     
     .transaction-list .transaction-item {
-        grid-template-columns: 25px 1fr auto;
-        gap: 0.75rem;
-        padding: 0.75rem 0;
+        padding: 0.625rem 0;
+        align-items: center;
     }
     
-    .transaction-list .transaction-info strong {
+    .transaction-info strong {
         font-size: 0.9rem;
     }
     
-    .transaction-list .transaction-amount {
+    .transaction-info small {
+        font-size: 0.75rem;
+    }
+    
+    .transaction-amount {
         font-size: 0.9rem;
     }
 }
 
-/* For very small screens */
+/* For very small screens - stack vertically */
 @media (max-width: 480px) {
-    .transactions-history {
-        padding: 1rem !important;
-    }
-    
-    .transactions-history .section-title {
+    .transaction-list .transaction-item {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: 0.25rem;
     }
     
-    .transactions-history .btn-text {
+    .transaction-amount {
         align-self: flex-end;
+        text-align: right;
+        margin-top: -1.5rem; /* Pull amount up to align with merchant */
     }
     
-    .transaction-list .transaction-item {
-        grid-template-columns: 25px 1fr;
-        grid-template-rows: auto auto;
-        gap: 0.5rem;
+    .transaction-info {
+        padding-right: 0;
     }
-    
-    .transaction-list .transaction-amount {
-        grid-column: 2;
-        grid-row: 2;
-        text-align: left;
-        padding-left: 35px; /* Align with text */
-        font-size: 0.85rem;
-    }
+}
+
+/* Add this to remove any residual card/border styling */
+.transaction-list .transaction-item {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+.transaction-list .transaction-item::before,
+.transaction-list .transaction-item::after {
+    content: none !important;
 }
 
 /* ===== SELECTED ACCOUNT CARD ===== */
