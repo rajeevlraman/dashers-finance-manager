@@ -368,59 +368,339 @@
   font-size: 1.2rem;
 }
 
-/* =====================================================
-   INSIGHTS & RECENT TRANSACTIONS — FLAT LIST STYLE
-   ===================================================== */
+/* =========================================
+   RECENT TRANSACTIONS — DENSE LIST
+   ========================================= */
 
-/* --- Shared reset: no cards, no chrome --- */
-.accounts-insights,
-.insights-card,
-.transactions-history,
-.transaction-list,
-#recentTransactions {
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
+.recent-transactions {
+  margin-top: 1rem;
 }
 
-/* -----------------------------------------------------
-   SECTION HEADERS
-   ----------------------------------------------------- */
-.insights-card h3,
-.transactions-history h3 {
+.rt-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.rt-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.rt-item:last-child {
+  border-bottom: none;
+}
+
+/* Left: merchant + date */
+.rt-desc {
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.rt-date {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Right: amount (bold & clear) */
+.rt-amt {
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.rt-amt.pos {
+  color: var(--color-positive);
+}
+
+.rt-amt.neg {
+  color: var(--color-negative);
+}
+
+.rt-item:hover {
+  background: transparent;
+}
+
+
+/* ==================================================
+   FORCE LIST MODE — REMOVE CARD LOOK COMPLETELY
+   ================================================== */
+
+
+/* INSIGHTS — CLEAN LIST */
+.accounts-insights h4 {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.accounts-insights .insight {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.accounts-insights .insight:last-child {
+  border-bottom: none;
+}
+
+.accounts-insights .insight small {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.accounts-insights .insight strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+/* TRANSACTIONS — BANK DENSITY MODE */
+.recent-transactions {
+  margin-top: 0.5rem;
+}
+
+.recent-transactions .rt-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.recent-transactions .rt-item:last-child {
+  border-bottom: none;
+}
+
+/* Merchant + date */
+.recent-transactions .rt-desc {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.recent-transactions .rt-date {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Amount — the hero */
+.recent-transactions .rt-amt {
+  font-weight: 900;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.recent-transactions .rt-amt.pos {
+  color: var(--color-positive);
+}
+
+.recent-transactions .rt-amt.neg {
+  color: var(--color-negative);
+}
+.accounts-insights.card,
+.accounts-insights .card,
+.recent-transactions.card,
+.recent-transactions .card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+
+/* INSIGHTS PANEL — NOT A CARD */
+.accounts-insights {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* INSIGHTS HEADER */
+.accounts-insights h4 {
   font-size: 0.95rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
   color: var(--color-text);
 }
 
-.transactions-history .section-title {
+/* INSIGHTS ROW */
+.accounts-insights .insight {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
 }
 
-.btn-text {
-  background: none;
-  border: none;
+.accounts-insights .insight:last-child {
+  border-bottom: none;
+}
+
+/* Insight label */
+.accounts-insights .insight small {
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-primary-light);
-  cursor: pointer;
+  color: var(--color-text-muted);
 }
 
+/* Insight value */
+.accounts-insights .insight strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+/* Highlight ONLY the main metric */
+.accounts-insights .insight.highlight strong {
+  font-size: 1.15rem;
+}
+
+/* -----------------------------------------------------
+   RECENT TRANSACTIONS — DENSE BANK LIST
+   ----------------------------------------------------- */
+
+.recent-transactions {
+  margin-top: 1rem;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Section title */
+.rt-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+/* Transaction row */
+.recent-transactions .rt-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.recent-transactions .rt-item:last-child {
+  border-bottom: none;
+}
+
+/* Merchant / description */
+.recent-transactions .rt-desc {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* Date */
+.recent-transactions .rt-date {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Amount — THE ONLY BOLD ELEMENT */
+.recent-transactions .rt-amt {
+  font-size: 0.9rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.recent-transactions .rt-amt.pos {
+  color: var(--color-positive);
+}
+
+.recent-transactions .rt-amt.neg {
+  color: var(--color-negative);
+}
+
+/* Disable card visuals anywhere inside insights/transactions */
+.accounts-insights .card,
+.recent-transactions .card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
 /* =====================================================
-   INSIGHTS — TRUE LIST MODE
+   INSIGHTS — LIST MODE (NO CARD)
    ===================================================== */
 
+.insights-card {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Title */
+.insights-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+}
+
+/* Insight rows */
+.insights-card .insight {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.insights-card .insight:last-child {
+  border-bottom: none;
+}
+
+/* Label */
+.insights-card .insight small {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Value (bold but clean) */
+.insights-card .insight strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+/* Emphasise key metric only */
+.insights-card .insight.highlight strong {
+  font-size: 1.15rem;
+}
+
+
+/* =====================================================
+   INSIGHTS — TRUE LIST MODE (MATCHES JS)
+   ===================================================== */
+
+.insights-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Insight rows rendered by JS */
 .insight-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   padding: 0.65rem 0;
   border-bottom: 1px solid rgba(255,255,255,0.12);
 }
@@ -440,62 +720,69 @@
   color: var(--color-text);
 }
 
-.insight-item .positive {
-  color: var(--color-positive);
-}
-
-.insight-item .negative {
-  color: var(--color-negative);
-}
-
 /* =====================================================
-   RECENT TRANSACTIONS — MATCH INSIGHTS EXACTLY
+   RECENT TRANSACTIONS — MATCH INSIGHTS STYLE
+   Flat list, subtle dividers, no card rows
    ===================================================== */
 
-.transaction-item {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr) max-content;
-  align-items: center;
-  gap: 0.75rem;
+.transactions-history.card
+{  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;}
 
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+/* Keep ONE outer container only */
+
+
+/* Header stays */
+.transactions-history .section-title {
+  margin-bottom: 0.75rem;
 }
 
+
+
+/* -----------------------------
+   TRANSACTION ROW (INSIGHTS-LIKE)
+   ----------------------------- */
+.transaction-item {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+
+  padding: 0.6rem 0;
+  margin: 0;
+
+  /* ONE subtle divider line */
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* No divider on last row */
 .transaction-item:last-child {
   border-bottom: none;
 }
 
-/* Icon */
+/* Icon — subtle */
 .transaction-icon {
   font-size: 0.75rem;
   opacity: 0.6;
-  text-align: center;
 }
 
 /* Text block */
-.transaction-info {
-  min-width: 0; /* enables ellipsis */
-}
-
 .transaction-info strong {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--color-text);
-
-    display: block;           /* critical */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  display: block;
 }
-
 
 .transaction-info small {
   font-size: 0.7rem;
   color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Amount — ONLY bold element */
@@ -503,7 +790,6 @@
   font-size: 0.9rem;
   font-weight: 800;
   white-space: nowrap;
-  text-align: right;
 }
 
 .transaction-amount.positive {
@@ -514,7 +800,7 @@
   color: var(--color-negative);
 }
 
-/* No hover, no card effects */
+/* Kill hover effects completely */
 .transaction-item:hover {
-  background: transparent;
+  background: transparent !important;
 }
