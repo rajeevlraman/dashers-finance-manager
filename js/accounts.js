@@ -1452,7 +1452,7 @@ async function updateEnhancedTransactionHistory() {
         accountMap[acc.id] = acc.name;
     });
     
-    // CLEAN TEXT-ONLY LIST - NO ICONS
+    // TEXT-ONLY SIMPLE LIST - NO ICONS, NO CARDS
     container.innerHTML = recent.map(t => {
         const accountName = accountMap[t.accountId] || 'Unknown Account';
         const formattedDate = new Date(t.date).toLocaleDateString('en-US', { 
@@ -1473,7 +1473,7 @@ async function updateEnhancedTransactionHistory() {
         `;
     }).join('');
     
-    // Add click handler
+    // Add click handler to view transaction details
     container.querySelectorAll('.transaction-item').forEach(item => {
         item.addEventListener('click', (e) => {
             const txId = e.currentTarget.dataset.id;
