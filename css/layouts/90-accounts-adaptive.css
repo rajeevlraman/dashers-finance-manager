@@ -1000,7 +1000,7 @@
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--color-text);
-  display: block;
+  display: list-item;
 }
 
 .transaction-info small {
