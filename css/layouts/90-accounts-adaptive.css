@@ -563,67 +563,6 @@
   font-size: 1.15rem;
 }
 
-/* -----------------------------------------------------
-   RECENT TRANSACTIONS — DENSE BANK LIST
-   ----------------------------------------------------- */
-
-.recent-transactions {
-  margin-top: 1rem;
-  background: transparent;
-  padding: 0;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-/* Section title */
-.rt-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: var(--color-text);
-}
-
-/* Transaction row */
-.recent-transactions .rt-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-
-.recent-transactions .rt-item:last-child {
-  border-bottom: none;
-}
-
-/* Merchant / description */
-.recent-transactions .rt-desc {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-/* Date */
-.recent-transactions .rt-date {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-}
-
-/* Amount — THE ONLY BOLD ELEMENT */
-.recent-transactions .rt-amt {
-  font-size: 0.9rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.recent-transactions .rt-amt.pos {
-  color: var(--color-positive);
-}
-
-.recent-transactions .rt-amt.neg {
-  color: var(--color-negative);
-}
 
 /* Disable card visuals anywhere inside insights/transactions */
 .accounts-insights .card,
@@ -801,6 +740,89 @@
 }
 
 /* Kill hover effects completely */
+.transaction-item:hover {
+  background: transparent !important;
+}
+/* ==========================================================
+   🔥 FINAL OVERRIDE — RECENT TRANSACTIONS = INSIGHTS STYLE
+   ========================================================== */
+
+/* Kill ALL card styling inheritance */
+.transactions-history,
+.transaction-list,
+#recentTransactions {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Ensure no wrapper behaves like a card */
+.transactions-history *,
+.transaction-list * {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* ----------------------------------------------------------
+   TRANSACTION ROW — EXACTLY LIKE INSIGHTS
+   ---------------------------------------------------------- */
+.transaction-item {
+  display: grid !important;
+  grid-template-columns: 14px 1fr auto;
+  align-items: center;
+
+  padding: 0.65rem 0 !important;
+  margin: 0 !important;
+
+  background: transparent !important;
+  border: none !important;
+
+  /* ONE divider only */
+  border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* Remove divider on last item */
+.transaction-item:last-child {
+  border-bottom: none !important;
+}
+
+/* Icon */
+.transaction-icon {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* Text */
+.transaction-info strong {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  display: block;
+}
+
+.transaction-info small {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Amount — ONLY bold element */
+.transaction-amount {
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.transaction-amount.positive {
+  color: var(--color-positive);
+}
+
+.transaction-amount.negative {
+  color: var(--color-negative);
+}
+
+/* Kill hover / card behaviour */
 .transaction-item:hover {
   background: transparent !important;
 }
