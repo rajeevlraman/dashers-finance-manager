@@ -945,116 +945,101 @@ h4 {
 }
 
 
-/* ===== OVERRIDE EXISTING TRANSACTION CARD STYLES ===== */
-/* Remove all card styling from transaction items */
-.rt-item,
-.recent-transactions .rt-item,
-.transactions-history .rt-item,
-.transaction-list .rt-item {
+/* ===== COMPLETELY REMOVE ICONS AND AMOUNT BOXES ===== */
+
+/* Remove the transaction icon (arrow) completely */
+.rt-item::before,
+.rt-item .rt-icon,
+.rt-item .transaction-icon,
+.rt-item > i,
+.rt-item > span:first-child:empty {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    content: none !important;
+}
+
+/* Specifically target the arrow/down arrow in recent transactions */
+#recentTransactions .rt-item > div:first-child,
+#recentTransactions .rt-item > span:first-child,
+.rt-item > div:first-child,
+.rt-item > span:first-child {
+    display: none !important;
+}
+
+/* Remove any box/styling around the amount */
+.rt-amt,
+.rt-item .rt-amt,
+#recentTransactions .rt-amt {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    border-radius: 0 !important;
-    padding: 0.6rem 0 !important;
+    padding: 0 !important;
     margin: 0 !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 0 !important;
-}
-
-/* Override the grid layout */
-.rt-item[style*="grid"],
-.recent-transactions .rt-item[style*="grid"],
-.transactions-history .rt-item[style*="grid"] {
-    display: flex !important;
-    grid-template-columns: none !important;
-}
-
-/* Remove any hover effects */
-.rt-item:hover,
-.recent-transactions .rt-item:hover,
-.transactions-history .rt-item:hover {
-    background: transparent !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* Fix the merchant text visibility */
-.rt-desc {
-    color: var(--color-text) !important;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-    flex: 1;
-    min-width: 0;
-}
-
-.rt-date {
-    color: var(--color-text-muted) !important;
-    font-size: 0.75rem !important;
-    font-weight: 500 !important;
-    display: block;
-    margin-top: 0.125rem;
-}
-
-/* Fix amount styling */
-.rt-amt {
     font-size: 0.9rem !important;
     font-weight: 700 !important;
+    color: var(--color-text) !important;
     white-space: nowrap;
-    flex-shrink: 0;
-    padding-left: 0.5rem;
+    text-align: right;
 }
 
+/* Color the amounts without boxes */
 .rt-amt.pos {
     color: var(--color-positive) !important;
+    background: transparent !important;
+    border: none !important;
 }
 
 .rt-amt.neg {
     color: var(--color-negative) !important;
-}
-
-/* Remove any inner containers */
-.rt-item > div,
-.rt-item > span {
     background: transparent !important;
     border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
 }
 
-/* Add bottom border for separation */
+/* Fix the layout - make rt-item a clean flex row */
 .rt-item {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-.rt-item:last-child {
-    border-bottom: none !important;
-}
-
-/* Specifically target the account card transaction lists */
-.account-card .rt-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     padding: 0.5rem 0 !important;
     margin: 0 !important;
+    gap: 0.5rem !important;
+    min-height: auto !important;
 }
 
-/* Also need to override the transaction items inside the main transaction list */
-#recentTransactions .rt-item {
+/* Remove any hover effects on the amount */
+.rt-amt:hover,
+.rt-item:hover .rt-amt {
     background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    padding: 0.6rem 0 !important;
-    margin: 0 !important;
+    transform: none !important;
 }
 
-/* Remove any card-like containers in recent transactions */
-#recentTransactions > div:not(.rt-item) {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+/* Make sure the merchant text takes full space */
+.rt-desc {
+    flex: 1 !important;
+    min-width: 0 !important;
+    color: var(--color-text) !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
 }
+
+/* Date styling */
+.rt-date {
+    color: var(--color-text-muted) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    display: block !important;
+    margin-top: 0.125rem !important;
+}
+
+/* Add this to completely remove any icon containers */
+.rt-item > *:first-child:not(.rt-desc):not(.rt-amt):not(.rt-date) {
+    display: none !important;
+}
+
+/* Quick inline fix you can add directly to your page */
+/* Add this style tag to your HTML head */
