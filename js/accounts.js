@@ -1492,5 +1492,4 @@ window.initAccountsUI = initAccountsUI;
 window.openAccountEditor = openAccountEditor;
 window.quickAddTransaction = quickAddTransaction;
 window.refreshAccountList = refreshAccountList;
->>>>>>> 01b78590d3a5a42c1f0b6e7dbd049e4816f7c134
 window.addDefaultAccounts = addDefaultAccounts;
