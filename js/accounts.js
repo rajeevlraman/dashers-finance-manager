@@ -775,3 +775,5 @@ function showAccountForm(acc) {
   });
 }
 
+// Force reload - version 2.0
+console.log('✅ accounts.js v2.0 loaded - May 8, 2026');
