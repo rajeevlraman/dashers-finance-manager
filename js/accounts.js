@@ -775,19 +775,3 @@ function showAccountForm(acc) {
   });
 }
 
-export {
-  initAccountsUI,
-  addDefaultAccounts,
-  getPrimaryAccountId,
-  setPrimaryAccountId,
-  calculateAccountBalance,
-  formatCurrency,
-  formatDate,
-  computeAccountSummary
-};
-
-window.initAccountsUI = initAccountsUI;
-window.openAccountEditor = openAccountEditor;
-window.quickAddTransaction = quickAddTransaction;
-window.refreshAccountList = refreshAccountList;
-window.addDefaultAccounts = addDefaultAccounts;
