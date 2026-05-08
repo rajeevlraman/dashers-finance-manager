@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES } from './db.js';
 
 // Default demo accounts
