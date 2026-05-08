@@ -2,11 +2,11 @@ import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES } from './db.
 
 // Default demo accounts
 const DEFAULT_ACCOUNTS = [
-  { id: 'bank1', name: 'Main Checking', type: 'bank', balance: 0, currency: 'AUD' },
-  { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
-  { id: 'credit1', name: 'Visa Credit Card', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 5000 },
-  { id: 'credit2', name: 'MasterCard', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 3000 },
-  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD', linkedLoanId: '' }
+  { id: 'bank1', name: 'ANZ Savings', type: 'bank', balance: 12000, currency: 'AUD' },
+  { id: 'bank2', name: 'NAB Savings', type: 'bank', balance: 5000, currency: 'AUD' },
+  { id: 'credit1', name: 'Macquarie Visa', type: 'credit', balance: -2100, currency: 'AUD', creditLimit: 2100 },
+  { id: 'offset1', name: 'ME Offset Account', type: 'offset', balance: 12000, currency: 'AUD', linkedLoanId: 'loan1' },
+  { id: 'wallet', name: 'Wallet', type: 'cash', balance: 200, currency: 'USD' }
 ];
 
 function generateId() {
