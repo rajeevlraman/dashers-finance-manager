@@ -403,9 +403,23 @@ async function importData(e) {
     const text = await file.text();
     const data = JSON.parse(text);
     
-    if (!data.metadata) {
-      throw new Error('Invalid backup file format');
-    }
+ //   if (!data.metadata) {
+ //     throw new Error('Invalid backup file format');
+ //   }
+
+// changed on 8th may 2026
+// In the importData function, replace the metadata check with:
+if (!data.metadata) {
+    // Auto-generate metadata instead of throwing error
+    data.metadata = {
+        exportDate: new Date().toISOString(),
+        version: "2.0.0",
+        recordCount: Object.values(data).reduce((sum, arr) => 
+            sum + (Array.isArray(arr) ? arr.length : 0), 0
+        )
+    };
+    console.log('Auto-generated missing metadata');
+}
 
     let totalImported = 0;
     let errors = 0;
