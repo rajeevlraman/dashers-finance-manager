@@ -1333,6 +1333,48 @@ function showNotification(message, type = 'info') {
     </div>
   `;
   
+// Add this helper in transactions.js
+function findMatchingCategoryId(categoryId, categories) {
+  // If already a custom category, return it
+  if (categoryId && !categoryId.startsWith('ms_')) {
+    return categoryId;
+  }
+  
+  // Try to find a similar custom category
+  if (categoryId && categoryId.startsWith('ms_')) {
+    const msType = categoryId.split('_')[1]; // e.g., 'food' from 'ms_food_groceries'
+    
+    const possibleMatches = categories.filter(c => 
+      c.name.toLowerCase().includes(msType) || 
+      c.id.includes(msType)
+    );
+    
+    if (possibleMatches.length > 0) {
+      return possibleMatches[0].id;
+    }
+  }
+  
+  return null;
+}
+
+// Update resolveCategoryParts to use it
+function resolveCategoryParts(tx, categories) {
+  const matchedId = findMatchingCategoryId(tx.categoryId, categories);
+  const effectiveCategoryId = matchedId || tx.categoryId;
+  
+  if (!effectiveCategoryId) return { main: null, sub: null };
+
+  const cat = categories.find(c => c.id === effectiveCategoryId);
+  if (!cat) return { main: null, sub: null };
+
+  if (cat.parentId) {
+    const parent = categories.find(c => c.id === cat.parentId);
+    return { main: parent || null, sub: cat };
+  }
+
+  return { main: cat, sub: null };
+}
+
   // Add to page
   document.body.appendChild(notification);
   

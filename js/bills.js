@@ -31,11 +31,12 @@ export class BillsManager {
             <div class="bills-container">
                 <div class="bills-header">
                     <h2>📋 Bills Manager</h2>
+                    <button id="addBillBtn" class="btn btn-primary">+ Add Bill</button>
                 </div>
 
                 ${this.renderStatsCards(today)}
 
-                ${this.renderHorizontalQuickActions(today)}
+                ${this.renderQuickActions(today)}
 
                 <div class="bills-content">
                     ${this.bills.length === 0 ? this.renderEmptyState() : this.renderBillsTable(today)}
@@ -265,6 +266,8 @@ export class BillsManager {
                     <button class="btn btn-primary" id="emptyAddBill">Add Your First Bill</button>
                 </div>
             </div>
+
+
         `;
     }
 
@@ -613,7 +616,37 @@ export class BillsManager {
     }
 }
 
+// Add this at the END of your bills.js file (after the BillsManager class definition)
 export async function initBillsUI() {
-    const manager = new BillsManager();
-    await manager.init();
+    console.log('Initializing Bills UI...'); // Debug log
+    
+    try {
+        const manager = new BillsManager();
+        await manager.init();
+        console.log('Bills UI initialized successfully');
+    } catch (error) {
+        console.error('Error initializing Bills UI:', error);
+        // Show error to user
+        document.getElementById('mainContent').innerHTML = `
+            <div class="error-state">
+                <div class="error-icon">❌</div>
+                <h3>Failed to load Bills</h3>
+                <p>Error: ${error.message}</p>
+                <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+            </div>
+        `;
+    }
 }
+
+// Optional: Auto-initialize if we're on the bills page
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if we're on bills page (you may need to adjust this condition)
+    const isBillsPage = document.getElementById('mainContent') && 
+                       (window.location.hash.includes('bills') || 
+                        document.querySelector('[data-page="bills"]'));
+    
+    if (isBillsPage) {
+        console.log('Auto-initializing bills page...');
+        await initBillsUI();
+    }
+});

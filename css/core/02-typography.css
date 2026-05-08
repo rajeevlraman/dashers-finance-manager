@@ -213,3 +213,20 @@ td {
         color: var(--text-muted);
     }
 }
+
+
+.account-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.account-balance {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.last-activity {
+  opacity: 0.85;
+}

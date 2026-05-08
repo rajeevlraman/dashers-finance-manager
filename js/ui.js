@@ -16,7 +16,11 @@ import { initMaintenanceUI } from './maintenance.js';
 import { initExpensesUI } from './expenses.js';
 import { initTaxComplianceUI } from './tax_compliance.js';
 import { initCostBaseTrackerUI } from './cost_base_tracker.js';
-
+import { 
+  initCategoryMapper, 
+  suggestCategoriesForBatch,
+  debugTransaction 
+} from './import/categoryMapper.js';
 
 // ============================================================================
 // 📄 VIEW LOADING

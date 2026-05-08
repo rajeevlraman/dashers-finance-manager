@@ -50,63 +50,110 @@ export function buildCategoryIndex(categories = []) {
   return index;
 }
 // Build lookup maps from default categories
-/**
- * Build lookup structures from default categories
- */
 export function buildCategoryResolver(categories) {
   const byId = new Map();
   const byName = new Map();
+  const bySlug = new Map();
 
   for (const cat of categories) {
-    if (!cat?.id) continue;
-
     byId.set(cat.id, cat);
 
     if (cat.name) {
       byName.set(cat.name.toLowerCase(), cat);
     }
+
+    // optional slug match
+    if (cat.id) {
+      bySlug.set(cat.id.toLowerCase(), cat);
+    }
   }
 
-  return { byId, byName };
+  return { byId, byName, bySlug };
 }
 
 import { findMerchantRule } from './merchantRules.js';
 
-
-/**
- * Resolve a transaction to a real categoryId
- */
 export function resolveCategoryId(tx, categories, resolver) {
-  const text =
-    (tx.merchant ||
-      tx.cleanDescription ||
-      tx.description ||
-      '').toLowerCase();
+  const text = (tx.merchant || tx.cleanDescription || '').toLowerCase();
 
-  // 1️⃣ Merchant rules (most accurate)
+  // 1️⃣ Merchant rules
   const rule = findMerchantRule(text);
-  if (rule && resolver.byId.has(rule.categoryId)) {
-    return rule.categoryId;
+  if (rule?.categoryId) {
+    // PERSONAL category → done
+    if (rule.categoryId.startsWith('exp_')) {
+      return rule.categoryId;
+    }
+
+    // MoneySmart → map to personal
+    if (rule.categoryId.startsWith('ms_')) {
+      const mapped = mapMoneySmartToPersonal(rule.categoryId);
+      if (mapped && resolver.byId.has(mapped)) {
+        return mapped;
+      }
+    }
   }
 
-  // 2️⃣ Bank category text → default category name
+  // 2️⃣ Bank category → MoneySmart → personal
   if (tx.bankCategory) {
-    const bankMatch = resolver.byName.get(
-      tx.bankCategory.toLowerCase()
-    );
-    if (bankMatch) return bankMatch.id;
+    const bankName = tx.bankCategory.toLowerCase();
+
+    // try MoneySmart-style inference
+    if (bankName.includes('grocery')) return 'exp_groceries';
+    if (bankName.includes('restaurant')) return 'exp_dining';
+    if (bankName.includes('fuel')) return 'exp_fuel';
   }
 
-  // 3️⃣ Keyword fallback against category names
+  // 3️⃣ Keyword fallback (personal only)
   for (const [name, cat] of resolver.byName.entries()) {
-    if (text.includes(name)) {
+    if (cat.id.startsWith('exp_') && text.includes(name)) {
       return cat.id;
     }
   }
 
-  return null;
+  // 4️⃣ Final fallback
+  return 'exp_misc_items';
 }
 
+// Add this helper function
+export function debugCategoryAssignment(tx, categories) {
+  const text = (tx.merchant || tx.cleanDescription || '').toLowerCase();
+  const upperText = text.toUpperCase();
+  
+  console.log('🔍 DEBUG Category Assignment:');
+  console.log('Transaction:', tx.description);
+  console.log('Clean text:', text);
+  console.log('Bank Category:', tx.bankCategory);
+  
+  // Check merchant rules
+  for (const rule of merchantRules) {
+    for (const keyword of rule.includesAny) {
+      if (upperText.includes(keyword)) {
+        console.log(`✓ Found merchant rule: ${rule.id} -> ${rule.categoryId}`);
+        
+        // Check if category exists
+        const exists = categories.some(c => c.id === rule.categoryId);
+        console.log(`  Category exists: ${exists}`);
+        
+        if (!exists) {
+          console.log(`  ❌ Category ${rule.categoryId} doesn't exist!`);
+          
+          // Find similar categories
+          const similar = categories.filter(c => 
+            c.id.toLowerCase().includes(rule.categoryId.toLowerCase().replace('exp_', '').slice(0, 5))
+          );
+          if (similar.length > 0) {
+            console.log('  Similar categories:', similar.map(c => c.id));
+          }
+        }
+      }
+    }
+  }
+  
+  // Check bank category mapping
+  if (tx.bankCategory) {
+    console.log(`Bank category: ${tx.bankCategory}`);
+  }
+}
 
 // ----------------------------------------------------------------------------
 // Auto-assign a categoryId based on description & keyword index (Fixed)
@@ -180,3 +227,4 @@ export function autoAssignCategory(tx, categories = [], index = []) {
 
   
 }
+

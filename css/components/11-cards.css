@@ -1,8 +1,38 @@
 /* ============================================================================
-   11-cards.css – CARD COMPONENTS (cleaned + consolidated)
+   11-cards.css – CARD COMPONENTS (cleaned + consolidated + iCloud Style)
    ============================================================================ */
 
-/* Generic Card Base */
+/* iCloud Theme Variables - ADD THESE AT THE TOP */
+:root {
+  /* Keep your existing variables, add these iCloud ones */
+  --icloud-bg: rgba(255, 255, 255, 0.8);
+  --icloud-border: rgba(255, 255, 255, 0.2);
+  --icloud-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --icloud-radius: 16px;
+  --icloud-blur: 10px;
+  
+  /* iCloud Colors */
+  --icloud-blue: #0073e3;
+  --icloud-green: #34c759;
+  --icloud-orange: #ff9500;
+  --icloud-purple: #af52de;
+  --icloud-red: #ff3b30;
+  --icloud-gray: #8e8e93;
+  
+  /* Glassmorphism gradients */
+  --glass-white: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  --glass-dark: linear-gradient(
+    135deg,
+    rgba(28, 28, 30, 0.7) 0%,
+    rgba(28, 28, 30, 0.4) 100%
+  );
+}
+
+/* Generic Card Base - ENHANCE WITH ICLOUD OPTIONS */
 .card {
     background: white;
     border-radius: 12px;
@@ -17,10 +47,40 @@
     transform: translateY(-2px);
 }
 
-/* Highlight Variants */
+/* iCloud Variant - ADD THIS NEW CLASS */
+.card.icloud {
+    background: var(--icloud-bg);
+    backdrop-filter: blur(var(--icloud-blur));
+    -webkit-backdrop-filter: blur(var(--icloud-blur));
+    border: 1px solid var(--icloud-border);
+    border-radius: var(--icloud-radius);
+    box-shadow: var(--icloud-shadow);
+    padding: 1.75rem;
+}
+
+.card.icloud:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Glassmorphism Variant */
+.card.glass {
+    background: var(--glass-white);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--icloud-radius);
+}
+
+/* Highlight Variants - UPDATE WITH ICLOUD COLORS */
 .card.highlight {
     border-left: 4px solid #2563eb;
     background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+}
+
+.card.highlight.icloud {
+    border-left: 4px solid var(--icloud-blue);
+    background: rgba(0, 115, 227, 0.1);
 }
 
 .card.warning {
@@ -28,12 +88,32 @@
     background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 }
 
+.card.warning.icloud {
+    border-left: 4px solid var(--icloud-orange);
+    background: rgba(255, 149, 0, 0.1);
+}
+
 .card.success {
     border-left: 4px solid #059669;
     background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
 }
 
-/* Stat Cards (Dashboard, Reports, Expenses, Cost Base) */
+.card.success.icloud {
+    border-left: 4px solid var(--icloud-green);
+    background: rgba(52, 199, 89, 0.1);
+}
+
+/* iCloud Color Variants - ADD THESE NEW CLASSES */
+.card.icloud-blue { border-left: 4px solid var(--icloud-blue); background: rgba(0, 115, 227, 0.08); }
+.card.icloud-green { border-left: 4px solid var(--icloud-green); background: rgba(52, 199, 89, 0.08); }
+.card.icloud-orange { border-left: 4px solid var(--icloud-orange); background: rgba(255, 149, 0, 0.08); }
+.card.icloud-purple { border-left: 4px solid var(--icloud-purple); background: rgba(175, 82, 222, 0.08); }
+.card.icloud-red { border-left: 4px solid var(--icloud-red); background: rgba(255, 59, 48, 0.08); }
+
+/* ============================================
+   Stat Cards (Dashboard, Reports, Expenses, Cost Base)
+   ============================================ */
+
 .stat-card {
     background: white;
     padding: 1.5rem;
@@ -45,24 +125,40 @@
     border-left: 4px solid #3498db;
 }
 
-.stat-card.total       { border-left-color: #3498db; }
-.stat-card.paid        { border-left-color: #27ae60; }
-.stat-card.pending     { border-left-color: #f39c12; }
-.stat-card.average     { border-left-color: #9b59b6; }
-.stat-card.total-income     { border-left-color: #27ae60; }
-.stat-card.total-expenses   { border-left-color: #e74c3c; }
-.stat-card.net-cashflow     { border-left-color: #3498db; }
-.stat-card.savings-rate     { border-left-color: #f39c12; }
-.stat-card.avg-monthly      { border-left-color: #9b59b6; }
-.stat-card.largest-expense  { border-left-color: #e67e22; }
+/* iCloud Stat Card Variant */
+.stat-card.icloud {
+    background: var(--icloud-bg);
+    backdrop-filter: blur(var(--icloud-blur));
+    -webkit-backdrop-filter: blur(var(--icloud-blur));
+    border: 1px solid var(--icloud-border);
+    border-radius: var(--icloud-radius);
+    box-shadow: var(--icloud-shadow);
+    padding: 1.75rem;
+}
 
-/* Icon inside cards */
+/* Icon inside cards - UPDATE FOR ICLOUD */
 .stat-icon {
     font-size: 2rem;
     opacity: 0.8;
 }
 
-/* Text content */
+.stat-card.icloud .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+    font-size: 1.5rem;
+}
+
+.stat-card.icloud .stat-icon.total       { background: rgba(52, 152, 219, 0.1); color: var(--icloud-blue); }
+.stat-card.icloud .stat-icon.paid        { background: rgba(39, 174, 96, 0.1); color: var(--icloud-green); }
+.stat-card.icloud .stat-icon.pending     { background: rgba(243, 156, 18, 0.1); color: var(--icloud-orange); }
+.stat-card.icloud .stat-icon.average     { background: rgba(155, 89, 182, 0.1); color: var(--icloud-purple); }
+
+/* Text content - ENHANCE FOR ICLOUD */
 .stat-content { flex: 1; }
 
 .stat-value {
@@ -71,14 +167,33 @@
     color: #2c3e50;
 }
 
+.stat-card.icloud .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1d1d1f;
+    margin: 0.5rem 0;
+}
+
 .stat-value.positive { color: #27ae60; }
 .stat-value.negative { color: #e74c3c; }
 .stat-value.warning  { color: #f39c12; }
+
+.stat-card.icloud .stat-value.positive { color: var(--icloud-green); }
+.stat-card.icloud .stat-value.negative { color: var(--icloud-red); }
+.stat-card.icloud .stat-value.warning  { color: var(--icloud-orange); }
 
 .stat-label {
     font-size: 0.9rem;
     color: #7f8c8d;
     margin-bottom: .25rem;
+}
+
+.stat-card.icloud .stat-label {
+    font-size: 0.85rem;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
 }
 
 .stat-subtext {
@@ -87,7 +202,30 @@
     margin-top: .25rem;
 }
 
-/* Budget Progress Card */
+.stat-card.icloud .stat-subtext {
+    color: var(--icloud-gray);
+    font-size: 0.9rem;
+}
+
+/* iCloud Progress Bar */
+.stat-card.icloud .progress-bar {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.stat-card.icloud .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--icloud-blue), #00a2ff);
+    border-radius: 3px;
+}
+
+/* ============================================
+   Budget Progress Card - ICLOUD STYLE
+   ============================================ */
+
 .budget-progress {
     padding: 1rem;
     border-radius: 8px;
@@ -95,11 +233,25 @@
     background: white;
 }
 
+.budget-progress.icloud {
+    background: var(--icloud-bg);
+    backdrop-filter: blur(var(--icloud-blur));
+    border: 1px solid var(--icloud-border);
+    border-radius: var(--icloud-radius);
+    padding: 1.5rem;
+}
+
 .progress-header {
     display: flex;
     justify-content: space-between;
     font-weight: 600;
     margin-bottom: .5rem;
+}
+
+.budget-progress.icloud .progress-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
 .progress-bar {
@@ -134,56 +286,10 @@
     font-weight: 600;
 }
 
-/* Section Cards (filters, expandable sections, info blocks) */
-.expandable-section {
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    overflow: hidden;
-}
+/* ============================================
+   Expense Cards - ICLOUD STYLE
+   ============================================ */
 
-.section-header {
-    padding: 1rem;
-    background: #f8fafc;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: background .2s;
-}
-
-.section-header:hover {
-    background: #f1f5f9;
-}
-
-.section-content {
-    padding: 1rem;
-}
-
-/* Info Cards */
-.info-card {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border: 2px solid #bae6fd;
-    border-radius: 12px;
-    padding: 1.25rem;
-}
-
-.info-header {
-    border-bottom: 1px solid #7dd3fc;
-    padding-bottom: .75rem;
-    margin-bottom: 1rem;
-}
-
-.info-content ul {
-    padding-left: 1.25rem;
-}
-
-.info-content li {
-    margin-bottom: .25rem;
-    color: #0369a1;
-}
-
-/* Expense Cards */
 .expense-card {
     background: white;
     border-radius: 12px;
@@ -192,105 +298,135 @@
     border-left: 4px solid #bdc3c7;
 }
 
+.expense-card.icloud {
+    background: var(--icloud-bg);
+    backdrop-filter: blur(var(--icloud-blur));
+    border: 1px solid var(--icloud-border);
+    border-radius: var(--icloud-radius);
+    padding: 1.75rem;
+}
+
 .expense-card.status-unpaid    { border-left-color: #e74c3c; background: #fff5f5; }
 .expense-card.status-pending   { border-left-color: #f39c12; background: #fffbf0; }
 .expense-card.status-paid      { border-left-color: #27ae60; }
 .expense-card.status-reimbursed{ border-left-color: #9b59b6; }
 
-.expense-card-header {
+.expense-card.icloud.status-unpaid     { border-left-color: var(--icloud-red); background: rgba(255, 59, 48, 0.08); }
+.expense-card.icloud.status-pending    { border-left-color: var(--icloud-orange); background: rgba(255, 149, 0, 0.08); }
+.expense-card.icloud.status-paid       { border-left-color: var(--icloud-green); background: rgba(52, 199, 89, 0.08); }
+.expense-card.icloud.status-reimbursed { border-left-color: var(--icloud-purple); background: rgba(175, 82, 222, 0.08); }
+
+/* ============================================
+   Transaction Cards - ICLOUD STYLE
+   ============================================ */
+
+.card.transaction-card.icloud {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.expense-title {
-    margin: 0 0 .5rem 0;
-    font-size: 1.1rem;
-    color: #2c3e50;
-}
-
-.expense-meta {
-    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
     gap: 1rem;
-    font-size: .85rem;
-    color: #7f8c8d;
+    margin-bottom: 0.75rem;
 }
 
-.expense-amount {
-    text-align: right;
+.card.transaction-card.icloud.income { 
+    border-left: 4px solid var(--icloud-green); 
+    background: rgba(52, 199, 89, 0.08);
 }
 
-.amount-value {
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #2c3e50;
+.card.transaction-card.icloud.expense { 
+    border-left: 4px solid var(--icloud-red); 
+    background: rgba(255, 59, 48, 0.08);
 }
 
-.status-badge {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    padding: .25rem .75rem;
-    border-radius: 20px;
-    font-size: .75rem;
-    font-weight: 600;
-    white-space: nowrap;
+.card.transaction-card.icloud.transfer { 
+    border-left: 4px solid var(--icloud-blue); 
+    background: rgba(0, 115, 227, 0.08);
 }
 
-/* Record Items (Cost Base) */
-.record-item {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 15px;
-    border-left: 4px solid #3498db;
-    display: flex;
-    justify-content: space-between;
-    transition: all .3s ease;
-}
-
-.record-item.expense { border-left-color: #27ae60; }
-
-.record-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-/* Misc Cards */
-.empty-state {
-    text-align: center;
-    background: white;
-    padding: 3rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.error-state {
-    text-align: center;
-    background: white;
-    padding: 3rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.card.transaction-card.icloud.pending { 
+    border-left: 4px solid var(--icloud-orange); 
+    background: rgba(255, 149, 0, 0.08);
 }
 
 /* ============================================
-   Card Variants – Transactions
+   Info Cards - ICLOUD STYLE
    ============================================ */
-/*
-.card.transaction-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.25rem;
-  gap: 1rem;
-}
-*/
-.card.transaction-card:hover {
-  transform: translateY(-2px);
+
+.info-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #bae6fd;
+    border-radius: 12px;
+    padding: 1.25rem;
 }
 
-/* Card accents */
-.card.transaction-card.income { border-left: 4px solid #27ae60; }
-.card.transaction-card.expense { border-left: 4px solid #e74c3c; }
-.card.transaction-card.transfer { border-left: 4px solid #3498db; }
-.card.transaction-card.pending { border-left: 4px solid #f39c12; }
-.card.transaction-card.property { border-left: 4px solid #1e40af; }
+.info-card.icloud {
+    background: rgba(0, 115, 227, 0.1);
+    border: 1px solid rgba(0, 115, 227, 0.2);
+    backdrop-filter: blur(var(--icloud-blur));
+    border-radius: var(--icloud-radius);
+}
+
+/* ============================================
+   iOS/WebKit Support
+   ============================================ */
+
+@supports (-webkit-touch-callout: none) {
+    /* iOS-specific styles for better blur performance */
+    .card.icloud,
+    .stat-card.icloud,
+    .expense-card.icloud {
+        -webkit-backdrop-filter: blur(var(--icloud-blur));
+    }
+}
+
+/* ============================================
+   Dark Mode Support
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    .card.icloud {
+        background: rgba(28, 28, 30, 0.7);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .card.glass {
+        background: var(--glass-dark);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .stat-card.icloud .stat-value {
+        color: #f5f5f7;
+    }
+    
+    .stat-card.icloud .stat-label {
+        color: #98989d;
+    }
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+    .card.icloud,
+    .stat-card.icloud,
+    .expense-card.icloud {
+        padding: 1.25rem;
+        margin: 0.5rem;
+    }
+    
+    .stat-card.icloud .stat-value {
+        font-size: 1.5rem;
+    }
+}
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
