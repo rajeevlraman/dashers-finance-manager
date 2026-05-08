@@ -656,3 +656,92 @@ function showAccountForm(acc) {
     });
   });
 }
+
+// ===== ADD THIS MISSING FUNCTION ===== 8-05-2026
+function calculateAccountBalance(account, transactions) {
+  const tx = transactions.filter(t => t.accountId === account.id);
+  if (!tx.length) return account.balance || 0;
+  return tx.reduce((sum, t) => sum + t.amount, 0);
+}
+
+// ===== PRIMARY ACCOUNT FUNCTIONS =====
+const PRIMARY_ACCOUNT_KEY = 'primaryAccountId';
+
+async function getPrimaryAccountId() {
+  const meta = await getAllItems(STORE_NAMES.meta);
+  const item = meta.find(m => m.key === PRIMARY_ACCOUNT_KEY);
+  return item?.value || null;
+}
+
+async function setPrimaryAccountId(accountId) {
+  const meta = await getAllItems(STORE_NAMES.meta);
+  const existing = meta.find(m => m.key === PRIMARY_ACCOUNT_KEY);
+
+  const payload = {
+    id: existing?.id || generateId(),
+    key: PRIMARY_ACCOUNT_KEY,
+    value: accountId
+  };
+
+  if (existing) {
+    await updateItem(STORE_NAMES.meta, payload);
+  } else {
+    await addItem(STORE_NAMES.meta, payload);
+  }
+}
+
+// ===== COMPUTE ACCOUNT SUMMARY FUNCTION =====
+function computeAccountSummary(accounts, transactions) {
+  const assets = accounts.filter(a => a.type !== 'credit');
+  const liabilities = accounts.filter(a => a.type === 'credit');
+
+  const totalAssets = assets.reduce((s, a) => s + (a.balance || 0), 0);
+  const totalLiabilities = liabilities.reduce(
+    (s, a) => s + Math.abs(a.balance || 0), 0
+  );
+
+  const netWorth = totalAssets - totalLiabilities;
+
+  const cashAccounts = accounts.filter(acc =>
+    ['bank', 'savings', 'cash', 'offset'].includes(acc.type)
+  ).length;
+
+  const totalCreditLimit = liabilities.reduce(
+    (s, a) => s + (a.creditLimit || 0), 0
+  );
+
+  const usedCredit = liabilities.reduce(
+    (s, a) => s + Math.abs(a.balance || 0), 0
+  );
+
+  const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
+
+  return {
+    netWorth,
+    totalAssets,
+    totalLiabilities,
+    cashAccounts,
+    creditCards: liabilities.length,
+    totalCreditLimit,
+    availableCredit
+  };
+}
+
+// ===== EXPORT STATEMENTS - ADD THIS AT THE VERY END =====
+export {
+  initAccountsUI,
+  addDefaultAccounts,
+  getPrimaryAccountId,
+  setPrimaryAccountId,
+  calculateAccountBalance,
+  formatCurrency,
+  formatDate,
+  computeAccountSummary
+};
+
+// Make key functions available globally for HTML onclick handlers
+window.initAccountsUI = initAccountsUI;
+window.openAccountEditor = openAccountEditor;
+window.quickAddTransaction = quickAddTransaction;
+window.refreshAccountList = refreshAccountList;
+window.addDefaultAccounts = addDefaultAccounts;
