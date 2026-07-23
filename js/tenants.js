@@ -3,6 +3,23 @@
 // ============================================================================
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
+import { escapeHtml } from './sanitize.js';
+
+// Bug fix: a new document-level click listener used to be attached every time
+// init() ran, stacking duplicate listeners. Now we attach exactly one and
+// delegate to whichever instance is active.
+let activeTenantsManager = null;
+let tenantsDelegatedListenerAttached = false;
+
+function attachTenantsDelegatedListener() {
+    if (tenantsDelegatedListenerAttached) return;
+    tenantsDelegatedListenerAttached = true;
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-action]');
+        if (!button || !activeTenantsManager) return;
+        activeTenantsManager.handleTenantAction(button.dataset.action, button.dataset.id);
+    });
+}
 
 export class TenantsManager {
     constructor() {
@@ -40,8 +57,8 @@ export class TenantsManager {
                         <div class="linked-property-info">
                             <span class="property-badge">🏠</span>
                             <div class="property-details">
-                                <strong>${currentProperty.name}</strong>
-                                <span class="property-address">${currentProperty.address || 'No address'}</span>
+                                <strong>${escapeHtml(currentProperty.name)}</strong>
+                                <span class="property-address">${escapeHtml(currentProperty.address) || 'No address'}</span>
                             </div>
                         </div>
                     ` : ''}
@@ -149,17 +166,17 @@ export class TenantsManager {
                         <span class="status-icon">${statusInfo.icon}</span>
                         <span class="status-text">${statusInfo.text}</span>
                     </div>
-                    <h3 class="tenant-name">${tenant.name}</h3>
+                    <h3 class="tenant-name">${escapeHtml(tenant.name)}</h3>
                 </div>
 
                 <div class="tenant-details">
                     <div class="detail-item">
                         <span class="detail-label">📞 Phone:</span>
-                        <span class="detail-value">${tenant.phone || 'Not provided'}</span>
+                        <span class="detail-value">${escapeHtml(tenant.phone) || 'Not provided'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">✉️ Email:</span>
-                        <span class="detail-value">${tenant.email || 'Not provided'}</span>
+                        <span class="detail-value">${escapeHtml(tenant.email) || 'Not provided'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">💰 Rent:</span>
@@ -168,7 +185,7 @@ export class TenantsManager {
                     ${property ? `
                         <div class="detail-item">
                             <span class="detail-label">🏠 Property:</span>
-                            <span class="detail-value property-name">${property.name}</span>
+                            <span class="detail-value property-name">${escapeHtml(property.name)}</span>
                         </div>
                     ` : ''}
                 </div>
@@ -200,7 +217,7 @@ export class TenantsManager {
 
     renderTenantModal() {
         const propertyOptions = this.properties.map(p => 
-            `<option value="${p.id}">${p.name}${this.currentPropertyId && p.id === this.currentPropertyId ? ' (Current)' : ''}</option>`
+            `<option value="${p.id}">${escapeHtml(p.name)}${this.currentPropertyId && p.id === this.currentPropertyId ? ' (Current)' : ''}</option>`
         ).join('');
 
         return `
@@ -299,28 +316,25 @@ export class TenantsManager {
         document.getElementById('btnNewTenant')?.addEventListener('click', () => this.openTenantForm());
 
         // Tenant actions
-        document.addEventListener('click', (e) => {
-            const button = e.target.closest('[data-action]');
-            if (!button) return;
-
-            const action = button.dataset.action;
-            const tenantId = button.dataset.id;
-            const tenant = this.tenants.find(t => t.id === tenantId);
-
-            if (!tenant) return;
-
-            switch (action) {
-                case 'edit':
-                    this.openTenantForm(tenant);
-                    break;
-                case 'delete':
-                    this.deleteTenant(tenant);
-                    break;
-            }
-        });
+        activeTenantsManager = this;
+        attachTenantsDelegatedListener();
 
         // Modal events
         this.setupModalEvents();
+    }
+
+    handleTenantAction(action, tenantId) {
+        const tenant = this.tenants.find(t => t.id === tenantId);
+        if (!tenant) return;
+
+        switch (action) {
+            case 'edit':
+                this.openTenantForm(tenant);
+                break;
+            case 'delete':
+                this.deleteTenant(tenant);
+                break;
+        }
     }
 
     setupModalEvents() {

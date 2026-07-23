@@ -21,7 +21,6 @@ export function isImportDebugEnabled() {
 export function setImportDebugEnabled(enabled) {
   try {
     localStorage.setItem(IMPORT_DEBUG_KEY, enabled ? '1' : '0');
-    console.log(`[IMPORT-DEBUG] Debug ${enabled ? 'ENABLED' : 'DISABLED'}`);
   } catch (e) {
     console.warn('[IMPORT-DEBUG] Failed to persist debug flag', e);
   }

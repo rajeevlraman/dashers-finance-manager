@@ -2,20 +2,13 @@
 // 📘 tax_compliance.js — Australian ATO Compliance & Reporting Hub
 // ============================================================================
 
-import { getAllItems, STORE_NAMES } from './db.js';
-
-// Tax rates and thresholds for 2024-2025
-const TAX_RATES = {
-  individual: [
-    { threshold: 0, rate: 0.00 },
-    { threshold: 18200, rate: 0.19 },
-    { threshold: 45000, rate: 0.325 },
-    { threshold: 120000, rate: 0.37 },
-    { threshold: 180000, rate: 0.45 }
-  ],
-  corporate: 0.30,
-  gst: 0.10
-};
+import { getAllItems, STORE_NAMES, getFinancialYear } from './db.js';
+import {
+  getMostRecentCompletedFYRange,
+  monthsOverlapping,
+  calculateCGTValues,
+  getAssumedMarginalRate
+} from './taxCalculations.js';
 
 // Global modal creation functions
 function createCGTModal() {
@@ -51,7 +44,7 @@ function createCGTModal() {
           
           <div class="form-group">
             <label class="form-label">Your Marginal Tax Rate (%)</label>
-            <input type="number" class="form-input" name="taxRate" value="32.5" required>
+            <input type="number" class="form-input" name="taxRate" value="30" required>
           </div>
           
           <button type="submit" class="btn btn-primary">Calculate CGT</button>
@@ -81,7 +74,7 @@ function createNegGearingModal() {
           
           <div class="form-group">
             <label class="form-label">Your Marginal Tax Rate (%)</label>
-            <input type="number" class="form-input" name="taxRate" value="32.5" required>
+            <input type="number" class="form-input" name="taxRate" value="30" required>
           </div>
           
           <div class="form-group">
@@ -127,6 +120,14 @@ function createDepreciationModal() {
           <div class="form-group">
             <label class="form-label">First Rental Date</label>
             <input type="date" class="form-input" name="rentalDate" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Plant & equipment purchased</label>
+            <select class="form-input" name="plantCondition">
+              <option value="new">Brand new (bought new by you, or you're an excluded entity)</option>
+              <option value="secondhand">Second-hand / already installed when you bought an established residential property</option>
+            </select>
           </div>
           
           <button type="submit" class="btn btn-primary">Calculate Depreciation</button>
@@ -227,7 +228,6 @@ function createDeductionWizard() {
 }
 
 export async function initTaxComplianceUI() {
-  console.log('📘 ATO Reports Page initializing...');
 
   const main = document.getElementById('mainContent');
   main.innerHTML = `
@@ -419,7 +419,10 @@ export async function initTaxComplianceUI() {
       <!-- Header -->
       <div class="tax-header">
         <h1>📘 ATO Compliance & Tax Hub</h1>
-        <p>Complete Australian tax management for property investors</p>
+        <p>Tax calculators, deduction tracking, and compliance tools for Australian property investors</p>
+        <p style="font-size: 0.75rem; opacity: 0.85; margin-top: 0.5rem;">
+          General information only, not tax advice. Confirm your specific situation with a registered tax agent.
+        </p>
         <div class="metric-grid" style="margin-top: 1.5rem;">
           <div class="metric">
             <div class="metric-value" id="totalDeductions">$0</div>
@@ -519,7 +522,7 @@ export async function initTaxComplianceUI() {
         <div class="tab-content" id="reports-tab">
           <div class="card">
             <h3>📤 ATO Report Generator</h3>
-            <p>Generate ready-to-lodge reports for Australian Tax Office</p>
+            <p>Generate working papers to help prepare your ATO return (not a lodgment format)</p>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
               <button class="btn btn-outline" onclick="generateRentalSchedule()">
@@ -592,7 +595,9 @@ function initializeTaxDashboard(transactions, loans, maintenance, properties, te
   renderRentalSummary(transactions, properties, tenants);
   renderDeductionTips(transactions, maintenance);
   renderFinancialRecords(transactions, loans, maintenance);
-  renderComplianceChecklist();
+  renderComplianceChecklist(transactions, loans, maintenance);
+  renderRecordKeeping();
+  renderRiskAssessment(transactions, properties);
   calculateTaxMetrics(transactions, loans, maintenance);
 }
 
@@ -603,7 +608,7 @@ function initializeTaxDashboard(transactions, loans, maintenance, properties, te
 function renderTaxDeadlines() {
   const deadlines = [
     { 
-      name: 'Quarterly BAS (Jan-Mar)', 
+      name: 'Quarterly BAS (Jan-Mar) — if GST registered', 
       date: new Date(new Date().getFullYear(), 3, 28),
       type: 'quarterly',
       priority: 'upcoming'
@@ -709,16 +714,21 @@ function renderRentalSummary(transactions, properties, tenants) {
 function renderDeductionTips(transactions, maintenance) {
   const tips = [
     "📝 Keep all receipts for 5 years",
-    "🏠 Claim depreciation on capital works",
-    "🔧 Maintenance costs are fully deductible",
-    "📊 Travel to rental properties may be deductible",
-    "💼 Professional fees (accountants, lawyers) are deductible"
+    "🏠 Capital works (2.5%/yr) are claimed as depreciation, not an immediate deduction",
+    "🔧 Genuine repairs to wear-and-tear during your ownership are deductible — repairs that existed when you bought the property must be capitalised instead",
+    "🚫 Travel to inspect, maintain, or collect rent from a residential rental property is NOT deductible for individuals (since 1 July 2017) — narrow exceptions only for a formal property business or commercial property",
+    "📦 Plant & equipment depreciation (carpets, appliances etc.) is only claimable on second-hand residential properties if you're an excluded entity — otherwise only applies to items you bought new",
+    "💳 Borrowing costs over $100 (loan fees, LMI) are spread over 5 years, not deducted upfront — this is separate from loan interest, which is fully deductible each year",
+    "💼 Professional fees (accountants, quantity surveyors, property lawyers) are deductible"
   ];
   
   document.getElementById('deductionTips').innerHTML = `
     <ul style="margin: 0; padding-left: 1.25rem;">
       ${tips.map(tip => `<li style="margin-bottom: 0.5rem; color: #64748b;">${tip}</li>`).join('')}
     </ul>
+    <p style="margin-top: 1rem; font-size: 0.75rem; color: #94a3b8;">
+      General information only, not tax advice — confirm your specific situation with a registered tax agent.
+    </p>
   `;
 }
 
@@ -767,15 +777,24 @@ function renderFinancialRecords(transactions, loans, maintenance) {
   ` : '<p style="color: #64748b; font-style: italic;">No maintenance data</p>';
 }
 
-function renderComplianceChecklist() {
+function renderComplianceChecklist(transactions, loans, maintenance) {
+  const hasIncomeRecords = transactions.some(t => t.type === 'income');
+  const hasExpenseRecords = transactions.some(t => t.type === 'expense');
+  const hasLoanRecords = loans.length > 0;
+  const hasCapitalWorksRecords = maintenance.some(m => m.category === 'Capital Improvements');
+
   const checklist = [
-    { task: "Rental income records maintained", completed: true, requirement: "ATO Requirement: 5 years" },
-    { task: "Expense receipts digitized", completed: true, requirement: "ATO Requirement: 5 years" },
-    { task: "Loan documents organized", completed: false, requirement: "Until loan repaid + 5 years" },
-    { task: "Capital works records updated", completed: true, requirement: "ATO Requirement: 5 years" },
-    { task: "BAS statements filed", completed: true, requirement: "Quarterly requirement" }
+    { task: "Rental income records maintained", completed: hasIncomeRecords, requirement: "ATO Requirement: keep for 5 years" },
+    { task: "Expense records maintained", completed: hasExpenseRecords, requirement: "ATO Requirement: keep for 5 years" },
+    { task: "Loan documents organized", completed: hasLoanRecords, requirement: "Until loan repaid + 5 years" },
+    { task: "Capital works records updated", completed: hasCapitalWorksRecords, requirement: "Keep for as long as you own the property + 5 years after selling" },
   ];
-  
+
+  const completedCount = checklist.filter(i => i.completed).length;
+  const score = Math.round((completedCount / checklist.length) * 100);
+  const scoreEl = document.getElementById('complianceScore');
+  if (scoreEl) scoreEl.textContent = `${score}%`;
+
   const html = checklist.map(item => `
     <div class="record-item">
       <div>
@@ -783,12 +802,85 @@ function renderComplianceChecklist() {
         <div style="font-size: 0.75rem; color: #64748b;">${item.requirement}</div>
       </div>
       <span class="compliance-status ${item.completed ? 'status-compliant' : 'status-pending'}">
-        ${item.completed ? '✓ COMPLIANT' : '⏳ PENDING'}
+        ${item.completed ? '✓ FOUND' : '⏳ NONE FOUND'}
       </span>
     </div>
-  `).join('');
+  `).join('') + `
+    <p style="margin-top: 1rem; font-size: 0.75rem; color: #94a3b8;">
+      This reflects whether matching records exist in this app, not whether
+      your actual paperwork/receipts meet ATO substantiation requirements.
+      Most residential landlords don't need to lodge a BAS at all — GST/BAS
+      applies mainly to commercial property or a GST-registered enterprise.
+    </p>
+  `;
   
   document.getElementById('complianceChecklist').innerHTML = html;
+}
+
+function renderRecordKeeping() {
+  const items = [
+    { label: "Income & expense records (rent, bills, invoices, receipts)", period: "5 years from the date you lodge your return" },
+    { label: "Loan and interest records", period: "5 years after the loan is fully repaid" },
+    { label: "Capital works & improvement records", period: "As long as you own the property, plus 5 years after you sell it (needed for your CGT cost base)" },
+    { label: "Depreciation schedules (quantity surveyor reports)", period: "As long as you own the property, plus 5 years after you sell it" },
+  ];
+
+  document.getElementById('recordKeeping').innerHTML = `
+    <ul style="margin: 0; padding-left: 1.25rem;">
+      ${items.map(i => `
+        <li style="margin-bottom: 0.75rem;">
+          <strong style="color: #374151;">${i.label}</strong>
+          <div style="font-size: 0.75rem; color: #64748b;">${i.period}</div>
+        </li>
+      `).join('')}
+    </ul>
+  `;
+}
+
+function renderRiskAssessment(transactions, properties) {
+  const TRAVEL_CATEGORY_IDS = ['exp_travel', 'exp_flights', 'exp_hotel', 'exp_car_rental', 'exp_travel_food', 'exp_tours'];
+  const propertyIds = new Set(properties.filter(p => p.propertyType !== 'primary').map(p => p.id));
+
+  const travelClaims = transactions.filter(t =>
+    t.type === 'expense' &&
+    t.propertyId && propertyIds.has(t.propertyId) &&
+    TRAVEL_CATEGORY_IDS.includes(t.categoryId)
+  );
+
+  const risks = [];
+
+  if (travelClaims.length > 0) {
+    risks.push({
+      level: 'overdue',
+      text: `${travelClaims.length} travel-related expense${travelClaims.length > 1 ? 's are' : ' is'} linked to a rental property. Travel to inspect/maintain a residential rental property hasn't been deductible for individuals since 1 July 2017 — this is a known ATO audit trigger.`
+    });
+  }
+
+  risks.push({
+    level: 'pending',
+    text: `From 1 July 2027 (subject to legislation passing), negative gearing losses on established residential properties are proposed to be limited to offsetting rental/capital gains income only, rather than all income. New builds are expected to be unaffected. Worth watching if you're relying on full offset against salary income.`
+  });
+
+  risks.push({
+    level: 'pending',
+    text: `If any property has private/holiday use, the ATO's TR 2025/D1 and TR 2026/1 guidance takes a stricter view on apportioning or denying deductions (interest, rates, land tax) for periods of private use — keep a log of private-use dates.`
+  });
+
+  document.getElementById('riskAssessment').innerHTML = `
+    <div style="display: grid; gap: 0.75rem;">
+      ${risks.map(r => `
+        <div class="record-item" style="align-items: flex-start;">
+          <span class="compliance-status status-${r.level}" style="flex-shrink: 0;">
+            ${r.level === 'overdue' ? '⚠️ FLAGGED' : 'ℹ️ WATCH'}
+          </span>
+          <span style="font-size: 0.875rem; color: #374151; margin-left: 0.75rem;">${r.text}</span>
+        </div>
+      `).join('')}
+    </div>
+    <p style="margin-top: 1rem; font-size: 0.75rem; color: #94a3b8;">
+      General information only, not tax advice — confirm your specific situation with a registered tax agent.
+    </p>
+  `;
 }
 
 // ============================================================================
@@ -805,7 +897,11 @@ function calculateTaxMetrics(transactions, loans, maintenance) {
   const maintenanceCosts = maintenance.reduce((sum, maint) => sum + maint.cost, 0);
   
   const totalDeductions = deductibleExpenses + loanInterest + maintenanceCosts;
-  const estimatedSavings = totalDeductions * 0.325; // Assuming 32.5% marginal rate
+  // Bug fix: this used to hardcode 0.325 (a pre-2024 marginal rate) completely
+  // independently of TAX_RATES, so fixing the tax brackets wouldn't have fixed
+  // this estimate too. Now it derives the assumed rate from the same source
+  // of truth in taxCalculations.js.
+  const estimatedSavings = totalDeductions * getAssumedMarginalRate();
   
   document.getElementById('totalDeductions').textContent = fmt(totalDeductions);
   document.getElementById('taxSavings').textContent = fmt(estimatedSavings);
@@ -821,13 +917,10 @@ function calculateCGT(formData) {
   const improve = parseFloat(formData.get('improve'));
   const costs = parseFloat(formData.get('costs'));
   const years = parseFloat(formData.get('years'));
-  const taxRate = parseFloat(formData.get('taxRate')) / 100;
-  
-  const costBase = purchase + improve + costs;
-  const capitalGain = sell - costBase;
-  const discount = years >= 1 ? 0.5 : 0; // 50% discount for >12 months
-  const taxableGain = capitalGain * (1 - discount);
-  const taxPayable = taxableGain * taxRate;
+  const taxRatePercent = parseFloat(formData.get('taxRate'));
+
+  const { capitalGain, discount, taxableGain, taxPayable } =
+    calculateCGTValues({ purchase, sell, improve, costs, years, taxRatePercent });
   
   return `
     <h4>Capital Gains Tax Calculation</h4>
@@ -890,6 +983,139 @@ function calculateNegativeGearing(formData) {
         <strong>${effectiveTaxRate.toFixed(1)}%</strong>
       </div>
     </div>
+
+    <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 6px;">
+      <strong>ℹ️ Proposed change from 1 July 2027</strong>
+      <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">
+        Under the 2026 Federal Budget announcement (subject to legislation passing),
+        losses on established residential properties would only offset rental/capital
+        gains income rather than all income (e.g. salary). New builds are expected to
+        be unaffected. This calculator assumes the current, unrestricted rules.
+      </p>
+    </div>
+  `;
+}
+
+function calculateDepreciation(formData) {
+  const buildingCost = parseFloat(formData.get('buildingCost')) || 0;
+  const plantValue = parseFloat(formData.get('plantValue')) || 0;
+  const constructionDate = new Date(formData.get('constructionDate'));
+  const rentalDate = new Date(formData.get('rentalDate'));
+  const plantCondition = formData.get('plantCondition');
+
+  // Division 43 capital works: 2.5% per year of construction cost, but only
+  // for buildings where construction started after 15 September 1987.
+  const CAPITAL_WORKS_CUTOFF = new Date('1987-09-15');
+  const capitalWorksEligible = constructionDate >= CAPITAL_WORKS_CUTOFF;
+  const capitalWorksAnnual = capitalWorksEligible ? buildingCost * 0.025 : 0;
+
+  // Division 40 plant & equipment: since 9 May 2017, individuals can only
+  // depreciate plant & equipment they bought new themselves - not items that
+  // were already installed when they bought an established residential
+  // property second-hand.
+  const plantEligible = plantCondition === 'new';
+  // Rough indicative figure only - actual claims need a professional
+  // depreciation schedule with per-asset effective lives (ATO TR 2024/1),
+  // since each item (carpet, blinds, appliances etc.) depreciates at a
+  // different rate.
+  const ASSUMED_AVG_RATE = 0.20;
+  const plantAnnualEstimate = plantEligible ? plantValue * ASSUMED_AVG_RATE : 0;
+
+  const totalAnnual = capitalWorksAnnual + plantAnnualEstimate;
+
+  return `
+    <h4>Depreciation Estimate</h4>
+    <div style="display: grid; gap: 0.5rem;">
+      <div style="display: flex; justify-content: space-between;">
+        <span>Capital Works (Div 43, 2.5%/yr):</span>
+        <strong>${fmt(capitalWorksAnnual)} / yr</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Plant & Equipment (Div 40, indicative):</span>
+        <strong>${fmt(plantAnnualEstimate)} / yr</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; border-top: 1px solid #cbd5e1; padding-top: 0.5rem;">
+        <span>Estimated Total:</span>
+        <strong>${fmt(totalAnnual)} / yr</strong>
+      </div>
+    </div>
+
+    ${!capitalWorksEligible ? `
+      <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 6px;">
+        <strong>⚠️ No capital works deduction</strong>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">
+          Construction started before 15 September 1987, so Division 43 capital
+          works deductions don't apply to the original building. Later
+          renovations or additions carried out after that date may still
+          separately qualify.
+        </p>
+      </div>
+    ` : ''}
+
+    ${!plantEligible ? `
+      <div style="margin-top: 1rem; padding: 1rem; background: #fee2e2; border-radius: 6px;">
+        <strong>🚫 Plant & equipment not depreciable</strong>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">
+          Since 9 May 2017, individual investors can't claim depreciation on
+          plant & equipment (carpets, appliances, blinds etc.) that was
+          already installed when they bought an established residential
+          property second-hand. Only items you buy new yourself (or that an
+          excluded entity like a company owns) can be depreciated.
+        </p>
+      </div>
+    ` : `
+      <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 6px;">
+        <p style="margin: 0; font-size: 0.875rem;">
+          This plant & equipment figure is a rough indicative estimate only.
+          Actual claims require a quantity surveyor's depreciation schedule,
+          since each asset type has its own effective life under ATO ruling
+          TR 2024/1.
+        </p>
+      </div>
+    `}
+  `;
+}
+
+function calculateGST(formData) {
+  const amount = parseFloat(formData.get('amount')) || 0;
+  const calculationType = formData.get('calculationType');
+  const GST_RATE = 0.10;
+
+  let gstAmount, netAmount, grossAmount;
+  if (calculationType === 'add') {
+    netAmount = amount;
+    gstAmount = amount * GST_RATE;
+    grossAmount = amount + gstAmount;
+  } else {
+    grossAmount = amount;
+    netAmount = amount / (1 + GST_RATE);
+    gstAmount = grossAmount - netAmount;
+  }
+
+  return `
+    <h4>GST Calculation</h4>
+    <div style="display: grid; gap: 0.5rem;">
+      <div style="display: flex; justify-content: space-between;">
+        <span>Amount excluding GST:</span>
+        <strong>${fmt(netAmount)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>GST (10%):</span>
+        <strong>${fmt(gstAmount)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; border-top: 1px solid #cbd5e1; padding-top: 0.5rem;">
+        <span>Amount including GST:</span>
+        <strong>${fmt(grossAmount)}</strong>
+      </div>
+    </div>
+    <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 6px;">
+      <p style="margin: 0; font-size: 0.875rem;">
+        Residential rent and most residential property sales are input-taxed
+        (GST-free) — most residential landlords don't charge or claim GST on
+        rental activity at all. This calculator is mainly useful for
+        commercial property or GST-registered enterprises.
+      </p>
+    </div>
   `;
 }
 
@@ -897,58 +1123,163 @@ function calculateNegativeGearing(formData) {
 // 📊 REPORT GENERATION
 // ============================================================================
 
-function generateRentalSchedule() {
+// Stores the last generated report so the "Download PDF" (JSON) button can
+// reference real data. Bug fix: the download buttons previously did
+// onclick="downloadReport('rental-schedule', report)" where `report` was a
+// local variable inside the generator function and didn't exist in the
+// button's global scope — clicking Download threw a ReferenceError.
+window.__lastGeneratedReport = null;
+
+async function generateRentalSchedule() {
+  const output = document.getElementById('reportOutput');
+  output.innerHTML = `<div class="card" style="margin-top: 1rem;"><p>Loading rental schedule…</p></div>`;
+
+  const { label, start, end } = getMostRecentCompletedFYRange();
+  const [properties, expenses] = await Promise.all([
+    getAllItems(STORE_NAMES.properties),
+    getAllItems(STORE_NAMES.expenses)
+  ]);
+
+  const rentalProperties = properties.filter(p => p.propertyType !== 'primary');
+
+  const monthlyIncome = {}; // "YYYY-MM" -> income
+  const monthlyExpenses = {}; // "YYYY-MM" -> expenses
+  let totalRentalIncome = 0;
+
+  const byProperty = rentalProperties.map(p => {
+    const months = monthsOverlapping(start, end, p.createdAt);
+    const monthlyRent = parseFloat(p.rent) || 0;
+    const propertyIncome = monthlyRent * months.length;
+    totalRentalIncome += propertyIncome;
+    months.forEach(m => {
+      monthlyIncome[m] = (monthlyIncome[m] || 0) + monthlyRent;
+    });
+
+    const propExpenses = expenses.filter(e => {
+      if (e.propertyId !== p.id) return false;
+      const d = new Date(e.date);
+      return d >= start && d <= end;
+    });
+    const propertyExpenseTotal = propExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    propExpenses.forEach(e => {
+      const d = new Date(e.date);
+      const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthlyExpenses[m] = (monthlyExpenses[m] || 0) + (parseFloat(e.amount) || 0);
+    });
+
+    return {
+      property: p.name,
+      monthsRented: months.length,
+      rentalIncome: propertyIncome,
+      expenses: propertyExpenseTotal,
+      netIncome: propertyIncome - propertyExpenseTotal
+    };
+  });
+
+  const totalDeductions = byProperty.reduce((sum, p) => sum + p.expenses, 0);
+  const allMonths = [...new Set([...Object.keys(monthlyIncome), ...Object.keys(monthlyExpenses)])].sort();
+
   const report = {
     title: "Rental Income Schedule",
-    period: "FY 2024-2025",
+    period: label,
     generated: new Date().toLocaleDateString('en-AU'),
     summary: {
-      totalRentalIncome: 45200,
-      totalDeductions: 28750,
-      netRentalIncome: 16450
+      totalRentalIncome,
+      totalDeductions,
+      netRentalIncome: totalRentalIncome - totalDeductions
     },
-    months: [
-      { month: "July 2024", income: 3800, expenses: 2450 },
-      { month: "August 2024", income: 3800, expenses: 2100 }
-    ]
+    byProperty,
+    months: allMonths.map(m => ({
+      month: m,
+      income: monthlyIncome[m] || 0,
+      expenses: monthlyExpenses[m] || 0
+    }))
   };
-  
-  document.getElementById('reportOutput').innerHTML = `
+
+  window.__lastGeneratedReport = report;
+
+  if (rentalProperties.length === 0) {
+    output.innerHTML = `
+      <div class="card" style="margin-top: 1rem;">
+        <h3>📄 Rental Schedule Report</h3>
+        <p style="color: #64748b;">No investment/rental properties found. Add one under Properties to generate a real schedule.</p>
+      </div>
+    `;
+    return;
+  }
+
+  output.innerHTML = `
     <div class="card" style="margin-top: 1rem;">
-      <h3>📄 Rental Schedule Report</h3>
+      <h3>📄 Rental Schedule Report — ${label}</h3>
       <pre style="background: #f8fafc; padding: 1rem; border-radius: 8px; overflow-x: auto;">
 ${JSON.stringify(report, null, 2)}
       </pre>
-      <button class="btn btn-success" onclick="downloadReport('rental-schedule', report)">
-        📥 Download PDF
+      <button class="btn btn-success" onclick="downloadReport('rental-schedule', window.__lastGeneratedReport)">
+        📥 Download JSON
       </button>
     </div>
   `;
 }
 
-function generateDeductionReport() {
+async function generateDeductionReport() {
+  const output = document.getElementById('reportOutput');
+  output.innerHTML = `<div class="card" style="margin-top: 1rem;"><p>Loading deduction report…</p></div>`;
+
+  const { label, start, end } = getMostRecentCompletedFYRange();
+  const expenses = await getAllItems(STORE_NAMES.expenses);
+
+  const periodExpenses = expenses.filter(e => {
+    const d = new Date(e.date);
+    return d >= start && d <= end;
+  });
+
+  // Bug fix: previously always showed fixed placeholder numbers regardless
+  // of taxDeductible status. We now respect the actual taxDeductible flag
+  // (itself fixed separately — see expenses.js) so Capital Improvements
+  // correctly stay out of the immediate-deduction total.
+  const deductibleExpenses = periodExpenses.filter(e => e.taxDeductible !== false);
+
+  const deductionsByCategory = deductibleExpenses.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] || 0) + (parseFloat(e.amount) || 0);
+    return acc;
+  }, {});
+
+  const totalDeductions = Object.values(deductionsByCategory).reduce((sum, v) => sum + v, 0);
+  const nonDeductibleTotal = periodExpenses
+    .filter(e => e.taxDeductible === false)
+    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
   const report = {
     title: "Tax Deduction Report",
-    period: "FY 2024-2025",
+    period: label,
     generated: new Date().toLocaleDateString('en-AU'),
-    deductions: {
-      interest: 18500,
-      maintenance: 4500,
-      councilRates: 3200,
-      insurance: 1500,
-      propertyManagement: 2050
-    },
-    totalDeductions: 29750
+    deductions: deductionsByCategory,
+    totalDeductions,
+    nonDeductibleExcluded: nonDeductibleTotal
+      ? { note: "Capital items (e.g. Capital Improvements) are excluded — they adjust cost base instead of an immediate deduction.", amount: nonDeductibleTotal }
+      : undefined
   };
-  
-  document.getElementById('reportOutput').innerHTML = `
+
+  window.__lastGeneratedReport = report;
+
+  if (periodExpenses.length === 0) {
+    output.innerHTML = `
+      <div class="card" style="margin-top: 1rem;">
+        <h3>💰 Deduction Report</h3>
+        <p style="color: #64748b;">No expenses recorded for ${label}. Add expenses under Expenses to generate a real report.</p>
+      </div>
+    `;
+    return;
+  }
+
+  output.innerHTML = `
     <div class="card" style="margin-top: 1rem;">
-      <h3>💰 Deduction Report</h3>
+      <h3>💰 Deduction Report — ${label}</h3>
       <pre style="background: #f8fafc; padding: 1rem; border-radius: 8px; overflow-x: auto;">
 ${JSON.stringify(report, null, 2)}
       </pre>
-      <button class="btn btn-success" onclick="downloadReport('deduction-report', report)">
-        📥 Download PDF
+      <button class="btn btn-success" onclick="downloadReport('deduction-report', window.__lastGeneratedReport)">
+        📥 Download JSON
       </button>
     </div>
   `;
@@ -966,13 +1297,29 @@ function generateCGTReport() {
   `;
 }
 
-function exportAllReports() {
+async function exportAllReports() {
+  const { label, start, end } = getMostRecentCompletedFYRange();
+  const [properties, expenses] = await Promise.all([
+    getAllItems(STORE_NAMES.properties),
+    getAllItems(STORE_NAMES.expenses)
+  ]);
+
+  // Bug fix: this used to call generateRentalSchedule()/generateDeductionReport()
+  // directly and store their (undefined, since those functions returned nothing
+  // and only wrote to the DOM) return values. It also predates those functions
+  // becoming async. We now build the bundle directly from real data instead.
+  await generateRentalSchedule();
+  const rentalSchedule = window.__lastGeneratedReport;
+  await generateDeductionReport();
+  const deductionReport = window.__lastGeneratedReport;
+
   const reports = {
-    rentalSchedule: generateRentalSchedule(),
-    deductionReport: generateDeductionReport(),
+    period: label,
+    rentalSchedule,
+    deductionReport,
     exported: new Date().toISOString()
   };
-  
+
   downloadReport('ato-reports-bundle', reports);
 }
 
@@ -1041,6 +1388,30 @@ function setupEventListeners() {
     });
   }
   
+  // Depreciation Calculator
+  const depreciationForm = document.getElementById('formDepreciation');
+  if (depreciationForm) {
+    depreciationForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const result = calculateDepreciation(formData);
+      document.getElementById('depreciationResult').style.display = 'block';
+      document.getElementById('depreciationResult').innerHTML = result;
+    });
+  }
+
+  // GST Calculator
+  const gstForm = document.getElementById('formGST');
+  if (gstForm) {
+    gstForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const result = calculateGST(formData);
+      document.getElementById('gstResult').style.display = 'block';
+      document.getElementById('gstResult').innerHTML = result;
+    });
+  }
+
   // Close modals when clicking outside
   document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', function(e) {

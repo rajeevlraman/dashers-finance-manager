@@ -56,8 +56,11 @@ export const PROPERTY_EXPENSE_CATEGORIES = {
     defaultCategoryId: 'exp_housing'
   },
   'Travel': { 
+    // Not deductible for individuals on a residential rental property since
+    // 1 July 2017 (narrow exceptions only for a formal property business or
+    // commercial property).
     type: 'immediate', 
-    deductible: true, 
+    deductible: false, 
     color: '#6366F1',
     defaultCategoryId: 'exp_travel'
   },

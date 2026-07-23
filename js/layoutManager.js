@@ -32,7 +32,6 @@ export function applyLayoutChanges(onChange) {
     if (newLayout !== currentLayout) {
       currentLayout = newLayout;
       document.documentElement.setAttribute('data-layout', newLayout);
-      console.log(`📱 Layout changed → ${newLayout}`);
 
       // Optional: callback to reinit certain UIs
       if (onChange && typeof onChange === 'function') {

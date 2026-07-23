@@ -69,13 +69,8 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_grocery_supermarket', name: 'Supermarket', type: 'expense', icon: '🛍️', parentId: 'exp_groceries' },
 { id: 'exp_grocery_fresh', name: 'Fruits & Vegetables', type: 'expense', icon: '🥬', parentId: 'exp_groceries' },
 { id: 'exp_grocery_meat', name: 'Meat & Seafood', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
-{ id: 'exp_Malvic_Pty', name: 'Meat & Afghani', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
-{ id: 'exp_Malvic', name: 'Meat & Afghani', type: 'expense', icon: '🥩', parentId: 'exp_groceries' },
 { id: 'exp_Safeway', name: 'Safeway', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
-{ id: 'exp_Woolworths', name: 'Woolworths', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 { id: 'exp_Coles', name: 'Coles', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
-{ id: 'exp_IGA', name: 'IGA', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
-{ id: 'exp_Woolworths', name: 'Woolworths', type: 'expense', icon: '🛒', parentId: 'exp_groceries' },
 { id: 'exp_Aldi', name: 'Aldi', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 { id: 'exp_Indian_Groceries', name: 'Indian Groceroies', type: 'expense', icon: '🧽', parentId: 'exp_groceries' },
 
@@ -123,7 +118,6 @@ export const DEFAULT_CATEGORIES = [
 { id: 'exp_dominos', name: 'Domino\'s', type: 'expense', icon: '🍕', parentId: 'exp_dining' },
 { id: 'exp_pizzahut', name: 'Pizza Hut', type: 'expense', icon: '🍕', parentId: 'exp_dining' },
 
-
 // Travel Main
 { id: 'exp_travel', name: 'Travel', type: 'expense', icon: '✈️', parentId: null },
 
@@ -139,11 +133,12 @@ export const DEFAULT_CATEGORIES = [
 
 // Personal Subcategories
 { id: 'exp_clothing', name: 'Clothing', type: 'expense', icon: '👕', parentId: 'exp_personal' },
+{ id: 'exp_gambling', name: 'Gambling / Lottery', type: 'expense', icon: '🎰', parentId: 'exp_personal' },
 { id: 'exp_grooming', name: 'Grooming / Salon', type: 'expense', icon: '💇', parentId: 'exp_personal' },
-{ id: 'exp_gifts', name: 'Gifts', type: 'expense', icon: '🎁 ', parentId: 'exp_personal' },
+{ id: 'exp_gifts', name: 'Gifts', type: 'expense', icon: '🎁', parentId: 'exp_personal' },
 { id: 'exp_fitness', name: 'Fitness / Gym', type: 'expense', icon: '🏋️', parentId: 'exp_personal' },
-{ id: 'exp_grindsten', name: 'Hairdresser', type: 'expense', icon: '🎁', parentId: 'exp_personal '},
-  // Subscriptions Main
+
+// Subscriptions Main
 { id: 'exp_subs', name: 'Subscriptions', type: 'expense', icon: '📺', parentId: null },
 
 // Subscriptions Subcategories
@@ -196,6 +191,7 @@ export const DEFAULT_CATEGORIES = [
 // Fees Subcategories
 { id: 'exp_bank_fees', name: 'Bank Fees', type: 'expense', icon: '🏦', parentId: 'exp_fees' },
 { id: 'exp_late_fees', name: 'Late Fees', type: 'expense', icon: '⏰', parentId: 'exp_fees' },
+{ id: 'exp_union_fees', name: 'Union Fees', type: 'expense', icon: '🪪', parentId: 'exp_fees' },
 { id: 'exp_service_fees', name: 'Service Charges', type: 'expense', icon: '🧾', parentId: 'exp_fees' },
 
 // Misc Main
@@ -330,6 +326,10 @@ export const DEFAULT_CATEGORIES = [
 { id: 'ms_financial_dispute_resolved', name: 'Dispute Resolved', type: 'expense', icon: '✔️', parentId: 'ms_financial' },
 { id: 'ms_financial_interest', name: 'Interest', type: 'expense', icon: '💲', parentId: 'ms_financial' },
 { id: 'ms_financial_transfers', name: 'Transfers', type: 'expense', icon: '🔄', parentId: 'ms_financial' },
+{ id: 'exp_transfer_nab_savings', name: 'Transfer to NAB Savings', type: 'expense', icon: '🔁', parentId: 'ms_financial_transfers' },
+{ id: 'exp_transfer_offset', name: 'Transfer to Offset Account', type: 'expense', icon: '🔁', parentId: 'ms_financial_transfers' },
+{ id: 'exp_transfer_inv_offset', name: 'Transfer to Investment Offset', type: 'expense', icon: '🔁', parentId: 'ms_financial_transfers' },
+{ id: 'exp_transfer_rajeev', name: 'Transfer to Rajeev', type: 'expense', icon: '🔁', parentId: 'ms_financial_transfers' },
 { id: 'ms_financial_other', name: 'Other Financials', type: 'expense', icon: '📦', parentId: 'ms_financial' },
 
 // -----------------------------
@@ -602,7 +602,6 @@ export const DEFAULT_CATEGORIES = [
 { id: 'ms_utilities_other', name: 'Other Utility Expenses', type: 'expense', icon: '📦', parentId: 'ms_utilities' },
 { id: 'ms_utilities_paytv', name: 'Pay TV', type: 'expense', icon: '📺', parentId: 'ms_utilities' },
 { id: 'ms_utilities_phone', name: 'Phone', type: 'expense', icon: '📱', parentId: 'ms_utilities' },
-
 
 ];
 

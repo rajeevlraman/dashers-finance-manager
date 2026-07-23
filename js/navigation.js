@@ -1,206 +1,49 @@
-// navigation.js - Complete Navigation with All Pages
-console.log("NAVIGATION: Loading complete navigation system");
+// /js/navigation.js
+// ============================================================================
+// This file used to contain an entire second navigation system — a
+// desktop/tablet sidebar with its own hamburger, overlay, and nav-item
+// markup (buildNavigationStructure, populateSidebarNav, populateBottomNav,
+// toggleSidebar, and the rest). None of it was ever wired up: nothing in
+// the app calls initNavigation(), so it never ran. The actual, live
+// navigation is the bottom tab bar and the hamburger drawer defined
+// directly in index.html, driven by ui.js (setActiveNav) and
+// mobileNavDrawer.js (open/close behavior).
+//
+// The one thing here that WAS genuinely used — applyPermittedSections,
+// imported by settings.js — is kept, with a real bug fixed: it was
+// querying for `.nav-item, .bottom-nav-item`, classes that only exist on
+// the 5-item bottom tab bar. The full hamburger drawer's links (all 17+
+// sections, including sensitive ones like Loans and Properties) have no
+// class at all, so a restricted family member's drawer was never actually
+// being filtered — they could see and open every section regardless of
+// their permissions, even though the bottom tab bar correctly hid theirs.
+// Querying by the data-view attribute instead — which every real nav link
+// in both the bottom bar and the drawer consistently has — fixes both at
+// once and doesn't depend on class names matching.
+// ============================================================================
 
-// ===============================
-// Navigation configuration
-// ===============================
-const mainNavItems = [
-  { id: 'dashboard', icon: '🏠', activeIcon: '🏠', label: 'Dashboard' },
-  { id: 'transactions', icon: '💸', activeIcon: '💸', label: 'Transactions' },
-  { id: 'budgets', icon: '🎯', activeIcon: '🎯', label: 'Budgets' },
-  { id: 'accounts', icon: '💳', activeIcon: '💳', label: 'Accounts' },
-  { id: 'properties', icon: '🏠', activeIcon: '🏠', label: 'Properties' },
-  { id: 'more', icon: '📂', activeIcon: '📂', label: 'More' }
-];
+import { getPermittedSections } from './familySync.js';
 
-const allViews = {
-  finance: [
-    { id: 'dashboard', name: 'Dashboard', icon: '🏠' },
-    { id: 'transactions', name: 'Transactions', icon: '💸' },
-    { id: 'budgets', name: 'Budgets', icon: '🎯' },
-    { id: 'accounts', name: 'Accounts', icon: '💳' },
-    { id: 'loans', name: 'Loans', icon: '🏦' },
-    { id: 'categories', name: 'Categories', icon: '🗂️' },
-    { id: 'reports', name: 'Reports', icon: '📊' },
-    { id: 'bills', name: 'Bills', icon: '🧾' },
-    { id: 'calendar', name: 'Calendar', icon: '📅' },
-    { id: 'recurring', name: 'Recurring', icon: '🔁' },
-    { id: 'expenses', name: 'Expenses', icon: '💸' }
-  ],
-  properties: [
-    { id: 'properties', name: 'Properties', icon: '🏠' },
-    { id: 'tenants', name: 'Tenants', icon: '👤' },
-    { id: 'maintenance', name: 'Maintenance', icon: '🧰' },
-    { id: 'costbase', name: 'Cost Base', icon: '🧱' }
-  ],
-  system: [
-    { id: 'settings', name: 'Settings', icon: '⚙️' },
-    { id: 'tax', name: 'ATO Reports', icon: '📘' }
-  ]
-};
+// Hide nav items outside a restricted family member's allowed sections.
+// When not connected to a family server (getPermittedSections() returns
+// null) or logged in as the admin (sections includes '*'), nothing is
+// hidden. This is enforcement-in-depth alongside the server itself
+// refusing to sync data for sections a user isn't permitted — hiding the
+// nav item here is about a clean experience, not the actual security
+// boundary (that's server-side).
+export async function applyPermittedSections() {
+  const sections = await getPermittedSections();
+  const isRestricted = Array.isArray(sections) && !sections.includes('*');
 
-// ===============================
-// Build Navigation HTML
-// ===============================
-function buildNavigationHTML() {
-  return `
-<nav class="navbar">
-  <div class="nav-container">
-
-    <div class="nav-brand">
-      <img src="./assets/icons/icon-152.png" class="nav-logo" alt="Budget Tracker">
-      <span class="nav-title">Budget Tracker</span>
-    </div>
-
-    <ul class="nav-menu">
-      ${mainNavItems.map((item, index) => `
-        <li class="nav-item ${index === 0 ? 'active' : ''}" data-view="${item.id}">
-          <a href="#" class="nav-link">
-            <span class="nav-icon">${item.icon}</span>
-            <span class="nav-label">${item.label}</span>
-          </a>
-        </li>
-      `).join('')}
-      <div class="indicator"></div>
-    </ul>
-
-    <div class="mobile-toggle" id="mobileToggle">
-      <span></span><span></span><span></span>
-    </div>
-  </div>
-
-  <div class="more-menu" id="moreMenu">
-    <div class="more-menu-header">
-      <h3>All Pages</h3>
-      <button class="close-more-menu" id="closeMoreMenu">×</button>
-    </div>
-
-    <div class="more-menu-content">
-      ${Object.entries(allViews).map(([group, items]) => `
-        <div class="more-section">
-          <h4>${group.toUpperCase()}</h4>
-          <div class="section-grid">
-            ${items.map(item => `
-              <a href="#" class="more-item" data-view="${item.id}">
-                <span class="more-icon">${item.icon}</span>
-                <span class="more-label">${item.name}</span>
-              </a>
-            `).join('')}
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  </div>
-
-  <div class="more-overlay" id="moreOverlay"></div>
-</nav>
-  `;
-}
-
-// ===============================
-// Inject Navigation (FIXED)
-// ===============================
-function injectNavigation() {
-  if (document.querySelector('.navbar')) {
-    console.log("NAVIGATION: Navbar already exists, skipping injection");
-    return;
-  }
-
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = buildNavigationHTML();
-
-  // ✅ FIX: inject into BODY, not splash screen
-  document.body.insertAdjacentElement('afterbegin', wrapper.firstElementChild);
-
-  initNavigation();
-  console.log("NAVIGATION: Complete navigation injected");
-}
-
-// ===============================
-// Initialise Navigation Behaviour
-// ===============================
-function initNavigation() {
-  const navbar = document.querySelector(".navbar");
-  const navItems = document.querySelectorAll(".nav-item");
-  const indicator = document.querySelector(".indicator");
-  const mobileToggle = document.getElementById("mobileToggle");
-  const moreMenu = document.getElementById("moreMenu");
-  const moreOverlay = document.getElementById("moreOverlay");
-  const closeMoreMenu = document.getElementById("closeMoreMenu");
-
-  if (!navbar) {
-    console.error("NAV ERROR: Navbar not found");
-    return;
-  }
-
-  function closeMoreMenuFunc() {
-    moreMenu.classList.remove('active');
-    moreOverlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  navItems.forEach((item, index) => {
-    item.addEventListener("click", e => {
-      e.preventDefault();
-      const view = item.dataset.view;
-
-      if (view === 'more') {
-        moreMenu.classList.add('active');
-        moreOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        return;
-      }
-
-      window.location.hash = view;
-      updateIndicator(index);
-      updateActiveStates(item);
-      closeMoreMenuFunc();
-    });
-  });
-
-  document.querySelectorAll(".more-item").forEach(item => {
-    item.addEventListener("click", e => {
-      e.preventDefault();
-      window.location.hash = item.dataset.view;
-      closeMoreMenuFunc();
-    });
-  });
-
-  closeMoreMenu?.addEventListener("click", closeMoreMenuFunc);
-  moreOverlay?.addEventListener("click", closeMoreMenuFunc);
-
-  mobileToggle?.addEventListener("click", () => {
-    navbar.classList.toggle("mobile-open");
-  });
-
-  function updateActiveStates(activeItem) {
-    navItems.forEach(i => i.classList.remove("active"));
-    activeItem.classList.add("active");
-  }
-
-  function updateIndicator(index) {
-    if (!indicator || !navItems.length) return;
-    const w = navItems[0].offsetWidth;
-    indicator.style.width = `${w}px`;
-    indicator.style.transform = `translateX(${index * w}px)`;
-  }
-
-  function syncWithHash() {
-    const hash = location.hash.replace('#', '') || 'dashboard';
-    const item = [...navItems].find(n => n.dataset.view === hash);
-    if (item) {
-      updateActiveStates(item);
-      updateIndicator([...navItems].indexOf(item));
+  document.querySelectorAll('a[data-view]').forEach(item => {
+    const view = item.getAttribute('data-view');
+    const allowed = !isRestricted || sections.includes(view);
+    item.style.display = allowed ? '' : 'none';
+    // For <li><a data-view>...</a></li> structures (the hamburger drawer),
+    // hiding just the <a> still leaves an empty list item taking up space —
+    // hide the parent <li> too when present.
+    if (item.parentElement?.tagName === 'LI') {
+      item.parentElement.style.display = allowed ? '' : 'none';
     }
-  }
-
-  window.addEventListener("hashchange", syncWithHash);
-  window.addEventListener("resize", syncWithHash);
-  syncWithHash();
-
-  console.log("NAVIGATION: Navigation initialized");
+  });
 }
-
-// ✅ FIX: wait for DOM
-document.addEventListener("DOMContentLoaded", injectNavigation);
-

@@ -1,8 +1,8 @@
 import { addItem, getAllItems, deleteItem, updateItem, STORE_NAMES } from './db.js';
 import { setupEmojiPicker } from './emojiPicker.js';
 import { generateId } from './db.js';
+import { escapeHtml } from './sanitize.js';
 import { addDefaultCategories, shouldAddDefaultCategories } from './defaultCategories.js';
-import { DEFAULT_CATEGORIES } from './defaultCategories.js';
 
 export async function initCategoriesUI() {
   const mainContent = document.getElementById('mainContent');
@@ -17,7 +17,6 @@ export async function initCategoriesUI() {
       addItem, 
       STORE_NAMES
     });
-    console.log(`📦 Added ${addedCount} default categories`);
     categories = await getAllItems(STORE_NAMES.categories);
   }
 
@@ -191,7 +190,7 @@ mainContent.innerHTML = `
           <div class="budget-left">
             <span class="category-icon">${category.icon || guessCategoryIcon(category.name)}</span>
             <span class="category-name">
-              ${category.name}
+              ${escapeHtml(category.name)}
               ${hasChildren ? `<span class="subcount-badge">${children.length} sub</span>` : ''}
             </span>
           </div>
@@ -231,8 +230,8 @@ mainContent.innerHTML = `
           <div class="budget-left">
             <span class="category-icon">${subcategory.icon || guessCategoryIcon(subcategory.name)}</span>
             <span class="category-name">
-              ${subcategory.name}
-              <small class="subcategory-parent">Under: ${parent?.name || 'Unknown'}</small>
+              ${escapeHtml(subcategory.name)}
+              <small class="subcategory-parent">Under: ${escapeHtml(parent?.name) || 'Unknown'}</small>
             </span>
           </div>
 
@@ -300,26 +299,24 @@ mainContent.innerHTML = `
   }
 
   // ========== RESET TO DEFAULTS ==========
-async function resetToDefaultCategories() {
-  const existing = await getAllItems(STORE_NAMES.categories);
-  const existingIds = new Set(existing.map(c => c.id));
-  const now = new Date().toISOString();
-
-  for (const cat of DEFAULT_CATEGORIES) {
-    const record = {
-      ...cat,
-      createdAt: cat.createdAt || now,
-      updatedAt: now
-    };
-
-    // 🔑 use updateItem (put), not addItem
-    await updateItem(STORE_NAMES.categories, record);
+  async function resetToDefaultCategories() {
+    if (confirm('This will delete ALL your current categories and restore the default set. This action cannot be undone. Continue?')) {
+      // Delete all existing categories
+      const existingCategories = await getAllItems(STORE_NAMES.categories);
+      for (const category of existingCategories) {
+        await deleteItem(STORE_NAMES.categories, category.id);
+      }
+      
+      // Add default categories
+      await addDefaultCategories({
+        getAllItems,
+        addItem,
+        STORE_NAMES
+      });
+      
+      initCategoriesUI();
+    }
   }
-
-  console.log('✅ Categories reset to defaults');
-}
-
-window.resetToDefaultCategories = resetToDefaultCategories;
 
   // ========== BUDGETS-STYLE CATEGORY EDITOR ==========
   async function openCatEditor(id = null, parentId = null) {
@@ -340,7 +337,7 @@ window.resetToDefaultCategories = resetToDefaultCategories;
           <form id="catForm" class="styled-form">
             <div class="form-group">
               <label class="form-label">Name</label>
-              <input type="text" name="name" value="${cat.name}" class="form-input" required placeholder="Enter category name">
+              <input type="text" name="name" value="${escapeHtml(cat.name)}" class="form-input" required placeholder="Enter category name">
             </div>
 
             <div class="form-group">
@@ -355,11 +352,10 @@ window.resetToDefaultCategories = resetToDefaultCategories;
             <div class="form-group">
               <label class="form-label">Icon</label>
               <div class="icon-input-group">
-                <input type="text" name="icon" value="${cat.icon || ''}" class="form-input icon-input" placeholder="💡" maxlength="2">
+                <input type="text" name="icon" value="${escapeHtml(cat.icon) || ''}" class="form-input icon-input" placeholder="💡" maxlength="2">
                 <button type="button" id="emojiBtn" class="btn btn-secondary">😀 Pick Emoji</button>
               </div>
               <small class="form-hint">Leave empty for auto-suggestion</small>
-              <div id="emojiPicker" class="emoji-picker" style="display:none;"></div>
             </div>
 
             ${!isSubcategory ? `
@@ -369,7 +365,7 @@ window.resetToDefaultCategories = resetToDefaultCategories;
                   <option value="">None (Main Category)</option>
                   ${allCats
                     .filter(c => !c.parentId && c.id !== id)
-                    .map(c => `<option value="${c.id}" ${c.id === cat.parentId ? 'selected' : ''}>${c.icon || guessCategoryIcon(c.name)} ${c.name}</option>`)
+                    .map(c => `<option value="${c.id}" ${c.id === cat.parentId ? 'selected' : ''}>${c.icon || guessCategoryIcon(c.name)} ${escapeHtml(c.name)}</option>`)
                     .join('')}
                 </select>
                 <small class="form-hint">Select to make this a subcategory</small>
@@ -506,4 +502,3 @@ export async function getFullCategoryName(id) {
     const path = await getCategoryPath(id);
     return path.length ? path.join(" / ") : "Uncategorised";
 }
-

@@ -2,12 +2,12 @@
 // 💰 Budget Tracker - IndexedDB Manager (Enhanced for Property & Tax System)
 // ----------------------------------------------------------------------------
 // Handles safe initialization, schema upgrades, and CRUD operations
-// without version-change race conditions or retry loops. v2
+// without version-change race conditions or retry loops.
 // ============================================================================
 
 // 🔹 Database configuration
 const DB_NAME = 'budgetTrackerDB';
-const DB_VERSION = 12; // 🆙 incremented from 11 → 12 for tax records and enhanced schema
+const DB_VERSION = 20; // 🆙 defensively bumped from 13 → 20 while reverting the Recurring+Bills merge: if the broken build was ever opened, even briefly, it may have upgraded the local database to version 14 — IndexedDB refuses to open at a version lower than what's already stored, which would cause blank screens all on its own. Jumping to 20 guarantees a clean reopen either way, with this file's original (pre-merge) store list.
 
 // 🔹 Centralized object store definitions
 export const STORE_NAMES = {
@@ -26,7 +26,8 @@ export const STORE_NAMES = {
   maintenance: 'maintenance',         // 🧰 Property maintenance
   costbase: 'costbase',               // 🧱 Capital improvements & cost base tracking
   taxRecords: 'tax_records',          // 📋 ATO tax compliance records
-  propertyExpenseCategories: 'property_expense_categories' // 🏷️ Property expense categories mapping
+  propertyExpenseCategories: 'property_expense_categories', // 🏷️ Property expense categories mapping
+  syncTombstones: 'sync_tombstones'    // 🗑️🔄 Deletion records so family sync can propagate deletes
 };
 
 // ----------------------------------------------------------------------------
@@ -55,7 +56,6 @@ export function openDb() {
   if (dbPromise) return dbPromise;
 
   dbPromise = new Promise((resolve, reject) => {
-    console.log(`📂 Opening IndexedDB: ${DB_NAME} (v${DB_VERSION})`);
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     // ------------------------------------------------------------------------
@@ -66,18 +66,15 @@ export function openDb() {
       const oldVersion = event.oldVersion;
       const tx = event.target.transaction;
 
-      console.log(`🛠️ Upgrading DB from v${oldVersion} → v${DB_VERSION}`);
       upgradeSchema(db, oldVersion, tx);
 
       // 🌱 Seed data for first-time DBs
       if (oldVersion === 0) {
-        console.log("🌱 Seeding demo data...");
         seedDemoData(tx);
       }
       
       // 🔄 Seed property expense categories on first creation
       if (oldVersion < 12) {
-        console.log("📊 Seeding property expense categories...");
         seedPropertyExpenseCategories(tx);
       }
     };
@@ -85,14 +82,11 @@ export function openDb() {
     // ------------------------------------------------------------------------
     // ✅ Successfully opened database
     // ------------------------------------------------------------------------
-request.onsuccess = event => {
-  dbInstance = event.target.result;
-  dbPromise = null;
-  console.log("✅ DB opened successfully");
-+ seedDefaultCategories().catch(console.error);
-  resolve(dbInstance);
-};
-
+    request.onsuccess = event => {
+      dbInstance = event.target.result;
+      dbPromise = null;
+      resolve(dbInstance);
+    };
 
     // ------------------------------------------------------------------------
     // ❌ Opening failed (permissions, blocked tab, etc.)
@@ -131,25 +125,21 @@ function upgradeSchema(db, oldVersion, tx) {
       switch (storeName) {
         case STORE_NAMES.loans:
           store.createIndex('type', 'type', { unique: false });
-          console.log(`✅ Created store: ${storeName} (type index)`);
           break;
           
         case STORE_NAMES.loanTransactions:
           store.createIndex('loanId', 'loanId', { unique: false });
           store.createIndex('date', 'date', { unique: false });
-          console.log(`✅ Created store: ${storeName} (loanId/date indexes)`);
           break;
           
         case STORE_NAMES.properties:
           store.createIndex('name', 'name', { unique: false });
           store.createIndex('propertyType', 'propertyType', { unique: false });
-          console.log(`🏠 Created store: ${storeName} (name, propertyType indexes)`);
           break;
           
         case STORE_NAMES.tenants:
           store.createIndex('propertyId', 'propertyId', { unique: false });
           store.createIndex('status', 'status', { unique: false });
-          console.log(`👤 Created store: ${storeName} (propertyId, status indexes)`);
           break;
           
         case STORE_NAMES.expenses:
@@ -159,7 +149,6 @@ function upgradeSchema(db, oldVersion, tx) {
           store.createIndex('category', 'category', { unique: false });
           store.createIndex('taxDeductible', 'taxDeductible', { unique: false });
           store.createIndex('financialYear', 'financialYear', { unique: false });
-          console.log(`📊 Created store: ${storeName} (propertyId, transactionId, date, category, taxDeductible, financialYear indexes)`);
           break;
           
         case STORE_NAMES.maintenance:
@@ -167,14 +156,12 @@ function upgradeSchema(db, oldVersion, tx) {
           store.createIndex('date', 'date', { unique: false });
           store.createIndex('category', 'category', { unique: false });
           store.createIndex('status', 'status', { unique: false });
-          console.log(`🧰 Created store: ${storeName} (propertyId, date, category, status indexes)`);
           break;
           
         case STORE_NAMES.costbase:
           store.createIndex('propertyId', 'propertyId', { unique: false });
           store.createIndex('date', 'date', { unique: false });
           store.createIndex('type', 'type', { unique: false });
-          console.log(`🧱 Created store: ${storeName} (propertyId, date, type indexes)`);
           break;
           
         case STORE_NAMES.taxRecords:
@@ -184,14 +171,12 @@ function upgradeSchema(db, oldVersion, tx) {
           store.createIndex('financialYear', 'financialYear', { unique: false });
           store.createIndex('category', 'category', { unique: false });
           store.createIndex('date', 'date', { unique: false });
-          console.log(`📋 Created store: ${storeName} (expenseId, transactionId, propertyId, financialYear, category, date indexes)`);
           break;
           
         case STORE_NAMES.propertyExpenseCategories:
           store.createIndex('categoryName', 'categoryName', { unique: true });
           store.createIndex('deductible', 'deductible', { unique: false });
           store.createIndex('type', 'type', { unique: false });
-          console.log(`🏷️ Created store: ${storeName} (categoryName, deductible, type indexes)`);
           break;
           
         case STORE_NAMES.transactions:
@@ -200,22 +185,18 @@ function upgradeSchema(db, oldVersion, tx) {
           store.createIndex('isPropertyExpense', 'isPropertyExpense', { unique: false });
           store.createIndex('expenseCategory', 'expenseCategory', { unique: false });
           store.createIndex('maintenanceId', 'maintenanceId', { unique: false });
-          console.log(`💸 Enhanced store: ${storeName} (propertyId, isPropertyExpense, expenseCategory, maintenanceId indexes)`);
           break;
           
         default:
-          console.log(`✅ Created store: ${storeName}`);
       }
     }
   }
 
   // Placeholder for future migrations
   if (oldVersion < 10) {
-    console.log("🔁 Schema migrations for v10 applied (Property Manager support)");
   }
   
   if (oldVersion < 12) {
-    console.log("🔁 Schema migrations for v12 applied (Tax Compliance & Enhanced Property Expense Tracking)");
     
     // Add isPropertyExpense field to existing transactions
     if (existingStores.includes(STORE_NAMES.transactions)) {
@@ -353,9 +334,9 @@ function seedPropertyExpenseCategories(tx) {
         categoryName: 'Travel',
         defaultCategoryId: 'exp_travel',
         type: 'immediate',
-        deductible: true,
+        deductible: false,
         color: '#6366F1',
-        description: 'Travel to inspect/manage property',
+        description: 'Travel to inspect/manage a residential rental property is not deductible for individuals since 1 July 2017 (narrow exceptions for a formal property business or commercial property)',
         createdAt: now,
         updatedAt: now
       },
@@ -387,7 +368,6 @@ function seedPropertyExpenseCategories(tx) {
       categoriesStore.put(cat);
     });
     
-    console.log("✅ Property expense categories seeded successfully");
   } catch (err) {
     console.error("❌ Error seeding property expense categories:", err);
   }
@@ -451,7 +431,6 @@ function seedDemoData(tx) {
     categories.forEach(cat => categoriesStore.add(cat));
     properties.forEach(prop => propertiesStore.add(prop));
 
-    console.log("✅ Demo data seeded successfully");
   } catch (err) {
     console.error("❌ Error seeding demo data:", err);
   }
@@ -498,16 +477,70 @@ export async function updateItem(storeName, item) {
   });
 }
 
-export async function deleteItem(storeName, id) {
+// Records that a record was deleted so family sync (see js/familySync.js) can
+// propagate the deletion to other devices — a plain IndexedDB delete leaves
+// no trace once it succeeds, so without this, deleted records would just
+// silently reappear on the next sync pull from another device.
+async function recordTombstone(storeName, id) {
+  if (storeName === STORE_NAMES.syncTombstones) return; // avoid recursion
+  try {
+    const store = await getStore(STORE_NAMES.syncTombstones, 'readwrite');
+    store.put({
+      id: `${storeName}:${id}`,
+      storeName,
+      recordId: id,
+      deletedAt: new Date().toISOString()
+    });
+  } catch (err) {
+    console.warn('⚠️ Could not record sync tombstone (deletion will still work locally):', err);
+  }
+}
+
+// Used only by js/familySync.js when applying records pulled from the
+// family server: a normal updateItem()/addItem() always stamps `updatedAt`
+// with the current local time, which would break sync's last-write-wins
+// comparison (a freshly-pulled record would look "newer" than the server's
+// own copy on the very next sync). This preserves whatever timestamp the
+// incoming record already has.
+export async function putRawItem(storeName, item) {
+  const store = await getStore(storeName, 'readwrite');
+  return new Promise((resolve, reject) => {
+    const req = store.put(item);
+    req.onsuccess = () => resolve(item);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+// Used only by js/familySync.js when the current user's permitted sections
+// change and a store they can no longer see needs to be wiped from this
+// device. Deliberately does NOT record tombstones or cascade — the data
+// still exists on the server (and for other family members); this is only
+// removing this device's local copy.
+export async function clearStoreLocal(storeName) {
+  const store = await getStore(storeName, 'readwrite');
+  return new Promise((resolve, reject) => {
+    const req = store.clear();
+    req.onsuccess = () => resolve();
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+export async function deleteItem(storeName, id, options = {}) {
   const store = await getStore(storeName, 'readwrite');
 
   return new Promise(async (resolve, reject) => {
     const req = store.delete(id);
 
     req.onsuccess = async () => {
-      console.log(`🗑️ Deleted item from ${storeName}: ${id}`);
+      if (!options.skipTombstone) {
+        await recordTombstone(storeName, id);
+      }
 
       // 🔄 Cascade cleanup if deleting a property
+      // (Cascade-deleted children below don't need their own tombstones:
+      // when another device pulls the property's tombstone, it re-runs
+      // deleteItem() for that property locally too, which re-triggers this
+      // exact same cascade on that device.)
       if (storeName === STORE_NAMES.properties) {
         const db = await openDb();
 
@@ -519,7 +552,6 @@ export async function deleteItem(storeName, id) {
 
         tenantReq.onsuccess = () => {
           tenantReq.result.forEach(t => tenantStore.delete(t.id));
-          console.log(`👤 Removed ${tenantReq.result.length} tenants linked to property ${id}`);
         };
 
         // Delete all maintenance linked to this property
@@ -530,7 +562,6 @@ export async function deleteItem(storeName, id) {
 
         maintReq.onsuccess = () => {
           maintReq.result.forEach(m => maintStore.delete(m.id));
-          console.log(`🧰 Removed ${maintReq.result.length} maintenance logs linked to property ${id}`);
         };
         
         // Delete all expenses linked to this property
@@ -541,7 +572,6 @@ export async function deleteItem(storeName, id) {
         
         expenseReq.onsuccess = () => {
           expenseReq.result.forEach(e => expenseStore.delete(e.id));
-          console.log(`📊 Removed ${expenseReq.result.length} expenses linked to property ${id}`);
         };
         
         // Delete all costbase items linked to this property
@@ -552,7 +582,6 @@ export async function deleteItem(storeName, id) {
         
         costbaseReq.onsuccess = () => {
           costbaseReq.result.forEach(c => costbaseStore.delete(c.id));
-          console.log(`🧱 Removed ${costbaseReq.result.length} costbase items linked to property ${id}`);
         };
         
         // Delete all tax records linked to this property
@@ -563,7 +592,6 @@ export async function deleteItem(storeName, id) {
         
         taxReq.onsuccess = () => {
           taxReq.result.forEach(t => taxStore.delete(t.id));
-          console.log(`📋 Removed ${taxReq.result.length} tax records linked to property ${id}`);
         };
       }
       
@@ -580,7 +608,6 @@ export async function deleteItem(storeName, id) {
         expenseReq.onsuccess = () => {
           if (expenseReq.result) {
             expenseStore.delete(expenseReq.result.id);
-            console.log(`📊 Removed linked expense: ${expenseReq.result.id}`);
           }
         };
         
@@ -593,7 +620,6 @@ export async function deleteItem(storeName, id) {
         taxReq.onsuccess = () => {
           if (taxReq.result) {
             taxStore.delete(taxReq.result.id);
-            console.log(`📋 Removed linked tax record: ${taxReq.result.id}`);
           }
         };
       }
@@ -611,7 +637,6 @@ export async function deleteItem(storeName, id) {
         taxReq.onsuccess = () => {
           if (taxReq.result) {
             taxStore.delete(taxReq.result.id);
-            console.log(`📋 Removed linked tax record: ${taxReq.result.id}`);
           }
         };
       }
@@ -674,6 +699,14 @@ export async function getPropertyMaintenance(propertyId) {
 // ----------------------------------------------------------------------------
 // 📊 Financial Year Calculations
 // ----------------------------------------------------------------------------
+// Tombstones recorded since a given ISO timestamp — used by js/familySync.js
+// to know what's been deleted locally since the last sync.
+export async function getTombstonesSince(sinceIso) {
+  const all = await getAllItems(STORE_NAMES.syncTombstones);
+  if (!sinceIso) return all;
+  return all.filter(t => t.deletedAt > sinceIso);
+}
+
 export function getFinancialYear(dateString) {
   const date = new Date(dateString);
   const year = date.getFullYear();
@@ -763,7 +796,6 @@ export async function exportAllData() {
     });
   }
 
-  console.log("📦 Export complete");
   return exportData;
 }
 
@@ -794,45 +826,7 @@ export async function importAllData(data) {
     }
   }
 
-  console.log("✅ Import complete");
 }
-
-// ----------------------------------------------------------------------------
-// 🌱 Seed Default Categories (SAFE + ID-PRESERVING)
-// ----------------------------------------------------------------------------
-import { DEFAULT_CATEGORIES } from './defaultCategories.js';
-
-export async function seedDefaultCategories(force = false) {
-  const store = await getStore(STORE_NAMES.categories, 'readwrite');
-
-  const existing = await new Promise(resolve => {
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => resolve([]);
-  });
-
-  if (existing.length > 0 && !force) {
-    console.log('📁 Categories already exist, skipping seed');
-    return;
-  }
-
-  const now = new Date().toISOString();
-
-  for (const cat of DEFAULT_CATEGORIES) {
-    try {
-      store.put({
-        ...cat,
-        createdAt: cat.createdAt || now,
-        updatedAt: now
-      });
-    } catch (e) {
-      console.warn('⚠️ Skipped category:', cat.id);
-    }
-  }
-
-  console.log('✅ Default categories seeded');
-}
-
 
 // ----------------------------------------------------------------------------
 // 📊 Get Database Stats

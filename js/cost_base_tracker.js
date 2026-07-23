@@ -4,6 +4,7 @@
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 import { html } from './utils/html.js';
+import { escapeHtml } from './sanitize.js';
 import { initPropertiesUI } from './properties.js';
 export class CostBaseTracker {
     constructor() {
@@ -31,10 +32,6 @@ export class CostBaseTracker {
         this.records = Array.isArray(records) ? records : [];
         this.properties = Array.isArray(properties) ? properties : [];
         
-        console.log('Loaded data:', {
-            recordsCount: this.records.length,
-            propertiesCount: this.properties.length
-        });
         
     } catch (error) {
         console.error('Error loading cost base data:', error);
@@ -66,7 +63,7 @@ export class CostBaseTracker {
                             <option value="">All Properties</option>
                             ${this.properties.map(p => `
                                 <option value="${p.id}" ${p.id === this.selectedProperty ? 'selected' : ''}>
-                                    ${p.name}
+                                    ${escapeHtml(p.name)}
                                 </option>
                             `).join('')}
                         </select>
@@ -94,16 +91,32 @@ export class CostBaseTracker {
                             <div class="guideline-item">
                                 <h4>✅ Capital Costs</h4>
                                 <p>Add to cost base: purchase price, legal fees, stamp duty, 
-                                improvements, borrowing costs.</p>
+                                agent/buyer's agent commission, capital improvements.</p>
                             </div>
                             <div class="guideline-item">
                                 <h4>❌ Non-Capital</h4>
-                                <p>Not added to cost base: repairs, maintenance, insurance, 
-                                rates, interest on loans.</p>
+                                <p>Not added to cost base - claimed as a regular deduction instead:
+                                repairs, maintenance, insurance, rates, loan interest, and
+                                <strong>borrowing costs</strong> (loan fees, LMI - these are spread
+                                over 5 years as a deduction, not added to cost base, in almost all
+                                cases). Borrowing/holding costs can only join the cost base in the
+                                rare case they were never tax-deductible at all (e.g. vacant land
+                                that never produced rent) - don't double-dip by claiming a cost both
+                                ways.</p>
                             </div>
                             <div class="guideline-item">
                                 <h4>📅 CGT Discount</h4>
-                                <p>Hold property for 12+ months to qualify for 50% CGT discount.</p>
+                                <p>Hold property for 12+ months to qualify for a 50% CGT discount
+                                (individuals/trusts only - doesn't apply to companies).</p>
+                            </div>
+                            <div class="guideline-item">
+                                <h4>🏠 Main Residence & Pre-CGT</h4>
+                                <p>If this property was ever your home, you may be able to apply the
+                                main residence exemption (including the "6-year rule" for a period
+                                it was rented out after you moved out) to reduce or eliminate the
+                                gain. Properties acquired before 20 September 1985 are generally
+                                exempt from CGT entirely. Neither of these is calculated here - talk
+                                to a registered tax agent if either applies to you.</p>
                             </div>
                         </div>
                         
@@ -112,9 +125,14 @@ export class CostBaseTracker {
                             <div class="calculation">
                                 <div>Purchase Price: <span>$500,000</span></div>
                                 <div>+ Capital Improvements: <span>$50,000</span></div>
-                                <div>+ Selling Costs: <span>$25,000</span></div>
+                                <div>+ Incidental Costs (legal, stamp duty): <span>$25,000</span></div>
                                 <div class="total">= Cost Base: <span>$575,000</span></div>
                             </div>
+                            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                                Selling costs (agent commission, marketing, legal fees on sale) reduce
+                                the capital gain at sale time rather than being added to this ongoing
+                                cost base figure.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -194,7 +212,17 @@ export class CostBaseTracker {
         const estimatedGain = property.currentValue 
             ? property.currentValue - totalCostBase 
             : 0;
-        const cgtDiscount = estimatedGain * 0.5; // Assuming held >12 months
+        // Only assume the 50% discount if the property has actually been
+        // held 12+ months (using when it was added as the best available
+        // proxy for purchase date) - previously this was applied
+        // unconditionally, which overstates the discount for a property
+        // bought less than a year ago.
+        const acquiredDate = property.createdAt ? new Date(property.createdAt) : null;
+        const monthsHeld = acquiredDate
+            ? (Date.now() - acquiredDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+            : 12; // unknown acquisition date: don't block the discount, but this is a guess
+        const discountEligible = monthsHeld >= 12;
+        const cgtDiscount = discountEligible ? estimatedGain * 0.5 : 0;
 
         return `
             <div class="tax-summary">
@@ -221,7 +249,7 @@ export class CostBaseTracker {
                         <span>${this.formatCurrency(estimatedGain)}</span>
                     </div>
                     <div class="tax-row discount">
-                        <span>CGT Discount (50%)</span>
+                        <span>CGT Discount ${discountEligible ? '(50%)' : '(not eligible - held < 12 months)'}</span>
                         <span>${this.formatCurrency(cgtDiscount)}</span>
                     </div>
                     <div class="tax-row taxable">
@@ -229,6 +257,9 @@ export class CostBaseTracker {
                         <span>${this.formatCurrency(estimatedGain - cgtDiscount)}</span>
                     </div>
                 </div>
+                <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                    Holding period is estimated from when this property was added to the app, not necessarily the actual settlement date - check against your contract of sale if you're close to the 12-month mark.
+                </p>
             </div>
         `;
     }
@@ -253,7 +284,7 @@ export class CostBaseTracker {
                                     // Use || '' to ensure comparison works safely
                                     <option value="${p.id}" 
                                         ${((this.editingRecord?.propertyId || this.selectedProperty) === p.id) ? 'selected' : ''}>
-                                        ${p.name}
+                                        ${escapeHtml(p.name)}
                                     </option>
                                 `).join('')}
                             </select>
@@ -303,11 +334,14 @@ export class CostBaseTracker {
                                 </select>
                             </div>
                         </div>
+                        <p style="font-size: 0.75rem; color: #64748b; margin: -0.5rem 0 1rem 0;">
+                            Tip: Borrowing Costs are usually "Expense" (deducted over 5 years), not "Capital" - see the ATO Guidelines panel for the rare exception.
+                        </p>
                         
                         <div class="form-group">
                             <label>Description</label>
                             <input type="text" name="description" class="form-input" 
-                                   value="${this.editingRecord?.description || ''}" 
+                                   value="${escapeHtml(this.editingRecord?.description) || ''}" 
                                    placeholder="e.g., Stamp duty, Renovation, Legal fees" required>
                         </div>
                         
@@ -336,7 +370,7 @@ export class CostBaseTracker {
                         <div class="form-group">
                             <label>Notes</label>
                             <textarea name="notes" rows="3" class="form-input" 
-                                      placeholder="Additional details, reference numbers...">${this.editingRecord?.notes || ''}</textarea>
+                                      placeholder="Additional details, reference numbers...">${escapeHtml(this.editingRecord?.notes) || ''}</textarea>
                         </div>
                         
                         <div class="form-actions">
@@ -445,7 +479,7 @@ async refreshRecordsList() {
         // Safely get classification with default
         const classification = record.classification || 'Other';
         const type = record.type || 'Other';
-        const description = record.description || 'No description';
+        const description = escapeHtml(record.description) || 'No description';
         const amount = parseFloat(record.amount) || 0;
 // ... inside renderRecordItem
         const date = record.date ? new Date(record.date) : new Date();
@@ -467,10 +501,10 @@ async refreshRecordsList() {
                                 ${classification}
                             </span>
                             // ...
-                            ${property ? `<span class="record-property">🏠 ${property.name}</span>` : ''}
+                            ${property ? `<span class="record-property">🏠 ${escapeHtml(property.name)}</span>` : ''}
                             <span class="record-date">📅 ${new Date(record.date).toLocaleDateString('en-AU')}</span>
                         </div>
-                        ${record.notes ? `<p class="record-notes">${record.notes}</p>` : ''}
+                        ${record.notes ? `<p class="record-notes">${escapeHtml(record.notes)}</p>` : ''}
                         ${record.atoCategory ? `<span class="record-ato">ATO: ${record.atoCategory}</span>` : ''}
                     </div>
                 </div>

@@ -1,5 +1,22 @@
 import { addItem, deleteItem, getAllItems, updateItem, STORE_NAMES, generateId } from './db.js';
 import { addItem as addTransaction } from './db.js';
+import { escapeHtml } from './sanitize.js';
+
+// Bug fix: a new document-level click listener used to be attached every time
+// init() ran (i.e. every save/delete/navigation), stacking duplicate listeners.
+// Now we attach exactly one and delegate to whichever instance is active.
+let activeBillsManager = null;
+let billsDelegatedListenerAttached = false;
+
+function attachBillsDelegatedListener() {
+    if (billsDelegatedListenerAttached) return;
+    billsDelegatedListenerAttached = true;
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-action]');
+        if (!button || !activeBillsManager) return;
+        activeBillsManager.handleBillAction(button.dataset.action, button.dataset.id);
+    });
+}
 
 export class BillsManager {
     constructor() {
@@ -31,12 +48,11 @@ export class BillsManager {
             <div class="bills-container">
                 <div class="bills-header">
                     <h2>📋 Bills Manager</h2>
-                    <button id="addBillBtn" class="btn btn-primary">+ Add Bill</button>
                 </div>
 
                 ${this.renderStatsCards(today)}
 
-                ${this.renderQuickActions(today)}
+                ${this.renderHorizontalQuickActions(today)}
 
                 <div class="bills-content">
                     ${this.bills.length === 0 ? this.renderEmptyState() : this.renderBillsTable(today)}
@@ -153,11 +169,11 @@ export class BillsManager {
                 <div class="bill-main">
                     <div class="bill-icon">${category?.icon || '🧾'}</div>
                     <div class="bill-details">
-                        <div class="bill-name">${bill.name}</div>
+                        <div class="bill-name">${escapeHtml(bill.name)}</div>
                         <div class="bill-meta">
                             <span class="due-date">Due: ${this.formatDateDisplay(bill.dueDate)}</span>
-                            ${bill.recurring ? `<span class="recurring-tag">🔄 ${bill.recurring}</span>` : ''}
-                            ${account ? `<span class="account-tag">${this.getAccountIcon(account.type)} ${account.name}</span>` : ''}
+                            ${bill.recurring ? `<span class="recurring-tag">🔄 ${escapeHtml(bill.recurring)}</span>` : ''}
+                            ${account ? `<span class="account-tag">${this.getAccountIcon(account.type)} ${escapeHtml(account.name)}</span>` : ''}
                         </div>
                     </div>
                     <div class="bill-amount ${bill.paid ? 'paid' : 'unpaid'}">
@@ -219,7 +235,7 @@ export class BillsManager {
                                 <select id="billAccount" class="form-select">
                                     <option value="">Select Account</option>
                                     ${this.accounts.map(acc => `
-                                        <option value="${acc.id}">${this.getAccountIcon(acc.type)} ${acc.name}</option>
+                                        <option value="${acc.id}">${this.getAccountIcon(acc.type)} ${escapeHtml(acc.name)}</option>
                                     `).join('')}
                                 </select>
                             </div>
@@ -228,7 +244,7 @@ export class BillsManager {
                                 <select id="billCategory" class="form-select">
                                     <option value="">Auto-detect</option>
                                     ${this.categories.map(cat => `
-                                        <option value="${cat.id}">${cat.icon || '📁'} ${cat.name}</option>
+                                        <option value="${cat.id}">${cat.icon || '📁'} ${escapeHtml(cat.name)}</option>
                                     `).join('')}
                                 </select>
                             </div>
@@ -266,8 +282,6 @@ export class BillsManager {
                     <button class="btn btn-primary" id="emptyAddBill">Add Your First Bill</button>
                 </div>
             </div>
-
-
         `;
     }
 
@@ -286,31 +300,28 @@ export class BillsManager {
         });
 
         // Bill actions
-        document.addEventListener('click', (e) => {
-            const button = e.target.closest('[data-action]');
-            if (!button) return;
-
-            const action = button.dataset.action;
-            const billId = button.dataset.id;
-            const bill = this.bills.find(b => b.id === billId);
-
-            if (!bill) return;
-
-            switch (action) {
-                case 'pay':
-                    this.payBill(bill);
-                    break;
-                case 'edit':
-                    this.openBillForm(bill);
-                    break;
-                case 'delete':
-                    this.deleteBill(bill);
-                    break;
-            }
-        });
+        activeBillsManager = this;
+        attachBillsDelegatedListener();
 
         // Modal events
         this.setupModalEvents();
+    }
+
+    handleBillAction(action, billId) {
+        const bill = this.bills.find(b => b.id === billId);
+        if (!bill) return;
+
+        switch (action) {
+            case 'pay':
+                this.payBill(bill);
+                break;
+            case 'edit':
+                this.openBillForm(bill);
+                break;
+            case 'delete':
+                this.deleteBill(bill);
+                break;
+        }
     }
 
     setupModalEvents() {
@@ -616,37 +627,7 @@ export class BillsManager {
     }
 }
 
-// Add this at the END of your bills.js file (after the BillsManager class definition)
 export async function initBillsUI() {
-    console.log('Initializing Bills UI...'); // Debug log
-    
-    try {
-        const manager = new BillsManager();
-        await manager.init();
-        console.log('Bills UI initialized successfully');
-    } catch (error) {
-        console.error('Error initializing Bills UI:', error);
-        // Show error to user
-        document.getElementById('mainContent').innerHTML = `
-            <div class="error-state">
-                <div class="error-icon">❌</div>
-                <h3>Failed to load Bills</h3>
-                <p>Error: ${error.message}</p>
-                <button class="btn btn-primary" onclick="location.reload()">Retry</button>
-            </div>
-        `;
-    }
+    const manager = new BillsManager();
+    await manager.init();
 }
-
-// Optional: Auto-initialize if we're on the bills page
-document.addEventListener('DOMContentLoaded', async () => {
-    // Check if we're on bills page (you may need to adjust this condition)
-    const isBillsPage = document.getElementById('mainContent') && 
-                       (window.location.hash.includes('bills') || 
-                        document.querySelector('[data-page="bills"]'));
-    
-    if (isBillsPage) {
-        console.log('Auto-initializing bills page...');
-        await initBillsUI();
-    }
-});

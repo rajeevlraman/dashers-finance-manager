@@ -15,12 +15,10 @@ function hideImportModal() {
   if (modal) {
     modal.style.display = "none";
     document.body.style.overflow = "auto";
-    console.log("[MODAL] Modal hidden");
   }
 }
 
 async function handleParseData() {
-  console.log("[MODAL] handleParseData called");
   
   const parseBtn = document.getElementById("parseData");
   const saveBtn = document.getElementById("saveImport");
@@ -66,7 +64,6 @@ async function handleParseData() {
         return;
       }
       
-      console.log("[MODAL] Parsing CSV file:", fileInput.files[0].name, "with format:", format);
       transactions = await parseCSVFile(fileInput.files[0], format);
       
     } else {
@@ -88,7 +85,6 @@ async function handleParseData() {
         return;
       }
       
-      console.log("[MODAL] Parsing text with format:", format);
       transactions = await parseStatementText(text, format);
     }
     
@@ -111,7 +107,6 @@ async function handleParseData() {
     // Show preview
     showImportPreview(transactions);
     
-    console.log("[MODAL] Successfully parsed", transactions.length, "transactions");
     
   } catch (error) {
     console.error("[MODAL] Parse error:", error);
@@ -123,7 +118,6 @@ async function handleParseData() {
 }
 
 function showImportPreview(transactions) {
-  console.log("[MODAL] Showing preview of", transactions.length, "transactions");
   
   const previewDiv = document.getElementById("importPreview");
   const headersDiv = document.getElementById("previewHeaders");
@@ -210,7 +204,6 @@ function showImportPreview(transactions) {
   document.getElementById("saveImport").style.display = "inline-block";
   document.getElementById("parseData").style.display = "none";
   
-  console.log("[MODAL] Preview displayed");
 }
 
 function formatHeader(header) {
@@ -223,7 +216,6 @@ function formatHeader(header) {
 }
 
 async function handleSaveImport() {
-  console.log("[MODAL] handleSaveImport called");
 
   const saveBtn = document.getElementById("saveImport");
   if (!saveBtn) {
@@ -253,8 +245,6 @@ async function handleSaveImport() {
       return;
     }
 
-    console.log("[MODAL] Preparing", transactions.length, "transactions for saving");
-
     // Normalise transactions before saving
     const normalisedTx = transactions.map(tx => ({
       ...tx,
@@ -265,18 +255,14 @@ async function handleSaveImport() {
       updatedAt: new Date().toISOString()
     }));
 
-    console.log("[MODAL] Normalised transactions:", normalisedTx);
-
     // ⛔️ FIXED: ONLY ONE SAVE CALL
     const { saved, skipped } = await saveImportedTransactions(normalisedTx);
 
     if (saved > 0) {
-      console.log(`[MODAL] ${saved} transactions saved successfully (${skipped} skipped as duplicates)`);
       alert(`✅ Successfully saved ${saved} transactions (${skipped} skipped as duplicates).`);
 
       // Trigger callback to refresh UI
       if (window._importData?.onImported) {
-        console.log("[MODAL] Calling import callback");
         await window._importData.onImported(saved);
       }
 
@@ -285,7 +271,6 @@ async function handleSaveImport() {
       console.warn("[MODAL] No transactions saved");
       alert("⚠️ No transactions were saved. Please check the data format or duplicates.");
     }
-
 
   } catch (error) {
     console.error("[MODAL] Save error:", error);
@@ -297,10 +282,8 @@ async function handleSaveImport() {
   }
 }
 
-
 // Helper function to get bank options
 function getBankOptions() {
-  console.log("[MODAL] Getting bank options from BANK_FORMATS");
   
   // If BANK_FORMATS is an array (from your structure)
   const bankOptions = [];
@@ -323,7 +306,10 @@ function getBankOptions() {
     description: 'Automatically detect bank format from file headers'
   });
   
-  // Add generic fallback options
+  // Add generic fallback options.
+  // NAB is no longer listed here manually — it's now a real entry in
+  // BANK_FORMATS (see bankFormats.js), added above via the forEach loop.
+  // Leaving both would have shown two identical "NAB" options.
   bankOptions.push(
     {
       value: 'generic_csv',
@@ -333,17 +319,12 @@ function getBankOptions() {
     {
       value: 'anz',
       name: 'ANZ Bank',
-      description: 'ANZ bank statement format'
+      description: 'ANZ bank statement format (no header row)'
     },
     {
       value: 'commbank',
       name: 'Commonwealth Bank',
       description: 'CommBank CSV export'
-    },
-    {
-      value: 'nab',
-      name: 'NAB',
-      description: 'NAB transaction export'
     },
     {
       value: 'westpac',
@@ -352,7 +333,6 @@ function getBankOptions() {
     }
   );
   
-  console.log("[MODAL] Bank options:", bankOptions);
   return bankOptions;
 }
 
@@ -361,7 +341,6 @@ function getBankOptions() {
 // ============================================================================
 
 function setupModalEvents() {
-  console.log("[MODAL] Setting up modal events");
   
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -430,11 +409,9 @@ function setupModalEvents() {
     });
   }
   
-  console.log("[MODAL] All event listeners set up");
 }
 
 function createImportModal() {
-  console.log("[MODAL] Creating modal HTML structure");
   
   // Remove existing modal if it exists
   const existingModal = document.getElementById("importModal");
@@ -532,7 +509,6 @@ function createImportModal() {
   
   // Add modal to body
   document.body.insertAdjacentHTML('beforeend', modalHTML);
-  console.log("[MODAL] Modal HTML created");
   
   // Setup event listeners
   setupModalEvents();
@@ -543,10 +519,8 @@ function createImportModal() {
 // ============================================================================
 
 export function initImportModal({ accounts, categories, onImported }) {
-  console.log("[MODAL] initImportModal called");
   
   const btnImportTx = document.getElementById("btnImportTx");
-  console.log("[MODAL] Button element:", btnImportTx);
   
   if (!btnImportTx) {
     console.error("[MODAL] btnImportTx not found!");
@@ -564,23 +538,15 @@ export function initImportModal({ accounts, categories, onImported }) {
   
   // Add click handler to the new button
   newBtn.addEventListener("click", () => {
-    console.log("[MODAL] Button clicked, showing modal");
     showImportModal({ accounts, categories, onImported });
   });
   
   modalInitialized = true;
-  console.log("[MODAL] Modal initialized successfully");
 }
 
 export function showImportModal({ accounts, categories, onImported }) {
-  console.log("[MODAL] showImportModal called with:", {
-    accountsCount: accounts?.length,
-    categoriesCount: categories?.length,
-    hasCallback: !!onImported
-  });
   
   const modal = document.getElementById("importModal");
-  console.log("[MODAL] Modal element found:", !!modal);
   
   if (!modal) {
     console.error("[MODAL] Modal not found in DOM!");
@@ -589,7 +555,6 @@ export function showImportModal({ accounts, categories, onImported }) {
   
   // Get bank options
   const bankOptions = getBankOptions();
-  console.log("[MODAL] Bank options loaded:", bankOptions.length, "formats");
   
   // Populate bank format dropdowns
   const csvFormatSelect = document.getElementById("csvFormat");
@@ -599,7 +564,6 @@ export function showImportModal({ accounts, categories, onImported }) {
     csvFormatSelect.innerHTML = bankOptions.map(bank => 
       `<option value="${bank.value}" title="${bank.description}">${bank.name}</option>`
     ).join('');
-    console.log("[MODAL] CSV format dropdown populated");
   }
   
   if (textFormatSelect && bankOptions.length > 0) {
@@ -608,15 +572,12 @@ export function showImportModal({ accounts, categories, onImported }) {
     textFormatSelect.innerHTML = textFormats.map(bank => 
       `<option value="${bank.value}" title="${bank.description}">${bank.name}</option>`
     ).join('');
-    console.log("[MODAL] Text format dropdown populated");
   }
   
   // Populate account dropdown
   const accountSelect = document.getElementById("importAccount");
-  console.log("[MODAL] Account select found:", !!accountSelect);
   
   if (accountSelect && accounts && accounts.length > 0) {
-    console.log("[MODAL] Populating accounts dropdown with", accounts.length, "accounts");
     accountSelect.innerHTML = '<option value="">-- Select Account --</option>' +
       accounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
   } else if (accountSelect) {
@@ -649,11 +610,9 @@ export function showImportModal({ accounts, categories, onImported }) {
     const firstInput = document.querySelector('#importModal input, #importModal select, #importModal textarea');
     if (firstInput) {
       firstInput.focus();
-      console.log("[MODAL] Focus set on first input");
     }
   }, 100);
   
-  console.log("[MODAL] Modal shown successfully");
 }
 
 // Make hideImportModal available globally if needed

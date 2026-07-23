@@ -6,36 +6,59 @@
 
 //const CACHE_NAME = 'budget-tracker-v35-debug'; // 🚨 Added -debug suffix commented to use import cache version form version.js
 
-const CACHE_VERSION = "v1.0.0";   // Increment this for each release
+const CACHE_VERSION = "v1.4.2";   // Increment this for each release (bumped to force old/broken cache to clear)
 const CACHE_NAME = `dfm-cache-${CACHE_VERSION}`;
 
 const DEBUG = true; // 🚨 Enable detailed debugging
 
 // 🎯 CRITICAL FIX: Expanded cache list with all required files
+// NOTE: every entry below was checked against the actual filenames on disk.
+// The previous list had several typos (wrong case / wrong name) which meant
+// those files silently 404'd during install and were NEVER cached, so the
+// app broke for those modules the moment it went offline:
+//   './js/exportimport.js'        -> real file is 'exportImport.js' (case)
+//   './js/costbase.js'            -> real file is 'cost_base_tracker.js'
+//   './assets/icons/maskable_icon.png' -> real file is 'icon-maskable.png'
+// It also only listed a subset of the app's JS modules - anything not
+// listed relied on being fetched once online before it would work offline.
+// The list below includes every module the app actually ships so a fresh
+// install is fully offline-capable immediately.
 const PRECACHE_URLS = [
   // Root and core files
   './',
   './index.html',
   './manifest.json',
-  
-  // CSS
+
+  // CSS (single bundled stylesheet - components/layouts/themes are
+  // pre-merged into this file by css-cleaner.js, not loaded separately)
   './css/styles.css',
 
-  // Core Application JS - ALL essential files
+  // Core Application JS
   './js/app.js',
   './js/ui.js',
   './js/db.js',
-  './js/db_dexie.js',
-  './js/db_migration_helper.js',
   './js/debugConsole.js',
   './js/recurringJob.js',
-  './js/exportimport.js',
+  './js/exportImport.js',
   './js/loanCalculations.js',
   './js/reports.js',
   './js/settings.js',
   './js/emojiPicker.js',
   './js/layoutManager.js',
-
+  './js/version.js',
+  './js/navigation.js',
+  './js/mobileNavDrawer.js',
+  './js/mergeCategoriesTool.js',
+  './js/appLock.js',
+  './js/auth-flow.js',
+  './js/sanitize.js',
+  './js/merchantRules.js',
+  './js/bankCategoryMap.js',
+  './js/backupCrypto.js',
+  './js/familySync.js',
+  './js/familySyncSections.js',
+  './js/charts.js',
+  './js/utils/html.js',
 
   // Feature Modules
   './js/budgets.js',
@@ -49,23 +72,43 @@ const PRECACHE_URLS = [
   './js/recurring.js',
   './js/loans.js',
   './js/properties.js',
+  './js/propertyExpenseCategories.js',
+  './js/recategorizeTool.js',
   './js/tenants.js',
   './js/maintenance.js',
   './js/expenses.js',
-  './js/costbase.js',
+  './js/cost_base_tracker.js',
+  './js/taxCalculations.js',
+  './js/tax_compliance.js',
+
+  // Import subsystem
+  './js/import/bankFormats.js',
+  './js/import/categoryMapper.js',
+  './js/import/categoryRules.js',
+  './js/import/debug.js',
+  './js/import/duplicateFinder.js',
+  './js/import/merchantCategories.js',
+  './js/import/merchantLogos.js',
+  './js/import/modal.js',
+  './js/import/parser.js',
+  './js/import/saver.js',
 
   // Vendor Libraries
   './js/vendor/chart.umd.min.js',
-  './js/vendor/dexie.min.js',
 
   // Icons and Assets
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
-  './assets/icons/maskable_icon.png',
-  './assets/icons/splash.png',
+  './assets/icons/icon-maskable.png',
   './assets/icons/icon-152.png',
   './assets/icons/icon-167.png',
-  './assets/icons/icon-180.png'
+  './assets/icons/icon-180.png',
+  './assets/icons/splash/splash-1125x2436.png',
+  './assets/icons/splash/splash-1170x2532.png',
+  './assets/icons/splash/splash-1179x2556.png',
+  './assets/icons/splash/splash-1284x2778.png',
+  './assets/icons/splash/splash-1290x2796.png',
+  './assets/icons/splash/splash-750x1334.png'
 ];
 
 // 🚨 DEBUG: Log all URLs that should be cached

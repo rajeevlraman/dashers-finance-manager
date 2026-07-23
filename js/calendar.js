@@ -1,5 +1,23 @@
 // calendar.js - ENHANCED VERSION
 import { getAllItems, STORE_NAMES } from './db.js';
+import { escapeHtml } from './sanitize.js';
+
+// Bug fix: a new document-level click listener used to be attached every time
+// init() ran, stacking duplicate listeners. Now we attach exactly one and
+// delegate to whichever instance is active.
+let activeCalendarManager = null;
+let calendarDelegatedListenerAttached = false;
+
+function attachCalendarDelegatedListener() {
+    if (calendarDelegatedListenerAttached) return;
+    calendarDelegatedListenerAttached = true;
+    document.addEventListener('click', (e) => {
+        const dayCell = e.target.closest('.calendar-day');
+        if (dayCell && activeCalendarManager) {
+            activeCalendarManager.showDayDetails(dayCell.getAttribute('data-date'));
+        }
+    });
+}
 
 export class CalendarManager {
     constructor() {
@@ -21,54 +39,6 @@ export class CalendarManager {
             getAllItems(STORE_NAMES.transactions)
         ]);
     }
-
-highlightImportantDays() {
-    const today = new Date().toISOString().slice(0, 10);
-    const cells = document.querySelectorAll('.calendar-day');
-    
-    cells.forEach(cell => {
-        const dateStr = cell.getAttribute('data-date');
-        if (!dateStr) return;
-        
-        const dayBills = this.bills.filter(b => b.dueDate === dateStr);
-        const overdueBills = dayBills.filter(b => !b.paid && b.dueDate < today);
-        
-        if (overdueBills.length > 0) {
-            cell.classList.add('urgent');
-        }
-    });
-}
-
-    // Add a method to quickly add a bill from the calendar
-    addQuickBill(dateStr) {
-        const sidebar = document.getElementById('dayDetails');
-        sidebar.innerHTML = `
-            <div class="sidebar-header">
-                <h3>Add Bill for ${new Date(dateStr).toLocaleDateString()}</h3>
-                <button class="btn-close" id="closeAddBill">✕</button>
-            </div>
-            <div class="sidebar-content">
-                <form id="quickBillForm" class="quick-form">
-                    <div class="form-group">
-                        <label>Bill Name</label>
-                        <input type="text" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Amount ($)</label>
-                        <input type="number" class="form-control" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox"> Recurring Monthly
-                        </label>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Save Bill</button>
-                    </div>
-                </form>
-            </div>
-        `;
-}
 
     renderUI() {
         const mainContent = document.getElementById('mainContent');
@@ -274,38 +244,35 @@ highlightImportantDays() {
     }
 
     attachEventListeners() {
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            this.navigateMonth(-1);
-        });
+        activeCalendarManager = this;
+        attachCalendarDelegatedListener();
 
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            this.navigateMonth(1);
-        });
+        // prevMonth/nextMonth/todayBtn also used to get duplicate listeners
+        // stacked on every init(); guard with a dataset flag so they're only
+        // wired up once per element (elements are recreated on each renderUI()
+        // via innerHTML, so this remains safe).
+        const prevBtn = document.getElementById('prevMonth');
+        if (prevBtn && !prevBtn.dataset.listenerAttached) {
+            prevBtn.dataset.listenerAttached = 'true';
+            prevBtn.addEventListener('click', () => activeCalendarManager.navigateMonth(-1));
+        }
 
-        document.getElementById('todayBtn').addEventListener('click', () => {
-            const today = new Date();
-            this.currentYear = today.getFullYear();
-            this.currentMonth = today.getMonth();
-            this.renderCalendar();
-        });
+        const nextBtn = document.getElementById('nextMonth');
+        if (nextBtn && !nextBtn.dataset.listenerAttached) {
+            nextBtn.dataset.listenerAttached = 'true';
+            nextBtn.addEventListener('click', () => activeCalendarManager.navigateMonth(1));
+        }
 
-                // Add this to the attachEventListeners method
-        document.addEventListener('dblclick', (e) => {
-            const dayCell = e.target.closest('.calendar-day');
-            if (dayCell) {
-                const dateStr = dayCell.getAttribute('data-date');
-                this.addQuickBill(dateStr);
-            }
-        });
-
-        // Day click events
-        document.addEventListener('click', (e) => {
-            const dayCell = e.target.closest('.calendar-day');
-            if (dayCell) {
-                const dateStr = dayCell.getAttribute('data-date');
-                this.showDayDetails(dateStr);
-            }
-        });
+        const todayBtn = document.getElementById('todayBtn');
+        if (todayBtn && !todayBtn.dataset.listenerAttached) {
+            todayBtn.dataset.listenerAttached = 'true';
+            todayBtn.addEventListener('click', () => {
+                const today = new Date();
+                activeCalendarManager.currentYear = today.getFullYear();
+                activeCalendarManager.currentMonth = today.getMonth();
+                activeCalendarManager.renderCalendar();
+            });
+        }
     }
 
     navigateMonth(direction) {
@@ -350,7 +317,7 @@ highlightImportantDays() {
                         ${dayBills.map(bill => `
                             <div class="bill-item ${bill.paid ? 'paid' : 'unpaid'}">
                                 <div class="bill-info">
-                                    <span class="bill-name">${bill.name}</span>
+                                    <span class="bill-name">${escapeHtml(bill.name)}</span>
                                     <span class="bill-amount">${this.formatCurrency(bill.amount)}</span>
                                 </div>
                                 <div class="bill-status">
@@ -396,7 +363,7 @@ highlightImportantDays() {
                                     ${transaction.type === 'income' ? '📥' : '📤'}
                                 </div>
                                 <div class="transaction-details">
-                                    <div class="transaction-description">${transaction.description}</div>
+                                    <div class="transaction-description">${escapeHtml(transaction.description)}</div>
                                     <div class="transaction-meta">
                                         ${transaction.categoryId ? `<span class="transaction-category">Category</span>` : ''}
                                         ${transaction.accountId ? `<span class="transaction-account">Account</span>` : ''}

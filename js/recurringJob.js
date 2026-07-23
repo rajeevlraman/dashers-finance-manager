@@ -9,7 +9,6 @@ export class RecurringJobManager {
     }
 
     async processAll() {
-        console.log('🔄 Starting recurring job processing...');
         
         try {
             const results = {
@@ -17,7 +16,6 @@ export class RecurringJobManager {
                 dueBills: await this.processDueBills()
             };
 
-            console.log(`✅ Processing complete: ${this.processedCount} items processed`);
             
             if (this.errors.length > 0) {
                 console.warn(`⚠️ ${this.errors.length} errors encountered:`, this.errors);
@@ -62,7 +60,6 @@ export class RecurringJobManager {
                     processed.push(transaction);
                     this.processedCount++;
                     
-                    console.log(`✅ Generated: ${rec.name} → ${this.formatCurrency(rec.amount)}`);
                 }
             } catch (error) {
                 this.errors.push(`Recurring ${rec.name}: ${error.message}`);
@@ -145,7 +142,6 @@ export class RecurringJobManager {
     async processBillPayment(bill, accounts, categories, today) {
         // Check if bill has payment account
         if (!bill.accountId) {
-            console.log(`⏭️ Skipping ${bill.name}: No payment account set`);
             return null;
         }
 
@@ -156,7 +152,6 @@ export class RecurringJobManager {
 
         // Check if account has sufficient funds
         if (!this.canAccountPayBill(account, bill)) {
-            console.log(`⏭️ Skipping ${bill.name}: Insufficient funds in ${account.name}`);
             return null;
         }
 
@@ -192,7 +187,6 @@ export class RecurringJobManager {
             await this.createNextBillInstance(bill, today);
         }
 
-        console.log(`✅ Auto-paid: ${bill.name} → ${this.formatCurrency(bill.amount)}`);
         
         return {
             bill: bill.name,
@@ -219,7 +213,6 @@ export class RecurringJobManager {
         };
 
         await addItem(STORE_NAMES.bills, newBill);
-        console.log(`🔄 Created next instance: ${bill.name} due ${nextDueDate}`);
     }
 
     canAccountPayBill(account, bill) {

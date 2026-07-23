@@ -1,6 +1,5 @@
 // /js/auth-flow.js
 export function initAuthFlow() {
-  console.log('🚀 Initializing auth flow...');
   
   const splashScreen = document.getElementById('splashScreen');
   const loginScreen = document.getElementById('loginScreen');
@@ -64,7 +63,6 @@ export function handleLogin() {
         localStorage.setItem('loggedIn', 'true');
         localStorage.setItem('userEmail', email);
         
-        console.log('✅ Login successful');
       }
     });
   }

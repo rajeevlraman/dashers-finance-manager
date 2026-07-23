@@ -5,6 +5,7 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 import { html } from './utils/html.js';
 import { initPropertiesUI } from './properties.js';
+import { escapeHtml } from './sanitize.js';
 
 // ============================================================================
 // 🎯 Configuration
@@ -75,11 +76,9 @@ async function migrateMaintenanceData() {
     
     // Save migrated data back to database
     if (needsMigration) {
-        console.log('🔄 Migrating maintenance data...');
         for (const log of migratedLogs) {
             await updateItem(STORE_NAMES.maintenance, log);
         }
-        console.log('✅ Maintenance data migration completed');
     }
     
     return migratedLogs;
@@ -89,7 +88,6 @@ async function migrateMaintenanceData() {
 // 🏗️ Initialize Enhanced Maintenance UI
 // ============================================================================
 export async function initMaintenanceUI(propertyId = null) {
-    console.log('🧰 Enhanced Maintenance Manager initialized');
     const main = document.getElementById('mainContent');
 
     // Migrate data first to ensure all records have required fields
@@ -107,7 +105,7 @@ export async function initMaintenanceUI(propertyId = null) {
                     ${currentProperty ? `
                         <div class="property-context">
                             <span class="context-label">For:</span>
-                            <span class="property-name">${currentProperty.name}</span>
+                            <span class="property-name">${escapeHtml(currentProperty.name)}</span>
                         </div>
                     ` : ''}
                 </div>
@@ -350,7 +348,7 @@ function renderMaintenanceCard(log, properties) {
         <div class="maintenance-card priority-${log.priority || 'medium'}">
             <div class="maintenance-card-header">
                 <div class="maintenance-title-section">
-                    <h3 class="maintenance-title">${log.title || 'Untitled Maintenance'}</h3>
+                    <h3 class="maintenance-title">${escapeHtml(log.title) || 'Untitled Maintenance'}</h3>
                     <div class="maintenance-meta">
                         <span class="maintenance-date">${new Date(log.date || new Date()).toLocaleDateString()}</span>
                         ${log.dueDate ? `
@@ -374,11 +372,11 @@ function renderMaintenanceCard(log, properties) {
                 <div class="maintenance-details-grid">
                     <div class="detail-item">
                         <span class="detail-label">📍 Property:</span>
-                        <span class="detail-value">${property ? property.name : 'Unknown Property'}</span>
+                        <span class="detail-value">${property ? escapeHtml(property.name) : 'Unknown Property'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">📂 Category:</span>
-                        <span class="detail-value category-${safeCategory}">${category}</span>
+                        <span class="detail-value category-${safeCategory}">${escapeHtml(category)}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">💰 Cost:</span>
@@ -387,7 +385,7 @@ function renderMaintenanceCard(log, properties) {
                     ${log.vendor ? `
                         <div class="detail-item">
                             <span class="detail-label">👤 Vendor:</span>
-                            <span class="detail-value">${log.vendor}</span>
+                            <span class="detail-value">${escapeHtml(log.vendor)}</span>
                         </div>
                     ` : ''}
                     ${log.recurrence && log.recurrence !== 'once' ? `
@@ -400,7 +398,7 @@ function renderMaintenanceCard(log, properties) {
 
                 ${log.description ? `
                     <div class="maintenance-description">
-                        <p>${log.description}</p>
+                        <p>${escapeHtml(log.description)}</p>
                     </div>
                 ` : ''}
 
@@ -467,7 +465,7 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
                     <option value="">-- Select Property --</option>
                     ${properties.map(p => 
                         `<option value="${p.id}" ${p.id === log.propertyId ? 'selected' : ''}>
-                            ${p.name}
+                            ${escapeHtml(p.name)}
                         </option>`
                     ).join('')}
                 </select>
@@ -486,14 +484,14 @@ async function openMaintenanceModal(propertyId = null, maintenanceId = null) {
 
         <div class="form-group">
             <label>📝 Title *</label>
-            <input type="text" name="title" value="${log.title || ''}" 
+            <input type="text" name="title" value="${escapeHtml(log.title) || ''}" 
                    placeholder="Brief description of maintenance needed" required>
         </div>
 
         <div class="form-group">
             <label>📋 Description</label>
             <textarea name="description" rows="3" 
-                      placeholder="Detailed description of the issue, work needed, etc.">${log.description || ''}</textarea>
+                      placeholder="Detailed description of the issue, work needed, etc.">${escapeHtml(log.description) || ''}</textarea>
         </div>
 
         <div class="form-row">
@@ -673,7 +671,7 @@ function setupFilePreview(existingImages = []) {
                 fileItem.className = 'file-preview-item document';
                 fileItem.innerHTML = `
                     <div class="file-icon">📄</div>
-                    <div class="file-name">${file.name}</div>
+                    <div class="file-name">${escapeHtml(file.name)}</div>
                     <button type="button" class="btn-remove-file">✕</button>
                 `;
                 preview.appendChild(fileItem);

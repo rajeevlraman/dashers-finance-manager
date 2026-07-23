@@ -5,6 +5,25 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 import { initTenantsUI } from './tenants.js';
 import { initMaintenanceUI } from './maintenance.js';
+import { escapeHtml } from './sanitize.js';
+
+// Bug fix: previously a new `document.addEventListener('click', ...)` was attached
+// every time init() ran (i.e. every save/delete/navigation), stacking duplicate
+// listeners for the life of the page and causing actions to fire multiple times.
+// We now attach exactly one delegated listener and route clicks to whichever
+// PropertiesManager instance is currently active.
+let activePropertiesManager = null;
+let propertiesDelegatedListenerAttached = false;
+
+function attachPropertiesDelegatedListener() {
+    if (propertiesDelegatedListenerAttached) return;
+    propertiesDelegatedListenerAttached = true;
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-action]');
+        if (!button || !activePropertiesManager) return;
+        activePropertiesManager.handlePropertyAction(button.dataset.action, button.dataset.id);
+    });
+}
 
 export class PropertiesManager {
     constructor() {
@@ -15,11 +34,11 @@ export class PropertiesManager {
         this.currentSort = 'name';
     }
 
-        async init() {
-            await this.loadData();
-            this.renderUI();
-            this.attachEventListeners();
-        }
+    async init() {
+        await this.loadData();
+        this.renderUI();
+        this.attachEventListeners();
+    }
 
     async loadData() {
         [this.properties, this.tenants, this.maintenanceLogs] = await Promise.all([
@@ -29,62 +48,48 @@ export class PropertiesManager {
         ]);
     }
 
-renderUI() {
-    const mainContent = document.getElementById('mainContent');
-    
-    // Render main content WITHOUT modal
-    mainContent.innerHTML = `
-        <div class="properties-container">
-            <div class="properties-header">
-                <h2>🏠 Property Portfolio</h2>
-                <div class="header-actions">
-                    <button id="btnNewProperty" class="btn btn-primary">➕ Add Property</button>
+    renderUI() {
+        const mainContent = document.getElementById('mainContent');
+        
+        mainContent.innerHTML = `
+            <div class="properties-container">
+                <div class="properties-header">
+                    <h2>🏠 Property Portfolio</h2>
+                    <div class="header-actions">
+                        <button id="btnNewProperty" class="btn btn-primary">➕ Add Property</button>
+                    </div>
                 </div>
+
+                ${this.renderPortfolioSummary()}
+
+                ${this.renderQuickActions()}
+
+                <div class="properties-controls">
+                    <select id="filterPropertyType" class="form-select">
+                        <option value="all">All Properties</option>
+                        <option value="primary">🏠 Primary Residence</option>
+                        <option value="investment">💰 Investment Properties</option>
+                        <option value="vacation">🌴 Vacation Homes</option>
+                        <option value="commercial">🏢 Commercial</option>
+                    </select>
+                    <select id="sortProperties" class="form-select">
+                        <option value="name">Name A-Z</option>
+                        <option value="value">Highest Value</option>
+                        <option value="type">Property Type</option>
+                        <option value="rent">Highest Rent</option>
+                    </select>
+                </div>
+
+                <div class="properties-content">
+                    ${this.renderPropertiesGrid()}
+                </div>
+
+                ${this.renderPropertyModal()}
             </div>
+        `;
 
-            ${this.renderPortfolioSummary()}
-
-            ${this.renderQuickActions()}
-
-            <div class="properties-controls">
-                <select id="filterPropertyType" class="form-select">
-                    <option value="all">All Properties</option>
-                    <option value="primary">🏠 Primary Residence</option>
-                    <option value="investment">💰 Investment Properties</option>
-                    <option value="vacation">🌴 Vacation Homes</option>
-                    <option value="commercial">🏢 Commercial</option>
-                </select>
-                <select id="sortProperties" class="form-select">
-                    <option value="name">Name A-Z</option>
-                    <option value="value">Highest Value</option>
-                    <option value="type">Property Type</option>
-                    <option value="rent">Highest Rent</option>
-                </select>
-            </div>
-
-            <div class="properties-content">
-                ${this.renderPropertiesGrid()}
-            </div>
-        </div>
-    `;
-
-    // Render modal separately at document body level
-    this.renderModal();
-
-    this.attachStaticEventListeners();
-}
-
-renderModal() {
-    // Create modal container if it doesn't exist
-    let modalContainer = document.getElementById('modalContainer');
-    if (!modalContainer) {
-        modalContainer = document.createElement('div');
-        modalContainer.id = 'modalContainer';
-        document.body.appendChild(modalContainer);
+        this.attachStaticEventListeners();
     }
-    
-    modalContainer.innerHTML = this.renderPropertyModal();
-}
 
     renderPortfolioSummary() {
         // Ensure we have actual numbers, not promises
@@ -196,8 +201,8 @@ renderModal() {
                         <span class="type-icon">${typeInfo.icon}</span>
                         <span class="type-label">${typeInfo.label}</span>
                     </div>
-                    <h3 class="property-name">${p.name || 'Unnamed Property'}</h3>
-                    <p class="property-address">${p.address || 'No address provided'}</p>
+                    <h3 class="property-name">${escapeHtml(p.name) || 'Unnamed Property'}</h3>
+                    <p class="property-address">${escapeHtml(p.address) || 'No address provided'}</p>
                 </div>
 
                 <div class="property-values">
@@ -265,7 +270,7 @@ renderModal() {
                     ${tenant ? `
                         <div class="tenant-status occupied">
                             <span class="tenant-icon">👤</span>
-                            <span class="tenant-name">${tenant.name}</span>
+                            <span class="tenant-name">${escapeHtml(tenant.name)}</span>
                             ${tenant.startDate ? `
                                 <span class="tenant-since">Since ${new Date(tenant.startDate).toLocaleDateString('en-AU')}</span>
                             ` : ''}
@@ -332,174 +337,75 @@ renderModal() {
         `;
     }
 
-renderPropertyModal() {
-    return `
-        <!-- Modal Overlay - JUST the background -->
-        <div id="propertyModal" style="
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 99999;
-            justify-content: center;
-            align-items: center;
-        ">
-            <!-- Modal Content - Separate from background -->
-            <div style="
-                background: white;
-                border-radius: 12px;
-                padding: 30px;
-                width: 90%;
-                max-width: 600px;
-                max-height: 85vh;
-                overflow-y: auto;
-                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-                position: relative;
-                z-index: 100000;
-            ">
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 25px;
-                    padding-bottom: 15px;
-                    border-bottom: 2px solid #e9ecef;
-                ">
-                    <h3 id="modalTitle" style="margin: 0; font-size: 24px; font-weight: 600;">Add New Property</h3>
-                    <button id="closeModal" style="
-                        background: none;
-                        border: none;
-                        font-size: 28px;
-                        cursor: pointer;
-                        padding: 0;
-                        width: 40px;
-                        height: 40px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #666;
-                        border-radius: 50%;
-                    ">✕</button>
+    renderPropertyModal() {
+        return `
+            <div id="propertyModal" class="modal-overlay" style="display: none;">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3 id="modalTitle">Add New Property</h3>
+                        <button class="btn-close" id="closeModal">✕</button>
+                    </div>
+                    <form id="propertyForm" class="modal-form">
+                        <input type="hidden" id="editPropertyId" value="">
+                        
+                        <div class="form-group">
+                            <label>Property Type</label>
+                            <select id="propertyType" class="form-select" required>
+                                <option value="primary">🏠 Primary Residence</option>
+                                <option value="investment">💰 Investment Property</option>
+                                <option value="vacation">🌴 Vacation Home</option>
+                                <option value="commercial">🏢 Commercial Property</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Property Name</label>
+                            <input type="text" id="propertyName" class="form-input" 
+                                   placeholder="e.g., Family Home, City Apartment" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input type="text" id="propertyAddress" class="form-input" 
+                                   placeholder="Full property address" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Purchase Price</label>
+                                <input type="number" id="purchasePrice" class="form-input" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Current Market Value</label>
+                                <input type="number" id="currentValue" class="form-input" step="0.01" min="0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="rentField">
+                            <label>Monthly Rent</label>
+                            <input type="number" id="propertyRent" class="form-input" step="0.01" min="0" value="0">
+                        </div>
+
+                        <div class="form-group" id="mortgageField" style="display: none;">
+                            <label>Monthly Mortgage Payment</label>
+                            <input type="number" id="propertyMortgage" class="form-input" step="0.01" min="0" value="0">
+                        </div>
+
+                        <div class="form-group" id="loanBalanceField" style="display: none;">
+                            <label>Outstanding Loan Balance</label>
+                            <input type="number" id="propertyOutstandingLoanBalance" class="form-input" step="0.01" min="0" value="0">
+                            <small class="form-hint">Used to calculate your equity (current value − outstanding balance)</small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">💾 Save Property</button>
+                            <button type="button" class="btn btn-secondary" id="cancelProperty">Cancel</button>
+                        </div>
+                    </form>
                 </div>
-                
-                <form id="propertyForm" style="margin: 0;">
-                    <input type="hidden" id="editPropertyId" value="">
-                    
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Property Type</label>
-                        <select id="propertyType" style="
-                            width: 100%;
-                            padding: 12px 15px;
-                            border: 2px solid #dee2e6;
-                            border-radius: 8px;
-                            font-size: 16px;
-                        " required>
-                            <option value="primary">🏠 Primary Residence</option>
-                            <option value="investment">💰 Investment Property</option>
-                            <option value="vacation">🌴 Vacation Home</option>
-                            <option value="commercial">🏢 Commercial Property</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Property Name</label>
-                        <input type="text" id="propertyName" style="
-                            width: 100%;
-                            padding: 12px 15px;
-                            border: 2px solid #dee2e6;
-                            border-radius: 8px;
-                            font-size: 16px;
-                        " placeholder="e.g., Family Home, City Apartment" required>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Address</label>
-                        <input type="text" id="propertyAddress" style="
-                            width: 100%;
-                            padding: 12px 15px;
-                            border: 2px solid #dee2e6;
-                            border-radius: 8px;
-                            font-size: 16px;
-                        " placeholder="Full property address" required>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Purchase Price</label>
-                            <input type="number" id="purchasePrice" style="
-                                width: 100%;
-                                padding: 12px 15px;
-                                border: 2px solid #dee2e6;
-                                border-radius: 8px;
-                                font-size: 16px;
-                            " step="0.01" min="0" required>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Market Value</label>
-                            <input type="number" id="currentValue" style="
-                                width: 100%;
-                                padding: 12px 15px;
-                                border: 2px solid #dee2e6;
-                                border-radius: 8px;
-                                font-size: 16px;
-                            " step="0.01" min="0" required>
-                        </div>
-                    </div>
-
-                    <div id="rentField" style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Monthly Rent</label>
-                        <input type="number" id="propertyRent" style="
-                            width: 100%;
-                            padding: 12px 15px;
-                            border: 2px solid #dee2e6;
-                            border-radius: 8px;
-                            font-size: 16px;
-                        " step="0.01" min="0" value="0">
-                    </div>
-
-                    <div id="mortgageField" style="display: none; margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Monthly Mortgage Payment</label>
-                        <input type="number" id="propertyMortgage" style="
-                            width: 100%;
-                            padding: 12px 15px;
-                            border: 2px solid #dee2e6;
-                            border-radius: 8px;
-                            font-size: 16px;
-                        " step="0.01" min="0" value="0">
-                    </div>
-
-                    <div style="display: flex; gap: 15px; margin-top: 25px;">
-                        <button type="submit" style="
-                            flex: 1;
-                            padding: 14px 20px;
-                            background: linear-gradient(135deg, #007bff, #0056b3);
-                            color: white;
-                            border: none;
-                            border-radius: 8px;
-                            font-size: 16px;
-                            font-weight: 600;
-                            cursor: pointer;
-                        ">💾 Save Property</button>
-                        <button type="button" id="cancelProperty" style="
-                            flex: 1;
-                            padding: 14px 20px;
-                            background: #6c757d;
-                            color: white;
-                            border: none;
-                            border-radius: 8px;
-                            font-size: 16px;
-                            font-weight: 600;
-                            cursor: pointer;
-                        ">Cancel</button>
-                    </div>
-                </form>
             </div>
-        </div>
-    `;
-}
+        `;
+    }
 
     renderEmptyState() {
         return `
@@ -537,155 +443,114 @@ renderPropertyModal() {
     attachEventListeners() {
         this.attachStaticEventListeners();
 
-        // Property actions - use event delegation
-        document.addEventListener('click', (e) => {
-            const button = e.target.closest('[data-action]');
-            if (!button) return;
-
-            const action = button.dataset.action;
-            const propertyId = button.dataset.id;
-            const property = this.properties.find(p => p.id === propertyId);
-
-            if (!property) return;
-
-            switch (action) {
-                case 'edit':
-                    this.openPropertyForm(null, property);
-                    break;
-                case 'delete':
-                    this.deleteProperty(property);
-                    break;
-                case 'view-tenants':
-                    initTenantsUI(propertyId);
-                    break;
-                case 'view-maintenance':
-                    initMaintenanceUI(propertyId);
-                    break;
-            }
-        });
+        // Property actions - use a single delegated listener shared across instances
+        // (fixes duplicate-listener bug where re-init() on every save/delete/nav
+        // stacked a new document-level listener without removing the old one)
+        activePropertiesManager = this;
+        attachPropertiesDelegatedListener();
 
         // Modal events
         this.setupModalEvents();
     }
 
-setupModalEvents() {
-    const modal = document.getElementById('propertyModal');
-    const form = document.getElementById('propertyForm');
-    const closeBtn = document.getElementById('closeModal');
-    const cancelBtn = document.getElementById('cancelProperty');
-    const typeSelect = document.getElementById('propertyType');
+    handlePropertyAction(action, propertyId) {
+        const property = this.properties.find(p => p.id === propertyId);
+        if (!property) return;
 
-    // Toggle rent/mortgage fields based on property type
-    typeSelect?.addEventListener('change', (e) => {
-        const type = e.target.value;
-        const rentField = document.getElementById('rentField');
-        const mortgageField = document.getElementById('mortgageField');
-        
-        if (type === 'primary') {
-            rentField.style.display = 'none';
-            mortgageField.style.display = 'block';
-        } else {
-            rentField.style.display = 'block';
-            mortgageField.style.display = 'none';
+        switch (action) {
+            case 'edit':
+                this.openPropertyForm(null, property);
+                break;
+            case 'delete':
+                this.deleteProperty(property);
+                break;
+            case 'view-tenants':
+                initTenantsUI(propertyId);
+                break;
+            case 'view-maintenance':
+                initMaintenanceUI(propertyId);
+                break;
         }
-    });
+    }
 
-    [closeBtn, cancelBtn].forEach(btn => {
-        btn?.addEventListener('click', () => {
-            this.closeModal();
+    setupModalEvents() {
+        const modal = document.getElementById('propertyModal');
+        const form = document.getElementById('propertyForm');
+        const closeBtn = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelProperty');
+        const typeSelect = document.getElementById('propertyType');
+
+        // Toggle rent/mortgage fields based on property type
+        typeSelect?.addEventListener('change', (e) => {
+            const type = e.target.value;
+            const rentField = document.getElementById('rentField');
+            const mortgageField = document.getElementById('mortgageField');
+            const loanBalanceField = document.getElementById('loanBalanceField');
+            
+            if (type === 'primary') {
+                rentField.style.display = 'none';
+                mortgageField.style.display = 'block';
+                loanBalanceField.style.display = 'block';
+            } else {
+                rentField.style.display = 'block';
+                mortgageField.style.display = 'none';
+                loanBalanceField.style.display = 'none';
+            }
         });
-    });
 
-    form?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.saveProperty();
-        this.closeModal();
-    });
+        [closeBtn, cancelBtn].forEach(btn => {
+            btn?.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        });
 
-    modal?.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            this.closeModal();
-        }
-    });
-}
+        form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.saveProperty();
+            modal.style.display = 'none';
+        });
+
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
 
     // Core functionality methods
-// Core functionality methods
-async openPropertyForm(prefillType = null, property = null) {
-    console.log('🔍 DEBUG: Opening property form...');
-    
-    const modal = document.getElementById('propertyModal');
-    if (!modal) {
-        console.error('❌ Modal not found!');
-        return;
-    }
-    
-    // DEBUG: Log modal styles before change
-    console.log('🔍 Modal before:', {
-        display: modal.style.display,
-        opacity: modal.style.opacity,
-        visibility: modal.style.visibility,
-        zIndex: modal.style.zIndex,
-        computedDisplay: window.getComputedStyle(modal).display
-    });
-    
-    // Set modal content
-    const title = document.getElementById('modalTitle');
-    const form = document.getElementById('propertyForm');
-    const typeSelect = document.getElementById('propertyType');
+    async openPropertyForm(prefillType = null, property = null) {
+        const modal = document.getElementById('propertyModal');
+        const title = document.getElementById('modalTitle');
+        const form = document.getElementById('propertyForm');
+        const typeSelect = document.getElementById('propertyType');
 
-    if (property) {
-        title.textContent = 'Edit Property';
-        document.getElementById('editPropertyId').value = property.id;
-        document.getElementById('propertyName').value = property.name || '';
-        document.getElementById('propertyAddress').value = property.address || '';
-        document.getElementById('purchasePrice').value = property.purchasePrice || '';
-        document.getElementById('currentValue').value = property.currentValue || '';
-        document.getElementById('propertyRent').value = property.rent || '0';
-        document.getElementById('propertyMortgage').value = property.mortgage || '0';
-        typeSelect.value = property.propertyType || 'primary';
-    } else {
-        title.textContent = 'Add New Property';
-        form.reset();
-        document.getElementById('editPropertyId').value = '';
-        document.getElementById('propertyRent').value = '0';
-        document.getElementById('propertyMortgage').value = '0';
-        if (prefillType) {
-            typeSelect.value = prefillType;
+        if (property) {
+            title.textContent = 'Edit Property';
+            document.getElementById('editPropertyId').value = property.id;
+            document.getElementById('propertyName').value = property.name || '';
+            document.getElementById('propertyAddress').value = property.address || '';
+            document.getElementById('purchasePrice').value = property.purchasePrice || '';
+            document.getElementById('currentValue').value = property.currentValue || '';
+            document.getElementById('propertyRent').value = property.rent || '0';
+            document.getElementById('propertyMortgage').value = property.mortgage || '0';
+            document.getElementById('propertyOutstandingLoanBalance').value = property.outstandingLoanBalance || '0';
+            typeSelect.value = property.propertyType || 'primary';
+        } else {
+            title.textContent = 'Add New Property';
+            form.reset();
+            document.getElementById('editPropertyId').value = '';
+            document.getElementById('propertyRent').value = '0';
+            document.getElementById('propertyMortgage').value = '0';
+            document.getElementById('propertyOutstandingLoanBalance').value = '0';
+            if (prefillType) {
+                typeSelect.value = prefillType;
+            }
         }
-    }
 
-    // Trigger field visibility
-    typeSelect.dispatchEvent(new Event('change'));
-    
-    // FIX: Set modal to be visible with !important
-    modal.style.cssText = `
-        display: flex !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        z-index: 9999 !important;
-    `;
-    
-    // Prevent body scrolling
-    document.body.style.overflow = 'hidden';
-    
-    console.log('🔍 Modal after:', {
-        display: modal.style.display,
-        opacity: modal.style.opacity,
-        visibility: modal.style.visibility,
-        zIndex: modal.style.zIndex,
-        computedDisplay: window.getComputedStyle(modal).display
-    });
-}
-
-// Add closeModal method if not exists
-closeModal() {
-    const modal = document.getElementById('propertyModal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
+        // Trigger field visibility
+        typeSelect.dispatchEvent(new Event('change'));
+        modal.style.display = 'flex';
     }
-}
 
     async saveProperty() {
         const form = document.getElementById('propertyForm');
@@ -701,6 +566,7 @@ closeModal() {
             propertyType: type,
             rent: type !== 'primary' ? parseFloat(document.getElementById('propertyRent').value) || 0 : 0,
             mortgage: type === 'primary' ? parseFloat(document.getElementById('propertyMortgage').value) || 0 : 0,
+            outstandingLoanBalance: type === 'primary' ? parseFloat(document.getElementById('propertyOutstandingLoanBalance').value) || 0 : 0,
             createdAt: propertyId ? this.properties.find(p => p.id === propertyId)?.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -770,7 +636,13 @@ closeModal() {
             ? (((parseFloat(p.currentValue) - parseFloat(p.purchasePrice)) / parseFloat(p.purchasePrice)) * 100).toFixed(1)
             : '0.0';
 
-        const equity = Math.max(0, (parseFloat(p.currentValue) || 0) - (parseFloat(p.mortgage) || 0) * 12 * 30);
+        // Bug fix: equity was previously calculated as
+        // currentValue - (monthlyMortgagePayment * 12 * 30), which wrongly assumes
+        // 30 years of repayments equal the outstanding loan balance (ignores
+        // interest/principal split and how far into the loan you actually are).
+        // We now use an explicit "outstanding loan balance" field the user enters.
+        const outstandingLoan = parseFloat(p.outstandingLoanBalance) || 0;
+        const equity = Math.max(0, (parseFloat(p.currentValue) || 0) - outstandingLoan);
 
         return {
             roi,
@@ -785,7 +657,7 @@ closeModal() {
     }
 
     convertToCSV(properties) {
-        const headers = ['Name', 'Type', 'Address', 'Purchase Price', 'Current Value', 'Rent', 'Mortgage'];
+        const headers = ['Name', 'Type', 'Address', 'Purchase Price', 'Current Value', 'Rent', 'Mortgage', 'Outstanding Loan Balance', 'Equity'];
         const rows = properties.map(p => [
             p.name,
             this.getPropertyTypeInfo(p.propertyType).label,
@@ -793,7 +665,9 @@ closeModal() {
             p.purchasePrice,
             p.currentValue,
             p.rent || '',
-            p.mortgage || ''
+            p.mortgage || '',
+            p.outstandingLoanBalance || '',
+            Math.max(0, (parseFloat(p.currentValue) || 0) - (parseFloat(p.outstandingLoanBalance) || 0))
         ]);
         
         return [headers, ...rows].map(row => row.join(',')).join('\n');

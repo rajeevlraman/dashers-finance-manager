@@ -1,12 +1,13 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES } from './db.js';
+import { escapeHtml } from './sanitize.js';
 
 // Default demo accounts
 const DEFAULT_ACCOUNTS = [
-  { id: 'bank1', name: 'ANZ Savings', type: 'bank', balance: 12000, currency: 'AUD' },
-  { id: 'bank2', name: 'NAB Savings', type: 'bank', balance: 5000, currency: 'AUD' },
-  { id: 'credit1', name: 'Macquarie Visa', type: 'credit', balance: -2100, currency: 'AUD', creditLimit: 2100 },
-  { id: 'offset1', name: 'ME Offset Account', type: 'offset', balance: 12000, currency: 'AUD', linkedLoanId: 'loan1' },
-  { id: 'wallet', name: 'Wallet', type: 'cash', balance: 200, currency: 'USD' }
+  { id: 'bank1', name: 'Main Checking', type: 'bank', balance: 0, currency: 'AUD' },
+  { id: 'bank2', name: 'Savings Account', type: 'bank', balance: 0, currency: 'AUD' },
+  { id: 'credit1', name: 'Visa Credit Card', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 5000 },
+  { id: 'credit2', name: 'MasterCard', type: 'credit', balance: 0, currency: 'AUD', creditLimit: 3000 },
+  { id: 'offset', name: 'Mortgage Offset', type: 'offset', balance: 0, currency: 'AUD', linkedLoanId: '' }
 ];
 
 function generateId() {
@@ -62,7 +63,6 @@ function getAccountTypeLabel(type) {
 
 // Add default accounts
 async function addDefaultAccounts() {
-  console.log('📦 Adding default accounts...');
   const existing = await getAllItems(STORE_NAMES.accounts);
   const existingIds = existing.map(a => a.id);
 
@@ -78,7 +78,6 @@ async function addDefaultAccounts() {
     }
   }
 
-  console.log(`✅ Added ${added} default accounts`);
   initAccountsUI();
 }
 // this is the summary cards function option 1
@@ -110,21 +109,6 @@ function updateSummaryCards(accounts, transactions) {
     .reduce((sum, acc) => sum + Math.abs(Math.min(acc.balance, 0)), 0);
   
   const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
-
-  console.log('Account Summary Debug:', {
-    totalBalance,
-    cashAccounts,
-    creditCards,
-    totalCreditLimit,
-    usedCredit,
-    availableCredit,
-    accountDetails: accounts.map(acc => ({
-      name: acc.name,
-      type: acc.type,
-      balance: acc.balance,
-      creditLimit: acc.creditLimit
-    }))
-  });
 
   // Update summary cards
   document.getElementById('totalBalanceCard').querySelector('.summary-amount').textContent = 
@@ -160,15 +144,6 @@ function updateSummaryCards(accounts, transactions) {
   const usedCredit = liabilities.reduce((sum, acc) => sum + Math.abs(acc.balance), 0);
   const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
 
-  console.log('Account Summary Debug:', {
-    netWorth,
-    totalAssets,
-    totalLiabilities,
-    cashAccounts,
-    creditCards,
-    availableCredit
-  });
-
   // Update summary cards - you might want to change the labels
   document.getElementById('totalBalanceCard').querySelector('.summary-amount').textContent = 
     formatCurrency(netWorth, 'AUD');
@@ -200,15 +175,6 @@ function updateSummaryCards(accounts, transactions) {
     const totalCreditLimit = liabilities.reduce((sum, acc) => sum + (acc.creditLimit || 0), 0);
     const usedCredit = liabilities.reduce((sum, acc) => sum + Math.abs(acc.balance), 0);
     const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
-
-    console.log('Account Summary Debug:', {
-      netWorth,
-      totalAssets: formatCurrency(totalAssets, 'AUD'),
-      totalLiabilities: formatCurrency(totalLiabilities, 'AUD'),
-      cashAccounts,
-      creditCards,
-      availableCredit: formatCurrency(availableCredit, 'AUD')
-    });
 
     // Update summary cards with better labels
     document.getElementById('totalBalanceCard').innerHTML = `
@@ -287,7 +253,7 @@ function toggleAccountDetails(accountId) {
       .map(t => `
         <div class="rt-item">
           <span class="rt-date">${formatDate(new Date(t.date))}</span>
-          <span class="rt-desc">${t.description || 'No description'}</span>
+          <span class="rt-desc">${escapeHtml(t.description) || 'No description'}</span>
           <span class="rt-amt ${t.amount < 0 ? 'neg' : 'pos'}">
             ${formatCurrency(t.amount, 'AUD')}
           </span>
@@ -456,7 +422,7 @@ function refreshAccountList() {
           <div class="account-header" data-id="${account.id}">
             <div class="account-icon">${icon}</div>
             <div class="account-info">
-              <h4 class="account-name">${account.name}</h4>
+              <h4 class="account-name">${escapeHtml(account.name)}</h4>
               <p class="account-type">${getAccountTypeLabel(account.type)}</p>
               ${lastTransaction ? `
                 <small class="last-activity">Last activity: ${daysSinceActivity === 0 ? 'Today' : `${daysSinceActivity} days ago`}</small>
@@ -549,7 +515,7 @@ function showAccountForm(acc) {
   getAllItems(STORE_NAMES.loans).then(loans => {
     const loanOptions = loans.map(loan => ` 
       <option value="${loan.id}" ${acc.linkedLoanId === loan.id ? 'selected' : ''}>
-        ${loan.name}
+        ${escapeHtml(loan.name)}
       </option>
     `).join('');
 
@@ -563,7 +529,7 @@ function showAccountForm(acc) {
           <form id="accForm" class="styled-form">
             <div class="form-group">
               <label>Name</label>
-              <input type="text" name="name" value="${acc.name}" class="form-input" required>
+              <input type="text" name="name" value="${escapeHtml(acc.name)}" class="form-input" required>
             </div>
 
             <div class="form-group">
@@ -656,74 +622,3 @@ function showAccountForm(acc) {
     });
   });
 }
-
-// ===== ADD THIS MISSING FUNCTION ===== 8-05-2026
-function calculateAccountBalance(account, transactions) {
-  const tx = transactions.filter(t => t.accountId === account.id);
-  if (!tx.length) return account.balance || 0;
-  return tx.reduce((sum, t) => sum + t.amount, 0);
-}
-
-// ===== PRIMARY ACCOUNT FUNCTIONS =====
-const PRIMARY_ACCOUNT_KEY = 'primaryAccountId';
-
-async function getPrimaryAccountId() {
-  const meta = await getAllItems(STORE_NAMES.meta);
-  const item = meta.find(m => m.key === PRIMARY_ACCOUNT_KEY);
-  return item?.value || null;
-}
-
-async function setPrimaryAccountId(accountId) {
-  const meta = await getAllItems(STORE_NAMES.meta);
-  const existing = meta.find(m => m.key === PRIMARY_ACCOUNT_KEY);
-
-  const payload = {
-    id: existing?.id || generateId(),
-    key: PRIMARY_ACCOUNT_KEY,
-    value: accountId
-  };
-
-  if (existing) {
-    await updateItem(STORE_NAMES.meta, payload);
-  } else {
-    await addItem(STORE_NAMES.meta, payload);
-  }
-}
-
-// ===== COMPUTE ACCOUNT SUMMARY FUNCTION =====
-function computeAccountSummary(accounts, transactions) {
-  const assets = accounts.filter(a => a.type !== 'credit');
-  const liabilities = accounts.filter(a => a.type === 'credit');
-
-  const totalAssets = assets.reduce((s, a) => s + (a.balance || 0), 0);
-  const totalLiabilities = liabilities.reduce(
-    (s, a) => s + Math.abs(a.balance || 0), 0
-  );
-
-  const netWorth = totalAssets - totalLiabilities;
-
-  const cashAccounts = accounts.filter(acc =>
-    ['bank', 'savings', 'cash', 'offset'].includes(acc.type)
-  ).length;
-
-  const totalCreditLimit = liabilities.reduce(
-    (s, a) => s + (a.creditLimit || 0), 0
-  );
-
-  const usedCredit = liabilities.reduce(
-    (s, a) => s + Math.abs(a.balance || 0), 0
-  );
-
-  const availableCredit = Math.max(totalCreditLimit - usedCredit, 0);
-
-  return {
-    netWorth,
-    totalAssets,
-    totalLiabilities,
-    cashAccounts,
-    creditCards: liabilities.length,
-    totalCreditLimit,
-    availableCredit
-  };
-}
-

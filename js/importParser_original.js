@@ -210,7 +210,7 @@ function cleanMerchant(str) {
         { key: "paypal", replace: /paypal\s*\*?([^0-9]+)/i },
         { key: "uber", replace: /uber\s*trip/i },
         { key: "amazon", replace: /amazon\s*(web services)?/i },
-        //{ key: "coles", replace: /coles\s*[0-9]*/i },
+        { key: "coles", replace: /coles\s*[0-9]*/i },
         { key: "woolworth", replace: /woolworths?\s*[0-9]*/i },
         { key: "7-eleven", replace: /7-?eleven\s*[0-9]*/i },
         { key: "linkt", replace: /linkt/i }
@@ -235,7 +235,7 @@ function autoCategorize(desc, amount) {
         return "inc_other";
     }
 
-    //if (d.includes("coles") || d.includes("woolworth") || d.includes("aldi")) return "exp_grocery";
+    if (d.includes("coles") || d.includes("woolworth") || d.includes("aldi")) return "exp_grocery";
     if (d.includes("shell") || d.includes("bp") || d.includes("fuel")) return "exp_fuel";
     if (d.includes("uber") || d.includes("13cabs")) return "exp_transport";
     if (d.includes("kmart") || d.includes("big w") || d.includes("amazon")) return "exp_shopping";

@@ -4,6 +4,7 @@
 
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
 import { calculateAmortizationSchedule, calculatePaymentAmount, calculateTotalInterest } from './loanCalculations.js';
+import { escapeHtml } from './sanitize.js';
 
 // ============================================================================
 // 🔹 Default Demo Loans
@@ -444,10 +445,9 @@ export async function initLoansUI() {
 
   setTimeout(() => mainContent.classList.remove('page-transition'), 400);
 
-  // Initialize with proper event delegation
-  await refreshLoansList();
-  setupLoansEventListeners();
-  attachLoanCardEventListeners(); // This sets up event delegation
+  // Initialize
+  renderLoansList(loans, accounts);
+  setupLoansEventListeners(loans, accounts);
 }
 
 // ============================================================================
@@ -511,90 +511,63 @@ function isLoanInterestOnly(loan) {
 }
 
 // ============================================================================
-// 🔄 Fixed Loan Card Rendering
+// 💳 Enhanced Loan Card with Interest-Only Support
 // ============================================================================
 async function renderLoanCard(loan, accounts) {
   const progress = ((loan.originalAmount - loan.currentBalance) / loan.originalAmount * 100).toFixed(1);
   const monthlyPayment = calculatePaymentAmount(loan);
+  const offsetSavings = await calculateOffsetInterest(loan.id);
   const isPaidOff = loan.currentBalance <= 0;
+  
+  // Calculate interest-only status
   const isInterestOnly = isLoanInterestOnly(loan);
   const remainingInterestOnlyMonths = isInterestOnly ? 
     Math.max(loan.interestOnlyMonths - calculateMonthsPassed(loan.startDate), 0) : 0;
 
-  const progressClass = parseFloat(progress) < 30 ? 'low' : parseFloat(progress) > 70 ? 'high' : '';
-
   return `
-    <div class="loan-card ${loan.type} ${isInterestOnly ? 'interest-only' : ''} ${isPaidOff ? 'paid-off' : ''}" data-id="${loan.id}">
-      <div class="loan-header">
-        <div class="loan-name-type">
-          <div class="loan-icon">${loan.icon || getLoanIcon(loan.type)}</div>
-          <div class="loan-titles">
-            <h4>${loan.name}</h4>
-            <div class="loan-type">${getLoanTypeLabel(loan.type)}</div>
+    <div class="transaction-card ${isPaidOff ? 'paid' : 'active'} ${isInterestOnly ? 'interest-only' : ''}" data-id="${loan.id}">
+      <div class="transaction-main">
+        <div class="transaction-icon">${loan.icon || getLoanIcon(loan.type)}</div>
+        <div class="transaction-details">
+          <div class="transaction-title">${escapeHtml(loan.name)}</div>
+          <div class="transaction-meta">
+            <span class="transaction-type ${loan.type}">${getLoanTypeLabel(loan.type)}</span>
+            <span class="transaction-interest">${loan.interestRate}% APR</span>
+            ${isInterestOnly ? `<span class="interest-only-badge">Interest Only</span>` : ''}
+            ${remainingInterestOnlyMonths > 0 ? `<span class="interest-only-months">${remainingInterestOnlyMonths} months left</span>` : ''}
           </div>
+          <div class="loan-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <span class="progress-text">${progress}% paid</span>
+          </div>
+          ${offsetSavings > 0 ? `
+            <div class="offset-savings">
+              💰 Offset saving ${formatCurrency(offsetSavings, loan.currency)}/month
+            </div>
+          ` : ''}
         </div>
-        <div class="loan-balance">
-          <div class="current-balance">${formatCurrency(loan.currentBalance, loan.currency)}</div>
-          <div class="original-amount">Original: ${formatCurrency(loan.originalAmount, loan.currency)}</div>
-        </div>
-      </div>
-
-      <div class="loan-details">
-        <div class="detail-item">
-          <span class="detail-label">Interest Rate</span>
-          <span class="detail-value interest-rate">${loan.interestRate}%</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Monthly Payment</span>
-          <span class="detail-value monthly-payment">${formatCurrency(monthlyPayment, loan.currency)}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Term</span>
-          <span class="detail-value">${loan.termMonths} months</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Started</span>
-          <span class="detail-value">${new Date(loan.startDate).toLocaleDateString()}</span>
+        <div class="transaction-amount ${isPaidOff ? 'positive' : 'negative'}">
+          ${isPaidOff ? '✅' : ''}${formatCurrency(loan.currentBalance, loan.currency)}
         </div>
       </div>
-
-      <div class="loan-progress">
-        <div class="progress-header">
-          <span>Progress</span>
-          <span>${progress}%</span>
+      <div class="transaction-actions">
+        ${!isPaidOff ? `
+          <button class="action-btn payment-btn" data-id="${loan.id}" title="Make Payment">💳</button>
+        ` : ''}
+        <button class="action-btn schedule-btn" data-id="${loan.id}" title="View Schedule">📅</button>
+        <button class="action-btn edit-btn" data-id="${loan.id}" title="Edit">✏️</button>
+        <button class="action-btn delete-btn" data-id="${loan.id}" title="Delete">🗑️</button>
+      </div>
+      ${!isPaidOff ? `
+        <div class="loan-payment-info">
+          <small>Next payment: ${formatCurrency(monthlyPayment, loan.currency)} ${loan.paymentFrequency} ${isInterestOnly ? '(Interest Only)' : '(P&I)'}</small>
         </div>
-        <div class="progress-bar">
-          <div class="progress-fill ${progressClass}" style="width: ${progress}%"></div>
-        </div>
-      </div>
-
-      <div class="loan-status">
-        ${isInterestOnly ? 
-          `<span class="status-badge status-interest-only">⏰ Interest Only (${remainingInterestOnlyMonths} months left)</span>` : ''}
-        ${isPaidOff ? 
-          `<span class="status-badge status-paid-off">✅ Paid Off</span>` : 
-          `<span class="status-badge status-active">Active</span>`}
-      </div>
-
-      <div class="loan-actions">
-        ${!isPaidOff ? 
-          `<button class="btn-icon pay" title="Make Payment" data-action="pay" data-id="${loan.id}">
-            💳
-          </button>` : ''}
-        <button class="btn-icon edit" title="View Schedule" data-action="schedule" data-id="${loan.id}">
-          📅
-        </button>
-        <button class="btn-icon edit" title="Edit Loan" data-action="edit" data-id="${loan.id}">
-          ✏️
-        </button>
-        <button class="btn-icon delete" title="Delete Loan" data-action="delete" data-id="${loan.id}">
-          🗑️
-        </button>
-      </div>
+      ` : ''}
     </div>
   `;
 }
-
 
 // Helper function to calculate months passed
 function calculateMonthsPassed(startDateStr) {
@@ -605,9 +578,9 @@ function calculateMonthsPassed(startDateStr) {
 }
 
 // ============================================================================
-// 🎯 Fixed Event Listeners Setup
+// 🎯 Event Listeners Setup
 // ============================================================================
-function setupLoansEventListeners() {
+function setupLoansEventListeners(loans, accounts) {
   const btnNewLoan = document.getElementById('btnNewLoan');
   const btnAddDefaultLoans = document.getElementById('btnAddDefaultLoans');
   const loanFormSection = document.getElementById('loanFormSection');
@@ -616,79 +589,70 @@ function setupLoansEventListeners() {
   const sortSelect = document.getElementById('sortLoans');
 
   // Form toggle
-  if (btnNewLoan) {
-    btnNewLoan.addEventListener('click', () => {
-      const isVisible = loanFormSection.style.display === 'block';
-      loanFormSection.style.display = isVisible ? 'none' : 'block';
-      loanForm.reset();
-      loanForm.dataset.id = '';
-      document.getElementById('loanFormTitle').textContent = '➕ Add New Loan';
-      const today = new Date().toISOString().split('T')[0];
-      if (loanForm.startDate) loanForm.startDate.value = today;
-      
-      if (!isVisible) {
-        loanFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    });
-  }
+  btnNewLoan.addEventListener('click', () => {
+    const isVisible = loanFormSection.style.display === 'block';
+    loanFormSection.style.display = isVisible ? 'none' : 'block';
+    loanForm.reset();
+    loanForm.dataset.id = '';
+    document.getElementById('loanFormTitle').textContent = '➕ Add New Loan';
+    const today = new Date().toISOString().split('T')[0];
+    loanForm.startDate.value = today;
+    
+    // Setup interest-only calculation
+    setupInterestOnlyCalculation();
+    
+    if (!isVisible) {
+      loanFormSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
 
-  if (closeLoanForm) {
-    closeLoanForm.addEventListener('click', () => {
-      loanFormSection.style.display = 'none';
-    });
-  }
+  closeLoanForm.addEventListener('click', () => {
+    loanFormSection.style.display = 'none';
+  });
 
   // Add default loans
-  if (btnAddDefaultLoans) {
-    btnAddDefaultLoans.addEventListener('click', addDefaultLoans);
-  }
+  btnAddDefaultLoans.addEventListener('click', addDefaultLoans);
 
   // Form submission
-  if (loanForm) {
-    loanForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const formData = new FormData(form);
-      
-      const loanData = {
-        name: formData.get('name'),
-        type: formData.get('type'),
-        originalAmount: parseFloat(formData.get('originalAmount')),
-        currentBalance: parseFloat(formData.get('currentBalance')),
-        interestRate: parseFloat(formData.get('interestRate')),
-        termMonths: parseInt(formData.get('termMonths')),
-        startDate: formData.get('startDate'),
-        paymentFrequency: formData.get('paymentFrequency'),
-        interestOnlyMonths: parseInt(formData.get('interestOnlyMonths')) || 0,
-        currency: 'AUD',
-        icon: getLoanIcon(formData.get('type')),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+  loanForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    const loanData = {
+      name: formData.get('name'),
+      type: formData.get('type'),
+      originalAmount: parseFloat(formData.get('originalAmount')),
+      currentBalance: parseFloat(formData.get('currentBalance')),
+      interestRate: parseFloat(formData.get('interestRate')),
+      termMonths: parseInt(formData.get('termMonths')),
+      startDate: formData.get('startDate'),
+      paymentFrequency: formData.get('paymentFrequency'),
+      interestOnlyMonths: parseInt(formData.get('interestOnlyMonths')) || 0,
+      currency: 'AUD',
+      icon: getLoanIcon(formData.get('type')),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
 
-      if (form.dataset.id) {
-        // Editing existing loan
-        loanData.id = form.dataset.id;
-        await updateItem(STORE_NAMES.loans, loanData);
-      } else {
-        // Adding new loan
-        loanData.id = generateId();
-        await addItem(STORE_NAMES.loans, loanData);
-      }
+    if (form.dataset.id) {
+      // Editing existing loan
+      loanData.id = form.dataset.id;
+      await updateItem(STORE_NAMES.loans, loanData);
+    } else {
+      // Adding new loan
+      loanData.id = generateId();
+      await addItem(STORE_NAMES.loans, loanData);
+    }
 
-      loanFormSection.style.display = 'none';
-      await refreshLoansList();
-    });
-  }
+    loanFormSection.style.display = 'none';
+    initLoansUI();
+  });
 
   // Sorting
-  if (sortSelect) {
-    sortSelect.addEventListener('change', async () => {
-      const loans = await getAllItems(STORE_NAMES.loans);
-      const accounts = await getAllItems(STORE_NAMES.accounts);
-      renderLoansList(loans, accounts);
-    });
-  }
+  sortSelect.addEventListener('change', () => {
+    renderLoansList(loans, accounts);
+  });
 
   // Setup interest-only calculation
   setupInterestOnlyCalculation();
@@ -723,41 +687,41 @@ function setupInterestOnlyCalculation() {
   }
 }
 
-// ============================================================================
-// 🎯 Fixed Event Listener Attachment
-// ============================================================================
-function attachLoanCardEventListeners() {
-  // Use event delegation for dynamic elements
-  document.getElementById('loansList')?.addEventListener('click', async (e) => {
-    const button = e.target.closest('button');
-    if (!button) return;
+function attachLoanCardEventListeners(loans) {
+  // Payment button
+  document.querySelectorAll('.payment-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const loanId = e.target.closest('.payment-btn').dataset.id;
+      showPaymentModal(loanId);
+    });
+  });
 
-    const action = button.dataset.action;
-    const loanId = button.dataset.id;
-    
-    if (!action || !loanId) return;
+  // Schedule button
+  document.querySelectorAll('.schedule-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const loanId = e.target.closest('.schedule-btn').dataset.id;
+      viewAmortizationSchedule(loanId);
+    });
+  });
 
-    const loans = await getAllItems(STORE_NAMES.loans);
-    const loan = loans.find(l => l.id === loanId);
-    if (!loan) return;
+  // Edit button
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const loanId = e.target.closest('.edit-btn').dataset.id;
+      openLoanEditor(loanId);
+    });
+  });
 
-    switch (action) {
-      case 'pay':
-        showPaymentModal(loanId);
-        break;
-      case 'schedule':
-        viewAmortizationSchedule(loanId);
-        break;
-      case 'edit':
-        openLoanEditor(loanId);
-        break;
-      case 'delete':
-        if (confirm(`Are you sure you want to delete "${loan.name}"?`)) {
-          await deleteItem(STORE_NAMES.loans, loanId);
-          await refreshLoansList();
-        }
-        break;
-    }
+  // Delete button
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const loanId = e.target.closest('.delete-btn').dataset.id;
+      const loan = loans.find(l => l.id === loanId);
+      if (loan && confirm(`Are you sure you want to delete "${loan.name}"?`)) {
+        await deleteItem(STORE_NAMES.loans, loanId);
+        initLoansUI();
+      }
+    });
   });
 }
 
@@ -806,7 +770,7 @@ async function populatePaymentAccounts(loanId) {
   const select = document.getElementById('paymentAccount');
   select.innerHTML += accounts
     .filter(a => a.balance > 0)
-    .map(a => `<option value="${a.id}">${a.name} (${formatCurrency(a.balance, a.currency)})</option>`)
+    .map(a => `<option value="${a.id}">${escapeHtml(a.name)} (${formatCurrency(a.balance, a.currency)})</option>`)
     .join('');
 }
 
@@ -864,7 +828,7 @@ function showPaymentModal(loanId) {
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
-          <h3>💳 Make Payment - ${loan.name}</h3>
+          <h3>💳 Make Payment - ${escapeHtml(loan.name)}</h3>
           ${isInterestOnly ? '<div class="interest-only-alert">⚠️ This loan is in interest-only period</div>' : ''}
           <button class="btn btn-text close-modal">✕</button>
         </div>
@@ -954,7 +918,7 @@ function viewAmortizationSchedule(loanId) {
     modal.innerHTML = `
       <div class="modal-content large">
         <div class="modal-header">
-          <h3>📅 Amortization Schedule — ${loan.name}</h3>
+          <h3>📅 Amortization Schedule — ${escapeHtml(loan.name)}</h3>
           <button class="btn btn-text close-modal">✕</button>
         </div>
 

@@ -1,4 +1,21 @@
 import { addItem, deleteItem, getAllItems, updateItem, STORE_NAMES, generateId } from './db.js';
+import { escapeHtml } from './sanitize.js';
+
+// Bug fix: a new document-level click listener used to be attached every time
+// init() ran, stacking duplicate listeners. Now we attach exactly one and
+// delegate to whichever instance is active.
+let activeRecurringManager = null;
+let recurringDelegatedListenerAttached = false;
+
+function attachRecurringDelegatedListener() {
+    if (recurringDelegatedListenerAttached) return;
+    recurringDelegatedListenerAttached = true;
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-action]');
+        if (!button || !activeRecurringManager) return;
+        activeRecurringManager.handleRecurringAction(button.dataset.action, button.dataset.id);
+    });
+}
 
 export class RecurringManager {
     constructor() {
@@ -154,7 +171,7 @@ export class RecurringManager {
                 <div class="recurring-main">
                     <div class="recurring-icon">${mainCategory?.icon || typeIcons[rec.type]}</div>
                     <div class="recurring-details">
-                        <div class="recurring-name">${rec.name}</div>
+                        <div class="recurring-name">${escapeHtml(rec.name)}</div>
                         <div class="recurring-meta">
                             <span class="recurring-type ${rec.type}">
                                 ${typeIcons[rec.type]} ${rec.type === 'income' ? 'Income' : 'Expense'}
@@ -164,13 +181,13 @@ export class RecurringManager {
                             </span>
                             ${account ? `
                                 <span class="recurring-account">
-                                    ${this.getAccountIcon(account.type)} ${account.name}
+                                    ${this.getAccountIcon(account.type)} ${escapeHtml(account.name)}
                                 </span>
                             ` : ''}
                         </div>
                         ${category ? `
                             <div class="recurring-category">
-                                ${category.icon || '📁'} ${category.name}
+                                ${category.icon || '📁'} ${escapeHtml(category.name)}
                             </div>
                         ` : ''}
                     </div>
@@ -244,7 +261,7 @@ export class RecurringManager {
                                 <select id="recurringAccount" class="form-select" required>
                                     <option value="">Select Account</option>
                                     ${this.accounts.map(acc => `
-                                        <option value="${acc.id}">${this.getAccountIcon(acc.type)} ${acc.name}</option>
+                                        <option value="${acc.id}">${this.getAccountIcon(acc.type)} ${escapeHtml(acc.name)}</option>
                                     `).join('')}
                                 </select>
                             </div>
@@ -253,7 +270,7 @@ export class RecurringManager {
                                 <select id="recurringMainCategory" class="form-select" required>
                                     <option value="">Select Category</option>
                                     ${this.mainCategories.map(cat => `
-                                        <option value="${cat.id}">${cat.icon || '📁'} ${cat.name}</option>
+                                        <option value="${cat.id}">${cat.icon || '📁'} ${escapeHtml(cat.name)}</option>
                                     `).join('')}
                                 </select>
                             </div>
@@ -303,28 +320,25 @@ export class RecurringManager {
         });
 
         // Recurring actions
-        document.addEventListener('click', (e) => {
-            const button = e.target.closest('[data-action]');
-            if (!button) return;
-
-            const action = button.dataset.action;
-            const recId = button.dataset.id;
-            const rec = this.recurring.find(r => r.id === recId);
-
-            if (!rec) return;
-
-            switch (action) {
-                case 'edit':
-                    this.openRecurringForm(null, rec);
-                    break;
-                case 'delete':
-                    this.deleteRecurring(rec);
-                    break;
-            }
-        });
+        activeRecurringManager = this;
+        attachRecurringDelegatedListener();
 
         // Modal events
         this.setupModalEvents();
+    }
+
+    handleRecurringAction(action, recId) {
+        const rec = this.recurring.find(r => r.id === recId);
+        if (!rec) return;
+
+        switch (action) {
+            case 'edit':
+                this.openRecurringForm(null, rec);
+                break;
+            case 'delete':
+                this.deleteRecurring(rec);
+                break;
+        }
     }
 
     setupModalEvents() {
@@ -340,7 +354,7 @@ export class RecurringManager {
             const parentId = mainSelect.value;
             const filteredSubs = this.subCategories.filter(s => s.parentId === parentId);
             subSelect.innerHTML = `<option value="">-- None --</option>` +
-                filteredSubs.map(s => `<option value="${s.id}">${s.icon || '📄'} ${s.name}</option>`).join('');
+                filteredSubs.map(s => `<option value="${s.id}">${s.icon || '📄'} ${escapeHtml(s.name)}</option>`).join('');
         });
 
         // Open/close modal

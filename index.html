@@ -3,43 +3,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-
   <meta name="theme-color" content="#3498db">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Budget Tracker">
 
   <!-- Enhanced Viewport for iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
 
-  <!-- iOS splash images -->
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="assets/icons/splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
-
+  <!-- Apple splash screens: previously all five of these pointed at the same
+       100x100 splash.png, which is not a real splash image for any of these
+       devices — iOS silently ignores a startup image that doesn't match the
+       declared resolution, so the launch screen was just blank/white on
+       every iPhone. Replaced with correctly-sized images per device. -->
+  <link rel="apple-touch-startup-image" href="assets/icons/splash/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash/splash-1284x2778.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash/splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash/splash-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash/splash-1179x2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="assets/icons/splash/splash-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)">
   <title>Budget Tracker</title>
 
-  <!-- IMPORTANT: base path matches GitHub Pages repo -->
-  <base href="/dashers-finance-manager/">
+  <!-- Bug fix: a hardcoded <base href="/dashers-finance-manager/"> used to be
+       here, which only works when served from exactly that GitHub Pages
+       subpath. It broke every relative asset (js/app.js, css/styles.css,
+       manifest, icons) when run locally or from any other host/path, which
+       is why navigation and everything else 404'd. All paths already use
+       "./" so no <base> tag is needed at all. -->
 
   <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./css/styles.css">
-
-  <!-- Icons -->
+  <link rel="stylesheet" href="./css/styles.css" />
+  <!-- Icons: each sizes= now points at a PNG actually saved at that
+       resolution. Previously every apple-touch-icon (152/167/180) linked to
+       icon-192.png regardless of its declared size, and icon-180.png on disk
+       was mislabeled — really only 100x100 — so iOS fell back to a blurry,
+       incorrectly-cropped home-screen icon. -->
   <link rel="icon" href="./assets/icons/icon-192.png">
-  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/icon-180.png">
 
   <meta name="format-detection" content="telephone=no">
 
-  <!-- Charts -->
+  <!-- Charts (local) -->
   <script src="js/vendor/chart.umd.min.js"></script>
 
-  <!-- Dexie -->
-  <script src="js/vendor/dexie.min.js"></script>
-
-  <!-- App JS -->
   <script type="module" src="./js/app.js"></script>
 
   <!-- iOS PWA Detection -->
@@ -47,53 +58,148 @@
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     if (isIOS) {
       document.documentElement.classList.add('ios-device');
-      console.log('📱 iOS Device Detected - Applying PWA fixes');
     }
   </script>
 </head>
-
 <body>
-
-  <!-- Splash Screen -->
   <div id="splashScreen">
     <div class="splash-inner">
       <img src="assets/icons/icon-192.png" alt="Logo">
-      <h1>Budget Tracker Dev Version 18-12-2025</h1>
+      <h1>Budget Tracker Dev Version 7-12-2025</h1>
       <div class="spinner"></div>
     </div>
   </div>
 
-  <!-- FIX: Navigation must load AFTER body exists -->
-  <script type="module" src="./js/navigation.js"></script>
 
-  <!-- Main content -->
+
+
+  <header>
+    <button id="mobileNavToggle" class="hamburger-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNavDrawer">
+      <span></span><span></span><span></span>
+    </button>
+    <h1>Budget Tracker Dev Version 7-12-2025</h1>
+    <div class="header-status">
+      <span id="connectionStatus" title="Online">🟢</span>
+      <span id="familySyncIndicator" title="Family Sync" style="display:none; margin-left:6px;"></span>
+    </div>
+    <div class="header-actions">
+      <button id="btnExport">Backup Data</button>
+      <button id="btnImport">Restore Data</button>
+    </div>
+    <div id="branchIndicator" style="display:none; 
+    background-color: #f39c12; 
+    color: white; 
+    text-align: center; 
+    padding: 5px; 
+    font-weight: bold; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    z-index: 10000;">
+    ⚠️ DEVELOPMENT VERSION ⚠️
+    </div>
+  </header>
+
+<!--
+  <div id="loginScreen" class="login-screen">
+
+  <form id="loginForm" class="login-form">
+    <h2 style="color:white; text-align:center; margin-bottom:10px;">
+      Welcome Back
+    </h2>
+    
+    <input id="email" type="email" placeholder="Email Address" required />
+    <input id="password" type="password" placeholder="Password" required />
+
+    <label class="remember-me" style="color:white; display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="rememberMe">
+      Remember me
+    </label>
+
+    <button id="loginButton" type="submit">Sign In</button>
+
+    <p id="loginError" style="display:none;">Invalid email or password</p>
+  </form>
+
+</div>
+
+-->
+
+  <nav>
+    <ul>
+      <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
+      <li><a href="#transactions" data-view="transactions"><span class="icon">💸</span><span class="label">Transactions</span></a></li>
+      <li><a href="#budgets" data-view="budgets"><span class="icon">🎯</span><span class="label">Budgets</span></a></li>
+      <li><a href="#accounts" data-view="accounts"><span class="icon">💳</span><span class="label">Accounts</span></a></li>
+      <li><a href="#categories" data-view="categories"><span class="icon">🗂️</span><span class="label">Categories</span></a></li>
+      <li><a href="#reports" data-view="reports"><span class="icon">📊</span><span class="label">Reports</span></a></li>
+      <li><a href="#bills" data-view="bills"><span class="icon">🧾</span><span class="label">Bills</span></a></li>
+      <li><a href="#settings" data-view="settings"><span class="icon">⚙️</span><span class="label">Settings</span></a></li>
+      <li><a href="#calendar" data-view="calendar"><span class="icon">📅</span><span class="label">Calendar</span></a></li>
+      <li><a href="#recurring" data-view="recurring"><span class="icon">🔁</span><span class="label">Recurring</span></a></li>
+      <li><a href="#loans" data-view="loans"><span class="icon">🏦</span><span class="label">Loans</span></a></li>
+      <li><a href="#properties" data-view="properties"><span class="icon">🏠</span><span class="label">Properties</span></a></li>
+      <li><a href="#tenants" data-view="tenants"><span class="icon">👤</span><span class="label">Tenants</span></a></li>
+      <li><a href="#maintenance" data-view="maintenance"><span class="icon">🧰</span><span class="label">Maintenance</span></a></li>
+      <li><a href="#expenses" data-view="expenses"><span class="icon">💸</span><span class="label">Expenses</span></a></li>
+      <li><a href="#tax" data-view="tax"><span class="icon">📘</span><span class="label">ATO Reports</span></a></li>
+      <li><a href="#costbase" data-view="costbase"><span class="icon">🧱</span><span class="label">Cost Base</span></a></li>
+    </ul>
+  </nav>
+
+  <div id="mobileNavOverlay" class="mobile-nav-overlay"></div>
+  <aside id="mobileNavDrawer" class="mobile-nav-drawer" aria-hidden="true">
+    <div class="mobile-nav-drawer-header">
+      <span>Menu</span>
+      <button id="mobileNavClose" class="mobile-nav-close" aria-label="Close navigation menu">✕</button>
+    </div>
+    <ul>
+      <li><a href="#dashboard" data-view="dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a></li>
+      <li><a href="#transactions" data-view="transactions"><span class="icon">💸</span><span class="label">Transactions</span></a></li>
+      <li><a href="#budgets" data-view="budgets"><span class="icon">🎯</span><span class="label">Budgets</span></a></li>
+      <li><a href="#accounts" data-view="accounts"><span class="icon">💳</span><span class="label">Accounts</span></a></li>
+      <li><a href="#categories" data-view="categories"><span class="icon">🗂️</span><span class="label">Categories</span></a></li>
+      <li><a href="#reports" data-view="reports"><span class="icon">📊</span><span class="label">Reports</span></a></li>
+      <li><a href="#bills" data-view="bills"><span class="icon">🧾</span><span class="label">Bills</span></a></li>
+      <li><a href="#settings" data-view="settings"><span class="icon">⚙️</span><span class="label">Settings</span></a></li>
+      <li><a href="#calendar" data-view="calendar"><span class="icon">📅</span><span class="label">Calendar</span></a></li>
+      <li><a href="#recurring" data-view="recurring"><span class="icon">🔁</span><span class="label">Recurring</span></a></li>
+      <li><a href="#loans" data-view="loans"><span class="icon">🏦</span><span class="label">Loans</span></a></li>
+      <li><a href="#properties" data-view="properties"><span class="icon">🏠</span><span class="label">Properties</span></a></li>
+      <li><a href="#tenants" data-view="tenants"><span class="icon">👤</span><span class="label">Tenants</span></a></li>
+      <li><a href="#maintenance" data-view="maintenance"><span class="icon">🧰</span><span class="label">Maintenance</span></a></li>
+      <li><a href="#expenses" data-view="expenses"><span class="icon">💸</span><span class="label">Expenses</span></a></li>
+      <li><a href="#tax" data-view="tax"><span class="icon">📘</span><span class="label">ATO Reports</span></a></li>
+      <li><a href="#costbase" data-view="costbase"><span class="icon">🧱</span><span class="label">Cost Base</span></a></li>
+    </ul>
+  </aside>
+
   <main id="mainContent"></main>
 
-  <!-- App bootstrap -->
-  <script type="module">
-    import { bootstrapApp } from './js/app.js';
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        await bootstrapApp();
-
-        /* FIX: Single Service Worker registration ONLY */
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./serviceWorker.js', { scope: './' });
-        }
-      } catch (err) {
-        console.error('❌ App failed to start', err);
-      }
-    });
-  </script>
-
-  <!-- TEMP FIX: Disable old header to avoid conflict with new top navigation -->
-  <style>
-    .app-header {
-      display: none !important;
-      visibility: hidden !important;
-    }
-  </style>
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a href="#dashboard" data-view="dashboard" class="nav-item active">
+      <span class="icon">🏠</span>
+      <span class="label">Home</span>
+    </a>
+    <a href="#transactions" data-view="transactions" class="nav-item">
+      <span class="icon">💸</span>
+      <span class="label">Finance</span>
+    </a>
+    <a href="#reports" data-view="reports" class="nav-item">
+      <span class="icon">📊</span>
+      <span class="label">Reports</span>
+    </a>
+    <a href="#properties" data-view="properties" class="nav-item">
+      <span class="icon">🏘️</span>
+      <span class="label">Properties</span>
+    </a>
+    <a href="#settings" data-view="settings" class="nav-item">
+      <span class="icon">⚙️</span>
+      <span class="label">Settings</span>
+    </a>
+  </nav>
 
   <!-- PWA Installation Banner -->
   <div id="installBanner" class="install-banner hidden">
@@ -109,49 +215,92 @@
       </div>
     </div>
   </div>
-
-  <button id="btnMigrateToDexie" class="btn-warning">⚙️ Migrate to Dexie Database</button>
-
-  <!-- Debug PWA -->
   <div style="position: fixed; top: 10px; right: 10px; z-index: 10000; display: none;" id="debugPWA">
     <button onclick="checkPWAStatus()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;">Check PWA</button>
   </div>
 
-  <!-- Device detection -->
   <script>
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
 
-    console.log('📱 Device Detection:', {
-      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
-      isSafari,
-      isAndroid,
-      userAgent: navigator.userAgent
-    });
 
+    // ✅ Register service worker (path relative to <base>)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./serviceWorker.js', { scope: './' })
+        .then((reg) => {
+        })
+        .catch((err) => console.error('❌ SW registration failed:', err));
+    }
+
+    // Android install prompt (only for Android)
     if (isAndroid) {
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         window.deferredPrompt = e;
         setTimeout(() => {
-          document.getElementById('installBanner')?.classList.remove('hidden');
+          const banner = document.getElementById('installBanner');
+          if (banner) banner.classList.remove('hidden');
         }, 2000);
       });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('installDismiss')?.addEventListener('click', () => {
-        document.getElementById('installBanner')?.classList.add('hidden');
-      });
+    function showIOSInstallGuide() {
+      const guide = document.getElementById('iosInstallGuide');
+      if (guide && !localStorage.getItem('iosGuideDismissed')) {
+        guide.classList.add('show');
+      }
+    }
+    function hideIOSInstallGuide() {
+      const guide = document.getElementById('iosInstallGuide');
+      if (guide) {
+        guide.classList.remove('show');
+        localStorage.setItem('iosGuideDismissed', 'true');
+      }
+    }
 
-      document.getElementById('installBtn')?.addEventListener('click', async () => {
-        if (!window.deferredPrompt) return;
-        window.deferredPrompt.prompt();
-        await window.deferredPrompt.userChoice;
-        window.deferredPrompt = null;
-        document.getElementById('installBanner')?.classList.add('hidden');
-      });
+    document.addEventListener('DOMContentLoaded', function() {
+      const closeBtn = document.getElementById('closeIosGuide');
+      if (closeBtn) closeBtn.addEventListener('click', hideIOSInstallGuide);
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        let guideShown = false;
+        const showGuideOnInteraction = function() {
+          if (!guideShown) {
+            setTimeout(showIOSInstallGuide, 1000);
+            guideShown = true;
+          }
+        };
+        document.addEventListener('touchstart', showGuideOnInteraction, { once: true, passive: true });
+        document.addEventListener('click', showGuideOnInteraction, { once: true, passive: true });
+      }
+
+      const installBtn = document.getElementById('installBtn');
+      if (installBtn && isAndroid) {
+        installBtn.addEventListener('click', async () => {
+          if (!window.deferredPrompt) return;
+          window.deferredPrompt.prompt();
+          await window.deferredPrompt.userChoice;
+          window.deferredPrompt = null;
+          document.getElementById('installBanner').classList.add('hidden');
+        });
+      }
+
+      const installDismiss = document.getElementById('installDismiss');
+      if (installDismiss) {
+        installDismiss.addEventListener('click', () => {
+          const banner = document.getElementById('installBanner');
+          if (banner) banner.classList.add('hidden');
+        });
+      }
     });
+
+    if (isAndroid) {
+      setTimeout(() => {
+        if (!window.deferredPrompt) {
+        }
+      }, 5000);
+    }
   </script>
 
   <!-- iOS Installation Guide -->
@@ -159,23 +308,63 @@
     <div class="ios-install-content">
       <h3>📱 Install Budget Tracker on iOS</h3>
       <ol class="ios-install-steps">
-        <li>Tap <strong>Share</strong></li>
-        <li>Select <strong>Add to Home Screen</strong></li>
-        <li>Tap <strong>Add</strong></li>
+        <li><span class="icon">①</span> Tap the <strong>Share</strong> button <span style="display:inline-block; background:#007AFF; color:white; padding:2px 8px; border-radius:4px;">⎔</span></li>
+        <li><span class="icon">②</span> Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+        <li><span class="icon">③</span> Tap <strong>"Add"</strong> in the top right</li>
       </ol>
-      <button id="closeIosGuide" class="button">Got It!</button>
+      <button id="closeIosGuide" class="button" style="margin-top: 10px;">Got It!</button>
     </div>
   </div>
+<script>
+// Add this to test CSS interference
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Test 1: Check if form elements are visible and clickable
+    const loginButton = document.getElementById('loginButton');
+    if (loginButton) {
+        const styles = window.getComputedStyle(loginButton);
+        
+        if (styles.pointerEvents === 'none') {
+            console.error('❌ Button has pointer-events: none !');
+            loginButton.style.pointerEvents = 'auto';
+        }
+    }
+    
+    // Test 2: Check for overlay elements blocking clicks
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) {
+        // Look for any ::before or ::after that might be blocking
+        const pseudoStyles = window.getComputedStyle(loginScreen, '::before');
+        if (pseudoStyles.content !== 'none') {
+            console.warn('⚠️ loginScreen has ::before pseudo-element');
+        }
+    }
+    
+    // Test 3: Manually test click without CSS interference
+    const form = document.getElementById('loginForm');
+    if (form) {
+        const originalSubmit = form.onsubmit;
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            
+            // Test credentials directly
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            
+            // Simulate login
+            if (email && password) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('userEmail', email);
+                document.getElementById('loginScreen').style.display = 'none';
+            }
+            
+            return false;
+        };
+    }
+});
+</script>
 
-  <script>
-    document.getElementById('closeIosGuide')?.addEventListener('click', () => {
-      document.getElementById('iosInstallGuide')?.classList.remove('show');
-      localStorage.setItem('iosGuideDismissed', 'true');
-    });
-  </script>
-
-  <!-- FIX: REMOVED broken sidebar/hamburger debug block -->
-  <!-- It checked elements that do not exist in your app -->
-
+<!--<script type="module" src="./js/ui.js"></script>-->
 </body>
 </html>

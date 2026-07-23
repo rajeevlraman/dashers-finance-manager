@@ -1,10 +1,10 @@
 import { getAllItems, STORE_NAMES } from './db.js';
-
-console.log('📊 Enhanced Reports Manager initialized');
+import { escapeHtml } from './sanitize.js';
 
 let activeCharts = [];
 let allTransactions = [];
 let allCategories = [];
+let allAccounts = [];
 
 export async function initReportsUI() {
   const mainContent = document.getElementById('mainContent');
@@ -67,13 +67,12 @@ export async function initReportsUI() {
 
 async function initializeReports() {
   try {
-    console.log('📥 Loading data...');
-    [allTransactions, allCategories] = await Promise.all([
+    [allTransactions, allCategories, allAccounts] = await Promise.all([
       getAllItems(STORE_NAMES.transactions),
-      getAllItems(STORE_NAMES.categories)
+      getAllItems(STORE_NAMES.categories),
+      getAllItems(STORE_NAMES.accounts).catch(() => [])
     ]);
 
-    console.log(`📊 Loaded ${allTransactions.length} transactions and ${allCategories.length} categories`);
     
     // Initialize date inputs after data is loaded
     initializeDateInputs();
@@ -132,7 +131,6 @@ function setupReportsEventListeners() {
 
 async function refreshAllCharts() {
   try {
-    console.log('🔄 Refreshing all charts...');
     await renderQuickStats();
     await renderReportsGrid();
   } catch (error) {
@@ -189,26 +187,67 @@ async function renderQuickStats() {
           <div class="stat-subtext">${stats.incomeCount} income, ${stats.expenseCount} expense</div>
         </div>
       </div>
+
+      <div class="stat-card savings-rate">
+        <div class="stat-icon">🐷</div>
+        <div class="stat-content">
+          <div class="stat-value ${stats.savingsRate >= 0 ? 'positive' : 'negative'}">${stats.savingsRate.toFixed(1)}%</div>
+          <div class="stat-label">Savings Rate</div>
+        </div>
+      </div>
+
+      <div class="stat-card avg-monthly">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.avgMonthlyExpense)}</div>
+          <div class="stat-label">Avg Monthly Spend</div>
+        </div>
+      </div>
+
+      <div class="stat-card largest-expense">
+        <div class="stat-icon">🔍</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.largestExpense.amount)}</div>
+          <div class="stat-label">Largest Expense</div>
+          <div class="stat-subtext">${escapeHtml(stats.largestExpense.description || 'N/A')}</div>
+        </div>
+      </div>
     </div>
   `;
 }
 
 function calculateFinancialStats(transactions) {
-  console.log('Calculating stats for', transactions.length, 'transactions');
   
   const income = transactions.filter(t => t.type === 'income');
   const expenses = transactions.filter(t => t.type === 'expense');
   
   const totalIncome = income.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   const totalExpenses = expenses.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-  const netCashFlow = totalIncome - totalExpenses;
+  // totalExpenses is already a negative sum (expense amounts are stored as
+  // negative numbers), so cash flow is income + expenses, not income - expenses.
+  // Subtracting here was flipping the sign of every expense, turning real
+  // deficits into inflated fake surpluses.
+  const netCashFlow = totalIncome + totalExpenses;
 
-  console.log('Stats calculated:', { totalIncome, totalExpenses, netCashFlow });
+  const savingsRate = totalIncome > 0 ? (netCashFlow / totalIncome) * 100 : 0;
+
+  const monthsSpanned = new Set(
+    transactions.filter(t => t.date).map(t => t.date.slice(0, 7))
+  ).size || 1;
+  const avgMonthlyExpense = Math.abs(totalExpenses) / monthsSpanned;
+
+  const largestExpense = expenses.reduce((max, t) => {
+    const amt = Math.abs(parseFloat(t.amount) || 0);
+    return amt > max.amount ? { amount: amt, description: t.description || 'Expense' } : max;
+  }, { amount: 0, description: '' });
 
   return {
     totalIncome,
     totalExpenses,
     netCashFlow,
+    savingsRate,
+    avgMonthlyExpense,
+    largestExpense,
     transactionCount: transactions.length,
     incomeCount: income.length,
     expenseCount: expenses.length
@@ -240,8 +279,6 @@ async function renderReportsGrid() {
     return;
   }
 
-  console.log('🎨 Preparing to render charts with', filteredTransactions.length, 'transactions');
-
   reportsGrid.innerHTML = `
     <div class="report-card full-width">
       <div class="report-header">
@@ -263,11 +300,34 @@ async function renderReportsGrid() {
 
     <div class="report-card">
       <div class="report-header">
+        <h3>🏆 Top Spending Categories</h3>
+      </div>
+      <div id="topCategoriesList" class="recent-activity"></div>
+    </div>
+
+    <div class="report-card">
+      <div class="report-header">
+        <h3>🏦 Spend by Account</h3>
+      </div>
+      <div class="chart-container" style="height: 250px;">
+        <canvas id="accountChart"></canvas>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <div class="report-header">
         <h3>💸 Income Sources</h3>
       </div>
       <div class="chart-container" style="height: 250px;">
         <canvas id="incomeChart"></canvas>
       </div>
+    </div>
+
+    <div class="report-card full-width">
+      <div class="report-header">
+        <h3>🗓️ Category Breakdown by Month</h3>
+      </div>
+      <div id="categoryMonthTable"></div>
     </div>
   `;
 
@@ -282,14 +342,12 @@ async function renderReportsGrid() {
 // ============================================================================
 
 function renderAllCharts(transactions) {
-  console.log('🔄 Starting chart rendering...');
   
   // Clear existing charts
   activeCharts.forEach(chart => {
     try { 
       chart.destroy(); 
     } catch (e) {
-      console.log('Error destroying old chart:', e);
     }
   });
   activeCharts = [];
@@ -313,7 +371,24 @@ function renderAllCharts(transactions) {
     console.error('❌ Error rendering income chart:', error);
   }
 
-  console.log('✅ Chart rendering completed');
+  try {
+    renderTopCategoriesList(transactions);
+  } catch (error) {
+    console.error('❌ Error rendering top categories list:', error);
+  }
+
+  try {
+    renderAccountChart(transactions);
+  } catch (error) {
+    console.error('❌ Error rendering account chart:', error);
+  }
+
+  try {
+    renderCategoryMonthTable(transactions);
+  } catch (error) {
+    console.error('❌ Error rendering category/month table:', error);
+  }
+
 }
 
 function renderMonthlyChart(transactions) {
@@ -324,8 +399,6 @@ function renderMonthlyChart(transactions) {
     console.error('❌ Monthly chart canvas not found');
     return;
   }
-
-  console.log('📊 Monthly data:', monthlyData);
 
   // Validate data
   if (!monthlyData.labels || monthlyData.labels.length === 0) {
@@ -391,7 +464,6 @@ function renderMonthlyChart(transactions) {
   });
   
   activeCharts.push(chart);
-  console.log('✅ Monthly chart rendered successfully');
 }
 
 function renderExpenseCategoriesChart(transactions) {
@@ -402,8 +474,6 @@ function renderExpenseCategoriesChart(transactions) {
     console.error('❌ Expense chart canvas not found');
     return;
   }
-
-  console.log('📊 Expense categories data:', expenseData);
 
   if (!expenseData.labels || expenseData.labels.length === 0) {
     console.warn('⚠️ No expense data available');
@@ -440,7 +510,6 @@ function renderExpenseCategoriesChart(transactions) {
   });
   
   activeCharts.push(chart);
-  console.log('✅ Expense categories chart rendered successfully');
 }
 
 function renderIncomeSourcesChart(transactions) {
@@ -451,8 +520,6 @@ function renderIncomeSourcesChart(transactions) {
     console.error('❌ Income chart canvas not found');
     return;
   }
-
-  console.log('📊 Income sources data:', incomeData);
 
   if (!incomeData.labels || incomeData.labels.length === 0) {
     console.warn('⚠️ No income data available');
@@ -489,7 +556,187 @@ function renderIncomeSourcesChart(transactions) {
   });
   
   activeCharts.push(chart);
-  console.log('✅ Income sources chart rendered successfully');
+}
+
+// ============================================================================
+// 🏆 TOP SPENDING CATEGORIES LIST
+// ============================================================================
+
+function renderTopCategoriesList(transactions) {
+  const container = document.getElementById('topCategoriesList');
+  if (!container) return;
+
+  const expenseData = getExpenseCategoriesData(transactions);
+  const total = expenseData.values.reduce((sum, v) => sum + v, 0);
+
+  if (expenseData.labels.length === 0) {
+    container.innerHTML = '<p class="no-data">No expense data available</p>';
+    return;
+  }
+
+  container.innerHTML = expenseData.labels.map((label, i) => {
+    const amount = expenseData.values[i];
+    const percent = total > 0 ? (amount / total) * 100 : 0;
+    return `
+      <div class="activity-item">
+        <span class="activity-icon">🏷️</span>
+        <div class="activity-details">
+          <div class="activity-desc">${escapeHtml(label)}</div>
+          <div class="activity-date">${percent.toFixed(1)}% of total spending</div>
+        </div>
+        <span class="activity-amount negative">-${formatCurrency(amount)}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================================
+// 🏦 SPEND BY ACCOUNT CHART
+// ============================================================================
+
+function getSpendByAccountData(transactions) {
+  const expenses = transactions.filter(t => t.type === 'expense');
+  const totals = {};
+
+  expenses.forEach(t => {
+    const account = allAccounts.find(a => a.id === t.accountId);
+    const name = account?.name || 'Unassigned';
+    totals[name] = (totals[name] || 0) + Math.abs(parseFloat(t.amount) || 0);
+  });
+
+  const sortedEntries = Object.entries(totals).sort(([, a], [, b]) => b - a);
+
+  return {
+    labels: sortedEntries.map(([name]) => name),
+    values: sortedEntries.map(([, amount]) => amount)
+  };
+}
+
+function renderAccountChart(transactions) {
+  const accountData = getSpendByAccountData(transactions);
+  const ctx = document.getElementById('accountChart');
+
+  if (!ctx) {
+    console.error('❌ Account chart canvas not found');
+    return;
+  }
+
+  if (!accountData.labels || accountData.labels.length === 0) {
+    ctx.parentElement.innerHTML = '<p class="no-data">No account data available</p>';
+    return;
+  }
+
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: accountData.labels,
+      datasets: [{
+        data: accountData.values,
+        backgroundColor: [
+          '#3498db', '#e67e22', '#1abc9c', '#9b59b6',
+          '#e74c3c', '#34495e', '#f39c12', '#16a085'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: { display: true, text: 'Spend by Account' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ${formatCurrency(ctx.parsed)}`
+          }
+        }
+      }
+    }
+  });
+
+  activeCharts.push(chart);
+}
+
+// ============================================================================
+// 🗓️ CATEGORY BREAKDOWN BY MONTH TABLE
+// ============================================================================
+
+function renderCategoryMonthTable(transactions) {
+  const container = document.getElementById('categoryMonthTable');
+  if (!container) return;
+
+  const expenses = transactions.filter(t => t.type === 'expense' && t.date);
+  if (expenses.length === 0) {
+    container.innerHTML = '<p class="no-data">No expense data available</p>';
+    return;
+  }
+
+  // Last 6 months present in the filtered data, oldest to newest
+  const monthSet = new Set(expenses.map(t => t.date.slice(0, 7)));
+  const months = Array.from(monthSet).sort().slice(-6);
+
+  // Top 8 categories by total spend across those months
+  const categoryTotals = {};
+  expenses.forEach(t => {
+    if (!months.includes(t.date.slice(0, 7))) return;
+    const name = getCategoryName(t.categoryId) || 'Uncategorized';
+    categoryTotals[name] = (categoryTotals[name] || 0) + Math.abs(parseFloat(t.amount) || 0);
+  });
+  const topCategories = Object.entries(categoryTotals)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 8)
+    .map(([name]) => name);
+
+  // Matrix: category -> month -> amount
+  const matrix = {};
+  topCategories.forEach(cat => { matrix[cat] = {}; months.forEach(m => matrix[cat][m] = 0); });
+  expenses.forEach(t => {
+    const month = t.date.slice(0, 7);
+    const name = getCategoryName(t.categoryId) || 'Uncategorized';
+    if (matrix[name] && months.includes(month)) {
+      matrix[name][month] += Math.abs(parseFloat(t.amount) || 0);
+    }
+  });
+
+  const monthLabels = months.map(m => {
+    const [year, num] = m.split('-');
+    return `${getMonthName(parseInt(num))} ${year}`;
+  });
+
+  const columnTotals = months.map(m => topCategories.reduce((sum, cat) => sum + matrix[cat][m], 0));
+
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            ${monthLabels.map(m => `<th>${m}</th>`).join('')}
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${topCategories.map(cat => {
+            const rowTotal = months.reduce((sum, m) => sum + matrix[cat][m], 0);
+            return `
+              <tr>
+                <td>${escapeHtml(cat)}</td>
+                ${months.map(m => `<td>${matrix[cat][m] > 0 ? formatCurrency(matrix[cat][m]) : '–'}</td>`).join('')}
+                <td><strong>${formatCurrency(rowTotal)}</strong></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>Total</strong></td>
+            ${columnTotals.map(t => `<td><strong>${formatCurrency(t)}</strong></td>`).join('')}
+            <td><strong>${formatCurrency(columnTotals.reduce((a, b) => a + b, 0))}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
 }
 
 // ============================================================================
@@ -497,7 +744,6 @@ function renderIncomeSourcesChart(transactions) {
 // ============================================================================
 
 function getMonthlyData(transactions) {
-  console.log('Processing monthly data for', transactions.length, 'transactions');
   
   const monthly = {};
   
@@ -524,7 +770,7 @@ function getMonthlyData(transactions) {
       if (tx.type === 'income') {
         monthly[monthKey].income += amount;
       } else if (tx.type === 'expense') {
-        monthly[monthKey].expenses += amount;
+        monthly[monthKey].expenses += Math.abs(amount);
       }
     } catch (error) {
       console.error('Error processing transaction:', tx, error);
@@ -542,19 +788,17 @@ function getMonthlyData(transactions) {
     expenses: sortedMonths.map(month => monthly[month].expenses)
   };
   
-  console.log('Monthly data result:', result);
   return result;
 }
 
 function getExpenseCategoriesData(transactions) {
   const expenses = transactions.filter(t => t.type === 'expense');
-  console.log('Processing', expenses.length, 'expenses for categories');
   
   const categories = {};
   
   expenses.forEach(expense => {
     const categoryName = getCategoryName(expense.categoryId) || 'Uncategorized';
-    const amount = parseFloat(expense.amount) || 0;
+    const amount = Math.abs(parseFloat(expense.amount) || 0);
     categories[categoryName] = (categories[categoryName] || 0) + amount;
   });
   
@@ -568,13 +812,11 @@ function getExpenseCategoriesData(transactions) {
     values: sortedEntries.map(([,amount]) => amount)
   };
   
-  console.log('Expense categories result:', result);
   return result;
 }
 
 function getIncomeSourcesData(transactions) {
   const income = transactions.filter(t => t.type === 'income');
-  console.log('Processing', income.length, 'income transactions for sources');
   
   const sources = {};
   
@@ -594,7 +836,6 @@ function getIncomeSourcesData(transactions) {
     values: sortedEntries.map(([,amount]) => amount)
   };
   
-  console.log('Income sources result:', result);
   return result;
 }
 
@@ -614,7 +855,6 @@ function getFilteredTransactions() {
     return true;
   });
   
-  console.log('Filtering transactions. Date range:', dateRange, 'Start:', startDate, 'End:', endDate);
   
   if (dateRange === 'custom' && startDate && endDate) {
     filtered = filtered.filter(t => t.date >= startDate && t.date <= endDate);
@@ -631,7 +871,6 @@ function getFilteredTransactions() {
     filtered = filtered.filter(t => t.date >= quarterStart);
   }
   
-  console.log(`📅 Filtered to ${filtered.length} valid transactions`);
   return filtered;
 }
 
