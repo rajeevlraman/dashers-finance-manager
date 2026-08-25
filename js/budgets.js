@@ -1,4 +1,5 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
+import { createDefaultBudgets, getAllBudgetTemplates, getBudgetSummary } from './defaultBudgets.js';
 
 // --- HELPER FUNCTION ---
 function getPeriodStartDate(viewMode) {
@@ -51,6 +52,7 @@ export async function initBudgetsUI() {
                         <option value="yearly"${currentViewMode === 'yearly' ? ' selected' : ''}>Yearly</option>
                     </select>
                 </div>
+                <button id="loadTemplateBtn" class="btn-secondary">📋 Load Template</button>
                 <button id="addBudgetBtn" class="btn-primary">➕ Add Budget</button>
             </div>
         </div>
@@ -143,7 +145,7 @@ export async function initBudgetsUI() {
     if (budgets.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>No budgets yet. Click "Add Budget" to create one.</p>
+                <p>No budgets yet. Click "Load Template" to get started with a starter budget, or "Add Budget" to create one manually.</p>
             </div>
         `;
     } else {
@@ -178,8 +180,97 @@ export async function initBudgetsUI() {
         });
     }
 
+    // Load template button
+    document.getElementById('loadTemplateBtn').addEventListener('click', () => {
+        showTemplateSelector();
+    });
+
     document.getElementById('addBudgetBtn').addEventListener('click', () => {
         showInlineEditor(null, categories);
+    });
+}
+
+// ============================================================================
+// 📋 BUDGET TEMPLATE SELECTOR
+// ============================================================================
+function showTemplateSelector() {
+    const templates = getAllBudgetTemplates();
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 Load Budget Template</h3>
+                <button class="btn btn-text close-modal">✕</button>
+            </div>
+            <div class="template-selector">
+                ${Object.entries(templates).map(([key, template]) => {
+                    const summary = getBudgetSummary(key);
+                    return `
+                        <div class="template-card" data-template="${key}">
+                            <div class="template-header">
+                                <h4>${template.name}</h4>
+                            </div>
+                            <div class="template-description">
+                                <p>${template.description}</p>
+                            </div>
+                            <div class="template-stats">
+                                <div class="stat">
+                                    <span class="stat-label">💰 Income:</span>
+                                    <span class="stat-value">$${summary.monthlyIncome.toLocaleString()}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">💸 Expenses:</span>
+                                    <span class="stat-value">$${summary.monthlyExpenses.toLocaleString()}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">📊 Surplus:</span>
+                                    <span class="stat-value ${summary.monthlySurplus >= 0 ? 'positive' : 'negative'}">$${summary.monthlySurplus.toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-load-template" data-template="${key}">
+                                📥 Load This Template
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close button
+    modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+
+    // Load template buttons
+    modal.querySelectorAll('.btn-load-template').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const templateName = e.target.dataset.template;
+            const template = templates[templateName];
+            
+            // Show confirmation
+            if (confirm(`Load "${template.name}"?\n\nThis will add ${template.template.length} budget items to your budget.`)) {
+                btn.disabled = true;
+                btn.textContent = '⏳ Loading...';
+                
+                try {
+                    const count = await createDefaultBudgets({ addItem, updateItem, getAllItems, STORE_NAMES }, templateName);
+                    alert(`✅ Successfully loaded ${count} budgets!`);
+                    modal.remove();
+                    initBudgetsUI();
+                } catch (err) {
+                    console.error('❌ Error loading template:', err);
+                    alert('❌ Error loading template: ' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = '📥 Load This Template';
+                }
+            }
+        });
     });
 }
 
