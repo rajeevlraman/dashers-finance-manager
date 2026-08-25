@@ -1,19 +1,7 @@
 import { getAllItems, addItem, updateItem, deleteItem, STORE_NAMES, generateId } from './db.js';
-import { escapeHtml } from './sanitize.js';
+import { createDefaultBudgets, getAllBudgetTemplates, getBudgetSummary } from './defaultBudgets.js';
 
 // --- HELPER FUNCTION ---
-// A transaction counts toward a budget if it's tagged with that exact
-// category, OR with one of that category's subcategories. This means a
-// budget set on a parent category (e.g. "Transport") automatically rolls up
-// spend from all its children (Fuel, Rego, Tolls...), while a budget set on
-// a specific subcategory (e.g. "Transport / Fuel") still tracks only that
-// one. Categories and their subcategories always stay linked for reporting.
-export function transactionMatchesBudgetCategory(t, budgetCategoryId, categories) {
-    if (t.categoryId === budgetCategoryId) return true;
-    const txCat = categories.find(c => c.id === t.categoryId);
-    return !!(txCat && txCat.parentId === budgetCategoryId);
-}
-
 function getPeriodStartDate(viewMode) {
     const now = new Date();
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -41,6 +29,7 @@ function getPeriodStartDate(viewMode) {
 }
 
 export async function initBudgetsUI() {
+    console.log("✅ initBudgetsUI running…");
     const mainContent = document.getElementById('mainContent');
     if (!mainContent) {
         console.error("No #mainContent element found");
@@ -63,6 +52,7 @@ export async function initBudgetsUI() {
                         <option value="yearly"${currentViewMode === 'yearly' ? ' selected' : ''}>Yearly</option>
                     </select>
                 </div>
+                <button id="loadTemplateBtn" class="btn-secondary">📋 Load Template</button>
                 <button id="addBudgetBtn" class="btn-primary">➕ Add Budget</button>
             </div>
         </div>
@@ -79,10 +69,12 @@ export async function initBudgetsUI() {
 
     const viewModeSelect = document.getElementById('budgetViewMode');
     viewModeSelect.addEventListener('change', () => {
+        console.log('Global view mode changed to:', viewModeSelect.value);
         initBudgetsUI(); 
     });
 
     const viewMode = viewModeSelect.value;
+    console.log('Rendering budgets in view mode:', viewMode);
 
     const [budgets, transactions, categories] = await Promise.all([
         getAllItems(STORE_NAMES.budgets),
@@ -104,6 +96,9 @@ export async function initBudgetsUI() {
         cat.type === 'expense' || 
         !incomeCategories.includes(cat.id)
     ).map(cat => cat.id);
+
+    console.log('Income categories:', incomeCategories);
+    console.log('Expense categories:', expenseCategories);
 
     // Calculate totals with frequency conversion
     let totalIncome = 0;
@@ -137,9 +132,7 @@ export async function initBudgetsUI() {
         .filter(t => t.type === 'expense' && t.date >= periodStartISO)
         .reduce((sum, t) => sum + t.amount, 0);
         
-    // actualExpenses is a sum of real expense transactions, which are stored
-    // as negative amounts, so balance is the sum, not income minus expenses.
-    const actualBalance = actualIncome + actualExpenses;
+    const actualBalance = actualIncome - actualExpenses;
 
     // Update the totals on the UI
     document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
@@ -152,7 +145,7 @@ export async function initBudgetsUI() {
     if (budgets.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>No budgets yet. Click "Add Budget" to create one.</p>
+                <p>No budgets yet. Click "Load Template" to get started with a starter budget, or "Add Budget" to create one manually.</p>
             </div>
         `;
     } else {
@@ -187,8 +180,97 @@ export async function initBudgetsUI() {
         });
     }
 
+    // Load template button
+    document.getElementById('loadTemplateBtn').addEventListener('click', () => {
+        showTemplateSelector();
+    });
+
     document.getElementById('addBudgetBtn').addEventListener('click', () => {
         showInlineEditor(null, categories);
+    });
+}
+
+// ============================================================================
+// 📋 BUDGET TEMPLATE SELECTOR
+// ============================================================================
+function showTemplateSelector() {
+    const templates = getAllBudgetTemplates();
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 Load Budget Template</h3>
+                <button class="btn btn-text close-modal">✕</button>
+            </div>
+            <div class="template-selector">
+                ${Object.entries(templates).map(([key, template]) => {
+                    const summary = getBudgetSummary(key);
+                    return `
+                        <div class="template-card" data-template="${key}">
+                            <div class="template-header">
+                                <h4>${template.name}</h4>
+                            </div>
+                            <div class="template-description">
+                                <p>${template.description}</p>
+                            </div>
+                            <div class="template-stats">
+                                <div class="stat">
+                                    <span class="stat-label">💰 Income:</span>
+                                    <span class="stat-value">$${summary.monthlyIncome.toLocaleString()}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">💸 Expenses:</span>
+                                    <span class="stat-value">$${summary.monthlyExpenses.toLocaleString()}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">📊 Surplus:</span>
+                                    <span class="stat-value ${summary.monthlySurplus >= 0 ? 'positive' : 'negative'}">$${summary.monthlySurplus.toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-load-template" data-template="${key}">
+                                📥 Load This Template
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close button
+    modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+
+    // Load template buttons
+    modal.querySelectorAll('.btn-load-template').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const templateName = e.target.dataset.template;
+            const template = templates[templateName];
+            
+            // Show confirmation
+            if (confirm(`Load "${template.name}"?\n\nThis will add ${template.template.length} budget items to your budget.`)) {
+                btn.disabled = true;
+                btn.textContent = '⏳ Loading...';
+                
+                try {
+                    const count = await createDefaultBudgets({ addItem, updateItem, getAllItems, STORE_NAMES }, templateName);
+                    alert(`✅ Successfully loaded ${count} budgets!`);
+                    modal.remove();
+                    initBudgetsUI();
+                } catch (err) {
+                    console.error('❌ Error loading template:', err);
+                    alert('❌ Error loading template: ' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = '📥 Load This Template';
+                }
+            }
+        });
     });
 }
 
@@ -206,7 +288,7 @@ function renderBudgetCard(budget, categories, transactions, incomeCategories, pe
                 : t.type === 'expense';
             
             return isCorrectType && 
-                   transactionMatchesBudgetCategory(t, budget.categoryId, categories) &&
+                   t.categoryId === budget.categoryId &&
                    t.date >= periodStartISO;
         })
         .reduce((sum, t) => sum + t.amount, 0);
@@ -233,7 +315,7 @@ function renderBudgetCard(budget, categories, transactions, incomeCategories, pe
         <div class="budget-card-row1">
             <div class="budget-left">
                 <span class="category-icon">${icon}</span>
-                <span class="category-name">${escapeHtml(cat?.name) || 'Unknown'}</span>
+                <span class="category-name">${cat?.name || 'Unknown'}</span>
 
                 <span class="budget-values">
                     $${normalizedSpent.toFixed(2)} / $${normalizedGoal.toFixed(2)} 
@@ -299,7 +381,7 @@ function showInlineEditor(existing, categories, scrollToForm = true) {
                         ${categories.map(c => {
                             const icon = c.icon || guessCategoryIcon(c.name || '');
                             const type = c.type === 'income' ? '💰 Income' : '💸 Expense';
-                            return `<option value="${c.id}" ${c.id === existing?.categoryId ? 'selected' : ''}>${icon} ${escapeHtml(c.name)} (${type})</option>`;
+                            return `<option value="${c.id}" ${c.id === existing?.categoryId ? 'selected' : ''}>${icon} ${c.name} (${type})</option>`;
                         }).join('')}
                     </select>
                 </div>
@@ -399,6 +481,7 @@ function showInlineEditor(existing, categories, scrollToForm = true) {
             } else {
                 await addItem(STORE_NAMES.budgets, budgetData);
             }
+            console.log('✅ Budget saved successfully', budgetData);
             initBudgetsUI();
         } catch (err) {
             console.error('❌ Error saving budget:', err);
